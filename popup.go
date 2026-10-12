@@ -30,7 +30,11 @@ func (ui *Context) popup(id ID, anchor draw2d.Rect, minimumWidth float32, passiv
 func (ui *Context) positionPopup(placed *root) {
 	element := &ui.elements[placed.element]
 	const spacing = 4
-	x := clamp(placed.anchor.X, spacing, ui.width-element.rect.Width-spacing)
+	x := placed.anchor.X
+	if placed.centred {
+		x -= element.rect.Width / 2
+	}
+	x = clamp(x, spacing, ui.width-element.rect.Width-spacing)
 	y := placed.anchor.Bottom() + spacing
 	if y+element.rect.Height > ui.height-spacing && placed.anchor.Y-element.rect.Height-spacing >= 0 {
 		y = placed.anchor.Y - element.rect.Height - spacing
@@ -62,4 +66,28 @@ func (ui *Context) Tooltip(text string) {
 			ui.Text(text, TextStyle{Size: theme.SmallTextSize + 1, Color: theme.Surface})
 		})
 	})
+}
+
+// Toast shows a short note centred near the bottom of the window, over everything, without taking
+// the mouse: what an action did, or (warning) why it could not be done. The program shows it for
+// as long as it wants, as with a sheet; a few seconds is usual.
+func (ui *Context) Toast(text string, warning bool) {
+	if text == "" {
+		return
+	}
+	theme := ui.Theme
+	icon, iconColour := "info", theme.Surface
+	if warning {
+		icon, iconColour = "triangle-alert", theme.Warning
+	}
+	id := ui.idFor("##toast")
+	outside := ui.open
+	ui.open = nil
+	layout := Layout{Direction: Horizontal, Padding: PadXY(12, 8), Gap: 8, AlignY: Center}
+	index := ui.openElement(element{id: id, kind: boxElement, layout: layout, look: Look{Fill: theme.Ink.WithAlpha(0.94), Radius: theme.ControlRadius + 2, Shadow: true}})
+	anchor := draw2d.Rect{X: ui.width / 2, Y: ui.height - 64 - 2*theme.TextSize}
+	ui.roots = append(ui.roots, root{id: id, element: index, popup: true, passive: true, centred: true, anchor: anchor})
+	ui.IconSized(icon, theme.TextSize, iconColour)
+	ui.Text(text, TextStyle{Color: theme.Surface})
+	ui.open = outside
 }

@@ -17,6 +17,7 @@ type root struct {
 	popup   bool        // floats over everything, next to anchor
 	sheet   bool        // covers the window over every panel, under the popups (see Sheet)
 	passive bool        // a popup that never takes the mouse (a tooltip)
+	centred bool        // a popup centred on its anchor's x (a toast)
 	anchor  draw2d.Rect // what a popup opens next to
 }
 

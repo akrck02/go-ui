@@ -112,3 +112,22 @@ func TestAMenuInASheetTakesEscapeFirst(t *testing.T) {
 		t.Fatal("the next Escape closes the sheet")
 	}
 }
+
+// A toast floats centred near the bottom of the window, over what is there.
+func TestAToastIsCentredAtTheBottom(t *testing.T) {
+	h := newHarness(t)
+	build := func(ui *Context) {
+		ui.Box(Layout{Width: Grow(), Height: Grow()}, func() { ui.Button("Under") })
+		ui.Toast("No se puede quitar: lo usa Prensa 2", true)
+	}
+	h.frame(build)
+	h.frame(build)
+	area, shown := h.ui.previous[idOf("##toast")]
+	if !shown {
+		t.Fatal("the toast is not shown")
+	}
+	middle := area.X + area.Width/2
+	if middle < 399 || middle > 401 || area.Y < 450 || area.Y+area.Height > 600 {
+		t.Errorf("the toast is at %+v, want centred near the bottom of 800 × 600", area)
+	}
+}
