@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" font-family="sans-serif" font-size="13">
+  <rect x="0" y="0" width="640" height="220" fill="#ffffff"/>
+  <text x="20" y="26" fill="#14202f" font-weight="bold">A row 600 px wide: padding 10, gap 10</text>
+  <rect x="20" y="40" width="600" height="80" rx="8" fill="#f1f4f8" stroke="#c9d2dd"/>
+  <rect x="30" y="50" width="120" height="60" rx="6" fill="#ffffff" stroke="#4a5768"/>
+  <text x="90" y="76" text-anchor="middle" fill="#14202f">Fixed(120)</text>
+  <text x="90" y="96" text-anchor="middle" fill="#6b7889">120</text>
+  <rect x="160" y="50" width="90" height="60" rx="6" fill="#ffffff" stroke="#4a5768"/>
+  <text x="205" y="76" text-anchor="middle" fill="#14202f">Fit()</text>
+  <text x="205" y="96" text-anchor="middle" fill="#6b7889">its text: 90</text>
+  <rect x="260" y="50" width="113" height="60" rx="6" fill="#eaf1fd" stroke="#1f5fc4"/>
+  <text x="316" y="76" text-anchor="middle" fill="#14202f">Grow()</text>
+  <text x="316" y="96" text-anchor="middle" fill="#6b7889">1 share: 113</text>
+  <rect x="383" y="50" width="227" height="60" rx="6" fill="#eaf1fd" stroke="#1f5fc4"/>
+  <text x="496" y="76" text-anchor="middle" fill="#14202f">GrowBy(2)</text>
+  <text x="496" y="96" text-anchor="middle" fill="#6b7889">2 shares: 227</text>
+  <text x="20" y="152" fill="#14202f" font-weight="bold">How the 340 px left are shared</text>
+  <text x="20" y="176" fill="#4a5768">inner 580 − fixed 120 − fit 90 − three gaps 30 = 340, split 1 : 2 between the growing boxes</text>
+  <text x="20" y="200" fill="#4a5768">(a box with a Max stops there, and what it leaves goes to the others)</text>
+</svg>
