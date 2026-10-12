@@ -118,7 +118,7 @@ func (ui *Context) buttonColours(variant buttonVariant, result interaction) (fil
 		}
 		return draw2d.Transparent, draw2d.Transparent, theme.InkSoft
 	default:
-		fill, border = theme.Surface, theme.Line
+		fill, border = theme.Surface, theme.ControlLine
 		if pressed {
 			fill = theme.Line
 		} else if result.hovered {

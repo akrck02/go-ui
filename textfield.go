@@ -13,6 +13,8 @@ type TextFieldOptions struct {
 	Placeholder string // shown, quiet, while the field is empty
 	MaxLength   int    // the most characters it takes; 0 = no limit
 	Width       Sizing // the zero value grows across the row or column
+	// Weight is the face the text is written in: draw2d.Mono for a code or a key.
+	Weight draw2d.Weight
 }
 
 // fieldEvent is how editing a field ended during a step, if it did.
@@ -37,6 +39,7 @@ type fieldMemory struct {
 	measuredKey   fieldMeasureKey
 	measuredValid bool
 	paint         fieldPaint
+	weight        draw2d.Weight // the face of its text, from its options
 }
 
 // fieldPaint is what painting a field needs, worked out while the field is built; offsets are
@@ -46,6 +49,7 @@ type fieldPaint struct {
 	focused, caretShown          bool
 	caretX, scroll               float32
 	selectionStart, selectionEnd float32
+	weight                       draw2d.Weight
 }
 
 // fieldPadding is the space between a field's edges and its text.
@@ -75,7 +79,7 @@ func (ui *Context) TextFieldWith(name string, text *string, options TextFieldOpt
 // typed and tells how the edit ended, if it did during this step.
 func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fieldEvent {
 	memory := remember(ui, id, func() *fieldMemory { return &fieldMemory{} })
-	memory.editor.limit = options.MaxLength
+	memory.editor.limit, memory.weight = options.MaxLength, options.Weight
 	ui.focusables = append(ui.focusables, id)
 	result := ui.interact(id)
 	if result.pressed && ui.focus != id {
@@ -170,20 +174,20 @@ func (ui *Context) fieldPositionAt(id ID, memory *fieldMemory, x float32) int {
 	low, high := 0, len(runes)
 	for low < high { // the first position whose caret is right of the pointer
 		middle := (low + high) / 2
-		if ui.textWidth(string(runes[:middle+1])) < offset {
+		if ui.textWidth(string(runes[:middle+1]), memory.weight) < offset {
 			low = middle + 1
 		} else {
 			high = middle
 		}
 	}
 	if low > 0 && low <= len(runes) {
-		left, right := ui.textWidth(string(runes[:low-1])), ui.textWidth(string(runes[:low]))
+		left, right := ui.textWidth(string(runes[:low-1]), memory.weight), ui.textWidth(string(runes[:low]), memory.weight)
 		if offset-left < right-offset {
 			return low - 1
 		}
 	}
 	if low < len(runes) {
-		left, right := ui.textWidth(string(runes[:low])), ui.textWidth(string(runes[:low+1]))
+		left, right := ui.textWidth(string(runes[:low]), memory.weight), ui.textWidth(string(runes[:low+1]), memory.weight)
 		if offset-left > right-offset {
 			return low + 1
 		}
@@ -191,8 +195,8 @@ func (ui *Context) fieldPositionAt(id ID, memory *fieldMemory, x float32) int {
 	return low
 }
 
-func (ui *Context) textWidth(text string) float32 {
-	return ui.measure(text, TextStyle{Size: ui.Theme.TextSize}).Width
+func (ui *Context) textWidth(text string, weight draw2d.Weight) float32 {
+	return ui.measure(text, TextStyle{Size: ui.Theme.TextSize, Weight: weight}).Width
 }
 
 // shortcutKey is the key held for copy, paste and undo: Cmd on a Mac, Ctrl elsewhere. wordKey is
@@ -300,7 +304,8 @@ func (ui *Context) addField(id ID, memory *fieldMemory, text string, options Tex
 	if width == (Sizing{}) {
 		width = Grow()
 	}
-	look := Look{Fill: theme.Surface, Border: theme.Line, BorderWidth: 1, Radius: theme.ControlRadius}
+	paint.weight = options.Weight
+	look := Look{Fill: theme.Surface, Border: theme.ControlLine, BorderWidth: 1, Radius: theme.ControlRadius}
 	switch {
 	case focused:
 		look.Border, look.BorderWidth = theme.Primary, 1.5
@@ -326,21 +331,22 @@ type fieldMeasureKey struct {
 	text          string
 	caret, anchor int
 	size, scale   float32
+	weight        draw2d.Weight
 }
 
 // measureField returns the caret's and the selection's offsets and the text's width.
 func (ui *Context) measureField(memory *fieldMemory, text string) fieldMeasures {
 	editor := &memory.editor
-	key := fieldMeasureKey{text: text, caret: editor.caret, anchor: editor.anchor, size: ui.Theme.TextSize, scale: ui.scale}
+	key := fieldMeasureKey{text: text, caret: editor.caret, anchor: editor.anchor, size: ui.Theme.TextSize, scale: ui.scale, weight: memory.weight}
 	if memory.measuredValid && memory.measuredKey == key {
 		return memory.measured
 	}
 	start, end := editor.selection()
 	memory.measured = fieldMeasures{
-		caretX:         ui.textWidth(string(editor.text[:editor.caret])),
-		selectionStart: ui.textWidth(string(editor.text[:start])),
-		selectionEnd:   ui.textWidth(string(editor.text[:end])),
-		textWidth:      ui.textWidth(text),
+		caretX:         ui.textWidth(string(editor.text[:editor.caret]), memory.weight),
+		selectionStart: ui.textWidth(string(editor.text[:start]), memory.weight),
+		selectionEnd:   ui.textWidth(string(editor.text[:end]), memory.weight),
+		textWidth:      ui.textWidth(text, memory.weight),
 	}
 	memory.measuredKey, memory.measuredValid = key, true
 	return memory.measured
@@ -400,7 +406,7 @@ func (ui *Context) paintField(element *element) {
 	if paint.text == "" && paint.placeholder != "" {
 		ui.drawing.Text(paint.placeholder, x, baseline, size, draw2d.Regular, theme.InkQuiet)
 	} else {
-		ui.drawing.Text(paint.text, x, baseline, size, draw2d.Regular, theme.Ink)
+		ui.drawing.Text(paint.text, x, baseline, size, paint.weight, theme.Ink)
 	}
 	if paint.focused && paint.caretShown {
 		caret := draw2d.Rect{X: x + paint.caretX - 0.75, Y: baseline - metrics.Ascent - 1, Width: 1.5, Height: metrics.Height() + 2}

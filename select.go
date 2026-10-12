@@ -32,7 +32,7 @@ func (ui *Context) Select(name string, selected *int, options []string) bool {
 		ui.Spacer()
 		ui.IconSized("chevron-down", 14, theme.InkSoft)
 	})
-	look := Look{Fill: theme.Surface, Border: theme.Line, BorderWidth: 1, Radius: theme.ControlRadius}
+	look := Look{Fill: theme.Surface, Border: theme.ControlLine, BorderWidth: 1, Radius: theme.ControlRadius}
 	if result.hovered {
 		look.Border = theme.InkQuiet
 		ui.cursor = input.CursorHand

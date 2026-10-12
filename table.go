@@ -14,6 +14,8 @@ type Column struct {
 	// start from nothing, so the header and every row come out the same.
 	Width Sizing
 	Align Align // Start for words, End for numbers
+	// Weight is the face of its cells: draw2d.Mono for a column of codes.
+	Weight draw2d.Weight
 }
 
 // Table is a table being built, handed to the function that adds its rows. Rows and group
@@ -84,6 +86,9 @@ func (ui *Context) tableHeader(columns []Column) {
 
 // tableCell is one cell: its column's width, its text cut with "…" when it does not fit.
 func (ui *Context) tableCell(column Column, text string, style TextStyle) {
+	if style.Weight == draw2d.Regular {
+		style.Weight = column.Weight
+	}
 	layout := Layout{Width: column.Width, Height: Grow(), Padding: PadXY(8, 0), AlignX: column.Align, AlignY: Center}
 	ui.Frame(layout, Look{Clip: true}, func() { ui.Text(text, style) })
 }
