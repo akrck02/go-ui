@@ -85,6 +85,14 @@ type Context struct {
 	overSurface            bool
 
 	wantsMouse, wantsKeyboard bool
+
+	sheets, nextSheets []ID // sheets shown in the last frame and in this one, back to front
+	// the fields of the front sheet, as a range of focusables, so Tab stays inside it
+	sheetFocusStart, sheetFocusEnd int
+	drag                           dragState
+	menu                           *menuMemory // the menu whose items are being built, if any
+	menuItems                      int         // items added to it so far
+	table                          Table       // the table being built (see Table)
 }
 
 // New returns an interface that measures text with go-renderer's fonts, in the default theme.
@@ -142,10 +150,12 @@ func (ui *Context) Begin(state *input.State) {
 	ui.hot = 0
 	ui.focusSeen, ui.focusables = false, ui.focusables[:0]
 	ui.scrollUsed = false
-	ui.nextPopups = ui.nextPopups[:0]
+	ui.nextPopups, ui.nextSheets = ui.nextPopups[:0], ui.nextSheets[:0]
+	ui.sheetFocusStart, ui.sheetFocusEnd = 0, 0
 	ui.cursor = input.CursorArrow
 	ui.findHoveredRoot()
 	ui.followPresses()
+	ui.followDrag()
 	ui.openScreen()
 }
 
@@ -156,6 +166,7 @@ func (ui *Context) End() {
 		return
 	}
 	ui.building = false
+	ui.showDrag()
 	ui.layOut()
 	ui.paint()
 	ui.previous, ui.current = ui.current, ui.previous
@@ -166,6 +177,7 @@ func (ui *Context) End() {
 	ui.moveFocusByTab()
 	ui.finishInteraction()
 	ui.popups, ui.nextPopups = ui.nextPopups, ui.popups
+	ui.sheets, ui.nextSheets = ui.nextSheets, ui.sheets
 	ui.forgetUnusedPanels()
 	ui.forgetUnusedMemory()
 }

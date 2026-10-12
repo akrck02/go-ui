@@ -104,11 +104,24 @@ type Layout struct {
 	Width, Height Sizing
 	Padding       Padding
 	Gap           float32 // space between two children, in pixels
-	AlignX        Align   // where the children sit horizontally when there is room to spare
-	AlignY        Align   // where the children sit vertically when there is room to spare
+	// Wrap, on a horizontal box, starts a new line when the next child would pass the box's
+	// right edge, like words in a paragraph (a row of tags). Gap is kept between children and
+	// between lines. The box needs a width that does not follow its content (Grow in a column,
+	// Fixed, Percent), or it is one line as wide as all its children.
+	// (Next to Gap, it takes the padding the compiler leaves there: boxes stay as small.)
+	Wrap   bool
+	AlignX Align // where the children sit horizontally when there is room to spare
+	AlignY Align // where the children sit vertically when there is room to spare
 	// Columns, when above 0, makes a grid: children fill rows of this many equal cells, left to
 	// right and then down, with Gap between cells both ways. Direction is not used then.
 	Columns int
+}
+
+// wraps tells whether a box breaks its children into lines. Callers test layout.Wrap on its own
+// first: that one byte keeps the layout of boxes that do not wrap as fast as before (measured with
+// BenchmarkAuditPhases).
+func (layout Layout) wraps() bool {
+	return layout.Wrap && layout.Direction == Horizontal && layout.Columns == 0
 }
 
 func (layout Layout) sizing(axis Direction) Sizing {
@@ -128,7 +141,9 @@ func (layout Layout) align(axis Direction) Align {
 // The layout runs once per frame, when the whole tree of boxes is known (Context.End), axis by
 // axis: first every box's size from its content, from the leaves up; then the space left over
 // is shared out to growing boxes, from the root down; then positions, from the root down. Text
-// does not wrap, so heights never depend on widths and the two axes are independent.
+// does not wrap, so heights never depend on widths and the two axes are independent, except in
+// boxes that wrap their children into lines (Layout.Wrap): their height is worked out from the
+// widths, which are all known by then, because the horizontal axis is done first.
 
 // size works out the sizes of a root's tree along an axis: the content first, then the root's
 // own size (which may depend on it), then the space shared out inside.
@@ -144,6 +159,10 @@ func (ui *Context) fitContent(index int, axis Direction) {
 	element := &ui.elements[index]
 	if element.layout.Columns > 0 {
 		ui.fitGrid(element, axis)
+		return
+	}
+	if element.layout.Wrap && axis == Vertical && element.layout.wraps() {
+		ui.fitWrapped(element)
 		return
 	}
 	content := element.intrinsic(axis)
@@ -194,6 +213,8 @@ func (ui *Context) shareSpace(index int, axis Direction) {
 	inner := max(element.sizeAlong(axis)-element.layout.Padding.along(axis), 0)
 	if element.layout.Columns > 0 {
 		ui.shareGrid(element, axis, inner)
+	} else if element.layout.Wrap && element.layout.wraps() {
+		ui.shareWrapped(element, axis, inner)
 	} else if element.layout.Direction == axis {
 		ui.shareAlongMainAxis(element, axis, inner)
 	} else {
@@ -297,8 +318,12 @@ func (ui *Context) fillAcross(element *element, axis Direction, inner float32) {
 // place sets the position of every child of a box, along both axes, from the box's own.
 func (ui *Context) place(index int) {
 	element := &ui.elements[index]
-	if element.layout.Columns > 0 {
-		ui.placeGrid(element)
+	if element.layout.Columns > 0 || (element.layout.Wrap && element.layout.wraps()) {
+		if element.layout.Columns > 0 {
+			ui.placeGrid(element)
+		} else {
+			ui.placeWrapped(element)
+		}
 		for child := element.firstChild; child >= 0; child = ui.elements[child].nextSibling {
 			ui.place(child)
 		}

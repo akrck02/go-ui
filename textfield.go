@@ -426,10 +426,14 @@ func (ui *Context) Focus(path ...string) {
 func (ui *Context) moveFocusByTab() {
 	from := ui.tabFrom
 	ui.tabFrom = 0
-	if from == 0 || len(ui.focusables) == 0 {
+	focusables := ui.focusables
+	if len(ui.nextSheets) > 0 { // a sheet is open: Tab goes round its own fields only
+		focusables = focusables[ui.sheetFocusStart:ui.sheetFocusEnd]
+	}
+	if from == 0 || len(focusables) == 0 {
 		return
 	}
-	for index, id := range ui.focusables {
+	for index, id := range focusables {
 		if id != from {
 			continue
 		}
@@ -437,8 +441,8 @@ func (ui *Context) moveFocusByTab() {
 		if ui.tabBack {
 			step = -1
 		}
-		next := (index + step + len(ui.focusables)) % len(ui.focusables)
-		ui.focus, ui.focusByKeyboard = ui.focusables[next], true
+		next := (index + step + len(focusables)) % len(focusables)
+		ui.focus, ui.focusByKeyboard = focusables[next], true
 		return
 	}
 }

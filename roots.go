@@ -15,6 +15,7 @@ type root struct {
 	panel   *panelMemory // nil for the screen and popups
 	dock    Edge
 	popup   bool        // floats over everything, next to anchor
+	sheet   bool        // covers the window over every panel, under the popups (see Sheet)
 	passive bool        // a popup that never takes the mouse (a tooltip)
 	anchor  draw2d.Rect // what a popup opens next to
 }
@@ -239,6 +240,9 @@ func (ui *Context) layerOf(id ID) int {
 	if position := slices.Index(ui.nextPopups, id); position >= 0 {
 		return popupLayer + position
 	}
+	if position := slices.Index(ui.nextSheets, id); position >= 0 {
+		return sheetLayer + position*10
+	}
 	for _, placed := range ui.roots {
 		if placed.id == id && placed.popup {
 			return popupLayer + len(ui.nextPopups) + 1 // a passive popup, over everything
@@ -261,6 +265,10 @@ func (ui *Context) findHoveredRoot() {
 			ui.hoveredRoot = ui.popups[position]
 			return
 		}
+	}
+	if len(ui.sheets) > 0 {
+		ui.hoveredRoot = ui.sheets[len(ui.sheets)-1] // the front sheet covers the window
+		return
 	}
 	for position := len(ui.order) - 1; position >= 0; position-- {
 		if area, shown := ui.previous[ui.order[position]]; shown && area.Contains(x, y) {

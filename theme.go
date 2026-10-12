@@ -25,6 +25,7 @@ type Theme struct {
 	FocusRing   draw2d.Color
 	Selection   draw2d.Color // behind selected text
 	Shadow      draw2d.Color
+	Scrim       draw2d.Color // over everything behind a sheet, dimming it
 
 	TextSize      float32
 	SmallTextSize float32
@@ -61,6 +62,7 @@ func LightTheme() Theme {
 		FocusRing:     draw2d.Hex("#1f5fc466"),
 		Selection:     draw2d.Hex("#1f5fc45c"),
 		Shadow:        draw2d.Hex("#14202f2e"),
+		Scrim:         draw2d.Hex("#14202f59"),
 		TextSize:      13,
 		SmallTextSize: 11,
 		HeadingSize:   15,
@@ -97,5 +99,6 @@ func DarkTheme() Theme {
 	theme.FocusRing = draw2d.Hex("#5b8fe880")
 	theme.Selection = draw2d.Hex("#5b8fe880")
 	theme.Shadow = draw2d.Hex("#00000066")
+	theme.Scrim = draw2d.Hex("#0000008c")
 	return theme
 }

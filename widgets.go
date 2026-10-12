@@ -53,12 +53,21 @@ func (ui *Context) flatIconButton(name, icon string) bool {
 }
 
 func (ui *Context) button(name, text, icon string, variant buttonVariant) bool {
-	id := ui.idFor(name)
+	return ui.buttonWithID(ui.idFor(name), text, icon, variant, false).clicked
+}
+
+// buttonWithID adds a button with a known id; a lit button looks pressed (the button of an open
+// menu).
+func (ui *Context) buttonWithID(id ID, text, icon string, variant buttonVariant, lit bool) interaction {
 	result := ui.interact(id)
 	if result.hovered {
 		ui.cursor = input.CursorHand
 	}
-	fill, border, ink := ui.buttonColours(variant, result)
+	shown := result
+	if lit {
+		shown.held, shown.hovered = true, true
+	}
+	fill, border, ink := ui.buttonColours(variant, shown)
 	height := ui.Theme.ControlHeight
 	padding := PadXY(12, 0)
 	width := Fit().Between(height, 0)
@@ -83,7 +92,7 @@ func (ui *Context) button(name, text, icon string, variant buttonVariant) bool {
 			ui.Text(text, TextStyle{Weight: draw2d.Medium, Color: ink})
 		}
 	})
-	return result.clicked
+	return result
 }
 
 // buttonColours picks fill, border and ink for a variant in its state: darker while hovered,

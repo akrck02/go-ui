@@ -36,6 +36,7 @@ summary cards, a table, an inspector and a status bar.
 go run ./cmd/app                      # the application above (-dark for the dark theme)
 go run ./cmd/scene-app                # the same kind of layout around a 3D view
 go run ./cmd/plan-editor              # place huts on an island's map: editing a 3D scene
+go run ./cmd/workbench                # a grouped table, chips, a menu, a sheet, drag and drop
 go run ./cmd/example                  # the example above; -dark for the dark theme
 go run ./cmd/example -capture shot.png
 go test ./...

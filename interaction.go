@@ -56,8 +56,10 @@ func (ui *Context) finishInteraction() {
 		ui.active = 0
 		ui.sceneDrag = false
 	}
+	sheetOpen := len(ui.nextSheets) > 0
 	ui.wantsMouse = !ui.sceneDrag && (ui.hoveredRoot != screenID || ui.overSurface || ui.hot != 0 || ui.active != 0)
-	ui.wantsKeyboard = ui.focus != 0
+	ui.wantsMouse = ui.wantsMouse || sheetOpen || ui.drag.holdsMouse()
+	ui.wantsKeyboard = ui.focus != 0 || sheetOpen || ui.drag.phase == dragMoving
 	if ui.hot != ui.lastHot {
 		ui.lastHot, ui.hotSince = ui.hot, ui.now
 	}
