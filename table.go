@@ -85,6 +85,30 @@ func (ui *Context) tableHeader(columns []Column) {
 }
 
 // tableCell is one cell: its column's width, its text cut with "…" when it does not fit.
+// leadingCell is a row's first cell with its icon, indent and second line.
+func (ui *Context) leadingCell(column Column, text string, look RowLook) {
+	theme := ui.Theme
+	layout := Layout{Width: column.Width, Height: Grow(), Padding: Padding{Left: 8 + look.Indent, Right: 8}, Gap: 10, AlignY: Center}
+	ui.Frame(layout, Look{Clip: true}, func() {
+		if look.Icon != "" {
+			ink := look.IconInk
+			if !ink.IsVisible() {
+				ink = theme.InkSoft
+			}
+			size := theme.ControlHeight * 0.66
+			ui.Frame(Layout{Width: Fixed(size), Height: Fixed(size), AlignX: Center, AlignY: Center}, Look{Fill: look.Tile, Radius: theme.ControlRadius * 0.7}, func() {
+				ui.IconSized(look.Icon, size*0.58, ink)
+			})
+		}
+		ui.Box(Layout{Direction: Vertical, Gap: 1}, func() {
+			ui.Text(text, TextStyle{Weight: column.Weight})
+			if look.Secondary != "" {
+				ui.Text(look.Secondary, TextStyle{Size: theme.SmallTextSize, Weight: look.SecondaryWeight, Color: theme.InkQuiet})
+			}
+		})
+	})
+}
+
 func (ui *Context) tableCell(column Column, text string, style TextStyle) {
 	if style.Weight == draw2d.Regular {
 		style.Weight = column.Weight
@@ -136,6 +160,21 @@ func (table *Table) Group(caption string) {
 // returns true on the step it is clicked. A selected row is tinted, with a strip of the primary
 // colour on its left. Cells beyond the columns are ignored; missing ones are empty.
 func (table *Table) Row(id string, selected bool, cells ...string) bool {
+	return table.RowWith(id, selected, RowLook{}, cells...)
+}
+
+// RowLook is how a row's first cell starts: an icon on a tinted tile, and an indent for a row that
+// belongs to the one above it (an attribute under its type).
+type RowLook struct {
+	Icon            string
+	IconInk, Tile   draw2d.Color // the icon's colour and its tile's; zero = the theme's soft ink, no tile
+	Indent          float32
+	Secondary       string // a quieter second line under the first cell's text
+	SecondaryWeight draw2d.Weight
+}
+
+// RowWith adds a row as Row does, its first cell starting as look says.
+func (table *Table) RowWith(id string, selected bool, look RowLook, cells ...string) bool {
 	ui := table.ui
 	if !table.inSight(ui.Theme.ControlHeight) {
 		return false
@@ -149,6 +188,10 @@ func (table *Table) Row(id string, selected bool, cells ...string) bool {
 			text := ""
 			if index < len(cells) {
 				text = cells[index]
+			}
+			if index == 0 && (look.Icon != "" || look.Indent > 0 || look.Secondary != "") {
+				ui.leadingCell(column, text, look)
+				continue
 			}
 			ui.tableCell(column, text, TextStyle{})
 		}
