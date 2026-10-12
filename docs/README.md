@@ -122,6 +122,13 @@ working inside it (`cmd/scene-app`).
 
 ![An application layout around a 3D view](images/scene-app.png)
 
+A program that **edits** the scene it shows runs through go-renderer's `viewer.Edit`: the
+interface is built in its function, and `viewer.View` turns the pointer into a point on the ground.
+`cmd/plan-editor` places huts on an island by clicking on the map (a drag still moves the map),
+and a panel lists them to select, rename and remove; at rest it uses no processor or GPU.
+
+![Huts placed on the map, with the panel that lists them](images/plan-editor.png)
+
 ![The second tab of the example in the dark theme: a switch, a scrolling list and a grid](images/example-dark.png)
 
 ### Popups
