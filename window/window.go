@@ -13,11 +13,16 @@
 package window
 
 import (
+	"errors"
 	"flag"
+	"fmt"
 	"hash/maphash"
+	"log"
+	"runtime"
 
 	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
+	"github.com/akrck02/go-renderer/metal"
 	"github.com/akrck02/go-renderer/models"
 	"github.com/akrck02/go-renderer/opengl"
 	ui "github.com/akrck02/go-ui"
@@ -36,9 +41,46 @@ type Options struct {
 	// Continuous draws every frame, at the display's rate, instead of only when something
 	// happens: for an interface that animates all the time. It uses far more battery.
 	Continuous bool
+	// Backend is what draws the window: Automatic (Metal on macOS, OpenGL elsewhere), Metal or
+	// OpenGL.
+	Backend Backend
 }
 
-// RegisterFlags declares -width, -height, -capture, -no-vsync, -dark and -continuous.
+// Backend is the graphics interface a window draws through.
+type Backend string
+
+const (
+	Automatic Backend = ""       // Metal on macOS, falling back to OpenGL if it cannot start; OpenGL elsewhere
+	Metal     Backend = "metal"  // only on macOS
+	OpenGL    Backend = "opengl" // OpenGL 4.1, on every desktop system
+)
+
+// Set reads a backend from a flag: automatic, metal or opengl.
+func (backend *Backend) Set(text string) error {
+	switch text {
+	case "automatic", "":
+		*backend = Automatic
+	case string(Metal), string(OpenGL):
+		*backend = Backend(text)
+	default:
+		return fmt.Errorf("unknown backend %q: use automatic, metal or opengl", text)
+	}
+	return nil
+}
+
+func (backend *Backend) String() string {
+	if *backend == Automatic {
+		return "automatic"
+	}
+	return string(*backend)
+}
+
+// usesMetal tells whether a window should try Metal first.
+func (backend Backend) usesMetal() bool {
+	return backend == Metal || backend == Automatic && runtime.GOOS == "darwin"
+}
+
+// RegisterFlags declares -width, -height, -capture, -no-vsync, -dark, -continuous and -backend.
 func (options *Options) RegisterFlags(flags *flag.FlagSet) {
 	flags.IntVar(&options.Width, "width", 1280, "window width")
 	flags.IntVar(&options.Height, "height", 800, "window height")
@@ -46,12 +88,13 @@ func (options *Options) RegisterFlags(flags *flag.FlagSet) {
 	flags.BoolVar(&options.NoVsync, "no-vsync", false, "do not wait for the display")
 	flags.BoolVar(&options.Dark, "dark", false, "use the dark theme")
 	flags.BoolVar(&options.Continuous, "continuous", false, "draw every frame instead of only when something happens")
+	flags.Var(&options.Backend, "backend", "what draws the window: automatic, metal or opengl")
 }
 
 // Wake makes the window draw a frame now: call it when the program's data changes on another
 // goroutine (a file loaded, a message arrived), since the window otherwise sleeps until input.
 // Safe from any goroutine.
-func Wake() { opengl.Wake() }
+func Wake() { opengl.Wake() } // both backends wait for events in GLFW
 
 // Run opens the window and calls build in every update step, between the interface's Begin and
 // End, until the window is closed. It must be called from the main goroutine.
@@ -72,7 +115,6 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 	if width <= 0 || height <= 0 {
 		width, height = 1280, 800
 	}
-	var renderer *opengl.FlatRenderer
 	shown := shownFrame{seed: maphash.MakeSeed()}
 	app := &models.Application{
 		Type:         models.WindowApplication,
@@ -96,21 +138,36 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 			context.End()
 			return nil
 		},
-		Draw: func(app *models.Application) error {
-			if renderer == nil {
-				created, err := opengl.NewFlatRenderer()
-				if err != nil {
-					return err
-				}
-				renderer = created
-			}
-			framebufferWidth, framebufferHeight, scale := frameSize(app)
-			renderer.Draw(context.Drawing(), context.Theme.Background, framebufferWidth, framebufferHeight, scale)
-			return nil
-		},
 	}
 	if options.CapturePath != "" {
 		app.Type, app.CapturePath = models.HeadlessApplication, options.CapturePath
+	}
+	if options.Backend.usesMetal() {
+		err := runMetal(context, app)
+		if !errors.Is(err, metal.ErrUnavailable) || options.Backend == Metal {
+			return err
+		}
+		log.Printf("window: %v; drawing through OpenGL", err)
+		shown = shownFrame{seed: shown.seed}
+		app.Input = input.NewState()
+	}
+	return runOpenGL(context, app)
+}
+
+// runOpenGL draws the window through OpenGL.
+func runOpenGL(context *ui.Context, app *models.Application) error {
+	var renderer *opengl.FlatRenderer
+	app.Draw = func(app *models.Application) error {
+		if renderer == nil {
+			created, err := opengl.NewFlatRenderer()
+			if err != nil {
+				return err
+			}
+			renderer = created
+		}
+		framebufferWidth, framebufferHeight, scale := frameSize(app)
+		renderer.Draw(context.Drawing(), context.Theme.Background, framebufferWidth, framebufferHeight, scale)
+		return nil
 	}
 	return (&opengl.OpenGL{}).StartLoop(app)
 }

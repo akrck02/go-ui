@@ -6,8 +6,9 @@ painter, atlas, flat renderer, window loop), measured with the register applicat
 
 The short answer: **an idle application now costs nothing**, and a frame of a normal interface is
 cheap. What is left to win is work done in frames that change nothing, and work that grows with
-content nobody sees (rows scrolled out of view). A Metal backend is not needed for battery; it is
-worth designing as insurance against OpenGL leaving macOS ([design](../../go-renderer/docs/metal.md)).
+content nobody sees (rows scrolled out of view). A Metal backend was not needed for battery, but
+once built it turned out cheaper than OpenGL on macOS, above all in memory
+([Metal](../../go-renderer/docs/metal.md)).
 
 ## How it was measured
 
@@ -133,8 +134,17 @@ Steps 1 to 4 are done (above); step 5 and the smaller items are left.
 
 ## Metal
 
-Not needed for battery: with drawing on demand and one draw call a frame, Apple's layer that runs
-OpenGL on Metal costs about 0.1–0.2 ms per frame that is drawn, and nothing while idle. It is worth
-designing because OpenGL has been deprecated on macOS since 2018 and may be removed; the
-[design](../../go-renderer/docs/metal.md) ports only the flat path first, reusing the painter, in
-about three or four days.
+Built after this audit, as insurance against OpenGL leaving macOS: go-ui's window now draws
+through Metal on macOS (`-backend opengl` goes back). It costs less than OpenGL, which on macOS
+runs on a translation layer over Metal:
+
+| | OpenGL | Metal |
+|---|---|---|
+| Register idle, memory | 93–102 MB | **66–70 MB** |
+| Changing every frame: processor | 13.6 % of a core | **9 %** |
+| Changing every frame: GPU | 19–20 % | **12–16 %** |
+| Changing every frame: memory | 163 MB | **107 MB** |
+| Still again, memory | 109 MB | **60 MB** |
+
+The details, and what still needs a look on screen, are in go-renderer's
+[docs/metal.md](../../go-renderer/docs/metal.md).

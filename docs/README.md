@@ -196,7 +196,7 @@ the theme's `Background`:
 ```go
 options := window.Options{Title: "Lighthouse register"}
 options.MinWidth, options.MinHeight = 960, 560 // the smallest the layout still works at
-options.RegisterFlags(flag.CommandLine) // -width, -height, -capture, -no-vsync, -dark
+options.RegisterFlags(flag.CommandLine) // -width, -height, -capture, -no-vsync, -dark, -continuous, -backend
 flag.Parse()
 window.Run(options, func(context *ui.Context) {
 	context.Label("Hello")
@@ -217,6 +217,13 @@ drawn either: the window compares the draw list's fingerprint with the last one.
 between it sleeps: the register uses no processor while idle, against about 14% of a core
 drawing every frame. `Options.Continuous` (`-continuous`) draws every frame, for an interface that
 animates all the time. Over a 3D view (`viewer.Run`) the scene keeps drawing every frame.
+
+On macOS the window draws through **Metal**; elsewhere through OpenGL 4.1. `Options.Backend`
+(`-backend automatic|metal|opengl`) chooses; if Metal cannot start, the window says so once and
+uses OpenGL. Both paint the same quads from the same atlas, and their captures match within 1/255
+per channel. Metal needs less: with the register idle, its memory is 66–70 MB against 93–102 MB
+through OpenGL, and with a window that changes every frame it used about a third less processor,
+GPU and memory ([measurements](../../go-renderer/docs/metal.md#measured)).
 
 The window has no depth or stencil buffer, which flat drawing never uses. Most of what the
 system then counts for the program is the window's own buffers, which grow with its size; the

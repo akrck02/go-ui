@@ -51,7 +51,7 @@ Read the [documentation](docs/README.md): how a frame works, the layout rules an
 I write most of my code by hand, so I want to be clear about where AI was used here.
 
 - **Written by an AI assistant (Claude, by Anthropic) under my direction, since October 2026:**
-  all of it so far: the context, the layout, the controls, the theme, the window, the examples and
-  the docs.
+  all of it so far: the context, the layout, the controls, the theme, the window (and its choice of
+  Metal or OpenGL), the examples and the docs.
 
 Commits made with AI carry a `Co-Authored-By: Claude` line.
