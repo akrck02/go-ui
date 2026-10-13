@@ -1,7 +1,9 @@
 package ui
 
 import (
+	"math"
 	"strconv"
+	"time"
 
 	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
@@ -15,7 +17,28 @@ type scrollMemory struct {
 	view    float32
 	thumbID ID
 	thumbOn bool // the pointer is on the thumb or dragging it: drawn stronger
+	finger  fingerScroll
 }
+
+// fingerScroll is a finger moving a scroll area's content on a touch screen, and the content
+// gliding on after the finger lets go.
+type fingerScroll struct {
+	following bool      // a finger came down on the area and is held
+	dragging  bool      // it moved far enough to be a drag, not a touch on a control
+	startY    float32   // where it came down
+	lastY     float32   // where it was at the last step
+	lastTime  time.Time // when that was
+	velocity  float32   // pixels a second, the content's, while dragging and gliding
+}
+
+// A finger has to move dragSlop pixels before a touch becomes a drag: a touch that moves a little
+// still presses the button under it. A glide slows by glideFriction of its speed every second and
+// stops under glideStop pixels a second.
+const (
+	dragSlop      = 8
+	glideFriction = 4
+	glideStop     = 20
+)
 
 // scrollBarWidth is the thumb's width, and scrollBarReach how wide an area around it takes the
 // pointer, so a thin bar is still easy to grab.
@@ -26,7 +49,8 @@ const (
 )
 
 // ScrollArea adds a box whose content scrolls up and down when it is taller than the box: with
-// the wheel or the trackpad over it, or by dragging the thin bar on its right. The box needs a
+// the wheel or the trackpad over it, by dragging the thin bar on its right, or, on a touch screen,
+// by dragging the content with a finger, which glides on when let go. The box needs a
 // height that does not follow its content (Grow, Fixed, Percent, or Fit with a maximum); its
 // children are stacked top to bottom.
 func (ui *Context) ScrollArea(name string, layout Layout, content func()) {
@@ -40,8 +64,71 @@ func (ui *Context) scrollArea(id ID, layout Layout, content func()) *scrollMemor
 	ui.elements[index].scroll = memory
 	ui.followWheel(id, memory)
 	ui.followThumb(memory)
+	ui.followFinger(id, memory)
 	return memory
 }
+
+// followFinger drags the content with one finger, and lets it glide on when the finger lets go
+// while moving. A finger that drags takes the pointer from the control it came down on, which then
+// is not touched. Inner areas see the finger first (they finish first) and keep it.
+func (ui *Context) followFinger(id ID, memory *scrollMemory) {
+	finger, state := &memory.finger, ui.state
+	now, y := ui.now, float32(state.CursorY)
+	seconds := float32(now.Sub(finger.lastTime).Seconds())
+	finger.lastTime = now
+	if finger.following && !state.Button(input.MouseLeft) {
+		finger.following = false
+		if !finger.dragging {
+			finger.velocity = 0
+		}
+		finger.dragging = false
+	}
+	if !finger.following {
+		ui.glide(memory, seconds)
+	}
+	touching := len(state.Touches()) == 1
+	if touching && state.ButtonPressed(input.MouseLeft) && !ui.fingerTaken && memory.content > memory.view {
+		area, shown := ui.previous[id]
+		if shown && area.Contains(float32(state.CursorX), y) && ui.hoveredRoot == ui.currentRoot() {
+			*finger = fingerScroll{following: true, startY: y, lastY: y, lastTime: now}
+			ui.fingerTaken = true
+			return
+		}
+	}
+	if !finger.following || !touching {
+		return
+	}
+	ui.fingerTaken = true
+	if !finger.dragging && abs32(y-finger.startY) < dragSlop {
+		return
+	}
+	finger.dragging = true
+	ui.active = id // the control the finger came down on is not touched after all
+	moved := y - finger.lastY
+	memory.offset -= moved
+	if seconds > 0 {
+		finger.velocity = 0.7*finger.velocity + 0.3*(-moved/seconds) // smoothed: one step can be uneven
+	}
+	finger.lastY = y
+}
+
+// glide moves the content on after a finger let go of it, slowing to a stop.
+func (ui *Context) glide(memory *scrollMemory, seconds float32) {
+	finger := &memory.finger
+	if finger.velocity == 0 || seconds <= 0 || seconds > 0.25 {
+		return
+	}
+	before := memory.offset
+	memory.offset = clamp(memory.offset+finger.velocity*seconds, 0, max(memory.content-memory.view, 0))
+	finger.velocity *= float32(math.Exp(-glideFriction * float64(seconds)))
+	if abs32(finger.velocity) < glideStop || memory.offset == before {
+		finger.velocity = 0
+		return
+	}
+	ui.RequestFrame(16 * time.Millisecond)
+}
+
+func abs32(value float32) float32 { return max(value, -value) }
 
 // followWheel scrolls with the wheel when the pointer is over the area. Inner areas see the wheel
 // first (they finish first) and take it, so a list inside a scrolling panel scrolls on its own.
