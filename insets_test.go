@@ -2,6 +2,7 @@ package ui
 
 import (
 	"testing"
+	"time"
 
 	"github.com/akrck02/go-renderer/input"
 )
@@ -19,5 +20,16 @@ func TestTheInterfaceKnowsTheWindowAndWhatCoversIt(t *testing.T) {
 	}
 	if insets := context.Insets(); insets.Top != 24 || insets.Bottom != 48 {
 		t.Fatalf("insets = %+v, want 24 at the top and 48 at the bottom", insets)
+	}
+}
+
+func TestAProgramCanAskForTheNextFrame(t *testing.T) {
+	context := NewWithMeasurer(&fakeMeasurer{})
+	state := input.NewState()
+	context.Begin(state)
+	context.RequestFrame(250 * time.Millisecond)
+	context.End()
+	if delay, wanted := state.TakeFrameRequest(); !wanted || delay > 250*time.Millisecond {
+		t.Fatalf("frame wanted %v in %v; want one within 250 ms", wanted, delay)
 	}
 }
