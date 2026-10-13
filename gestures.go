@@ -3,6 +3,7 @@ package ui
 import (
 	"time"
 
+	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
 )
 
@@ -93,6 +94,9 @@ type Swipe struct {
 	Velocity float32 // pixels a second along the axis, as it last moved
 	Held     bool    // a finger is dragging the box
 	Released bool    // the finger let go in this frame; Offset and Velocity are its last
+	// Area is where the box was laid out in the last frame (zero in its first): its width is a
+	// page's, for content that moves a page at a time.
+	Area draw2d.Rect
 }
 
 // SwipeBox lays content out in a box a finger drags along an axis (sideways, for pages, cards in a
@@ -116,5 +120,16 @@ func (ui *Context) SwipeBox(name string, layout Layout, axis Direction, content 
 		}
 		swipe = Swipe{Offset: along, Velocity: velocity, Held: finger.down, Released: finger.released}
 	}
+	swipe.Area = ui.previous[id]
 	ui.frameWithID(id, layout, Look{Clip: true}, func() { content(swipe) })
+}
+
+// Pointer is where the pointer is, in the window's layout pixels: a finger on a touch screen. For a
+// control of a program's own that takes a position (a clock's dial, a colour wheel), read while it
+// is pressed.
+func (ui *Context) Pointer() (x, y float32) {
+	if ui.state == nil {
+		return 0, 0
+	}
+	return float32(ui.state.CursorX), float32(ui.state.CursorY)
 }
