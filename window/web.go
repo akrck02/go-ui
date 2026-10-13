@@ -22,6 +22,11 @@ func Graphics() string { return "" }
 // is always "".
 func LastCrash() string { return "" }
 
+// Stop ends the window in a web page: Run returns after one more frame and the canvas is let go.
+// For a page whose own application shows the program on one of its screens, and takes the screen
+// away. Safe from any goroutine.
+func Stop() { browser.Stop() }
+
 // SystemPrefersDark tells whether the browser is set to a dark theme (prefers-color-scheme).
 func SystemPrefersDark() bool {
 	query := js.Global().Call("matchMedia", "(prefers-color-scheme: dark)")

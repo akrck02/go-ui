@@ -62,10 +62,17 @@ shadows or sky yet (see go-renderer's `docs/web.md`).
 | `Options.Title` is the window's title | It becomes the page's title |
 | Sleeps in `glfw.WaitEvents` between frames | Asks for an animation frame only when something happens |
 | `window.Wake()` posts an empty event | `window.Wake()` asks for an animation frame |
+| Closing the window ends `Run` | `window.Stop()` ends `Run`, for a page that takes the canvas away (below) |
 
 Everything else is shared: one interface step per frame, no frame when the draw list's
 fingerprint says it would look the same, `Options.Continuous` to draw every frame. Measured in the
 register: **no frames at all in two seconds of idling**.
+
+**One screen of a larger web application.** Give the program the page's canvas by id
+(`Options.Canvas`) and leave `Options.Title` empty, so the page keeps its own title. When the page
+leaves that screen, it asks the program to stop (a function the program hands the page through
+`syscall/js` calls `window.Stop()`): `Run` returns, the canvas's listeners come off the page and the
+program exits. Opening the screen again starts a new one.
 
 The window's code is split by build tags: `window.go` (options, the interface application, frames
 that look the same) for everyone, `desktop.go`, `thread.go` and the Metal files for desktops, and
