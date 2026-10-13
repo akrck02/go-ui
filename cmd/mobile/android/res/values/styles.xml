@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The window covers the whole screen, under see-through system bars; the program paints its own bars'
+  backgrounds there (window.Context.Insets). With a light interface the bars' icons are dark.
+-->
+<resources>
+  <style name="WindowTheme" parent="@android:style/Theme.DeviceDefault.Light.NoActionBar">
+    <item name="android:statusBarColor">@android:color/transparent</item>
+    <item name="android:navigationBarColor">@android:color/transparent</item>
+    <item name="android:windowLightStatusBar">true</item>
+    <item name="android:windowLightNavigationBar">true</item>
+    <item name="android:windowBackground">@android:color/white</item>
+  </style>
+</resources>

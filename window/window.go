@@ -23,6 +23,7 @@ import (
 	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
 	"github.com/akrck02/go-renderer/models"
+	"github.com/akrck02/go-renderer/scene"
 	ui "github.com/akrck02/go-ui"
 )
 
@@ -45,7 +46,21 @@ type Options struct {
 	// Canvas is the id of the page's canvas to draw in, in a web page; empty = the first canvas.
 	// The window is the canvas: Width, Height and Title follow the page.
 	Canvas string
+	// Scene, when set, puts a 3D scene behind the interface. It is called at every step after the
+	// interface, with the input the interface did not claim (so the program can turn its camera
+	// without fighting a slider), and returns what to show this frame: nil for no scene. On the
+	// desktop a window with a scene draws through OpenGL.
+	Scene func(state *input.State, step float64) *SceneView
 }
+
+// SceneView is a 3D scene seen from a camera, drawn behind the interface.
+type SceneView struct {
+	World  *scene.Scene
+	Camera models.Camera
+}
+
+// shownScene is the scene the last step asked for, shared by the step and the drawing.
+type shownScene struct{ view *SceneView }
 
 // Backend is the graphics interface a window draws through.
 type Backend string
@@ -108,7 +123,7 @@ func Run(options Options, build func(context *ui.Context)) error {
 // interfaceApplication is the application every window runs: one interface step (Begin, build,
 // End) per update step, drawing only when something happens unless Continuous, and no frame when
 // it would look like the one shown.
-func interfaceApplication(context *ui.Context, options Options, build func(context *ui.Context), shown *shownFrame) *models.Application {
+func interfaceApplication(context *ui.Context, options Options, build func(context *ui.Context), shown *shownFrame, view *shownScene) *models.Application {
 	return &models.Application{
 		Type:         models.WindowApplication,
 		Title:        options.Title,
@@ -117,8 +132,14 @@ func interfaceApplication(context *ui.Context, options Options, build func(conte
 		Input:        input.NewState(),
 		DisableVsync: options.NoVsync,
 		DrawOnDemand: !options.Continuous,
-		FlatOnly:     true,
+		FlatOnly:     options.Scene == nil,
 		Unchanged: func(app *models.Application) bool {
+			if view.view != nil {
+				// a scene can change without the interface changing: the program asks for frames
+				// while its camera moves, and is idle otherwise
+				*shown = shownFrame{seed: shown.seed}
+				return false
+			}
 			width, height, scale := frameSize(app)
 			return shown.same(context.Drawing(), context.Theme.Background, width, height, scale)
 		},
@@ -126,6 +147,18 @@ func interfaceApplication(context *ui.Context, options Options, build func(conte
 			context.Begin(app.Input)
 			build(context)
 			context.End()
+			view.view = nil
+			if options.Scene != nil {
+				unclaimed := app.Input.Unclaimed()
+				view.view = options.Scene(&unclaimed, step)
+				// the program asks for frames on its copy (while its camera moves): pass them on
+				if delay, wanted := unclaimed.TakeFrameRequest(); wanted {
+					app.Input.RequestFrame(delay)
+				}
+			}
+			if view.view != nil {
+				view.view.World.Overlay.Drawing = context.Drawing() // the interface is painted over the scene
+			}
 			return nil
 		},
 	}

@@ -1,11 +1,12 @@
 # go-ui on Android
 
 **Status:** a first step (October 2026). A go-ui program opens and draws on an Android 16
-emulator, and reacts to taps and drags; the same code runs on the desktop and in a browser. This
+emulator, with a 3D scene under its interface, and reacts to taps and drags; the same code runs on
+the desktop and in a browser. The example looks like Android's own apps (Material Design 3). This
 page started as a plan (what to build, install and try, in which order); *What was built* says how
-it turned out, and *Next* what is left of the plan.
+it turned out, and *Next* what is left.
 
-![cmd/mobile on the Android emulator: a list of lighthouses, a switch, a slider and a button](images/android-emulator.jpg)
+![cmd/mobile on the Android emulator: the list of lighthouses, a lighthouse's details, and the island at three in the afternoon](images/android-emulator.jpg)
 
 ## What was built
 
@@ -20,11 +21,13 @@ golang.org/x/mobile     the activity, the EGL surface and the events; gomobile c
 
 | Piece | Where |
 |---|---|
-| The loop: lifecycle (create the renderer when visible, let it go when hidden), size, touch, keys, paint | `window/android.go` |
+| The loop: lifecycle (create the renderers when visible, let them go when hidden), size, touch, keys, paint | `window/android.go` |
 | go-renderer's `gles.Functions` over `golang.org/x/mobile/gl` | `window/android_gl.go` |
+| What the system's bars cover, and whether the phone is in its dark theme, asked through JNI | `window/android_system.go` |
 | Fingers as the pointer, and the screen's density as the drawing scale | `window/touch.go`, with tests |
-| A phone-sized example, the same on desktop, web and Android | `cmd/mobile` |
-| Building an installable package | `cmd/mobile/build-apk.sh`, `cmd/mobile/android/AndroidManifest.xml` |
+| A 3D scene under the interface (`Options.Scene`), on every platform | `window/window.go` and each platform's file |
+| An example that looks like an Android app, the same on desktop, web and Android | `cmd/mobile` |
+| Building an installable package, with a window theme | `cmd/mobile/build-apk.sh`, `cmd/mobile/android/` |
 
 **Touch.** The first finger down is the pointer: it moves the cursor and presses the left button,
 lifting it releases the button, so every control works unchanged. Other fingers are ignored until
@@ -34,10 +37,33 @@ density-independent pixels (1/160 inch) and an interface is the same size on eve
 **Drawing on demand.** As on the desktop and in the browser, the window draws only when something
 happens: a touch, a size change, a frame a control asks for (`RequestFrame`) or `window.Wake`. A
 frame that would look like the one shown is not drawn. Idle on the emulator, the program used
-about 1 % of a core (the Go runtime and x/mobile's threads; no frames are drawn).
+about 0.5–1 % of a core (the Go runtime and x/mobile's threads; no frames are drawn).
 
-**`cmd/mobile`** enlarges the theme for fingers (controls 44 pixels tall, 15-pixel text) in its
-own code, until go-ui has a touch theme of its own.
+**The system's bars.** The window covers the whole screen, under see-through bars, as Android's
+own apps do. `Context.Insets()` says how much of each edge the status bar and the gesture bar
+cover, in layout pixels, so a program paints its own bars' backgrounds under them and keeps its
+controls clear. x/mobile does not report them, so the window asks Android through JNI
+(`getRootWindowInsets`, through x/mobile's `RunOnJVM`); before the window is shown it falls back on
+the bars' standard heights. The window theme in `cmd/mobile/android/res` makes the bars
+see-through, with dark icons in the system's light theme and light ones in its dark theme.
+
+**The dark theme.** `window.SystemPrefersDark()` tells whether the phone (or the browser) is set to
+a dark theme, so a program can follow it.
+
+**A scene under the interface.** `Options.Scene` returns, at every step, a scene and a camera to
+draw behind the interface, or nil for none. It gets the input the interface did not claim, so a
+drag on an empty part of the screen turns the camera while a drag on a slider moves the slider.
+The scene is drawn by go-renderer's `gles.SceneRenderer` on Android and in browsers, and its
+OpenGL scene renderer on the desktop.
+
+**`cmd/mobile`** is built the way Android's own apps look, out of go-ui boxes, texts and
+clickables (`material.go`): a top app bar and a navigation bar painted under the system's bars,
+list items with a round icon and a Material switch, filter chips, pill-shaped buttons, cards and
+floating buttons, in Material Design 3's baseline colours, light and dark, and in Roboto, Android's
+typeface (embedded under the SIL Open Font License, in `cmd/mobile/fonts`). Its three destinations
+are a list of lighthouses with their details, a map with the 3D island (drag to turn, buttons to
+come closer, a slider for the time of day) and settings (the dark theme, the screen's size and
+insets).
 
 ## Building and trying it
 
@@ -66,22 +92,26 @@ the emulator and an arm64 Android 16 image were already there.
 
 ## What was checked, and what was not
 
-On the emulator (Android 16, arm64, 1080 × 2400 at 420 dots per inch): the window opens and draws
-with sharp text at a density of 2.625; tapping a row selects it, tapping the switch turns it off,
-dragging the slider moves it; idle, nothing is drawn.
+On the emulator (Android 16, arm64, 1080 × 2400 at 420 dots per inch): the window draws with
+sharp text at a density of 2.625, clear of the status bar and the gesture bar (49 and 24
+layout pixels); a tap on a row opens its details and a tap on its switch flips it without
+opening it; the back arrow, the chips, the buttons, the navigation bar and the sliders work; the
+island draws at any time of day, turns with a drag and comes closer with the buttons; the dark
+theme switches every screen. Idle, the program uses about 0.5 % of a core; the map takes 16 draw
+calls a frame.
 
 Not yet: a real phone (density, touch accuracy, how it feels), rotating the screen, going to the
-background and back, and the 3D scene on Android.
+background and back.
 
 ## Next
 
 | # | What | Why |
 |---|---|---|
-| 1 | **Insets.** The window draws under the status bar and the gesture bar (see the title in the screenshot). This x/mobile does not report their size; a few lines of JNI, or a newer x/mobile, would, and the window would pad the interface by them | Nothing important may sit under the system's bars |
-| 2 | **A touch theme** (`TouchTheme()`), `Context.Width()` and `Height()` for narrow layouts, no hover looks with a finger | Comfortable on phones and tablets, in light and dark |
+| 1 | **The bars' icons follow the program's theme**, not only the system's: it needs a call on Android's interface thread, which x/mobile does not offer | Dark icons on a dark app (when the app's theme differs from the phone's) |
+| 2 | **Material pieces in go-ui itself**: a touch theme, the switch, list items, the navigation bar, now in the example | Every program gets them, not only the example |
 | 3 | **The on-screen keyboard** for text fields | Typing works only with a hardware keyboard today |
-| 4 | **The 3D scene**: `gles.SceneRenderer` already draws in browsers; it needs a try on a phone | Interfaces over a scene, as on the desktop |
-| 5 | **Long press, two fingers** | A right click, pinch to zoom |
+| 4 | **Long press, two fingers, the back gesture** | A right click, pinch to zoom the map, back from a lighthouse's details |
+| 5 | **Shadows, sky and waves** on phones, as on the desktop | The scene is go-renderer's simple one on phones and in browsers |
 
 ## Risks
 

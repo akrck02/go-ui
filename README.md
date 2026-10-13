@@ -59,3 +59,5 @@ I write most of my code by hand, so I want to be clear about where AI was used h
   Metal or OpenGL, and its web and Android versions), the examples and the docs.
 
 Commits made with AI carry a `Co-Authored-By: Claude` line.
+
+`cmd/mobile` embeds the Roboto typeface (SIL Open Font License, licence in `cmd/mobile/fonts`).

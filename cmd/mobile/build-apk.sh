@@ -26,9 +26,11 @@ gomobile build -target android/arm64 -androidapi 26 -o "$work/gomobile.apk" "$he
 mkdir "$work/contents"
 (cd "$work/contents" && unzip -q "$work/gomobile.apk" 'lib/*' classes.dex)
 
-# 2. a new package with the manifest of our own, then the library and the activity's code
+# 2. a new package with the manifest and window theme of our own, then the library and the
+#    activity's code
+"$build_tools/aapt2" compile --dir "$here/android/res" -o "$work/resources.zip"
 "$build_tools/aapt2" link -o "$work/unaligned.apk" -I "$platform/android.jar" \
-	--manifest "$here/android/AndroidManifest.xml"
+	--manifest "$here/android/AndroidManifest.xml" -R "$work/resources.zip" --auto-add-overlay
 (cd "$work/contents" && zip -q -0 -r "$work/unaligned.apk" lib && zip -q "$work/unaligned.apk" classes.dex)
 
 # 3. aligned and signed

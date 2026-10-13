@@ -69,6 +69,7 @@ type Context struct {
 	tabBack         bool
 	focusByKeyboard bool
 	sceneDrag       bool
+	insets          Insets // what the system draws over the window's edges (SetInsets)
 	cursor          input.CursorShape
 	cursorWasSet    bool // the interface set the pointer's shape, so it puts the arrow back when it leaves
 	panels          map[ID]*panelMemory

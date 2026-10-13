@@ -43,8 +43,9 @@ var (
 // gles.FlatRenderer. It never returns: the system ends the program.
 func RunWith(context *ui.Context, options Options, build func(context *ui.Context)) error {
 	shown := shownFrame{seed: maphash.MakeSeed()}
-	window := &androidWindow{context: context, shown: &shown,
-		app: interfaceApplication(context, options, build, &shown)}
+	view := &shownScene{}
+	window := &androidWindow{context: context, shown: &shown, view: view,
+		app: interfaceApplication(context, options, build, &shown, view)}
 	window.clock = frameloop.NewClock(window.app.FixedStep)
 	mobileapp.Main(window.run)
 	return nil
@@ -54,13 +55,18 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 type androidWindow struct {
 	context  *ui.Context
 	shown    *shownFrame
+	view     *shownScene
 	app      *models.Application
 	clock    *frameloop.Clock
 	events   mobileapp.App
 	graphics gl.Context
 	renderer *gles.FlatRenderer
+	scene    *gles.SceneRenderer
 	pointer  touchPointer
 	scale    float32
+	// insetsKnown is whether the window's insets were read; until it is shown, Android only knows
+	// the bars' standard heights, so the window asks again at the next paint
+	insetsKnown bool
 
 	mutex        sync.Mutex
 	paintPending bool // a paint event is on its way: more requests add nothing
@@ -94,11 +100,12 @@ func (window *androidWindow) changeStage(event lifecycle.Event) {
 	switch event.Crosses(lifecycle.StageVisible) {
 	case lifecycle.CrossOn:
 		window.graphics, _ = event.DrawContext.(gl.Context)
-		window.renderer = nil
+		window.renderer, window.scene = nil, nil
+		readSystemDark()
 		*window.shown = shownFrame{seed: window.shown.seed} // the new surface is empty: draw again
 		window.requestPaint()
 	case lifecycle.CrossOff:
-		window.graphics, window.renderer = nil, nil
+		window.graphics, window.renderer, window.scene = nil, nil, nil
 	}
 }
 
@@ -110,7 +117,21 @@ func (window *androidWindow) resize(event size.Event) {
 	state.FramebufferWidth, state.FramebufferHeight = event.WidthPx, event.HeightPx
 	state.WindowWidth = int(float32(event.WidthPx) / window.scale)
 	state.WindowHeight = int(float32(event.HeightPx) / window.scale)
+	window.insetsKnown = false
+	window.followInsets()
 	window.requestPaint()
+}
+
+// followInsets tells the interface how much of each edge the system's bars cover, in layout
+// pixels, until the window's own insets are known.
+func (window *androidWindow) followInsets() {
+	if window.insetsKnown || window.scale <= 0 {
+		return
+	}
+	insets, known := readInsets()
+	window.insetsKnown = known
+	window.context.SetInsets(ui.Insets{Top: float32(insets.top) / window.scale, Bottom: float32(insets.bottom) / window.scale,
+		Left: float32(insets.left) / window.scale, Right: float32(insets.right) / window.scale})
 }
 
 func (window *androidWindow) touched(event touch.Event) {
@@ -165,6 +186,7 @@ func (window *androidWindow) paint(event paint.Event) {
 	if window.graphics == nil || event.External {
 		return
 	}
+	window.followInsets()
 	hadInput := window.app.Input.HasInput()
 	if err := window.clock.StepOnce(window.app); err != nil {
 		log.Printf("window: %v", err)
@@ -180,6 +202,19 @@ func (window *androidWindow) paint(event paint.Event) {
 }
 
 func (window *androidWindow) draw() error {
+	width, height, scale := frameSize(window.app)
+	if view := window.view.view; view != nil {
+		if window.scene == nil {
+			scene, err := gles.NewSceneRenderer(mobileGL{window.graphics})
+			if err != nil {
+				return err
+			}
+			window.scene = scene
+		}
+		window.scene.OverlayScale = scale
+		window.scene.Draw(view.World, view.Camera, width, height)
+		return nil
+	}
 	if window.renderer == nil {
 		renderer, err := gles.NewFlatRenderer(mobileGL{window.graphics})
 		if err != nil {
@@ -187,7 +222,6 @@ func (window *androidWindow) draw() error {
 		}
 		window.renderer = renderer
 	}
-	width, height, scale := frameSize(window.app)
 	window.renderer.Draw(window.context.Drawing(), window.context.Theme.Background, width, height, scale)
 	return nil
 }

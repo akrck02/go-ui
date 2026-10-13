@@ -366,7 +366,13 @@ drawing every frame. `Options.Continuous` (`-continuous`) draws every frame, for
 animates all the time. Over a 3D view (`viewer.Run`) the scene keeps drawing every frame.
 
 Built for WebAssembly (`GOOS=js GOARCH=wasm`), the same program runs in a web page: the window is
-the page's canvas, drawn through WebGL2 ([in a web browser](web.md)).
+the page's canvas, drawn through WebGL2 ([in a web browser](web.md)); built for Android, it is the
+application's activity ([on Android](android.md)).
+
+`Options.Scene` puts a 3D scene behind the interface: a function called at every step, with the
+input the interface did not claim, that returns a scene and a camera (or nil for none). On a phone,
+`Context.Insets()` says how much of each edge the system's bars cover, and `Context.Size()` gives
+the window's size, so a layout can paint under the bars and choose itself by the screen.
 
 On macOS the window draws through **Metal**; elsewhere through OpenGL 4.1. `Options.Backend`
 (`-backend automatic|metal|opengl`) chooses; if Metal cannot start, the window says so once and

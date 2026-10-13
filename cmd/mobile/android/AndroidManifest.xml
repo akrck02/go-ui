@@ -10,7 +10,7 @@
     android:versionCode="1"
     android:versionName="1.0">
   <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="34" />
-  <application android:label="Lighthouses" android:debuggable="true">
+  <application android:label="Lighthouses" android:debuggable="true" android:theme="@style/WindowTheme">
     <activity android:name="org.golang.app.GoNativeActivity"
         android:label="Lighthouses"
         android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
