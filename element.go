@@ -45,10 +45,11 @@ type element struct {
 
 	parent, firstChild, lastChild, nextSibling int
 	rect                                       draw2d.Rect
-	capped                                     [2]bool       // reached its maximum while growing, per axis
-	content                                    [2]float32    // what the content needs, per axis, padding included
-	scroll                                     *scrollMemory // set on scroll areas
-	field                                      *fieldPaint   // set on text fields
+	capped                                     [2]bool                                      // reached its maximum while growing, per axis
+	content                                    [2]float32                                   // what the content needs, per axis, padding included
+	scroll                                     *scrollMemory                                // set on scroll areas
+	field                                      *fieldPaint                                  // set on text fields
+	painter                                    func(area draw2d.Rect, drawing *draw2d.List) // set on painted boxes (Paint)
 }
 
 // intrinsic is the size of what the element shows itself (not its children) along an axis.

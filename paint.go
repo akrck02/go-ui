@@ -38,6 +38,9 @@ func (ui *Context) paintBox(element *element) {
 	if element.field != nil {
 		ui.paintField(element)
 	}
+	if element.painter != nil {
+		element.painter(element.rect, &ui.drawing)
+	}
 	outerClip, outerClipped := ui.clip, ui.clipped
 	if look.Clip {
 		ui.drawing.PushClip(element.rect)

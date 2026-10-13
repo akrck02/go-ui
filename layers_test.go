@@ -118,3 +118,26 @@ func TestAPlainFieldDrawsNoBoxOfItsOwn(t *testing.T) {
 		}
 	}
 }
+
+func TestAPaintedBoxIsGivenItsArea(t *testing.T) {
+	h := newHarness(t)
+	var given draw2d.Rect
+	h.frame(func(ui *Context) {
+		ui.Box(Layout{Padding: Pad(10)}, func() {
+			ui.Paint(Layout{Width: Fixed(40), Height: Fixed(30)}, func(area draw2d.Rect, drawing *draw2d.List) {
+				given = area
+				drawing.Rectangle(area, 4, draw2d.Hex("#ff0000"), draw2d.Transparent, 0)
+			})
+		})
+	})
+	if given != (draw2d.Rect{X: 10, Y: 10, Width: 40, Height: 30}) {
+		t.Fatalf("painted at %+v; want the box's laid out area", given)
+	}
+	painted := false
+	for _, command := range h.ui.Drawing().Commands {
+		painted = painted || (command.Kind == draw2d.RectangleKind && command.Area == given)
+	}
+	if !painted {
+		t.Fatal("what the program painted is not in the frame")
+	}
+}
