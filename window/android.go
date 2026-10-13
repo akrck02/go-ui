@@ -44,7 +44,11 @@ var (
 func RunWith(context *ui.Context, options Options, build func(context *ui.Context)) error {
 	shown := shownFrame{seed: maphash.MakeSeed()}
 	view := &shownScene{}
-	window := &androidWindow{context: context, shown: &shown, view: view,
+	rate := options.MaxFramesPerSecond
+	if rate == 0 {
+		rate = defaultPhoneFrameRate
+	}
+	window := &androidWindow{context: context, shown: &shown, view: view, pacer: newFramePacer(rate),
 		app: interfaceApplication(context, options, build, &shown, view)}
 	window.clock = frameloop.NewClock(window.app.FixedStep)
 	mobileapp.Main(window.run)
@@ -71,6 +75,8 @@ type androidWindow struct {
 	mutex        sync.Mutex
 	paintPending bool // a paint event is on its way: more requests add nothing
 	timer        *time.Timer
+	pacer        framePacer // keeps frames apart (MaxFramesPerSecond)
+	paced        bool       // a paint waits for the pacer: more requests add nothing
 }
 
 func (window *androidWindow) run(events mobileapp.App) {
@@ -187,6 +193,7 @@ func (window *androidWindow) paint(event paint.Event) {
 		return
 	}
 	window.followInsets()
+	started := time.Now() // the pacer counts from a frame's start, so its work is inside the interval
 	hadInput := window.app.Input.HasInput()
 	if err := window.clock.StepOnce(window.app); err != nil {
 		log.Printf("window: %v", err)
@@ -197,6 +204,9 @@ func (window *androidWindow) paint(event paint.Event) {
 			return
 		}
 		window.events.Publish()
+		window.mutex.Lock()
+		window.pacer.drawn(started) // only frames really drawn count: the system's own paints do not
+		window.mutex.Unlock()
 	}
 	window.scheduleNext(hadInput)
 }
@@ -251,9 +261,23 @@ func (window *androidWindow) scheduleNext(hadInput bool) {
 func (window *androidWindow) requestPaint() {
 	window.mutex.Lock()
 	defer window.mutex.Unlock()
-	if window.paintPending || window.events == nil {
+	if window.paintPending || window.paced || window.events == nil {
+		return
+	}
+	if wait := window.pacer.wait(time.Now()); wait > 0 {
+		// too soon after the last frame: a finger dragging asks far faster than the cap
+		window.paced = true
+		time.AfterFunc(wait, window.paceOver)
 		return
 	}
 	window.paintPending = true
 	window.events.Send(paint.Event{})
+}
+
+// paceOver sends the paint that waited for the pacer.
+func (window *androidWindow) paceOver() {
+	window.mutex.Lock()
+	window.paced = false
+	window.mutex.Unlock()
+	window.requestPaint()
 }

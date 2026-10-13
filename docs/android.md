@@ -39,6 +39,15 @@ happens: a touch, a size change, a frame a control asks for (`RequestFrame`) or 
 frame that would look like the one shown is not drawn. Idle on the emulator, the program used
 about 0.5–1 % of a core (the Go runtime and x/mobile's threads; no frames are drawn).
 
+**A cap on frames.** Phones refresh at 90 or 120 Hz, and a finger dragging a 3D view asks for a
+frame at every touch event (over a hundred a second). The window draws at most
+`Options.MaxFramesPerSecond` frames a second, 60 on a phone by default; the system's own repaints
+do not count. Measured on a Pixel 6 Pro dragging the example's island for 10 seconds: 56 frames a
+second at about 8.7 ms each, 82 % of one core. Before the cap and go-renderer's lighter frames it
+was well over a core (an earlier, independent measurement found 125–128 % at about 100 frames a
+second). Most of what is left is x/mobile's bindings, which cross to their own thread every three
+OpenGL calls: the next step against it is a native activity of our own, with direct calls.
+
 **The system's bars.** The window covers the whole screen, under see-through bars, as Android's
 own apps do. `Context.Insets()` says how much of each edge the status bar and the gesture bar
 cover, in layout pixels, so a program paints its own bars' backgrounds under them and keeps its

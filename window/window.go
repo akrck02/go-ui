@@ -51,6 +51,9 @@ type Options struct {
 	// without fighting a slider), and returns what to show this frame: nil for no scene. On the
 	// desktop a window with a scene draws through OpenGL.
 	Scene func(state *input.State, step float64) *SceneView
+	// MaxFramesPerSecond caps how often the window draws, to spare a battery; 0 = 60 on a phone,
+	// the display's own rate elsewhere (where vsync keeps it).
+	MaxFramesPerSecond int
 }
 
 // SceneView is a 3D scene seen from a camera, drawn behind the interface.
