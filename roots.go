@@ -14,11 +14,13 @@ type root struct {
 	element int
 	panel   *panelMemory // nil for the screen and popups
 	dock    Edge
-	popup   bool        // floats over everything, next to anchor
-	sheet   bool        // covers the window over every panel, under the popups (see Sheet)
-	passive bool        // a popup that never takes the mouse (a tooltip)
-	centred bool        // a popup centred on its anchor's x (a toast)
-	anchor  draw2d.Rect // what a popup opens next to
+	popup   bool         // floats over everything, next to anchor
+	sheet   bool         // covers the window over every panel, under the popups (see Sheet)
+	passive bool         // a popup that never takes the mouse (a tooltip)
+	centred bool         // a popup centred on its anchor's x (a toast)
+	anchor  draw2d.Rect  // what a popup opens next to
+	placed  bool         // an overlay, placed in the window by options (see Overlay)
+	options LayerOptions // where an overlay goes
 }
 
 // Edge is a side of the window a panel can be docked to.
@@ -202,6 +204,10 @@ func (ui *Context) windowAlong(axis Direction) float32 {
 // its edge, a floating panel where it was left, kept within reach (its title bar on screen).
 func (ui *Context) positionRoot(placed *root) {
 	element := &ui.elements[placed.element]
+	if placed.placed {
+		ui.placeInWindow(placed)
+		return
+	}
 	if placed.popup {
 		ui.positionPopup(placed)
 		return

@@ -86,6 +86,7 @@ type Context struct {
 	overSurface            bool
 
 	wantsMouse, wantsKeyboard bool
+	typing                    bool // a text field has the focus in this frame
 
 	sheets, nextSheets []ID // sheets shown in the last frame and in this one, back to front
 	// the fields of the front sheet, as a range of focusables, so Tab stays inside it
@@ -133,11 +134,16 @@ func (ui *Context) WantsMouse() bool { return ui.wantsMouse }
 // typed in).
 func (ui *Context) WantsKeyboard() bool { return ui.wantsKeyboard }
 
+// Typing tells whether a text field had the focus in the last frame: a phone shows its on-screen
+// keyboard while it does. WantsKeyboard is wider (a sheet open, a list with the focus).
+func (ui *Context) Typing() bool { return ui.typing }
+
 // Begin starts describing the interface for a frame, with the frame's input. Call it in every
 // update step, before the controls.
 func (ui *Context) Begin(state *input.State) {
 	ui.state = state
 	ui.frame++
+	ui.typing = false
 	ui.now = state.Time()
 	ui.texts.turnOver()
 	ui.building = true

@@ -15,6 +15,9 @@ type TextFieldOptions struct {
 	Width       Sizing // the zero value grows across the row or column
 	// Weight is the face the text is written in: draw2d.Mono for a code or a key.
 	Weight draw2d.Weight
+	// Plain draws no box of the field's own, neither fill nor border nor focus ring: for a field
+	// inside a box of the program's (a search bar's pill), which shows where it is.
+	Plain bool
 }
 
 // fieldEvent is how editing a field ended during a step, if it did.
@@ -47,6 +50,7 @@ type fieldMemory struct {
 type fieldPaint struct {
 	text, placeholder            string
 	focused, caretShown          bool
+	plain                        bool // no box nor focus ring of its own (TextFieldOptions.Plain)
 	caretX, scroll               float32
 	selectionStart, selectionEnd float32
 	weight                       draw2d.Weight
@@ -117,7 +121,7 @@ func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fiel
 		focused = ui.focus == id
 	}
 	if focused {
-		ui.focusSeen = true
+		ui.focusSeen, ui.typing = true, true
 	}
 	memory.hadFocus = focused
 	ui.addField(id, memory, *text, options, result, focused)
@@ -304,9 +308,11 @@ func (ui *Context) addField(id ID, memory *fieldMemory, text string, options Tex
 	if width == (Sizing{}) {
 		width = Grow()
 	}
-	paint.weight = options.Weight
+	paint.weight, paint.plain = options.Weight, options.Plain
 	look := Look{Fill: theme.Surface, Border: theme.ControlLine, BorderWidth: 1, Radius: theme.ControlRadius}
 	switch {
+	case options.Plain:
+		look = Look{}
 	case focused:
 		look.Border, look.BorderWidth = theme.Primary, 1.5
 	case result.hovered:
@@ -388,7 +394,7 @@ func (ui *Context) paintField(element *element) {
 	theme := ui.Theme
 	paint := element.field
 	rect := element.rect
-	if paint.focused {
+	if paint.focused && !paint.plain {
 		ring := draw2d.Rect{X: rect.X - 3, Y: rect.Y - 3, Width: rect.Width + 6, Height: rect.Height + 6}
 		ui.drawing.Rectangle(ring, element.look.Radius+3, draw2d.Transparent, theme.FocusRing, 3)
 	}

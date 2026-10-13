@@ -4,6 +4,7 @@ package window
 
 import (
 	"hash/maphash"
+	"strconv"
 	"syscall/js"
 
 	"github.com/akrck02/go-renderer/browser"
@@ -31,6 +32,33 @@ func Stop() { browser.Stop() }
 func SystemPrefersDark() bool {
 	query := js.Global().Call("matchMedia", "(prefers-color-scheme: dark)")
 	return query.Truthy() && query.Get("matches").Bool()
+}
+
+// Notify shows a notification through the browser (the Notification API), once the person has
+// allowed the page's; the id replaces the one shown with it before. It returns false when it could
+// not.
+func Notify(id int, title, text string) bool {
+	if !NotificationsAllowed() {
+		return false
+	}
+	options := map[string]any{"body": text, "tag": "notification-" + strconv.Itoa(id)}
+	js.Global().Get("Notification").New(title, options)
+	return true
+}
+
+// NotificationsAllowed tells whether the page may show notifications.
+func NotificationsAllowed() bool {
+	notification := js.Global().Get("Notification")
+	return notification.Truthy() && notification.Get("permission").String() == "granted"
+}
+
+// AskForNotifications shows the browser's question to allow the page's notifications. Browsers
+// ask only just after the person touched or clicked something: call it from such a step.
+func AskForNotifications() {
+	notification := js.Global().Get("Notification")
+	if notification.Truthy() && notification.Get("permission").String() == "default" {
+		notification.Call("requestPermission")
+	}
 }
 
 // SystemPalettes returns the colours a phone made from its wallpaper; a browser does not tell them.

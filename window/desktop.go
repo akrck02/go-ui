@@ -31,6 +31,15 @@ func LastCrash() string { return "" }
 // asked yet, and the answer is false: use Options.Dark.
 func SystemPrefersDark() bool { return false }
 
+// Notify shows a notification; on the desktop it does not yet, and returns false.
+func Notify(id int, title, text string) bool { return false }
+
+// NotificationsAllowed tells whether the program may show notifications: not yet on the desktop.
+func NotificationsAllowed() bool { return false }
+
+// AskForNotifications asks the person to allow notifications; on the desktop there is nothing to ask.
+func AskForNotifications() {}
+
 // SystemPalettes returns the colours a phone made from its wallpaper; a desktop has none.
 func SystemPalettes() (Palettes, bool) { return Palettes{}, false }
 

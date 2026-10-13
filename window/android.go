@@ -25,6 +25,18 @@ func SystemPalettes() (Palettes, bool) {
 	return Palettes(read), found
 }
 
+// Notify shows a notification in the phone's shade, even while the program is in the background:
+// a title and a line, and touching it opens the program. The same id replaces the one shown with
+// it before. It returns false when it could not, most often because notifications are not allowed.
+func Notify(id int, title, text string) bool { return android.Notify(id, title, text) }
+
+// NotificationsAllowed tells whether the program may show notifications.
+func NotificationsAllowed() bool { return android.NotificationsAllowed() }
+
+// AskForNotifications asks the person to allow notifications (Android 13 and later, whose package
+// names android.permission.POST_NOTIFICATIONS); ask when they do something that needs them.
+func AskForNotifications() { android.AskForNotifications() }
+
 // Graphics describes the phone's OpenGL ES and GPU, or the error that stopped the window drawing,
 // for a program that shows it to help find a fault on a phone nobody can reach.
 func Graphics() string { return android.Graphics() }
@@ -44,7 +56,9 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 	app.Update = func(app *models.Application, step float64) error {
 		bars := android.CurrentInsets()
 		context.SetInsets(ui.Insets{Top: bars.Top, Bottom: bars.Bottom, Left: bars.Left, Right: bars.Right})
-		return update(app, step)
+		err := update(app, step)
+		android.ShowKeyboard(context.Typing()) // the on-screen keyboard, while a field is typed in
+		return err
 	}
 	var flat *gles.FlatRenderer
 	var scene *gles.SceneRenderer

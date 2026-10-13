@@ -372,7 +372,8 @@ application's activity ([on Android](android.md)).
 `Options.Scene` puts a 3D scene behind the interface: a function called at every step, with the
 input the interface did not claim, that returns a scene and a camera (or nil for none). On a phone,
 `Context.Insets()` says how much of each edge the system's bars cover, and `Context.Size()` gives
-the window's size, so a layout can paint under the bars and choose itself by the screen. `Context.Touches()` lists the fingers on a touch screen, for a
+the window's size, so a layout can paint under the bars and choose itself by the screen. `Context.Modal` and `Context.Overlay` put a program's own content over everything, dimming what is
+behind (a dialog) or not (a note at the bottom). `Context.Touches()` lists the fingers on a touch screen, for a
 control of a program's own that follows them (an on-screen stick); the first finger is also the
 pointer that clicks.
 
