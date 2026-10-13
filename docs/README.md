@@ -372,7 +372,8 @@ application's activity ([on Android](android.md)).
 `Options.Scene` puts a 3D scene behind the interface: a function called at every step, with the
 input the interface did not claim, that returns a scene and a camera (or nil for none). On a phone,
 `Context.Insets()` says how much of each edge the system's bars cover, and `Context.Size()` gives
-the window's size, so a layout can paint under the bars and choose itself by the screen. `Context.Animate` eases a value to its target and `Context.Appear` eases something in as it is
+the window's size, so a layout can paint under the bars and choose itself by the screen. `Context.Paint` adds a box the program paints itself once laid out, for shapes go-ui has no
+control for. `Context.Animate` eases a value to its target and `Context.Appear` eases something in as it is
 shown, asking for frames only while they move. `Context.Back` answers a phone's back gesture; modals
 and sheets answer it first. On a touch screen, scroll areas follow a finger and glide on when let
 go. `Context.Modal` and `Context.Overlay` put a program's own content over everything, dimming what is
