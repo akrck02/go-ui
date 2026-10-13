@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  gomobile writes a manifest that targets Android 4.1 (SDK 16), which Android 14 and later refuse
-  to install, and it does not accept one with uses-sdk. build-apk.sh therefore packs gomobile's
-  native library and activity again with this manifest: the same activity, a recent target.
-  lib_name is the Go package's name.
+  The program is a shared library that Android's own NativeActivity loads: no Java code
+  (hasCode="false"). lib_name is the library's name, libmobile.so (build-apk.sh).
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="io.github.akrck02.goui.mobile"
-    android:versionCode="1"
-    android:versionName="1.0">
+    android:versionCode="2"
+    android:versionName="1.1">
   <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="34" />
-  <application android:label="Lighthouses" android:debuggable="true" android:theme="@style/WindowTheme">
-    <activity android:name="org.golang.app.GoNativeActivity"
+  <application android:label="Lighthouses" android:debuggable="true" android:hasCode="false"
+      android:theme="@style/WindowTheme">
+    <activity android:name="android.app.NativeActivity"
         android:label="Lighthouses"
-        android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+        android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
         android:exported="true">
       <meta-data android:name="android.app.lib_name" android:value="mobile" />
       <intent-filter>

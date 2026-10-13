@@ -13,21 +13,23 @@ it turned out, and *Next* what is left.
 ```text
 your program            build(context) every frame: the same code as on the desktop
 go-ui                   unchanged: context, layout, controls, theme
-go-ui/window (android)  the activity's loop: lifecycle, size and density, touch → input.State, paint
-                        and gles.Functions over golang.org/x/mobile/gl
-go-renderer/gles        FlatRenderer: the overlay's atlas and quads, shared with the browser
-golang.org/x/mobile     the activity, the EGL surface and the events; gomobile compiles
+go-ui/window (android)  window.Run: the interface, and a scene under it, over go-renderer's android
+go-renderer/android     the activity, its window and touches, a thread that draws, direct OpenGL ES
+go-renderer/gles        FlatRenderer and SceneRenderer, shared with the browser
+Android                 its own NativeActivity loads the program, a shared library built with the NDK
 ```
 
 | Piece | Where |
 |---|---|
-| The loop: lifecycle (create the renderers when visible, let them go when hidden), size, touch, keys, paint | `window/android.go` |
-| go-renderer's `gles.Functions` over `golang.org/x/mobile/gl` | `window/android_gl.go` |
-| What the system's bars cover, and whether the phone is in its dark theme, asked through JNI | `window/android_system.go` |
-| Fingers as the pointer, and the screen's density as the drawing scale | `window/touch.go`, with tests |
+| The window: renderers made again with each new graphics context, the insets for the interface | `window/android.go` |
+| The activity, the drawing thread, touches, JNI for the bars and the theme, crash reports | go-renderer's `android` package ([its docs](../../go-renderer/docs/android.md)) |
 | A 3D scene under the interface (`Options.Scene`), on every platform | `window/window.go` and each platform's file |
 | An example that looks like an Android app, the same on desktop, web and Android | `cmd/mobile` |
 | Building an installable package, with a window theme | `cmd/mobile/build-apk.sh`, `cmd/mobile/android/` |
+
+There is no Java and no golang.org/x/mobile. The first step used x/mobile (gomobile); its way of
+calling OpenGL (every call to another thread, three at a time) was about two thirds of what a 3D view
+cost on a phone, and go-renderer's own activity halved it (see *A cap on frames*).
 
 **Touch.** The first finger down is the pointer: it moves the cursor and presses the left button,
 lifting it releases the button, so every control works unchanged. Other fingers are ignored until
@@ -36,24 +38,22 @@ density-independent pixels (1/160 inch) and an interface is the same size on eve
 
 **Drawing on demand.** As on the desktop and in the browser, the window draws only when something
 happens: a touch, a size change, a frame a control asks for (`RequestFrame`) or `window.Wake`. A
-frame that would look like the one shown is not drawn. Idle on the emulator, the program used
-about 0.5–1 % of a core (the Go runtime and x/mobile's threads; no frames are drawn).
+frame that would look like the one shown is not drawn. Idle on a phone, the program uses
+nothing at all: the drawing thread sleeps until a touch or a frame asked for.
 
 **A cap on frames.** Phones refresh at 90 or 120 Hz, and a finger dragging a 3D view asks for a
 frame at every touch event (over a hundred a second). The window draws at most
 `Options.MaxFramesPerSecond` frames a second, 60 on a phone by default; the system's own repaints
-do not count. Measured on a Pixel 6 Pro dragging the example's island for 10 seconds: 56 frames a
-second at about 8.7 ms each, 82 % of one core. Before the cap and go-renderer's lighter frames it
-was well over a core (an earlier, independent measurement found 125–128 % at about 100 frames a
-second). Most of what is left is x/mobile's bindings, which cross to their own thread every three
-OpenGL calls: the next step against it is a native activity of our own, with direct calls.
+do not count. Measured on a Pixel 6 Pro dragging the example's island for 10 seconds:
+well over a core at first (an independent measurement found 125–128 % at about 100 frames a
+second); 82 % with the cap and lighter frames, still through x/mobile; **41 %** with go-renderer's own
+activity and direct OpenGL calls.
 
 **The system's bars.** The window covers the whole screen, under see-through bars, as Android's
 own apps do. `Context.Insets()` says how much of each edge the status bar and the gesture bar
 cover, in layout pixels, so a program paints its own bars' backgrounds under them and keeps its
-controls clear. x/mobile does not report them, so the window asks Android through JNI
-(`getRootWindowInsets`, through x/mobile's `RunOnJVM`); before the window is shown it falls back on
-the bars' standard heights. The window theme in `cmd/mobile/android/res` makes the bars
+controls clear. The window asks Android through JNI (`getRootWindowInsets`); before the window is
+shown it falls back on the bars' standard heights. The window theme in `cmd/mobile/android/res` makes the bars
 see-through, with dark icons in the system's light theme and light ones in its dark theme.
 
 **When it closes on a phone nobody can reach.** On Android the window keeps the report of a crash
@@ -85,27 +85,21 @@ insets).
 ## Building and trying it
 
 ```bash
-go install golang.org/x/mobile/cmd/gomobile@v0.0.0-20250711185624-d5bb5ecc55c0   # the version in go.mod
 export ANDROID_HOME=…/android-sdk ANDROID_NDK_HOME=$ANDROID_HOME/ndk/<version>
 cmd/mobile/build-apk.sh mobile.apk
 adb install -r mobile.apk
-adb shell am start -n io.github.akrck02.goui.mobile/org.golang.app.GoNativeActivity
+adb shell am start -n io.github.akrck02.goui.mobile/android.app.NativeActivity
 adb exec-out screencap -p > screen.png          # what the screen shows
 adb shell input tap 230 330                     # a tap, in screen pixels
 ```
 
-**Why a script and not just `gomobile build`.** gomobile writes a manifest that targets Android 4.1
-(SDK 16), and Android 14 and later refuse to install such a package; it also refuses a manifest
-that says otherwise. `build-apk.sh` lets gomobile compile, takes the native library and the
-activity's code out of its package and packs them again, with the SDK's own tools (`aapt2`,
-`zipalign`, `apksigner`), under `cmd/mobile/android/AndroidManifest.xml`. It signs with the debug
-key: for trying, not for publishing.
+`build-apk.sh` builds the program as a shared library with the NDK's compiler (aligned to 16 KB
+pages, which newer phones need), and packs it with the Android SDK's tools (`aapt2`, `zipalign`,
+`apksigner`) under `cmd/mobile/android/AndroidManifest.xml`: Android's own `NativeActivity`, no Java
+code. It signs with the debug key: for trying, not for publishing.
 
-**Which gomobile.** The newest `golang.org/x/mobile` needs Go 1.26; these repositories are on
-Go 1.25, so `go.mod` holds a version from July 2025 and gomobile must be the same one.
-
-**Installed for this:** the NDK (r29) through `sdkmanager`, and gomobile. The SDK, its build tools,
-the emulator and an arm64 Android 16 image were already there.
+**Installed for this:** the NDK (r29) through `sdkmanager`. The SDK, its build tools, the emulator and
+an arm64 Android 16 image were already there.
 
 ## What was checked, and what was not
 
@@ -119,7 +113,7 @@ calls a frame.
 
 On a phone (Pixel 6 Pro, Android 16, Mali-G78, 1080 × 2340): the same, in the system's dark theme
 at start, and after going to the background and back. That phone gives an OpenGL ES 3.2 context
-although x/mobile asks for version 2. It found two faults the emulator hid, now fixed: the 3D map
+(first asked for version 2, through x/mobile). It found two faults the emulator hid, now fixed: the 3D map
 lost its ground after coming back from the background (meshes kept the buffers of the destroyed
 graphics context), and the program read the system's theme before Android gave it.
 
@@ -129,7 +123,7 @@ Not yet: rotating the screen, and how it feels on other phones and tablets.
 
 | # | What | Why |
 |---|---|---|
-| 1 | **The bars' icons follow the program's theme**, not only the system's: it needs a call on Android's interface thread, which x/mobile does not offer | Dark icons on a dark app (when the app's theme differs from the phone's) |
+| 1 | **The bars' icons follow the program's theme**, not only the system's: a JNI call on Android's interface thread | Dark icons on a dark app (when the app's theme differs from the phone's) |
 | 2 | **Material pieces in go-ui itself**: a touch theme, the switch, list items, the navigation bar, now in the example | Every program gets them, not only the example |
 | 3 | **The on-screen keyboard** for text fields | Typing works only with a hardware keyboard today |
 | 4 | **Long press, two fingers, the back gesture** | A right click, pinch to zoom the map, back from a lighthouse's details |
@@ -137,10 +131,7 @@ Not yet: rotating the screen, and how it feels on other phones and tablets.
 
 ## Risks
 
-- **x/mobile on Android is OpenGL ES 2 only** (its bindings are compiled against the ES 2
-  headers, and it asks for an ES 2 context). go-renderer's `gles` keeps to OpenGL ES 2 for that
-  reason (see go-renderer's `docs/android.md`). If OpenGL ES 3 or instancing become necessary, the
-  fallback is a small native activity of our own (cgo, EGL and the NDK's
-  `android_native_app_glue`): more code, more control.
-- **x/mobile changes slowly**, and pinning an older version keeps it working with Go 1.25.
-- **Battery**: drawing on demand is a must on a phone, and it is in place.
+- **Phones differ.** The window was tried on a Mali GPU (Pixel 6 Pro) and the emulator; an Adreno
+  phone closed the first version, for a reason not known yet (the crash report will tell).
+- **Battery**: drawing on demand is a must on a phone, and it is in place, with a cap of 60 frames
+  a second.
