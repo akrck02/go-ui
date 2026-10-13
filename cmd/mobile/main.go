@@ -54,6 +54,9 @@ type application struct {
 	screen      int
 	chosen      int // the lighthouse whose details are open; -1 = the list
 	showing     filter
+	// themeChosen is set once the theme is chosen in the settings (or with -dark); until then the
+	// interface follows the phone's or the browser's theme
+	themeChosen bool
 	dark        bool
 	hour        float32 // time of day on the map, 0–24
 
@@ -70,7 +73,7 @@ func main() {
 	options.Width, options.Height = 412, 892 // a phone's size on the desktop
 
 	useRoboto() // before the window makes its interface, which reads the fonts
-	program := newApplication(options.Dark || window.SystemPrefersDark())
+	program := newApplication(options.Dark)
 	options.Scene = program.scene
 	if err := window.Run(options, program.build); err != nil {
 		log.Fatal(err)
@@ -78,7 +81,7 @@ func main() {
 }
 
 func newApplication(dark bool) *application {
-	program := &application{chosen: -1, dark: dark, hour: 15,
+	program := &application{chosen: -1, dark: dark, themeChosen: dark, hour: 15,
 		lighthouses: []*lighthouse{
 			{name: "North Point", place: "Rocky island, north shore", built: 1850, lit: true, reach: 20},
 			{name: "Harbour Light", place: "Breakwater, harbour mouth", built: 1920, lit: true, reach: 6},
@@ -94,11 +97,12 @@ func newApplication(dark bool) *application {
 
 // build describes the whole interface for this frame.
 func (program *application) build(context *ui.Context) {
+	dark := program.isDark()
 	colours := lightPalette()
-	if program.dark {
+	if dark {
 		colours = darkPalette()
 	}
-	context.Theme = materialTheme(colours, program.dark)
+	context.Theme = materialTheme(colours, dark)
 	look := material{context: context, colours: colours}
 	screen := ui.Layout{Direction: ui.Vertical, Width: ui.Grow(), Height: ui.Grow()}
 	context.Box(screen, func() {
@@ -300,8 +304,17 @@ func (program *application) settings(look material) {
 	context, colours := look.context, look.colours
 	context.Box(ui.Layout{Direction: ui.Vertical, Width: ui.Grow(), Height: ui.Grow()}, func() {
 		look.sectionTitle("Appearance")
-		if look.listItem("dark row", "moon", "Dark theme", "Follows the phone's setting at start", func() { look.toggle("dark", &program.dark) }) {
-			program.dark = !program.dark
+		dark := program.isDark()
+		explanation := "Follows the phone's setting"
+		if program.themeChosen {
+			explanation = "Chosen here"
+		}
+		touched := false
+		if look.listItem("dark row", "moon", "Dark theme", explanation, func() { touched = look.toggle("dark", &dark) }) {
+			dark, touched = !dark, true
+		}
+		if touched {
+			program.dark, program.themeChosen = dark, true
 		}
 		look.sectionTitle("This screen")
 		width, height := context.Size()
@@ -315,6 +328,15 @@ func (program *application) settings(look material) {
 			look.text("OpenGL ES on Android, WebGL2 in a browser", 14, draw2d.Regular, colours.onSurfaceVariant)
 		})
 	})
+}
+
+// isDark tells which theme to draw in: the one chosen in the settings, or else the system's, asked
+// every frame so a phone switching to its dark theme at night is followed.
+func (program *application) isDark() bool {
+	if program.themeChosen {
+		return program.dark
+	}
+	return window.SystemPrefersDark()
 }
 
 func (program *application) countLit() int {

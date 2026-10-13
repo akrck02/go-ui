@@ -48,7 +48,8 @@ the bars' standard heights. The window theme in `cmd/mobile/android/res` makes t
 see-through, with dark icons in the system's light theme and light ones in its dark theme.
 
 **The dark theme.** `window.SystemPrefersDark()` tells whether the phone (or the browser) is set to
-a dark theme, so a program can follow it.
+a dark theme, so a program can follow it; `cmd/mobile` asks at every frame until a theme is chosen
+in its settings.
 
 **A scene under the interface.** `Options.Scene` returns, at every step, a scene and a camera to
 draw behind the interface, or nil for none. It gets the input the interface did not claim, so a
@@ -100,8 +101,13 @@ island draws at any time of day, turns with a drag and comes closer with the but
 theme switches every screen. Idle, the program uses about 0.5 % of a core; the map takes 16 draw
 calls a frame.
 
-Not yet: a real phone (density, touch accuracy, how it feels), rotating the screen, going to the
-background and back.
+On a phone (Pixel 6 Pro, Android 16, Mali-G78, 1080 × 2340): the same, in the system's dark theme
+at start, and after going to the background and back. That phone gives an OpenGL ES 3.2 context
+although x/mobile asks for version 2. It found two faults the emulator hid, now fixed: the 3D map
+lost its ground after coming back from the background (meshes kept the buffers of the destroyed
+graphics context), and the program read the system's theme before Android gave it.
+
+Not yet: rotating the screen, and how it feels on other phones and tablets.
 
 ## Next
 
