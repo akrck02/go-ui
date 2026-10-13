@@ -1,7 +1,8 @@
 // Package window runs an application that is only an interface: a window with no 3D scene, where
 // go-ui draws everything on the theme's background, in one draw call. On the desktop it opens the
 // window through go-renderer (so it needs cgo, and Metal or OpenGL 4.1); built for WebAssembly
-// (GOOS=js) the window is a canvas in a web page, drawn through WebGL2.
+// (GOOS=js) the window is a canvas in a web page, drawn through WebGL2; built for Android (with
+// gomobile) it is the application's activity, drawn through OpenGL ES.
 //
 // The window draws only when something happens: input, a resize, a frame a control asks for (a
 // caret's blink, a tooltip due) or Wake. In between the program sleeps and uses no processor,

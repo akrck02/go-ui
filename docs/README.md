@@ -16,7 +16,7 @@ are sized and placed, and what each control does.
 | [How it is drawn](#how-it-is-drawn) | From boxes to go-renderer's draw list |
 | [Performance and battery audit](performance-audit.md) | What an idle and a busy interface cost, measured, and what to improve in order |
 | [In a web browser](web.md) | Running go-ui applications in a page, built for WebAssembly and drawn through WebGL2 |
-| [Plan: Android](android.md) | What it would take to run go-ui applications on Android (not started) |
+| [On Android](android.md) | Running go-ui applications on Android: the window, touch, building a package, what was tested and what is next |
 
 ## A frame
 

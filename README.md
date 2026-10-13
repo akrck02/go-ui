@@ -40,6 +40,7 @@ go run ./cmd/workbench                # a grouped table, chips, a menu, a sheet,
 go run ./cmd/example                  # the example above; -dark for the dark theme
 go run ./cmd/example -capture shot.png
 GOOS=js GOARCH=wasm go build -o web/app.wasm ./cmd/app   # the register in a web page: docs/web.md
+cmd/mobile/build-apk.sh mobile.apk    # a phone-sized example on Android: docs/android.md
 go test ./...
 ```
 
@@ -55,6 +56,6 @@ I write most of my code by hand, so I want to be clear about where AI was used h
 
 - **Written by an AI assistant (Claude, by Anthropic) under my direction, since October 2026:**
   all of it so far: the context, the layout, the controls, the theme, the window (and its choice of
-  Metal or OpenGL, and its web version), the examples and the docs.
+  Metal or OpenGL, and its web and Android versions), the examples and the docs.
 
 Commits made with AI carry a `Co-Authored-By: Claude` line.
