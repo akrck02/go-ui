@@ -67,6 +67,12 @@ crash, so a screenshot is enough to know what happened.
 a dark theme, so a program can follow it; `cmd/mobile` asks at every frame until a theme is chosen
 in its settings.
 
+**The wallpaper's colours.** Android 12 and later make five palettes from the wallpaper (Material
+You), and the system's own applications take their colours from them. `window.SystemPalettes()`
+returns them, thirteen shades each, from white to black (`window.PaletteTones`), and false on an
+older phone, on the desktop and in a browser. They change with the wallpaper, so read them at every
+frame. go-ui-android's `material.System` builds a Material scheme from them.
+
 **A scene under the interface.** `Options.Scene` returns, at every step, a scene and a camera to
 draw behind the interface, or nil for none. It gets the input the interface did not claim, so a
 drag on an empty part of the screen turns the camera while a drag on a slider moves the slider.

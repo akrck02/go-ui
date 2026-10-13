@@ -33,6 +33,9 @@ func SystemPrefersDark() bool {
 	return query.Truthy() && query.Get("matches").Bool()
 }
 
+// SystemPalettes returns the colours a phone made from its wallpaper; a browser does not tell them.
+func SystemPalettes() (Palettes, bool) { return Palettes{}, false }
+
 // RunWith is Run with an interface context of your own (a custom theme or measurer). In a web page
 // the window is the page's canvas (Options.Canvas); it draws through WebGL2 and returns only when
 // the program stops, which keeps the WebAssembly program alive.

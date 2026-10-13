@@ -31,6 +31,9 @@ func LastCrash() string { return "" }
 // asked yet, and the answer is false: use Options.Dark.
 func SystemPrefersDark() bool { return false }
 
+// SystemPalettes returns the colours a phone made from its wallpaper; a desktop has none.
+func SystemPalettes() (Palettes, bool) { return Palettes{}, false }
+
 // RunWith is Run with an interface context of your own (a custom theme or measurer).
 func RunWith(context *ui.Context, options Options, build func(context *ui.Context)) error {
 	width, height := options.Width, options.Height

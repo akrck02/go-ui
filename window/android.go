@@ -18,6 +18,13 @@ func Wake() { android.Wake() }
 // SystemPrefersDark tells whether the phone is set to its dark theme, so a program can follow it.
 func SystemPrefersDark() bool { return android.SystemPrefersDark() }
 
+// SystemPalettes returns the colours the phone made from its wallpaper, and false before Android
+// 12, which has none. They change with the wallpaper: read them in every frame.
+func SystemPalettes() (Palettes, bool) {
+	read, found := android.SystemPalettes()
+	return Palettes(read), found
+}
+
 // Graphics describes the phone's OpenGL ES and GPU, or the error that stopped the window drawing,
 // for a program that shows it to help find a fault on a phone nobody can reach.
 func Graphics() string { return android.Graphics() }
