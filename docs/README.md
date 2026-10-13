@@ -372,7 +372,9 @@ application's activity ([on Android](android.md)).
 `Options.Scene` puts a 3D scene behind the interface: a function called at every step, with the
 input the interface did not claim, that returns a scene and a camera (or nil for none). On a phone,
 `Context.Insets()` says how much of each edge the system's bars cover, and `Context.Size()` gives
-the window's size, so a layout can paint under the bars and choose itself by the screen.
+the window's size, so a layout can paint under the bars and choose itself by the screen. `Context.Touches()` lists the fingers on a touch screen, for a
+control of a program's own that follows them (an on-screen stick); the first finger is also the
+pointer that clicks.
 
 On macOS the window draws through **Metal**; elsewhere through OpenGL 4.1. `Options.Backend`
 (`-backend automatic|metal|opengl`) chooses; if Metal cannot start, the window says so once and

@@ -33,3 +33,19 @@ func TestAProgramCanAskForTheNextFrame(t *testing.T) {
 		t.Fatalf("frame wanted %v in %v; want one within 250 ms", wanted, delay)
 	}
 }
+
+func TestTheInterfaceListsTheFingers(t *testing.T) {
+	context := NewWithMeasurer(&fakeMeasurer{})
+	if len(context.Touches()) != 0 {
+		t.Fatal("fingers before any frame")
+	}
+	state := input.NewState()
+	state.SetTouch(1, 10, 20)
+	state.SetTouch(2, 30, 40)
+	context.Begin(state)
+	touches := context.Touches()
+	context.End()
+	if len(touches) != 2 || touches[1].X != 30 {
+		t.Fatalf("touches = %+v, want the two fingers", touches)
+	}
+}

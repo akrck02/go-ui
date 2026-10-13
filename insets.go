@@ -1,6 +1,10 @@
 package ui
 
-import "time"
+import (
+	"time"
+
+	"github.com/akrck02/go-renderer/input"
+)
 
 // Insets are how far in from each edge of the window the system draws over it, in layout pixels:
 // a phone's status bar at the top and its gesture bar at the bottom. A window that covers the
@@ -27,4 +31,14 @@ func (ui *Context) RequestFrame(delay time.Duration) {
 	if ui.state != nil {
 		ui.state.RequestFrame(delay)
 	}
+}
+
+// Touches returns the fingers on a touch screen in this frame, in layout pixels, all of them:
+// those on controls too. A control of a program's own that follows fingers (an on-screen stick, a
+// gesture) reads them here; the first finger is also the pointer that clicks. None on a desktop.
+func (ui *Context) Touches() []input.Touch {
+	if ui.state == nil {
+		return nil
+	}
+	return ui.state.Touches()
 }
