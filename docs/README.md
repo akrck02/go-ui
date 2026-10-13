@@ -15,6 +15,7 @@ are sized and placed, and what each control does.
 | [Applications without a scene](#applications-without-a-scene) | A plain window for interface-only programs |
 | [How it is drawn](#how-it-is-drawn) | From boxes to go-renderer's draw list |
 | [Performance and battery audit](performance-audit.md) | What an idle and a busy interface cost, measured, and what to improve in order |
+| [In a web browser](web.md) | Running go-ui applications in a page, built for WebAssembly and drawn through WebGL2 |
 | [Plan: Android](android.md) | What it would take to run go-ui applications on Android (not started) |
 
 ## A frame
@@ -363,6 +364,9 @@ drawn either: the window compares the draw list's fingerprint with the last one.
 between it sleeps: the register uses no processor while idle, against about 14% of a core
 drawing every frame. `Options.Continuous` (`-continuous`) draws every frame, for an interface that
 animates all the time. Over a 3D view (`viewer.Run`) the scene keeps drawing every frame.
+
+Built for WebAssembly (`GOOS=js GOARCH=wasm`), the same program runs in a web page: the window is
+the page's canvas, drawn through WebGL2 ([in a web browser](web.md)).
 
 On macOS the window draws through **Metal**; elsewhere through OpenGL 4.1. `Options.Backend`
 (`-backend automatic|metal|opengl`) chooses; if Metal cannot start, the window says so once and
