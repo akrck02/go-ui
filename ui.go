@@ -176,6 +176,9 @@ func (ui *Context) End() {
 	ui.showDrag()
 	ui.layOut()
 	ui.paint()
+	if ui.moving() {
+		ui.RequestFrame(16 * time.Millisecond) // about sixty frames a second while something eases
+	}
 	ui.previous, ui.current = ui.current, ui.previous
 	clear(ui.current)
 	if !ui.focusSeen {

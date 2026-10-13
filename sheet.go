@@ -26,12 +26,13 @@ type sheetMemory struct {
 // a question to confirm, a short form. While it is shown, nothing behind it reacts to the mouse or
 // the keyboard, and the interface claims both, so cameras and shortcuts leave them alone too. Tab
 // goes round the sheet's own fields. The program shows it with an if, for as long as it wants; it
-// returns true on the step the person asks to close it (Escape, the × in its title, or a click on
-// the dimmed backdrop), and the program then stops showing it.
+// returns true on the step the person asks to close it (Escape, the system's back, the × in its
+// title, or a click on the dimmed backdrop), and the program then stops showing it.
 func (ui *Context) Sheet(title string, options SheetOptions, content func()) (dismissed bool) {
 	id := ui.idFor(title)
 	ui.dropOutsideFocusWhenOpening(id)
 	escaped := ui.state.Pressed(input.KeyEscape) && ui.focus == 0 // a field or a list in the sheet takes Escape first
+	escaped = escaped || (ui.frontSheet(id) && ui.Back())
 	outside := ui.open
 	ui.open = nil
 	backdrop := Layout{Direction: Vertical, Width: Grow(), Height: Grow(), Padding: Pad(24), AlignX: Center, AlignY: Center}
