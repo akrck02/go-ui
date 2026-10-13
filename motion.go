@@ -15,7 +15,8 @@ type animation struct {
 
 // Animate eases a value towards a target over a duration, starting again from where it is when the
 // target changes: a switch's handle going across, a tab's underline moving to the tab chosen. The
-// first time a name is seen, the value is at its target. It returns the value for this frame.
+// first time a name is seen, the value is at its target; with no duration it goes there at once
+// (following a finger), and the next change eases from there. It returns the value for this frame.
 func (ui *Context) Animate(name string, target float32, duration time.Duration) float32 {
 	memory := remember(ui, ui.idFor("##animate "+name), func() *animation {
 		return &animation{from: target, to: target}
@@ -40,6 +41,7 @@ func (ui *Context) Appear(name string, duration time.Duration) float32 {
 // valueAt is the value at a time, asking for the next frame while it moves.
 func (memory *animation) valueAt(now time.Time, duration time.Duration) float32 {
 	if memory.from == memory.to || duration <= 0 {
+		memory.from = memory.to // with no time, it is there: the next change eases from here
 		return memory.to
 	}
 	progress := float32(now.Sub(memory.started)) / float32(duration)

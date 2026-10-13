@@ -17,28 +17,13 @@ type scrollMemory struct {
 	view    float32
 	thumbID ID
 	thumbOn bool // the pointer is on the thumb or dragging it: drawn stronger
-	finger  fingerScroll
-}
 
-// fingerScroll is a finger moving a scroll area's content on a touch screen, and the content
-// gliding on after the finger lets go.
-type fingerScroll struct {
-	following bool      // a finger came down on the area and is held
-	dragging  bool      // it moved far enough to be a drag, not a touch on a control
-	startY    float32   // where it came down
-	lastY     float32   // where it was at the last step
-	lastTime  time.Time // when that was
-	velocity  float32   // pixels a second, the content's, while dragging and gliding
+	glide       float32   // pixels a second the content moves on after a finger let it go
+	lastTime    time.Time // the last step's time, for the glide
+	pull        float32   // how far a finger pulls the content down past its top
+	pulledAt    float32   // how far it was pulled when the finger let go
+	pulledFrame int       // the frame it let go in
 }
-
-// A finger has to move dragSlop pixels before a touch becomes a drag: a touch that moves a little
-// still presses the button under it. A glide slows by glideFriction of its speed every second and
-// stops under glideStop pixels a second.
-const (
-	dragSlop      = 8
-	glideFriction = 4
-	glideStop     = 20
-)
 
 // scrollBarWidth is the thumb's width, and scrollBarReach how wide an area around it takes the
 // pointer, so a thin bar is still easy to grab.
@@ -46,6 +31,14 @@ const (
 	scrollBarWidth = 4
 	scrollBarReach = 12
 	minimumThumb   = 24
+)
+
+// A glide slows by glideFriction of its speed every second and stops under glideStop pixels a
+// second. A pull past the top moves half as far as the finger (pullResistance), as a list resists.
+const (
+	glideFriction  = 4
+	glideStop      = 20
+	pullResistance = 0.5
 )
 
 // ScrollArea adds a box whose content scrolls up and down when it is taller than the box: with
@@ -58,7 +51,7 @@ func (ui *Context) ScrollArea(name string, layout Layout, content func()) {
 }
 
 func (ui *Context) scrollArea(id ID, layout Layout, content func()) *scrollMemory {
-	memory := remember(ui, id, func() *scrollMemory { return &scrollMemory{thumbID: childID(id, "##thumb")} })
+	memory := ui.scrollMemoryOf(id)
 	layout.Direction, layout.Columns = Vertical, 0
 	index := ui.frameWithID(id, layout, Look{Clip: true}, content)
 	ui.elements[index].scroll = memory
@@ -68,61 +61,65 @@ func (ui *Context) scrollArea(id ID, layout Layout, content func()) *scrollMemor
 	return memory
 }
 
-// followFinger drags the content with one finger, and lets it glide on when the finger lets go
-// while moving. A finger that drags takes the pointer from the control it came down on, which then
-// is not touched. Inner areas see the finger first (they finish first) and keep it.
+// followFinger drags the content with a finger that went up or down first, and lets it glide on
+// when let go while moving. Pulled down past its top, the content stays and the pull is measured
+// (ScrollPull), for a list that refreshes when pulled. Inner areas see the finger first (they
+// finish first) and keep it.
 func (ui *Context) followFinger(id ID, memory *scrollMemory) {
-	finger, state := &memory.finger, ui.state
-	now, y := ui.now, float32(state.CursorY)
-	seconds := float32(now.Sub(finger.lastTime).Seconds())
-	finger.lastTime = now
-	if finger.following && !state.Button(input.MouseLeft) {
-		finger.following = false
-		if !finger.dragging {
-			finger.velocity = 0
-		}
-		finger.dragging = false
-	}
-	if !finger.following {
-		ui.glide(memory, seconds)
-	}
-	touching := len(state.Touches()) == 1
-	if touching && state.ButtonPressed(input.MouseLeft) && !ui.fingerTaken && memory.content > memory.view {
-		area, shown := ui.previous[id]
-		if shown && area.Contains(float32(state.CursorX), y) && ui.hoveredRoot == ui.currentRoot() {
-			*finger = fingerScroll{following: true, startY: y, lastY: y, lastTime: now}
-			ui.fingerTaken = true
-			return
-		}
-	}
-	if !finger.following || !touching {
+	seconds := float32(ui.now.Sub(memory.lastTime).Seconds())
+	memory.lastTime = ui.now
+	finger := &ui.finger
+	if !ui.takeFinger(id, Vertical) {
+		ui.glideOn(memory, seconds)
 		return
 	}
-	ui.fingerTaken = true
-	if !finger.dragging && abs32(y-finger.startY) < dragSlop {
+	if finger.released {
+		memory.glide = -finger.velocityY
+		if memory.pull > 0 {
+			memory.glide = 0
+		}
+		memory.pulledAt, memory.pulledFrame, memory.pull = memory.pull, ui.frame, 0
 		return
 	}
-	finger.dragging = true
-	ui.active = id // the control the finger came down on is not touched after all
-	moved := y - finger.lastY
-	memory.offset -= moved
-	if seconds > 0 {
-		finger.velocity = 0.7*finger.velocity + 0.3*(-moved/seconds) // smoothed: one step can be uneven
+	moved := finger.y - finger.previousY
+	switch {
+	case memory.pull > 0 || (moved > 0 && memory.offset <= 0):
+		memory.pull = max(memory.pull+moved*pullResistance, 0)
+		memory.offset = 0
+	default:
+		memory.offset -= moved
 	}
-	finger.lastY = y
+	memory.glide = 0
 }
 
-// glide moves the content on after a finger let go of it, slowing to a stop.
-func (ui *Context) glide(memory *scrollMemory, seconds float32) {
-	finger := &memory.finger
-	if finger.velocity == 0 || seconds <= 0 || seconds > 0.25 {
+// ScrollPull tells how far a finger is pulling a scroll area's content down past its top, and, in
+// the frame the finger lets go, how far it was pulled then (zero otherwise): a list refreshes when
+// pulled far enough and let go. name is the scroll area's, in the same scope.
+func (ui *Context) ScrollPull(name string) (pulling, releasedAt float32) {
+	// the area's id, worked out without counting as a use of the name (idFor would make the area's
+	// own a different one)
+	memory := ui.scrollMemoryOf(hashString(ui.scopeSeed(), name))
+	if memory.pulledFrame >= ui.frame-1 && memory.pulledFrame > 0 {
+		releasedAt = memory.pulledAt
+	}
+	return memory.pull, releasedAt
+}
+
+// scrollMemoryOf is a scroll area's memory, made the first time either the area or ScrollPull asks.
+func (ui *Context) scrollMemoryOf(id ID) *scrollMemory {
+	return remember(ui, id, func() *scrollMemory { return &scrollMemory{thumbID: childID(id, "##thumb")} })
+}
+
+// glideOn moves the content on after a finger let go of it, slowing to a stop.
+func (ui *Context) glideOn(memory *scrollMemory, seconds float32) {
+	if memory.glide == 0 || seconds <= 0 || seconds > 0.25 {
 		return
 	}
 	before := memory.offset
-	memory.offset = clamp(memory.offset+finger.velocity*seconds, 0, max(memory.content-memory.view, 0))
-	finger.velocity *= float32(math.Exp(-glideFriction * float64(seconds)))
-	if abs32(finger.velocity) < glideStop || memory.offset == before {
-		finger.velocity = 0
+	memory.offset = clamp(memory.offset+memory.glide*seconds, 0, max(memory.content-memory.view, 0))
+	memory.glide *= float32(math.Exp(-glideFriction * float64(seconds)))
+	if abs32(memory.glide) < glideStop || memory.offset == before {
+		memory.glide = 0
 		return
 	}
 	ui.RequestFrame(16 * time.Millisecond)

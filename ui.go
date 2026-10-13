@@ -77,7 +77,7 @@ type Context struct {
 	popups          []ID // popups that took part in the last frame, back to front
 	nextPopups      []ID
 	scrollUsed      bool      // a scroll area took this step's wheel movement
-	fingerTaken     bool      // a scroll area follows this step's finger
+	finger          finger    // the one finger on a touch screen (gestures.go)
 	lastHot         ID        // the control under the pointer in the last frame
 	hotSince        time.Time // when the pointer came onto it
 	interacted      ID        // the last control that looked at the mouse, for Tooltip
@@ -157,11 +157,12 @@ func (ui *Context) Begin(state *input.State) {
 	clear(ui.seen)
 	ui.hot = 0
 	ui.focusSeen, ui.focusables = false, ui.focusables[:0]
-	ui.scrollUsed, ui.fingerTaken = false, false
+	ui.scrollUsed = false
 	ui.nextPopups, ui.nextSheets = ui.nextPopups[:0], ui.nextSheets[:0]
 	ui.sheetFocusStart, ui.sheetFocusEnd = 0, 0
 	ui.cursor = input.CursorArrow
 	ui.findHoveredRoot()
+	ui.trackFinger()
 	ui.followPresses()
 	ui.followDrag()
 	ui.openScreen()

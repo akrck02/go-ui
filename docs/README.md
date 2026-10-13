@@ -375,8 +375,11 @@ input the interface did not claim, that returns a scene and a camera (or nil for
 the window's size, so a layout can paint under the bars and choose itself by the screen. `Context.Paint` adds a box the program paints itself once laid out, for shapes go-ui has no
 control for. `Context.Animate` eases a value to its target and `Context.Appear` eases something in as it is
 shown, asking for frames only while they move. `Context.Back` answers a phone's back gesture; modals
-and sheets answer it first. On a touch screen, scroll areas follow a finger and glide on when let
-go. `Context.Modal` and `Context.Overlay` put a program's own content over everything, dimming what is
+and sheets answer it first. On a touch screen, one finger is followed from where it comes down: the way it goes first
+decides who takes it, the innermost scroll area for up and down, a `SwipeBox` for sideways (pages,
+cards in a row, a row swiped away), and the control it came down on is then not touched. Scroll
+areas glide on when let go, and `ScrollPull` measures a pull past a list's top, for a list that
+refreshes. `Context.Modal` and `Context.Overlay` put a program's own content over everything, dimming what is
 behind (a dialog) or not (a note at the bottom). `Context.Touches()` lists the fingers on a touch screen, for a
 control of a program's own that follows them (an on-screen stick); the first finger is also the
 pointer that clicks.
