@@ -42,6 +42,7 @@ var (
 // the window is the application's activity, drawn through OpenGL ES with go-renderer's
 // gles.FlatRenderer. It never returns: the system ends the program.
 func RunWith(context *ui.Context, options Options, build func(context *ui.Context)) error {
+	keepCrashReports()
 	shown := shownFrame{seed: maphash.MakeSeed()}
 	view := &shownScene{}
 	rate := options.MaxFramesPerSecond
@@ -199,8 +200,10 @@ func (window *androidWindow) paint(event paint.Event) {
 		log.Printf("window: %v", err)
 	}
 	if !window.app.Unchanged(window.app) {
+		window.describeGraphics()
 		if err := window.draw(); err != nil {
 			log.Printf("window: %v", err)
+			graphics.Store("could not draw: " + err.Error())
 			return
 		}
 		window.events.Publish()
@@ -234,6 +237,14 @@ func (window *androidWindow) draw() error {
 	}
 	window.renderer.Draw(window.context.Drawing(), window.context.Theme.Background, width, height, scale)
 	return nil
+}
+
+// describeGraphics records the phone's OpenGL ES and GPU the first time the window draws.
+func (window *androidWindow) describeGraphics() {
+	if Graphics() != "" {
+		return
+	}
+	graphics.Store(window.graphics.GetString(gl.VERSION) + " · " + window.graphics.GetString(gl.RENDERER))
 }
 
 // scheduleNext asks for the next frame: right away when drawing continuously or after a frame with

@@ -15,6 +15,13 @@ import (
 // goroutine (a fetch finished). Safe from any goroutine.
 func Wake() { browser.Wake() }
 
+// Graphics describes a phone's OpenGL ES and GPU; in a browser it is "".
+func Graphics() string { return "" }
+
+// LastCrash returns the report of the last run's crash; in a browser the console shows it, and this
+// is always "".
+func LastCrash() string { return "" }
+
 // SystemPrefersDark tells whether the browser is set to a dark theme (prefers-color-scheme).
 func SystemPrefersDark() bool {
 	query := js.Global().Call("matchMedia", "(prefers-color-scheme: dark)")

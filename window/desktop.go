@@ -20,6 +20,13 @@ import (
 // Safe from any goroutine.
 func Wake() { opengl.Wake() } // both backends wait for events in GLFW
 
+// Graphics describes a phone's OpenGL ES and GPU; on the desktop it is "".
+func Graphics() string { return "" }
+
+// LastCrash returns the report of the last run's crash; on the desktop the terminal shows it, and
+// this is always "".
+func LastCrash() string { return "" }
+
 // SystemPrefersDark tells whether the system is set to a dark theme. On the desktop it is not
 // asked yet, and the answer is false: use Options.Dark.
 func SystemPrefersDark() bool { return false }

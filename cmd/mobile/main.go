@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"strings"
 
 	"github.com/akrck02/go-renderer/camera"
 	"github.com/akrck02/go-renderer/draw2d"
@@ -129,6 +130,15 @@ func (program *application) list(look material) {
 	look.topAppBar("Lighthouses", false)
 	context := look.context
 	context.Box(ui.Layout{Direction: ui.Vertical, Width: ui.Grow(), Height: ui.Grow()}, func() {
+		if window.LastCrash() != "" {
+			context.Box(ui.Layout{Width: ui.Grow(), Padding: ui.Padding{Left: 16, Right: 16, Bottom: 8}}, func() {
+				look.card(func() {
+					look.text("The app closed unexpectedly last time", 16, draw2d.Medium, look.colours.onSurface)
+					look.text("Settings shows what happened:", 14, draw2d.Regular, look.colours.onSurfaceVariant)
+					look.text("a screenshot of it helps fix it", 14, draw2d.Regular, look.colours.onSurfaceVariant)
+				})
+			})
+		}
 		context.Box(ui.Layout{Width: ui.Grow(), Padding: ui.Padding{Left: 16, Right: 16, Bottom: 8}, Gap: 8}, func() {
 			for _, choice := range []struct {
 				label string
@@ -322,6 +332,13 @@ func (program *application) settings(look material) {
 		look.listItem("size row", "smartphone", fmt.Sprintf("%.0f × %.0f", width, height), "Size in density-independent pixels", nil)
 		look.listItem("insets row", "panel-top", fmt.Sprintf("%.0f at the top, %.0f at the bottom", insets.Top, insets.Bottom),
 			"Covered by the system's bars", nil)
+		if graphics := window.Graphics(); graphics != "" {
+			look.listItem("graphics row", "cpu", "Graphics", graphics, nil)
+		}
+		if crash := window.LastCrash(); crash != "" {
+			look.sectionTitle("Last time the app closed")
+			crashReport(look, crash)
+		}
 		look.sectionTitle("About")
 		context.Box(ui.Layout{Direction: ui.Vertical, Width: ui.Grow(), Padding: ui.PadXY(16, 0), Gap: 4}, func() {
 			look.text("Drawn with go-ui and go-renderer", 14, draw2d.Regular, colours.onSurface)
@@ -337,6 +354,20 @@ func (program *application) isDark() bool {
 		return program.dark
 	}
 	return window.SystemPrefersDark()
+}
+
+// crashReport shows the first lines of a crash's report, small, for a screenshot.
+func crashReport(look material, crash string) {
+	lines := strings.Split(crash, "\n")
+	if len(lines) > 18 {
+		lines = lines[:18]
+	}
+	layout := ui.Layout{Direction: ui.Vertical, Width: ui.Grow(), Padding: ui.PadXY(16, 0), Gap: 2}
+	look.context.Frame(layout, ui.Look{Clip: true}, func() {
+		for _, line := range lines {
+			look.text(strings.TrimSpace(line), 11, draw2d.Regular, look.colours.onSurfaceVariant)
+		}
+	})
 }
 
 func (program *application) countLit() int {

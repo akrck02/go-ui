@@ -56,6 +56,13 @@ controls clear. x/mobile does not report them, so the window asks Android throug
 the bars' standard heights. The window theme in `cmd/mobile/android/res` makes the bars
 see-through, with dark icons in the system's light theme and light ones in its dark theme.
 
+**When it closes on a phone nobody can reach.** On Android the window keeps the report of a crash
+(an unrecovered panic, a fatal error or signal, with the failing goroutine's stack) in the
+application's own folder, through `runtime/debug.SetCrashOutput`, and `window.LastCrash()` gives it
+to the next run; `window.Graphics()` names the phone's OpenGL ES and GPU, or the error that stopped
+the window drawing. `cmd/mobile` shows both in its settings, and warns on its first screen after a
+crash, so a screenshot is enough to know what happened.
+
 **The dark theme.** `window.SystemPrefersDark()` tells whether the phone (or the browser) is set to
 a dark theme, so a program can follow it; `cmd/mobile` asks at every frame until a theme is chosen
 in its settings.
