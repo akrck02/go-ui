@@ -133,3 +133,9 @@ func (ui *Context) Pointer() (x, y float32) {
 	}
 	return float32(ui.state.CursorX), float32(ui.state.CursorY)
 }
+
+// Pressing tells whether the pointer is pressed now: a finger is on a touch screen, the mouse's
+// left button is down. With Pointer, for a control of a program's own that follows a drag.
+func (ui *Context) Pressing() bool {
+	return ui.state != nil && ui.state.Button(input.MouseLeft)
+}
