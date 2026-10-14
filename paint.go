@@ -12,9 +12,12 @@ func (ui *Context) paint() {
 	for _, placed := range ui.roots {
 		ui.drawing.SetLayer(ui.layerOf(placed.id))
 		ui.clip, ui.clipped = draw2d.Rect{}, false
+		first := len(ui.drawing.Commands)
 		ui.paintElement(placed.element)
+		ui.keepForLeaving(placed.id, placed.options.Leave, first)
 	}
 	ui.drawing.SetLayer(0)
+	ui.paintLeaving()
 }
 
 func (ui *Context) paintElement(index int) {

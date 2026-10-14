@@ -14,6 +14,8 @@ type LayerOptions struct {
 	// Hidden is how much of a modal's dimming is not shown yet, from 0 (all of it, the zero value)
 	// to 1 (none): a modal fading in as it opens (see Appear).
 	Hidden float32
+	// Leave is how it goes when the program stops showing it (leave.go); at once by default.
+	Leave Leave
 }
 
 // Modal shows content over everything with what is behind it dimmed, as Sheet does, but drawn
@@ -33,7 +35,7 @@ func (ui *Context) Modal(name string, options LayerOptions, content func()) (dis
 	scrim := ui.Theme.Scrim
 	scrim[3] *= 1 - clamp(options.Hidden, 0, 1)
 	index := ui.openElement(element{id: id, kind: boxElement, layout: backdrop, look: Look{Fill: scrim}})
-	ui.roots = append(ui.roots, root{id: id, element: index, sheet: true})
+	ui.roots = append(ui.roots, root{id: id, element: index, sheet: true, options: options})
 	ui.nextSheets = append(ui.nextSheets, id)
 	ui.Push(name)
 	contentID := childID(id, "##content")

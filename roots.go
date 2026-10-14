@@ -20,7 +20,7 @@ type root struct {
 	centred bool         // a popup centred on its anchor's x (a toast)
 	anchor  draw2d.Rect  // what a popup opens next to
 	placed  bool         // an overlay, placed in the window by options (see Overlay)
-	options LayerOptions // where an overlay goes
+	options LayerOptions // where an overlay goes, and how a modal or an overlay leaves
 }
 
 // Edge is a side of the window a panel can be docked to.
