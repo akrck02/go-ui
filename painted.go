@@ -11,3 +11,13 @@ func (ui *Context) Paint(layout Layout, paint func(area draw2d.Rect, drawing *dr
 	ui.openElement(element{kind: boxElement, layout: layout, painter: paint})
 	ui.closeElement()
 }
+
+// Image adds a picture filling a box laid out as any other (a photo in a card, a person's avatar):
+// scaled to cover it and cropped evenly where their shapes differ, its corners rounded by radius.
+// Give the box a size: a picture has no size of its own in the layout. Keep the draw2d.Image
+// between frames, so its pixels are uploaded once.
+func (ui *Context) Image(picture *draw2d.Image, layout Layout, radius float32) {
+	ui.Paint(layout, func(area draw2d.Rect, drawing *draw2d.List) {
+		drawing.Image(picture, area, radius, draw2d.Color{1, 1, 1, 1})
+	})
+}

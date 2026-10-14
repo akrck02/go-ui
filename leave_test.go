@@ -130,3 +130,22 @@ func TestAFoldOpensToItsContentAndClosesToNothing(t *testing.T) {
 		t.Fatal("a fold closed some time ago still builds its content")
 	}
 }
+
+func TestAnImageIsDrawnInItsBox(t *testing.T) {
+	h := newHarness(t)
+	photo := draw2d.NewBlankImage(40, 30)
+	build := func(ui *Context) {
+		ui.Box(Layout{Padding: Pad(10)}, func() { ui.Image(photo, Layout{Width: Fixed(120), Height: Fixed(90)}, 12) })
+	}
+	h.frame(build)
+	h.frame(build)
+	for _, command := range h.ui.Drawing().Commands {
+		if command.Kind == draw2d.ImageKind && command.Picture == photo {
+			if command.Area != (draw2d.Rect{X: 10, Y: 10, Width: 120, Height: 90}) || command.Radius != 12 {
+				t.Fatalf("image drawn at %+v with radius %v; want its box, rounded by 12", command.Area, command.Radius)
+			}
+			return
+		}
+	}
+	t.Fatal("the image was not drawn")
+}

@@ -123,6 +123,7 @@ theme.
 | `Table(name, layout, columns, rows)` | A header and rows that scroll, with group captions and a selected row; see [Tables](#tables) |
 | `DragSource(name, payload, layout, content)`, `DropTarget(name, layout, accepts, content)` | Drag a value of yours from one box to another, or onto the scene; see [Drag and drop](#drag-and-drop) |
 | `Resizable(name, side, &size, minimum, maximum, layout, content)` | A box whose edge can be dragged to change its width or height; see [Resizable boxes](#resizable-boxes) |
+| `Image(picture, layout, radius)` | A picture (`draw2d.Image`) filling a box of the size given, cropped evenly where their shapes differ, its corners rounded |
 | `Tooltip(text)` | Explains the control added just before it, in a small dark note, once the pointer rests on it for half a second |
 | `LongPressed()` | Tells whether the control added just before it was long-pressed in this frame: a finger held still on it for half a second, or the right mouse button. A touch that became a long press is no click |
 
