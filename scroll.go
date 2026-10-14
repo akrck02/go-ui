@@ -105,6 +105,13 @@ func (ui *Context) ScrollPull(name string) (pulling, releasedAt float32) {
 	return memory.pull, releasedAt
 }
 
+// ScrollOffset tells how far a scroll area's content is scrolled from its top, as of the last
+// frame: a bar over a list shrinks or takes a colour as the list goes up under it. name is the
+// scroll area's, in the same scope.
+func (ui *Context) ScrollOffset(name string) float32 {
+	return ui.scrollMemoryOf(hashString(ui.scopeSeed(), name)).offset
+}
+
 // scrollMemoryOf is a scroll area's memory, made the first time either the area or ScrollPull asks.
 func (ui *Context) scrollMemoryOf(id ID) *scrollMemory {
 	return remember(ui, id, func() *scrollMemory { return &scrollMemory{thumbID: childID(id, "##thumb")} })

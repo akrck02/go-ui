@@ -85,3 +85,30 @@ func (ui *Context) Back() bool {
 func (ui *Context) frontSheet(id ID) bool {
 	return len(ui.sheets) > 0 && ui.sheets[len(ui.sheets)-1] == id
 }
+
+// Fold lays content out in a box that opens to the content's height and closes to nothing with
+// motion, clipping what does not show yet: the answer under a question, more under a list row.
+// While closed, content is not built at all. Open, the box follows its content's height as it
+// changes. name tells folds apart.
+func (ui *Context) Fold(name string, open bool, duration time.Duration, layout Layout, content func()) {
+	target := float32(0)
+	if open {
+		target = 1
+	}
+	shown := ui.Animate(name+"##fold", target, duration)
+	id := ui.idFor(name)
+	// opening, it is built from its first frame, still closed, so its height is known in the next
+	if shown <= 0 && !open {
+		return
+	}
+	inside := childID(id, "##content")
+	outer := Layout{Width: layout.Width}
+	if shown < 1 {
+		// the content's own height, from the last frame it was laid out
+		outer.Height = Fixed(ui.previous[inside].Height * shown)
+	}
+	ui.frameWithID(id, outer, Look{Clip: true}, func() {
+		layout.Height = Fit()
+		ui.frameWithID(inside, layout, Look{}, content)
+	})
+}

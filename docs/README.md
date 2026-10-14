@@ -375,13 +375,14 @@ input the interface did not claim, that returns a scene and a camera (or nil for
 `Context.Insets()` says how much of each edge the system's bars cover, and `Context.Size()` gives
 the window's size, so a layout can paint under the bars and choose itself by the screen. `Context.Paint` adds a box the program paints itself once laid out, for shapes go-ui has no
 control for. `Context.Animate` eases a value to its target and `Context.Appear` eases something in as it is
-shown, asking for frames only while they move. `Context.Back` answers a phone's back gesture; modals
+shown, asking for frames only while they move; `Context.Fold` opens a box to its content's height
+and closes it to nothing, with motion (more under a list row). `Context.Back` answers a phone's back gesture; modals
 and sheets answer it first. On a touch screen, one finger is followed from where it comes down: the way it goes first
 decides who takes it, the innermost scroll area for up and down, a `SwipeBox` for sideways (pages,
 cards in a row, a row swiped away), and the control it came down on is then not touched; a finger that stays still on a control for half
 a second long-presses it (`LongPressed`). Scroll
 areas glide on when let go, and `ScrollPull` measures a pull past a list's top, for a list that
-refreshes. `Context.Modal` and `Context.Overlay` put a program's own content over everything, dimming what is
+refreshes; `ScrollOffset` tells how far it is scrolled, for a bar that shrinks over it. `Context.Modal` and `Context.Overlay` put a program's own content over everything, dimming what is
 behind (a dialog) or not (a note at the bottom); with `LayerOptions.Leave` they leave with motion
 once the program stops showing them, fading and moving away (a picture of their last frame, which
 cannot be touched). `Context.Touches()` lists the fingers on a touch screen, for a

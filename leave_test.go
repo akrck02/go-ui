@@ -92,3 +92,41 @@ func TestALayerShownAgainIsDrawnOnce(t *testing.T) {
 		t.Fatalf("the note shown again is drawn %d times; want once", count)
 	}
 }
+
+func TestAFoldOpensToItsContentAndClosesToNothing(t *testing.T) {
+	h := newHarness(t)
+	now := h.withClock()
+	open, built := false, false
+	build := func(ui *Context) {
+		built = false
+		ui.Fold("answer", open, 200*time.Millisecond, Layout{Direction: Vertical, Width: Fixed(300)}, func() {
+			built = true
+			for range 4 {
+				ui.Box(Layout{Width: Grow(), Height: Fixed(30)}, nil)
+			}
+		})
+	}
+	step := func(milliseconds int) {
+		*now = now.Add(time.Duration(milliseconds) * time.Millisecond)
+		h.frame(build)
+	}
+	step(16)
+	if built {
+		t.Fatal("a closed fold built its content")
+	}
+	open = true
+	step(16)
+	step(100)
+	half := h.rect(idOf("answer")).Height
+	step(200)
+	full := h.rect(idOf("answer")).Height
+	if half <= 0 || half >= 120 || full != 120 {
+		t.Fatalf("fold %v tall half way and %v open; want between 0 and 120, then 120", half, full)
+	}
+	open = false
+	step(16)
+	step(300)
+	if built {
+		t.Fatal("a fold closed some time ago still builds its content")
+	}
+}

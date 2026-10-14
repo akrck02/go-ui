@@ -129,3 +129,28 @@ func TestCardsInsidePagesSlideOnTheirOwn(t *testing.T) {
 		t.Fatalf("pages followed %d frames, cards %d: a drag under the cards is the pages'", len(outer), len(inner))
 	}
 }
+
+func TestHowFarAListIsScrolledIsTold(t *testing.T) {
+	h := newHarness(t)
+	now := h.withClock()
+	var scrolled float32
+	build := func(ui *Context) {
+		scrolled = ui.ScrollOffset("list")
+		ui.ScrollArea("list", Layout{Width: Fixed(300), Height: Fixed(200)}, func() {
+			for index := range 40 {
+				ui.Label("row " + strconv.Itoa(index))
+			}
+		})
+	}
+	h.frame(build)
+	h.frame(build)
+	if scrolled != 0 {
+		t.Fatalf("scrolled %v before any finger; want 0", scrolled)
+	}
+	dragFinger(h, now, build, 50, 180, 0, -120, false)
+	*now = now.Add(16 * time.Millisecond)
+	h.frame(build)
+	if scrolled < 100 {
+		t.Fatalf("scrolled %v after the content went 120 pixels up; want about that", scrolled)
+	}
+}
