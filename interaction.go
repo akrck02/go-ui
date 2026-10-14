@@ -34,8 +34,9 @@ func (ui *Context) interact(id ID) interaction {
 	}
 	if ui.active == id {
 		result.held = ui.state.Button(input.MouseLeft)
-		result.clicked = ui.state.ButtonReleased(input.MouseLeft) && over
+		result.clicked = ui.state.ButtonReleased(input.MouseLeft) && over && !ui.press.long
 	}
+	ui.noteLongPress(id, result)
 	return result
 }
 

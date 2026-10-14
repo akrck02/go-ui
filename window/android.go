@@ -37,6 +37,10 @@ func NotificationsAllowed() bool { return android.NotificationsAllowed() }
 // names android.permission.POST_NOTIFICATIONS); ask when they do something that needs them.
 func AskForNotifications() { android.AskForNotifications() }
 
+// FeelLongPress gives the short buzz of a long press, as Android's own applications do, if the
+// person has touch feedback on. Call it in the frame a control is long-pressed (ui.LongPressed).
+func FeelLongPress() { android.FeelLongPress() }
+
 // Graphics describes the phone's OpenGL ES and GPU, or the error that stopped the window drawing,
 // for a program that shows it to help find a fault on a phone nobody can reach.
 func Graphics() string { return android.Graphics() }

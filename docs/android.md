@@ -71,6 +71,8 @@ in its settings.
 the phone's on-screen keyboard up, and puts it away after. `window.Notify` shows a notification in
 the phone's shade (in a browser, through the page's notifications), once `window.NotificationsAllowed`;
 `window.AskForNotifications` asks the person. On the desktop they are not shown yet.
+`window.FeelLongPress` gives the short buzz of a long press (`Context.LongPressed`), where the
+person has touch feedback on; in a browser it vibrates where the browser can.
 
 **The wallpaper's colours.** Android 12 and later make five palettes from the wallpaper (Material
 You), and the system's own applications take their colours from them. `window.SystemPalettes()`
@@ -137,7 +139,7 @@ Not yet: rotating the screen, and how it feels on other phones and tablets.
 | 1 | **The bars' icons follow the program's theme**, not only the system's: a JNI call on Android's interface thread | Dark icons on a dark app (when the app's theme differs from the phone's) |
 | 2 | **Material pieces in go-ui itself**: a touch theme, the switch, list items, the navigation bar, now in the example | Every program gets them, not only the example |
 | 3 | ~~The on-screen keyboard~~ | Done: it comes up while a field is typed in (`Context.Typing`) |
-| 4 | **Long press, two fingers, the back gesture** | A right click, pinch to zoom the map, back from a lighthouse's details |
+| 4 | ~~Long press~~, **two fingers, the back gesture** | Long press done (`Context.LongPressed`); pinch to zoom the map, back from a lighthouse's details |
 | 5 | **Shadows, sky and waves** on phones, as on the desktop | The scene is go-renderer's simple one on phones and in browsers |
 
 ## Risks

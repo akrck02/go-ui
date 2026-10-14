@@ -124,6 +124,7 @@ theme.
 | `DragSource(name, payload, layout, content)`, `DropTarget(name, layout, accepts, content)` | Drag a value of yours from one box to another, or onto the scene; see [Drag and drop](#drag-and-drop) |
 | `Resizable(name, side, &size, minimum, maximum, layout, content)` | A box whose edge can be dragged to change its width or height; see [Resizable boxes](#resizable-boxes) |
 | `Tooltip(text)` | Explains the control added just before it, in a small dark note, once the pointer rests on it for half a second |
+| `LongPressed()` | Tells whether the control added just before it was long-pressed in this frame: a finger held still on it for half a second, or the right mouse button. A touch that became a long press is no click |
 
 Controls added outside any panel go on the **screen**, a box the size of the window behind every
 panel: a status bar is a `Spacer()` followed by a full-width `Frame`. The screen can hold a whole
@@ -377,7 +378,8 @@ control for. `Context.Animate` eases a value to its target and `Context.Appear` 
 shown, asking for frames only while they move. `Context.Back` answers a phone's back gesture; modals
 and sheets answer it first. On a touch screen, one finger is followed from where it comes down: the way it goes first
 decides who takes it, the innermost scroll area for up and down, a `SwipeBox` for sideways (pages,
-cards in a row, a row swiped away), and the control it came down on is then not touched. Scroll
+cards in a row, a row swiped away), and the control it came down on is then not touched; a finger that stays still on a control for half
+a second long-presses it (`LongPressed`). Scroll
 areas glide on when let go, and `ScrollPull` measures a pull past a list's top, for a list that
 refreshes. `Context.Modal` and `Context.Overlay` put a program's own content over everything, dimming what is
 behind (a dialog) or not (a note at the bottom). `Context.Touches()` lists the fingers on a touch screen, for a

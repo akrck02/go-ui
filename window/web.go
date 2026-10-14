@@ -61,6 +61,15 @@ func AskForNotifications() {
 	}
 }
 
+// FeelLongPress gives a short buzz for a long press, where the browser can (the Vibration API, on
+// phones); elsewhere nothing.
+func FeelLongPress() {
+	navigator := js.Global().Get("navigator")
+	if navigator.Get("vibrate").Truthy() {
+		navigator.Call("vibrate", 25)
+	}
+}
+
 // SystemPalettes returns the colours a phone made from its wallpaper; a browser does not tell them.
 func SystemPalettes() (Palettes, bool) { return Palettes{}, false }
 
