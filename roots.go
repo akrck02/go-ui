@@ -146,7 +146,7 @@ func (ui *Context) titleBar(title string, memory *panelMemory, options PanelOpti
 			memory.collapsed = !memory.collapsed
 		}
 	})
-	bar := ui.interact(barID)
+	bar := ui.pointerOn(barID)
 	canMove := options.Dock == Floating && !options.Locked
 	if canMove && (bar.hovered || ui.active == barID) {
 		ui.cursor = input.CursorMove

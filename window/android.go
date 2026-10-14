@@ -7,6 +7,7 @@ import (
 
 	"github.com/akrck02/go-renderer/android"
 	"github.com/akrck02/go-renderer/gles"
+	"github.com/akrck02/go-renderer/input"
 	"github.com/akrck02/go-renderer/models"
 	ui "github.com/akrck02/go-ui"
 )
@@ -65,11 +66,14 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 	view := &shownScene{}
 	app := interfaceApplication(context, options, build, &shown, view)
 	update := app.Update
+	reader := &screenReader{}
 	app.Update = func(app *models.Application, step float64) error {
 		bars := android.CurrentInsets()
 		context.SetInsets(ui.Insets{Top: bars.Top, Bottom: bars.Bottom, Left: bars.Left, Right: bars.Right})
 		context.SetTextScale(android.TextScale()) // the person's text size, from the phone's settings
+		reader.before(context, app.Input)
 		err := update(app, step)
+		reader.after(context)
 		android.ShowKeyboard(context.Typing()) // the on-screen keyboard, while a field is typed in
 		return err
 	}
@@ -105,4 +109,71 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 		return nil
 	}
 	return android.Run(app, android.Options{MaxFramesPerSecond: options.MaxFramesPerSecond, Hidden: options.Hidden}, draw)
+}
+
+// screenReader carries what TalkBack asks to the interface, and what the interface shows to
+// TalkBack, at each step.
+type screenReader struct {
+	numbers readerNumbers
+	nodes   []android.AccessibleNode // reused from step to step
+}
+
+// before tells the interface whether a screen reader is on, which node it is on, and what it asked.
+func (reader *screenReader) before(context *ui.Context, state *input.State) {
+	context.SetScreenReader(android.ScreenReaderOn())
+	actions := android.TakeReaderActions()
+	for _, action := range actions {
+		if id := reader.numbers.id(action.Node); id != 0 {
+			context.ScreenReaderAct(id, readerAction(action.Kind))
+		}
+	}
+	if len(actions) > 0 {
+		// as after a touch, one more frame: what the program changed in this one (another screen)
+		// shows in the next
+		state.RequestFrame(0)
+	}
+	context.SetScreenReaderFocus(reader.numbers.id(android.ScreenReaderFocus()))
+}
+
+// after hands the step's nodes to Android.
+func (reader *screenReader) after(context *ui.Context) {
+	if !context.ScreenReaderOn() {
+		return
+	}
+	reader.numbers.start()
+	reader.nodes = reader.nodes[:0]
+	for _, node := range context.ScreenReaderNodes() {
+		reader.nodes = append(reader.nodes, reader.androidNode(node))
+	}
+	android.ShowAccessibleNodes(reader.nodes)
+}
+
+func (reader *screenReader) androidNode(node ui.AccessibleNode) android.AccessibleNode {
+	var parent int32
+	if node.Parent != 0 {
+		parent = reader.numbers.number(node.Parent)
+	}
+	return android.AccessibleNode{
+		ID: reader.numbers.number(node.ID), Parent: parent,
+		X: node.Area.X, Y: node.Area.Y, Width: node.Area.Width, Height: node.Area.Height,
+		Class: readerClass(node.Role), Label: node.Label, Value: node.Value,
+		Pressable: node.Pressable, LongPressable: node.LongPressable,
+		Checkable: isCheckable(node.Role), Checked: node.Checked, Selected: node.Selected, Disabled: node.Disabled,
+		Scrollable: node.Scrollable, Editable: node.Role == ui.FieldRole, Typing: node.Typing, Secret: node.Secret,
+		Heading: node.Role == ui.HeadingRole,
+		Minimum: node.Range.Minimum, Maximum: node.Range.Maximum, Current: node.Range.Current,
+	}
+}
+
+// readerAction is what TalkBack asked, as the interface names it.
+func readerAction(kind android.ReaderActionKind) ui.ReaderAction {
+	switch kind {
+	case android.ReaderLongPress:
+		return ui.ReaderLongPress
+	case android.ReaderForward:
+		return ui.ReaderForward
+	case android.ReaderBackward:
+		return ui.ReaderBackward
+	}
+	return ui.ReaderPress
 }

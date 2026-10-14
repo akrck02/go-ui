@@ -106,6 +106,19 @@ are a list of lighthouses with their details, a map with the 3D island (drag to 
 come closer, a slider for the time of day) and settings (the dark theme, the screen's size and
 insets).
 
+## Screen readers
+
+TalkBack reads a go-ui program as it reads Android's own applications: a finger moved over the
+screen reads what is under it, a swipe goes to the next thing, a double tap presses it, and the
+thing read is ringed. Every frame, while a screen reader is on, the interface makes its list of
+nodes ([screen readers](README.md#screen-readers)); `window/android.go` numbers them as Android's
+virtual views, says what Android widget each reads as (a switch is an `android.widget.Switch`) and
+hands them to go-renderer, which sends them to one small Java class only when they change. What
+TalkBack asks (press, long press, scroll, the thing it is on) comes back the same way.
+
+A package needs that class: `go-ui-apk` in go-ui-android compiles it in. A package made without it
+(`cmd/mobile/build-apk.sh`, which carries no Java) runs as before, without a screen reader.
+
 ## Building and trying it
 
 ```bash

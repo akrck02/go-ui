@@ -103,6 +103,8 @@ type Context struct {
 	menu                           *menuMemory // the menu whose items are being built, if any
 	menuItems                      int         // items added to it so far
 	table                          Table       // the table being built (see Table)
+	finished                       int         // the element closed last, which Describe describes
+	reader                         readerState // what a screen reader is told and asks (accessibility.go)
 }
 
 // New returns an interface that measures text with go-renderer's fonts, in the default theme.
@@ -153,6 +155,7 @@ func (ui *Context) Typing() bool { return ui.typing }
 func (ui *Context) Begin(state *input.State) {
 	ui.state = state
 	ui.frame++
+	ui.beginReading()
 	ui.typing = false
 	ui.now = state.Time()
 	ui.texts.turnOver()
@@ -187,7 +190,9 @@ func (ui *Context) End() {
 	ui.building = false
 	ui.showDrag()
 	ui.layOut()
+	ui.readNodes()
 	ui.paint()
+	ui.paintReaderFocus()
 	if ui.moving() {
 		ui.RequestFrame(16 * time.Millisecond) // about sixty frames a second while something eases
 	}

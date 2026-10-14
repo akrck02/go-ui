@@ -19,6 +19,13 @@ type interaction struct {
 // to find the pointer over it takes it: containers that react to the mouse (a panel's title bar)
 // call interact after their content, so the buttons inside them win.
 func (ui *Context) interact(id ID) interaction {
+	ui.noteControl(id)
+	return ui.pointerOn(id)
+}
+
+// pointerOn is interact for what takes the mouse without being a control a screen reader reads: a
+// modal's backdrop, a card that keeps a touch from it, a panel's title bar.
+func (ui *Context) pointerOn(id ID) interaction {
 	area, shown := ui.reachOf(id)
 	x, y := float32(ui.state.CursorX), float32(ui.state.CursorY)
 	over := shown && area.Contains(x, y) && ui.hoveredRoot == ui.currentRoot() && !ui.sceneDrag
@@ -35,6 +42,10 @@ func (ui *Context) interact(id ID) interaction {
 	if ui.active == id {
 		result.held = ui.state.Button(input.MouseLeft)
 		result.clicked = ui.state.ButtonReleased(input.MouseLeft) && over && !ui.press.long
+	}
+	if ui.readerActs(id, ReaderPress) {
+		// a screen reader's double tap: pressed and let go at once, where the control is
+		result.pressed, result.clicked = true, true
 	}
 	ui.noteLongPress(id, result)
 	return result

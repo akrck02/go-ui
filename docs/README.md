@@ -310,6 +310,45 @@ take the letters.
 
 ![The register's search box with the text selected, filtering the table](images/app-search.png)
 
+## Screen readers
+
+A screen reader speaks what is on the screen for a person who cannot see it, and lets them act on
+it: on a phone, TalkBack reads what a finger moves over, and a double tap presses it. It needs the
+screen as *things with names*, not pixels. While one is on (`SetScreenReader(true)`, which the
+window does on Android), every frame also makes a list of what can be read, worked out from the
+boxes themselves, at no cost while none is on:
+
+- **A control is a node**, read by the texts inside it: a button reads "Light the lamp, button". A
+  control inside another (a switch in a row) is a node of its own, inside the row.
+- **Texts beside each other in one box are read together**: a row's title and the line under it are
+  one node, and a paragraph is one, not a node per word.
+- **A scroll area holds its rows**, and only those that show are read; the screen reader can scroll
+  it on (`ReaderForward`) or back.
+- **What is behind a modal or a sheet is left out**, as it cannot be touched.
+- **The node the screen reader is on is ringed** (`SetScreenReaderFocus`), dark outside and light
+  inside, over everything, as a phone rings what TalkBack reads.
+
+The controls say what they are and their state: a checkbox ticked, a toggle on (a switch), the tab
+shown, a slider's range, a field's text (not a secret one's). `Describe` says it for a control of
+your own, after it, in every frame:
+
+```go
+if interfaceContext.Clickable("beacon", layout, looks, drawSwitch) {
+	beacon = !beacon
+}
+interfaceContext.Describe(ui.Description{Role: ui.SwitchRole, Label: "Beacon", Checked: beacon})
+```
+
+What `Describe` leaves empty stays as the boxes tell it. `Hidden` leaves out a decoration, or a label
+read already with the field it names. A control with an icon alone and no label is read by the icon's
+name ("arrow left") for want of a better one: describe it with what it does.
+
+What the screen reader asks comes back as `ScreenReaderAct(id, action)`, done in the next frame: a
+press clicks the control as a tap would (a field takes the keyboard), a long press is read by
+`LongPressed`, forward and backward scroll an area or move a slider a step. Nodes keep their ids from
+frame to frame, so the screen reader stays on what it was reading. On Android, the window hands the
+list to go-renderer, which gives it to TalkBack ([go-ui on Android](android.md#screen-readers)).
+
 ## Mouse and keyboard
 
 Controls react to the mouse using where they were laid out in the **previous** frame (sizes are

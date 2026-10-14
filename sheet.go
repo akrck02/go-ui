@@ -42,7 +42,7 @@ func (ui *Context) Sheet(title string, options SheetOptions, content func()) (di
 	ui.Push(title)
 	closed := ui.sheetCard(id, title, options, content)
 	ui.Pop()
-	backdropClicked := ui.interact(id).clicked // after the card, so a click on the card is not on the backdrop
+	backdropClicked := ui.pointerOn(id).clicked // after the card, so a click on the card is not on the backdrop
 	ui.open = outside
 	return escaped || closed || backdropClicked
 }
@@ -81,6 +81,6 @@ func (ui *Context) sheetCard(id ID, title string, options SheetOptions, content 
 		ui.Box(Layout{Direction: Vertical, Width: Grow(), Padding: Pad(theme.Padding), Gap: theme.Gap}, content)
 		ui.sheetFocusStart, ui.sheetFocusEnd = start, len(ui.focusables)
 	})
-	ui.interact(cardID)
+	ui.pointerOn(cardID)
 	return closed
 }

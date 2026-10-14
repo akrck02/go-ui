@@ -42,9 +42,9 @@ func (ui *Context) Modal(name string, options LayerOptions, content func()) (dis
 	start := len(ui.focusables)
 	ui.frameWithID(contentID, Layout{Direction: Vertical, Width: options.Width, Height: options.Height}, Look{}, content)
 	ui.sheetFocusStart, ui.sheetFocusEnd = start, len(ui.focusables)
-	ui.interact(contentID) // a touch on the content is not one on the backdrop
+	ui.pointerOn(contentID) // a touch on the content is not one on the backdrop
 	ui.Pop()
-	touchedOutside := ui.interact(id).clicked
+	touchedOutside := ui.pointerOn(id).clicked
 	ui.open = outside
 	return escaped || touchedOutside
 }
@@ -65,7 +65,7 @@ func (ui *Context) Overlay(name string, options LayerOptions, content func()) {
 		content()
 	}
 	ui.Pop()
-	ui.interact(id)
+	ui.pointerOn(id)
 	ui.open = outside
 }
 

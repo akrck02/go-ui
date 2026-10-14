@@ -163,6 +163,12 @@ func (ui *Context) followFieldMouse(id ID, memory *fieldMemory, result interacti
 		ui.focus = 0
 		return fieldLeft
 	}
+	if ui.readerActs(id, ReaderPress) {
+		// a screen reader's double tap has no place in the text: typing goes on at its end
+		editor.moveTo(len(editor.text), false)
+		memory.blinkStart = ui.now
+		return fieldEditing
+	}
 	if !result.pressed && !(result.held && memory.dragging) {
 		memory.dragging = false
 		return fieldEditing
@@ -350,6 +356,11 @@ func (ui *Context) addField(id ID, memory *fieldMemory, text string, options Tex
 	layout := Layout{Width: width.Between(max(width.Min, 2*fieldPadding+20), width.Max), Height: Fixed(theme.ControlHeight)}
 	index := ui.frameWithID(id, layout, look, nil)
 	ui.elements[index].field = paint
+	read := Description{Role: FieldRole, Label: options.Placeholder, Secret: options.Secret}
+	if !options.Secret {
+		read.Value = text
+	}
+	ui.describeElement(index, read)
 }
 
 // fieldMeasures are the widths a focused field paints with, from the start of its text.

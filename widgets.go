@@ -163,6 +163,7 @@ func (ui *Context) Selectable(icon, label string, selected bool) bool {
 		}
 		ui.Text(displayText(label), TextStyle{Weight: weight, Color: ink})
 	})
+	ui.Describe(Description{Selected: selected})
 	return result.clicked
 }
 

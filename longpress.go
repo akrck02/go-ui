@@ -58,7 +58,7 @@ func (ui *Context) noteLongPress(id ID, result interaction) {
 	if ui.active == id && result.held && ui.press.longNow {
 		ui.longPressed = id
 	}
-	if result.hovered && ui.state.ButtonPressed(input.MouseRight) {
+	if result.hovered && ui.state.ButtonPressed(input.MouseRight) || ui.readerActs(id, ReaderLongPress) {
 		ui.longPressed = id
 	}
 }
@@ -67,5 +67,6 @@ func (ui *Context) noteLongPress(id ID, result interaction) {
 // finger held still on it for half a second, or the right mouse button pressed on it. It is true
 // in one frame only; a program opens what it shows then, and keeps it open itself.
 func (ui *Context) LongPressed() bool {
+	ui.noteLongPressable(ui.interacted)
 	return ui.longPressed != 0 && ui.longPressed == ui.interacted
 }

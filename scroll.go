@@ -56,6 +56,7 @@ func (ui *Context) scrollArea(id ID, layout Layout, content func()) *scrollMemor
 	index := ui.frameWithID(id, layout, Look{Clip: true}, content)
 	ui.elements[index].scroll = memory
 	ui.followWheel(id, memory)
+	ui.scrollForReader(id, memory)
 	ui.followThumb(memory)
 	ui.followFinger(id, memory)
 	return memory
@@ -153,7 +154,7 @@ func (ui *Context) followWheel(id ID, memory *scrollMemory) {
 // followThumb moves the content while the thumb is dragged, as far as the thumb moves times how
 // much taller the content is than the view.
 func (ui *Context) followThumb(memory *scrollMemory) {
-	thumb := ui.interact(memory.thumbID)
+	thumb := ui.pointerOn(memory.thumbID) // a screen reader scrolls the area itself
 	memory.thumbOn = thumb.hovered || ui.active == memory.thumbID
 	if memory.thumbOn {
 		ui.cursor = input.CursorArrow
