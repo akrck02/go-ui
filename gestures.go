@@ -101,12 +101,14 @@ type Swipe struct {
 
 // SwipeBox lays content out in a box a finger drags along an axis (sideways, for pages, cards in a
 // row, a row swiped away): content is given what the finger does in this frame, and places itself
-// by it. The box clips what goes past its edges. A swipe box takes a finger before what is inside
-// it, along its own axis only, so a list inside pages still scrolls up and down.
+// by it. The box clips what goes past its edges. It takes a finger along its own axis only, so a
+// list inside pages still scrolls up and down, and after what is inside it, so a row of cards inside
+// swiping pages slides on its own.
 func (ui *Context) SwipeBox(name string, layout Layout, axis Direction, content func(swipe Swipe)) {
 	id := ui.idFor(name)
 	var swipe Swipe
-	if ui.takeFinger(id, axis) {
+	// a finger it already has, it follows; a new one goes first to what is inside it (below)
+	if ui.finger.owner == id && ui.takeFinger(id, axis) {
 		finger := &ui.finger
 		along, velocity := finger.x-finger.startX, finger.velocityX
 		if axis == Vertical {
@@ -122,6 +124,9 @@ func (ui *Context) SwipeBox(name string, layout Layout, axis Direction, content 
 	}
 	swipe.Area = ui.previous[id]
 	ui.frameWithID(id, layout, Look{Clip: true}, func() { content(swipe) })
+	if ui.finger.owner == 0 {
+		ui.takeFinger(id, axis) // nothing inside took it: the box follows it from the next frame
+	}
 }
 
 // Pointer is where the pointer is, in the window's layout pixels: a finger on a touch screen. For a

@@ -100,3 +100,32 @@ func TestPullingAListPastItsTopIsMeasured(t *testing.T) {
 		t.Fatalf("released at %v, still pulling %v: want the pull at the lift, and none after", released, pulling)
 	}
 }
+
+func TestCardsInsidePagesSlideOnTheirOwn(t *testing.T) {
+	h := newHarness(t)
+	now := h.withClock()
+	var outer, inner []Swipe
+	build := func(ui *Context) {
+		ui.SwipeBox("pages", Layout{Width: Fixed(400), Height: Fixed(300), Direction: Vertical}, Horizontal, func(swipe Swipe) {
+			if swipe.Held {
+				outer = append(outer, swipe)
+			}
+			ui.SwipeBox("cards", Layout{Width: Grow(), Height: Fixed(100)}, Horizontal, func(swipe Swipe) {
+				if swipe.Held {
+					inner = append(inner, swipe)
+				}
+			})
+		})
+	}
+	h.frame(build)
+	h.frame(build)
+	dragFinger(h, now, build, 300, 50, -150, 2, true)
+	if len(inner) == 0 || len(outer) != 0 {
+		t.Fatalf("cards followed %d frames, pages %d: a drag on the cards is theirs", len(inner), len(outer))
+	}
+	inner, outer = nil, nil
+	dragFinger(h, now, build, 300, 200, -150, 2, true)
+	if len(outer) == 0 || len(inner) != 0 {
+		t.Fatalf("pages followed %d frames, cards %d: a drag under the cards is the pages'", len(outer), len(inner))
+	}
+}
