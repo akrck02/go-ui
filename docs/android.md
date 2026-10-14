@@ -71,6 +71,10 @@ in its settings.
 the phone's on-screen keyboard up, and puts it away after. `window.Notify` shows a notification in
 the phone's shade (in a browser, through the page's notifications), once `window.NotificationsAllowed`;
 `window.AskForNotifications` asks the person. On the desktop they are not shown yet.
+`window.OpenVideo(film)` plays a film's pictures (not yet its sound) in a `draw2d.Image` that
+`Context.Image` draws: `Play`, `Pause`, `Loop`, and `Update` in every frame it shows. On Android the
+phone's decoders read it; in a browser, a video element the page never shows; on the desktop it is
+`ErrVideoUnsupported` for now.
 `window.FeelLongPress` gives the short buzz of a long press (`Context.LongPressed`), where the
 person has touch feedback on; in a browser it vibrates where the browser can.
 
