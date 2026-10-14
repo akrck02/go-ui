@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
 )
 
@@ -367,5 +368,76 @@ func TestAnIdleInterfaceAsksForNoFramesButACaretBlinks(t *testing.T) {
 	h.frame(build)
 	if h.ui.memory[scoped("Light", "Name")].value.(*fieldMemory).paint.caretShown == shown {
 		t.Fatal("at that time the caret blinks")
+	}
+}
+
+func TestASecretFieldShowsDotsAndCopiesNothing(t *testing.T) {
+	h := newHarness(t)
+	clipboard := &fakeClipboard{text: "before"}
+	h.state.Clipboard = clipboard
+	password := ""
+	build := func(ui *Context) {
+		ui.TextFieldWith("password", &password, TextFieldOptions{Secret: true})
+	}
+	h.frame(build)
+	area := h.rect(idOf("password"))
+	h.clickAt(area.X+10, area.Y+area.Height/2, build)
+	h.typeText("lamp", build)
+	if password != "lamp" {
+		t.Fatalf("the field holds %q; want what was typed", password)
+	}
+	for _, command := range h.ui.Drawing().Commands {
+		if command.Kind == draw2d.TextKind && command.Text == "lamp" {
+			t.Fatal("a secret field shows its text")
+		}
+	}
+	drawn := false
+	for _, command := range h.ui.Drawing().Commands {
+		drawn = drawn || (command.Kind == draw2d.TextKind && command.Text == "••••")
+	}
+	if !drawn {
+		t.Fatal("a secret field does not show a dot for each character")
+	}
+	h.key(input.KeyA, build, shortcutKey)
+	h.key(input.KeyC, build, shortcutKey)
+	if clipboard.text != "before" {
+		t.Fatalf("copying from a secret field put %q on the clipboard", clipboard.text)
+	}
+}
+
+func TestAProgramKnowsWhichFieldIsTypedIn(t *testing.T) {
+	h := newHarness(t)
+	name, place := "", ""
+	var nameFocused, placeFocused bool
+	build := func(ui *Context) {
+		nameFocused, placeFocused = ui.FieldFocused("name"), ui.FieldFocused("place")
+		ui.Column(func() {
+			ui.TextField("name", &name)
+			ui.TextField("place", &place)
+		})
+	}
+	h.frame(build)
+	area := h.rect(idOf("place"))
+	h.clickAt(area.X+10, area.Y+area.Height/2, build)
+	h.frame(build)
+	if nameFocused || !placeFocused {
+		t.Fatalf("name focused %v, place focused %v after touching place; want only place", nameFocused, placeFocused)
+	}
+}
+
+func TestAFieldGivenTheKeyboardIsTypedIn(t *testing.T) {
+	h := newHarness(t)
+	query, opened := "", false
+	build := func(ui *Context) {
+		if !opened {
+			ui.FocusField("query")
+			opened = true
+		}
+		ui.TextField("query", &query)
+	}
+	h.frame(build)
+	h.typeText("north", build)
+	if query != "north" || !h.ui.Typing() {
+		t.Fatalf("query %q, typing %v; want the field typed in without a touch", query, h.ui.Typing())
 	}
 }

@@ -1,6 +1,9 @@
 package ui
 
-import "github.com/akrck02/go-renderer/draw2d"
+import (
+	"github.com/akrck02/go-renderer/draw2d"
+	"github.com/akrck02/go-renderer/input"
+)
 
 // A popup is a root that floats over everything else, next to an anchor rectangle: the list of a
 // select, a tooltip. Popups are drawn above every panel and get the mouse before them.
@@ -90,4 +93,28 @@ func (ui *Context) Toast(text string, warning bool) {
 	ui.IconSized(icon, theme.TextSize, iconColour)
 	ui.Text(text, TextStyle{Color: theme.Surface})
 	ui.open = outside
+}
+
+// Popover floats a box of the program's own under the control added just before it, over
+// everything, at least as wide as the control: a dropdown's choices, a small form about a row.
+// While *open is true it shows; a touch outside it and the control, Escape and the system's back
+// close it (*open becomes false). name tells popovers apart; what content adds is named inside it.
+func (ui *Context) Popover(name string, open *bool, look Look, content func()) {
+	anchorID := ui.interacted
+	if !*open || anchorID == 0 {
+		return
+	}
+	id := ui.idFor(name)
+	anchor := ui.previous[anchorID]
+	x, y := float32(ui.state.CursorX), float32(ui.state.CursorY)
+	touchedOutside := ui.state.ButtonPressed(input.MouseLeft) && ui.hoveredRoot != id && !anchor.Contains(x, y)
+	if touchedOutside || ui.state.Pressed(input.KeyEscape) || ui.Back() {
+		*open = false
+		return
+	}
+	ui.popup(id, anchor, anchor.Width, false, look, func() {
+		ui.scopes = append(ui.scopes, id) // what it holds is named inside it
+		content()
+		ui.Pop()
+	})
 }

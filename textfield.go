@@ -2,6 +2,7 @@ package ui
 
 import (
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/akrck02/go-renderer/draw2d"
@@ -18,6 +19,30 @@ type TextFieldOptions struct {
 	// Plain draws no box of the field's own, neither fill nor border nor focus ring: for a field
 	// inside a box of the program's (a search bar's pill), which shows where it is.
 	Plain bool
+	// Secret shows a dot for each character (a password), and lets nothing be copied or cut.
+	Secret bool
+}
+
+// FieldFocused tells whether the text field of a name, in the same scope, has the keyboard: a
+// program that draws the field's box itself (a Material field, with its text before and after)
+// colours it by that. Call it before the field: it tells the focus as the last frame left it.
+func (ui *Context) FieldFocused(name string) bool {
+	return ui.focus != 0 && ui.focus == hashString(ui.scopeSeed(), name)
+}
+
+// FocusField gives the keyboard to the text field of a name, in the same scope, from the next
+// time it is built: a search that opens ready to type in. Call it before the field.
+func (ui *Context) FocusField(name string) {
+	ui.focus, ui.focusByKeyboard = hashString(ui.scopeSeed(), name), false
+}
+
+// shown is what a field shows of some of its text: the characters, or a dot for each in a secret
+// field. Every width the field measures is of what it shows.
+func (memory *fieldMemory) shown(runes []rune) string {
+	if !memory.secret {
+		return string(runes)
+	}
+	return strings.Repeat("•", len(runes))
 }
 
 // fieldEvent is how editing a field ended during a step, if it did.
@@ -33,6 +58,7 @@ const (
 // fieldMemory is what a text field keeps between frames.
 type fieldMemory struct {
 	editor        editor
+	secret        bool // dots for the characters (TextFieldOptions.Secret)
 	hadFocus      bool
 	original      string    // the text when the field took the focus, for Escape
 	scroll        float32   // how far the text is moved left to keep the caret in sight
@@ -83,7 +109,7 @@ func (ui *Context) TextFieldWith(name string, text *string, options TextFieldOpt
 // typed and tells how the edit ended, if it did during this step.
 func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fieldEvent {
 	memory := remember(ui, id, func() *fieldMemory { return &fieldMemory{} })
-	memory.editor.limit, memory.weight = options.MaxLength, options.Weight
+	memory.editor.limit, memory.weight, memory.secret = options.MaxLength, options.Weight, options.Secret
 	ui.focusables = append(ui.focusables, id)
 	result := ui.interact(id)
 	if result.pressed && ui.focus != id {
@@ -178,20 +204,20 @@ func (ui *Context) fieldPositionAt(id ID, memory *fieldMemory, x float32) int {
 	low, high := 0, len(runes)
 	for low < high { // the first position whose caret is right of the pointer
 		middle := (low + high) / 2
-		if ui.textWidth(string(runes[:middle+1]), memory.weight) < offset {
+		if ui.textWidth(memory.shown(runes[:middle+1]), memory.weight) < offset {
 			low = middle + 1
 		} else {
 			high = middle
 		}
 	}
 	if low > 0 && low <= len(runes) {
-		left, right := ui.textWidth(string(runes[:low-1]), memory.weight), ui.textWidth(string(runes[:low]), memory.weight)
+		left, right := ui.textWidth(memory.shown(runes[:low-1]), memory.weight), ui.textWidth(memory.shown(runes[:low]), memory.weight)
 		if offset-left < right-offset {
 			return low - 1
 		}
 	}
 	if low < len(runes) {
-		left, right := ui.textWidth(string(runes[:low]), memory.weight), ui.textWidth(string(runes[:low+1]), memory.weight)
+		left, right := ui.textWidth(memory.shown(runes[:low]), memory.weight), ui.textWidth(memory.shown(runes[:low+1]), memory.weight)
 		if offset-left > right-offset {
 			return low + 1
 		}
@@ -254,9 +280,9 @@ func (ui *Context) followFieldKeys(id ID, memory *fieldMemory) fieldEvent {
 		editor.deleteTo(ui.deletionEnd(editor, 1, word, lineKey))
 	case shortcut && state.Typed(input.KeyA):
 		editor.selectAll()
-	case shortcut && state.Typed(input.KeyC) && editor.hasSelection():
+	case shortcut && state.Typed(input.KeyC) && editor.hasSelection() && !memory.secret:
 		state.SetClipboardText(editor.selectedText())
-	case shortcut && state.Typed(input.KeyX) && editor.hasSelection():
+	case shortcut && state.Typed(input.KeyX) && editor.hasSelection() && !memory.secret:
 		state.SetClipboardText(editor.selectedText())
 		editor.deleteTo(editor.caret)
 	case shortcut && state.Typed(input.KeyV):
@@ -294,7 +320,7 @@ func (ui *Context) deletionEnd(editor *editor, direction int, word, line bool) i
 func (ui *Context) addField(id ID, memory *fieldMemory, text string, options TextFieldOptions, result interaction, focused bool) {
 	theme := ui.Theme
 	paint := &memory.paint
-	*paint = fieldPaint{text: text, placeholder: options.Placeholder, focused: focused}
+	*paint = fieldPaint{text: memory.shown([]rune(text)), placeholder: options.Placeholder, focused: focused}
 	if focused {
 		measures := ui.measureField(memory, text)
 		paint.caretX, paint.selectionStart, paint.selectionEnd = measures.caretX, measures.selectionStart, measures.selectionEnd
@@ -349,10 +375,10 @@ func (ui *Context) measureField(memory *fieldMemory, text string) fieldMeasures 
 	}
 	start, end := editor.selection()
 	memory.measured = fieldMeasures{
-		caretX:         ui.textWidth(string(editor.text[:editor.caret]), memory.weight),
-		selectionStart: ui.textWidth(string(editor.text[:start]), memory.weight),
-		selectionEnd:   ui.textWidth(string(editor.text[:end]), memory.weight),
-		textWidth:      ui.textWidth(text, memory.weight),
+		caretX:         ui.textWidth(memory.shown(editor.text[:editor.caret]), memory.weight),
+		selectionStart: ui.textWidth(memory.shown(editor.text[:start]), memory.weight),
+		selectionEnd:   ui.textWidth(memory.shown(editor.text[:end]), memory.weight),
+		textWidth:      ui.textWidth(memory.shown([]rune(text)), memory.weight),
 	}
 	memory.measuredKey, memory.measuredValid = key, true
 	return memory.measured

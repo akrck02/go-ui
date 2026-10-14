@@ -173,15 +173,9 @@ func TestTextGrowsWithThePersonsTextSize(t *testing.T) {
 	}
 }
 
-// noteClipboard is a clipboard in memory, as a backend gives one.
-type noteClipboard struct{ text string }
-
-func (clipboard *noteClipboard) ClipboardText() string        { return clipboard.text }
-func (clipboard *noteClipboard) SetClipboardText(text string) { clipboard.text = text }
-
 func TestAProgramCopiesToTheClipboard(t *testing.T) {
 	h := newHarness(t)
-	clipboard := &noteClipboard{}
+	clipboard := &fakeClipboard{}
 	h.state.Clipboard = clipboard
 	pasted := ""
 	h.frame(func(ui *Context) {
@@ -190,5 +184,42 @@ func TestAProgramCopiesToTheClipboard(t *testing.T) {
 	})
 	if clipboard.text != "54°N 8°W" || pasted != "54°N 8°W" {
 		t.Fatalf("clipboard %q, read back %q; want the text copied", clipboard.text, pasted)
+	}
+}
+
+func TestAPopoverOpensUnderItsControlAndClosesOutside(t *testing.T) {
+	h := newHarness(t)
+	open, chosen := false, ""
+	build := func(ui *Context) {
+		ui.Column(func() {
+			if ui.Button("Kind of light") {
+				open = !open
+			}
+			ui.Popover("kinds", &open, Look{Fill: ui.Theme.Surface}, func() {
+				for _, kind := range []string{"Fixed", "Flashing"} {
+					if ui.Button(kind) {
+						chosen, open = kind, false
+					}
+				}
+			})
+		})
+	}
+	h.frame(build)
+	button := h.rect(idOf("Kind of light"))
+	h.clickAt(button.X+5, button.Y+5, build)
+	h.frame(build)
+	inside, found := h.ui.Area("kinds", "Flashing")
+	if !open || !found || inside.Y < button.Bottom() {
+		t.Fatalf("open %v, choice at %+v (found %v); want the choices under the button", open, inside, found)
+	}
+	h.clickAt(inside.X+5, inside.Y+5, build)
+	if chosen != "Flashing" || open {
+		t.Fatalf("chosen %q, open %v; want Flashing chosen and the popover closed", chosen, open)
+	}
+	h.clickAt(button.X+5, button.Y+5, build)
+	h.frame(build)
+	h.clickAt(700, 500, build) // somewhere else
+	if open {
+		t.Fatal("a touch outside did not close the popover")
 	}
 }

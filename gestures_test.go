@@ -154,3 +154,25 @@ func TestHowFarAListIsScrolledIsTold(t *testing.T) {
 		t.Fatalf("scrolled %v after the content went 120 pixels up; want about that", scrolled)
 	}
 }
+
+func TestAFingerThatLeavesItsLayerAsItStartsIsStillItsDrag(t *testing.T) {
+	h := newHarness(t)
+	now := h.withClock()
+	var dragged float32
+	build := func(ui *Context) {
+		ui.Overlay("sheet", LayerOptions{AlignX: Center, AlignY: End, Width: Fixed(300), Height: Fixed(100)}, func() {
+			ui.SwipeBox("handle", Layout{Width: Grow(), Height: Fixed(30)}, Vertical, func(swipe Swipe) {
+				if swipe.Held {
+					dragged = swipe.Offset
+				}
+			})
+		})
+	}
+	h.frame(build)
+	h.frame(build)
+	// from just inside the sheet's top edge, 30 pixels a step upwards: out of it at the first step
+	dragFinger(h, now, build, 400, 505, 0, -300, false)
+	if dragged > -200 {
+		t.Fatalf("the handle followed the finger %v pixels; want the 300 it moved, less the slop", dragged)
+	}
+}

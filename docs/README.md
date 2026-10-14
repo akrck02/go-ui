@@ -108,7 +108,9 @@ theme.
 | `Checkbox(label, &value)` | A box to tick, with its label; clicking either flips the value. Returns `true` when it changes |
 | `Toggle(label, &value)` | A settings row: the label on the left, a switch on the right |
 | `Slider(name, &value, minimum, maximum)`, `SliderStep(…, step)` | A track with a knob: click to jump, drag to slide, Shift to slide ten times slower; `SliderStep` keeps whole steps |
-| `TextField(name, &text)`, `TextFieldWith(name, &text, TextFieldOptions{…})` | A line of text to type in, with a `Placeholder`, a `MaxLength` or a `Width`. Returns `true` on the steps the text changes; see [Text fields](#text-fields) |
+| `TextField(name, &text)`, `TextFieldWith(name, &text, TextFieldOptions{…})` | A line of text to type in, with a `Placeholder`, a `MaxLength` or a `Width`, `Secret` for a password (a dot for each character, nothing copied). Returns `true` on the steps the text changes; see [Text fields](#text-fields) |
+| `FieldFocused(name)`, `FocusField(name)` | Whether the field of a name has the keyboard (for a box the program draws around it), and giving it the keyboard (a search that opens ready to type in) |
+| `Popover(name, &open, look, content)` | A box of the program's own floating under the control added just before it (a dropdown's choices); a touch outside, Escape or the back closes it |
 | `NumberField(name, &value, minimum, maximum, step, format)` | A number with − and + on its sides; drag the number sideways for a step every 4 px, or click it to type a value (a point or a comma for decimals; Enter keeps it, Escape does not). Shown with a format such as `"%.1f s"` |
 | `Tabs(name, &selected, labels…)` | A segmented row, the selected segment raised; the program shows what belongs to it with an `if` |
 | `Select(name, &selected, options)` | A field showing the chosen option; clicking opens the list over everything. Click an option, or use the arrows and Enter; Escape or a click elsewhere closes it |

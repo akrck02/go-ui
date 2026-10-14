@@ -26,6 +26,7 @@ type finger struct {
 	moved                bool      // past dragSlop: a drag, not a touch
 	axis                 Direction // the way it went first, once moved
 	owner                ID        // the part of the interface that took it
+	root                 ID        // the panel, layer or screen it came down on
 	velocityX, velocityY float32   // pixels a second, smoothed
 	lastTime             time.Time
 }
@@ -63,7 +64,7 @@ func (ui *Context) trackFinger() {
 }
 
 func (ui *Context) fingerAt(x, y float32) finger {
-	return finger{down: true, startX: x, startY: y, x: x, y: y, previousX: x, previousY: y, lastTime: ui.now}
+	return finger{down: true, startX: x, startY: y, x: x, y: y, previousX: x, previousY: y, lastTime: ui.now, root: ui.hoveredRoot}
 }
 
 // takeFinger gives the finger to a part of the interface that follows it along an axis: when it
@@ -81,7 +82,9 @@ func (ui *Context) takeFinger(id ID, axis Direction) bool {
 		return false
 	}
 	area, shown := ui.reachOf(id)
-	if !shown || !area.Contains(finger.startX, finger.startY) || ui.hoveredRoot != ui.currentRoot() {
+	// where the finger came down decides, not where it is now: a sheet dragged up by its edge has
+	// the finger over the screen above it by the time it moves enough to be a drag
+	if !shown || !area.Contains(finger.startX, finger.startY) || finger.root != ui.currentRoot() {
 		return false
 	}
 	finger.owner, ui.active = id, id
