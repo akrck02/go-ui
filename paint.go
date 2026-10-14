@@ -19,6 +19,11 @@ func (ui *Context) paint() {
 
 func (ui *Context) paintElement(index int) {
 	element := &ui.elements[index]
+	if element.id != 0 && ui.clipped {
+		// what the pointer can reach is what shows: a row scrolled out of a list's view must not
+		// take a touch meant for the bar over it
+		ui.currentReach[element.id] = element.rect.Intersect(ui.clip)
+	}
 	switch element.kind {
 	case textElement:
 		ui.paintText(element)
@@ -52,6 +57,7 @@ func (ui *Context) paintBox(element *element) {
 	right := element.rect.Right() - element.layout.Padding.Right
 	for child := element.firstChild; child >= 0; child = ui.elements[child].nextSibling {
 		if ui.isOutOfSight(&ui.elements[child]) {
+			ui.outOfReach(child)
 			continue
 		}
 		if look.Clip && ui.elements[child].kind == textElement {
@@ -167,4 +173,15 @@ func (ui *Context) measure(text string, style TextStyle) draw2d.TextMetrics {
 	}
 	ui.texts.entries[key] = metrics
 	return metrics
+}
+
+// outOfReach takes an element out of sight, and everything in it, from the pointer's reach.
+func (ui *Context) outOfReach(index int) {
+	element := &ui.elements[index]
+	if element.id != 0 {
+		ui.currentReach[element.id] = draw2d.Rect{}
+	}
+	for child := element.firstChild; child >= 0; child = ui.elements[child].nextSibling {
+		ui.outOfReach(child)
+	}
 }

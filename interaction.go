@@ -1,6 +1,9 @@
 package ui
 
-import "github.com/akrck02/go-renderer/input"
+import (
+	"github.com/akrck02/go-renderer/draw2d"
+	"github.com/akrck02/go-renderer/input"
+)
 
 // interaction is what the mouse did to a control during this step.
 type interaction struct {
@@ -16,7 +19,7 @@ type interaction struct {
 // to find the pointer over it takes it: containers that react to the mouse (a panel's title bar)
 // call interact after their content, so the buttons inside them win.
 func (ui *Context) interact(id ID) interaction {
-	area, shown := ui.previous[id]
+	area, shown := ui.reachOf(id)
 	x, y := float32(ui.state.CursorX), float32(ui.state.CursorY)
 	over := shown && area.Contains(x, y) && ui.hoveredRoot == ui.currentRoot() && !ui.sceneDrag
 	var result interaction
@@ -73,4 +76,14 @@ func (ui *Context) finishInteraction() {
 	if ui.wantsKeyboard {
 		state.ClaimKeyboard()
 	}
+}
+
+// reachOf is where the pointer could reach a thing in the last frame: the part that showed, when a
+// box around it clipped it (a list scrolled), else all of it.
+func (ui *Context) reachOf(id ID) (draw2d.Rect, bool) {
+	if area, clipped := ui.previousReach[id]; clipped {
+		return area, !area.IsEmpty()
+	}
+	area, shown := ui.previous[id]
+	return area, shown
 }

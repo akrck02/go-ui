@@ -53,14 +53,17 @@ type Context struct {
 	scopes   []ID
 	seen     map[ID]int // how many times an id was used this frame, to tell repeats apart
 
-	previous    map[ID]draw2d.Rect // where things were in the last frame
-	current     map[ID]draw2d.Rect
-	order       []ID // panels from back to front
-	hoveredRoot ID
-	hot         ID   // the control under the mouse
-	active      ID   // the control being pressed or dragged
-	focus       ID   // the control the keyboard goes to
-	focusSeen   bool // the focused control was built this frame; if not, it went away
+	previous map[ID]draw2d.Rect // where things were in the last frame
+	current  map[ID]draw2d.Rect
+	// what of a thing showed, where a box around it clipped it: what the pointer could reach in
+	// the last frame (reachOf), for things clipped; the others are reached wholly
+	previousReach, currentReach map[ID]draw2d.Rect
+	order                       []ID // panels from back to front
+	hoveredRoot                 ID
+	hot                         ID   // the control under the mouse
+	active                      ID   // the control being pressed or dragged
+	focus                       ID   // the control the keyboard goes to
+	focusSeen                   bool // the focused control was built this frame; if not, it went away
 	// focusables are the fields that can take the focus, in the order they were built this frame,
 	// for Tab; tabFrom is the field where Tab was pressed (tabBack with Shift), and
 	// focusByKeyboard tells the field taking the focus that it came by Tab.
@@ -111,14 +114,16 @@ func New() (*Context, error) {
 // use a fake one, so they need no fonts.
 func NewWithMeasurer(measurer draw2d.Measurer) *Context {
 	return &Context{
-		Theme:    LightTheme(),
-		measurer: measurer,
-		texts:    textCache{entries: map[textKey]draw2d.TextMetrics{}, older: map[textKey]draw2d.TextMetrics{}},
-		seen:     map[ID]int{},
-		previous: map[ID]draw2d.Rect{},
-		current:  map[ID]draw2d.Rect{},
-		panels:   map[ID]*panelMemory{},
-		memory:   map[ID]*remembered{},
+		Theme:         LightTheme(),
+		measurer:      measurer,
+		texts:         textCache{entries: map[textKey]draw2d.TextMetrics{}, older: map[textKey]draw2d.TextMetrics{}},
+		seen:          map[ID]int{},
+		previous:      map[ID]draw2d.Rect{},
+		current:       map[ID]draw2d.Rect{},
+		previousReach: map[ID]draw2d.Rect{},
+		currentReach:  map[ID]draw2d.Rect{},
+		panels:        map[ID]*panelMemory{},
+		memory:        map[ID]*remembered{},
 	}
 }
 
@@ -183,6 +188,8 @@ func (ui *Context) End() {
 	}
 	ui.previous, ui.current = ui.current, ui.previous
 	clear(ui.current)
+	ui.previousReach, ui.currentReach = ui.currentReach, ui.previousReach
+	clear(ui.currentReach)
 	if !ui.focusSeen {
 		ui.focus = 0
 	}

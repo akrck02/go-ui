@@ -80,7 +80,7 @@ func (ui *Context) takeFinger(id ID, axis Direction) bool {
 	if finger.owner != 0 || !finger.down || !finger.moved || finger.axis != axis {
 		return false
 	}
-	area, shown := ui.previous[id]
+	area, shown := ui.reachOf(id)
 	if !shown || !area.Contains(finger.startX, finger.startY) || ui.hoveredRoot != ui.currentRoot() {
 		return false
 	}

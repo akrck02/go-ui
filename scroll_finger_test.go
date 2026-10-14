@@ -86,3 +86,33 @@ func TestATouchThatHardlyMovesStillPresses(t *testing.T) {
 		t.Fatalf("%d clicks; a touch moving 3 pixels is a touch", clicked)
 	}
 }
+
+func TestARowScrolledOutOfViewDoesNotTakeATouchMeantForWhatIsThere(t *testing.T) {
+	h := newHarness(t)
+	rowClicks, barClicks := 0, 0
+	build := func(ui *Context) {
+		ui.Box(Layout{Direction: Vertical, Width: Fixed(300), Height: Fixed(300)}, func() {
+			ui.ScrollArea("list", Layout{Width: Grow(), Height: Grow()}, func() {
+				for index := range 40 {
+					if ui.Button("row " + strconv.Itoa(index)) {
+						rowClicks++
+					}
+				}
+			})
+			if ui.Button("bar") {
+				barClicks++
+			}
+		})
+	}
+	h.frame(build)
+	h.frame(build)
+	bar := h.rect(idOf("bar"))
+	h.moveTo(float64(bar.X+4), float64(bar.Y+bar.Height/2)) // where rows run on under the list's edge
+	h.press()
+	h.frame(build)
+	h.release()
+	h.frame(build)
+	if barClicks != 1 || rowClicks != 0 {
+		t.Fatalf("bar clicked %d, rows %d: the touch is the bar's", barClicks, rowClicks)
+	}
+}

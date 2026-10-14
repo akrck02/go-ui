@@ -134,7 +134,7 @@ func (ui *Context) followWheel(id ID, memory *scrollMemory) {
 	if delta == 0 || ui.scrollUsed || ui.sceneDrag || memory.content <= memory.view {
 		return
 	}
-	area, shown := ui.previous[id]
+	area, shown := ui.reachOf(id)
 	x, y := float32(ui.state.CursorX), float32(ui.state.CursorY)
 	if !shown || !area.Contains(x, y) || ui.hoveredRoot != ui.currentRoot() {
 		return
