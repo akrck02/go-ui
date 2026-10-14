@@ -54,6 +54,11 @@ type Options struct {
 	// MaxFramesPerSecond caps how often the window draws, to spare a battery; 0 = 60 on a phone,
 	// the display's own rate elsewhere (where vsync keeps it).
 	MaxFramesPerSecond int
+	// Hidden is called when the program leaves the screen: on a phone, another application comes
+	// up or the phone locks, and the system may end the program after that without a word; in a
+	// browser, the page is hidden; on the desktop, the window closes. Keep what must survive then
+	// (KeepPreference). It runs on the goroutine that builds the interface, except in a browser.
+	Hidden func()
 }
 
 // SceneView is a 3D scene seen from a camera, drawn behind the interface.

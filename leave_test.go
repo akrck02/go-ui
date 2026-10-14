@@ -149,3 +149,46 @@ func TestAnImageIsDrawnInItsBox(t *testing.T) {
 	}
 	t.Fatal("the image was not drawn")
 }
+
+func TestTextGrowsWithThePersonsTextSize(t *testing.T) {
+	h := newHarness(t)
+	size := func() float32 {
+		for _, command := range h.ui.Drawing().Commands {
+			if command.Kind == draw2d.TextKind && command.Text == "North light" {
+				return command.Size
+			}
+		}
+		t.Fatal("the text was not drawn")
+		return 0
+	}
+	build := func(ui *Context) { ui.Text("North light", TextStyle{Size: 16}) }
+	h.frame(build)
+	if got := size(); got != 16 || h.ui.TextScale() != 1 {
+		t.Fatalf("text %v at scale %v by default; want 16 at 1", got, h.ui.TextScale())
+	}
+	h.ui.SetTextScale(1.3)
+	h.frame(build)
+	if got := size(); got < 20.7 || got > 20.9 {
+		t.Fatalf("text %v at a text size of 1.3; want 20.8", got)
+	}
+}
+
+// noteClipboard is a clipboard in memory, as a backend gives one.
+type noteClipboard struct{ text string }
+
+func (clipboard *noteClipboard) ClipboardText() string        { return clipboard.text }
+func (clipboard *noteClipboard) SetClipboardText(text string) { clipboard.text = text }
+
+func TestAProgramCopiesToTheClipboard(t *testing.T) {
+	h := newHarness(t)
+	clipboard := &noteClipboard{}
+	h.state.Clipboard = clipboard
+	pasted := ""
+	h.frame(func(ui *Context) {
+		ui.Copy("54°N 8°W")
+		pasted = ui.ClipboardText()
+	})
+	if clipboard.text != "54°N 8°W" || pasted != "54°N 8°W" {
+		t.Fatalf("clipboard %q, read back %q; want the text copied", clipboard.text, pasted)
+	}
+}

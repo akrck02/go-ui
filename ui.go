@@ -82,6 +82,7 @@ type Context struct {
 	scrollUsed      bool                 // a scroll area took this step's wheel movement
 	finger          finger               // the one finger on a touch screen (gestures.go)
 	leaving         map[ID]*leavingLayer // layers that keep their last picture to leave with (leave.go)
+	textScale       float32              // the person's text size (SetTextScale); 0 = 1
 	press           press                // the pointer held down, for a long press (longpress.go)
 	longPressed     ID                   // the control long-pressed in this frame
 	lastHot         ID                   // the control under the pointer in the last frame

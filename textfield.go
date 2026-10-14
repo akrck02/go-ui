@@ -200,7 +200,7 @@ func (ui *Context) fieldPositionAt(id ID, memory *fieldMemory, x float32) int {
 }
 
 func (ui *Context) textWidth(text string, weight draw2d.Weight) float32 {
-	return ui.measure(text, TextStyle{Size: ui.Theme.TextSize, Weight: weight}).Width
+	return ui.measure(text, TextStyle{Size: ui.scaledText(ui.Theme.TextSize), Weight: weight}).Width
 }
 
 // shortcutKey is the key held for copy, paste and undo: Cmd on a Mac, Ctrl elsewhere. wordKey is
@@ -401,7 +401,7 @@ func (ui *Context) paintField(element *element) {
 	clip := draw2d.Rect{X: rect.X + fieldPadding - 1, Y: rect.Y, Width: rect.Width - 2*fieldPadding + 2, Height: rect.Height}
 	ui.drawing.PushClip(clip)
 	defer ui.drawing.PopClip()
-	size := theme.TextSize
+	size := ui.scaledText(theme.TextSize)
 	metrics := ui.measure("Hg", TextStyle{Size: size})
 	baseline := rect.Y + (rect.Height-metrics.Height())/2 + metrics.Ascent
 	x := rect.X + fieldPadding - paint.scroll

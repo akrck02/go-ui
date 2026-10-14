@@ -6,6 +6,8 @@ import (
 	"errors"
 	"hash/maphash"
 	"log"
+	"os/exec"
+	"runtime"
 	"time"
 
 	"github.com/akrck02/go-renderer/input"
@@ -31,6 +33,20 @@ func LastCrash() string { return "" }
 // asked yet, and the answer is false: use Options.Dark.
 func SystemPrefersDark() bool { return false }
 
+// OpenLink opens a link in the application that shows it (the browser for a web page), through
+// the computer's own command for that. It returns false when the command failed.
+func OpenLink(link string) bool {
+	opener := map[string][]string{"darwin": {"open"}, "windows": {"rundll32", "url.dll,FileProtocolHandler"}}[runtime.GOOS]
+	if opener == nil {
+		opener = []string{"xdg-open"}
+	}
+	return exec.Command(opener[0], append(opener[1:], link)...).Start() == nil
+}
+
+// Share offers a text to other applications; a desktop has no sheet for that, so it returns false
+// (put the text on the clipboard instead).
+func Share(title, text string) bool { return false }
+
 // Notify shows a notification; on the desktop it does not yet, and returns false.
 func Notify(id int, title, text string) bool { return false }
 
@@ -48,6 +64,9 @@ func SystemPalettes() (Palettes, bool) { return Palettes{}, false }
 
 // RunWith is Run with an interface context of your own (a custom theme or measurer).
 func RunWith(context *ui.Context, options Options, build func(context *ui.Context)) error {
+	if options.Hidden != nil {
+		defer options.Hidden() // the window closed
+	}
 	width, height := options.Width, options.Height
 	if width <= 0 || height <= 0 {
 		width, height = 1280, 800

@@ -41,6 +41,14 @@ func AskForNotifications() { android.AskForNotifications() }
 // person has touch feedback on. Call it in the frame a control is long-pressed (ui.LongPressed).
 func FeelLongPress() { android.FeelLongPress() }
 
+// OpenLink opens a link in the application that shows it: a web page in the browser, mailto: in
+// the mail, tel: in the phone, geo: in the maps. It returns false when nothing opens it.
+func OpenLink(link string) bool { return android.OpenLink(link) }
+
+// Share offers a text (a link, a note) to the person's other applications, through the system's
+// sheet with a title over it. It returns false when it could not.
+func Share(title, text string) bool { return android.Share(title, text) }
+
 // Graphics describes the phone's OpenGL ES and GPU, or the error that stopped the window drawing,
 // for a program that shows it to help find a fault on a phone nobody can reach.
 func Graphics() string { return android.Graphics() }
@@ -60,6 +68,7 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 	app.Update = func(app *models.Application, step float64) error {
 		bars := android.CurrentInsets()
 		context.SetInsets(ui.Insets{Top: bars.Top, Bottom: bars.Bottom, Left: bars.Left, Right: bars.Right})
+		context.SetTextScale(android.TextScale()) // the person's text size, from the phone's settings
 		err := update(app, step)
 		android.ShowKeyboard(context.Typing()) // the on-screen keyboard, while a field is typed in
 		return err
@@ -95,5 +104,5 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 		flat.Draw(context.Drawing(), context.Theme.Background, width, height, scale)
 		return nil
 	}
-	return android.Run(app, android.Options{MaxFramesPerSecond: options.MaxFramesPerSecond}, draw)
+	return android.Run(app, android.Options{MaxFramesPerSecond: options.MaxFramesPerSecond, Hidden: options.Hidden}, draw)
 }

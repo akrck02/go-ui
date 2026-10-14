@@ -20,6 +20,38 @@ func (ui *Context) SetInsets(insets Insets) { ui.insets = insets }
 // Insets returns what the system draws over the window's edges.
 func (ui *Context) Insets() Insets { return ui.insets }
 
+// Copy puts a text on the system's clipboard (a link, a code, what a row holds), to paste in
+// another application. Without a clipboard (tests) it does nothing.
+func (ui *Context) Copy(text string) {
+	if ui.state != nil {
+		ui.state.SetClipboardText(text)
+	}
+}
+
+// ClipboardText is the text on the system's clipboard, "" when there is none.
+func (ui *Context) ClipboardText() string {
+	if ui.state == nil {
+		return ""
+	}
+	return ui.state.ClipboardText()
+}
+
+// SetTextScale sets how much larger than its size each text is drawn: the person's text size, as
+// a phone's settings give it (1.3 for a larger text). Only text grows; icons, paddings and fixed
+// boxes keep their size, as on Android. The window sets it in every frame.
+func (ui *Context) SetTextScale(scale float32) { ui.textScale = scale }
+
+// TextScale is the text size SetTextScale gave, 1 by default: a control of a program's own whose
+// height holds text grows by it.
+func (ui *Context) TextScale() float32 {
+	if ui.textScale <= 0 {
+		return 1
+	}
+	return ui.textScale
+}
+
+func (ui *Context) scaledText(size float32) float32 { return size * ui.TextScale() }
+
 // Size returns the window's size in this frame, in layout pixels: a program chooses a layout by it
 // (a list alone on a phone, a list and its details side by side on a tablet).
 func (ui *Context) Size() (width, height float32) { return ui.width, ui.height }

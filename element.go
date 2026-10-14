@@ -200,6 +200,7 @@ func (ui *Context) textElement(text string, style TextStyle) element {
 	if style.Size <= 0 {
 		style.Size = ui.Theme.TextSize
 	}
+	style.Size = ui.scaledText(style.Size)
 	if !style.Color.IsVisible() {
 		style.Color = ui.Theme.Ink
 	}

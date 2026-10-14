@@ -70,6 +70,37 @@ func FeelLongPress() {
 	}
 }
 
+// OpenLink opens a link in a new tab, or in the application that shows it (mailto:, tel:).
+func OpenLink(link string) bool {
+	return js.Global().Call("open", link, "_blank", "noopener").Truthy()
+}
+
+// Share offers a text to the person's other applications, through the browser's sheet where it
+// has one (phones' browsers, mostly): false where it has none.
+func Share(title, text string) bool {
+	navigator := js.Global().Get("navigator")
+	if !navigator.Get("share").Truthy() {
+		return false
+	}
+	navigator.Call("share", map[string]any{"title": title, "text": text})
+	return true
+}
+
+// whenHidden calls the program's Hidden when the page is hidden: another tab, the phone locked,
+// the page closing.
+func whenHidden(hidden func()) {
+	if hidden == nil {
+		return
+	}
+	document := js.Global().Get("document")
+	document.Call("addEventListener", "visibilitychange", js.FuncOf(func(js.Value, []js.Value) any {
+		if document.Get("visibilityState").String() == "hidden" {
+			hidden()
+		}
+		return nil
+	}))
+}
+
 // SystemPalettes returns the colours a phone made from its wallpaper; a browser does not tell them.
 func SystemPalettes() (Palettes, bool) { return Palettes{}, false }
 
@@ -77,6 +108,7 @@ func SystemPalettes() (Palettes, bool) { return Palettes{}, false }
 // the window is the page's canvas (Options.Canvas); it draws through WebGL2 and returns only when
 // the program stops, which keeps the WebAssembly program alive.
 func RunWith(context *ui.Context, options Options, build func(context *ui.Context)) error {
+	whenHidden(options.Hidden)
 	canvas, err := browser.OpenCanvas(options.Canvas)
 	if err != nil {
 		return err

@@ -71,6 +71,13 @@ in its settings.
 the phone's on-screen keyboard up, and puts it away after. `window.Notify` shows a notification in
 the phone's shade (in a browser, through the page's notifications), once `window.NotificationsAllowed`;
 `window.AskForNotifications` asks the person. On the desktop they are not shown yet.
+`window.OpenLink(link)` opens a link in the application that shows it, `window.Share(title, text)`
+offers a text through the system's sheet, `Context.Copy` and `Context.ClipboardText` reach the
+phone's clipboard, and `window.Preference` / `window.KeepPreference` keep small values between runs
+(a JSON file in the application's folder; on the desktop, the user's configuration folder; in a
+browser, local storage). `Options.Hidden` is called when the program leaves the screen, the moment
+to keep them, since Android may end the program after that. The person's text size reaches every
+text through `Context.SetTextScale`, which the window sets in every frame.
 `window.OpenVideo(film)` plays a film's pictures (not yet its sound) in a `draw2d.Image` that
 `Context.Image` draws: `Play`, `Pause`, `Loop`, and `Update` in every frame it shows. On Android the
 phone's decoders read it; in a browser, a video element the page never shows; on the desktop it is
