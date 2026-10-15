@@ -47,7 +47,8 @@ var EnglishEditingWords = EditingWords{Cut: "Cut", Copy: "Copy", Paste: "Paste",
 // SetEditingWords sets the labels of the bar over a selection, in the person's language.
 func (ui *Context) SetEditingWords(words EditingWords) { ui.editingWords = words }
 
-func (ui *Context) editingWordsOrEnglish() EditingWords {
+// EditingWords are the labels the bar over a selection shows: the ones set, or English.
+func (ui *Context) EditingWords() EditingWords {
 	if ui.editingWords == (EditingWords{}) {
 		return EnglishEditingWords
 	}
@@ -238,7 +239,7 @@ func (ui *Context) addSelectionBar(field ID, memory *fieldMemory, area draw2d.Re
 // selectionActions are the bar's buttons: cut and copy a selection (not a secret one's), paste
 // what the clipboard holds, select the whole text when it is not.
 func (ui *Context) selectionActions(memory *fieldMemory) {
-	editor, words := &memory.editor, ui.editingWordsOrEnglish()
+	editor, words := &memory.editor, ui.EditingWords()
 	chosen := editor.hasSelection() && !memory.secret
 	done := false
 	if chosen && ui.button(words.Cut, words.Cut, "", flatButton) {
