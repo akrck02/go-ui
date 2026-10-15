@@ -341,7 +341,8 @@ interfaceContext.Describe(ui.Description{Role: ui.SwitchRole, Label: "Beacon", C
 
 What `Describe` leaves empty stays as the boxes tell it. `Hidden` leaves out a decoration, or a label
 read already with the field it names. A control with an icon alone and no label is read by the icon's
-name ("arrow left") for want of a better one: describe it with what it does.
+name ("arrow left") for want of a better one: describe it with what it does. After a menu button
+or a select, `Describe` describes the button, even while its list is open over it.
 
 What the screen reader asks comes back as `ScreenReaderAct(id, action)`, done in the next frame: a
 press clicks the control as a tap would (a field takes the keyboard), a long press is read by

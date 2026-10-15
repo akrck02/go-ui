@@ -12,9 +12,10 @@ import (
 const popupLayer = 100000
 
 // popup adds a floating box under the anchor (or above it when there is no room below), at least
-// minimumWidth wide. A passive popup never takes the mouse (a tooltip).
+// minimumWidth wide. A passive popup never takes the mouse (a tooltip). Describe after it still
+// describes the control it opened from, not the popup's last item.
 func (ui *Context) popup(id ID, anchor draw2d.Rect, minimumWidth float32, passive bool, look Look, content func()) {
-	outside := ui.open
+	outside, opener := ui.open, ui.finished
 	ui.open = nil
 	layout := Layout{Direction: Vertical, Width: Fit().Between(minimumWidth, 0), Padding: Pad(4)}
 	index := ui.openElement(element{id: id, kind: boxElement, layout: layout, look: look})
@@ -25,7 +26,7 @@ func (ui *Context) popup(id ID, anchor draw2d.Rect, minimumWidth float32, passiv
 	if content != nil {
 		content()
 	}
-	ui.open = outside
+	ui.open, ui.finished = outside, opener
 }
 
 // positionPopup puts a popup under its anchor, or above it when it would leave the window, and

@@ -290,3 +290,18 @@ func TestTheScreenReadersNodeIsRinged(t *testing.T) {
 		t.Fatal("no screen reader, no ring")
 	}
 }
+
+func TestDescribeAfterAnOpenMenuNamesItsButton(t *testing.T) {
+	h := readerHarness(t)
+	build := func(ui *Context) {
+		ui.MenuButton("ellipsis-vertical", "", func() { ui.MenuItem("", "Tides", "") })
+		ui.Describe(Description{Label: "More options"})
+	}
+	h.frame(build)
+	h.ui.ScreenReaderAct(h.node("More options").ID, ReaderPress)
+	h.frame(build)
+	h.node("Tides")
+	if node := h.node("More options"); node.Role != ButtonRole {
+		t.Fatalf("the button keeps its name while its menu is open: %+v", node)
+	}
+}
