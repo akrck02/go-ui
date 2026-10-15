@@ -346,7 +346,9 @@ or a select, `Describe` describes the button, even while its list is open over i
 
 What the screen reader asks comes back as `ScreenReaderAct(id, action)`, done in the next frame: a
 press clicks the control as a tap would (a field takes the keyboard), a long press is read by
-`LongPressed`, forward and backward scroll an area or move a slider a step. Nodes keep their ids from
+`LongPressed`, forward and backward scroll an area or move a slider a step. Text the screen reader
+types, pastes or dictates into a field comes as `ScreenReaderSetText(id, text)`: the field takes it
+whole, as typing (one line, cut at its `MaxLength`), and the keyboard stays down. Nodes keep their ids from
 frame to frame, so the screen reader stays on what it was reading. On Android, the window hands the
 list to go-renderer, which gives it to TalkBack ([go-ui on Android](android.md#screen-readers)).
 

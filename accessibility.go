@@ -108,6 +108,8 @@ type readerState struct {
 	focus         ID         // the node the screen reader is on, ringed
 	asked         map[ID]ReaderAction
 	acting        map[ID]ReaderAction // the actions of this frame
+	textAsked     map[ID]string       // fields' new texts, by ScreenReaderSetText
+	texts         map[ID]string       // the new texts of this frame
 }
 
 // SetScreenReader tells the interface whether a screen reader is on; the window does, on a phone.
@@ -140,6 +142,16 @@ func (ui *Context) ScreenReaderAct(id ID, action ReaderAction) {
 		ui.reader.asked = map[ID]ReaderAction{}
 	}
 	ui.reader.asked[id] = action
+}
+
+// ScreenReaderSetText replaces a field's whole text with what a screen reader typed, pasted or
+// dictated into it, in the next frame, without bringing the keyboard up. The field takes it as
+// typing: one line, cut at its MaxLength.
+func (ui *Context) ScreenReaderSetText(id ID, text string) {
+	if ui.reader.textAsked == nil {
+		ui.reader.textAsked = map[ID]string{}
+	}
+	ui.reader.textAsked[id] = text
 }
 
 // Describe tells a screen reader more about the box added just before it (a control, a text): what
@@ -176,6 +188,14 @@ func (ui *Context) beginReading() {
 	clear(reader.longPressable)
 	reader.acting, reader.asked = reader.asked, reader.acting
 	clear(reader.asked)
+	reader.texts, reader.textAsked = reader.textAsked, reader.texts
+	clear(reader.textAsked)
+}
+
+// readerText is the text a screen reader put in a field for this frame, if it did.
+func (ui *Context) readerText(id ID) (string, bool) {
+	text, asked := ui.reader.texts[id]
+	return text, asked
 }
 
 // readerActs tells whether a screen reader asked something of a control in this frame.

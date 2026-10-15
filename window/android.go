@@ -123,7 +123,12 @@ func (reader *screenReader) before(context *ui.Context, state *input.State) {
 	context.SetScreenReader(android.ScreenReaderOn())
 	actions := android.TakeReaderActions()
 	for _, action := range actions {
-		if id := reader.numbers.id(action.Node); id != 0 {
+		id := reader.numbers.id(action.Node)
+		switch {
+		case id == 0:
+		case action.Kind == android.ReaderSetText:
+			context.ScreenReaderSetText(id, action.Text)
+		default:
 			context.ScreenReaderAct(id, readerAction(action.Kind))
 		}
 	}

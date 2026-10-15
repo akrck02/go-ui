@@ -165,14 +165,10 @@ func (editor *editor) wordAfter(position int) int {
 	return position
 }
 
-// insert types text at the caret, over the selection if there is one. Line breaks and other
-// control characters are left out (the field has one line), and the limit cuts what does not fit.
-// It returns whether the text changed.
-func (editor *editor) insert(text string, kind editKind) bool {
-	if text == "" {
-		return false
-	}
-	added := make([]rune, 0, len(text))
+// typable is text as a one-line field takes it: line breaks and tabs become spaces, and other
+// control characters are left out.
+func typable(text string) []rune {
+	kept := make([]rune, 0, len(text))
 	for _, character := range text {
 		if character == '\n' || character == '\r' || character == '\t' {
 			character = ' '
@@ -180,8 +176,28 @@ func (editor *editor) insert(text string, kind editKind) bool {
 		if unicode.IsControl(character) {
 			continue
 		}
-		added = append(added, character)
+		kept = append(kept, character)
 	}
+	return kept
+}
+
+// fitted is text as the field takes it whole: typable, and cut at the limit.
+func (editor *editor) fitted(text string) string {
+	kept := typable(text)
+	if editor.limit > 0 && len(kept) > editor.limit {
+		kept = kept[:editor.limit]
+	}
+	return string(kept)
+}
+
+// insert types text at the caret, over the selection if there is one. Line breaks and other
+// control characters are left out (the field has one line), and the limit cuts what does not fit.
+// It returns whether the text changed.
+func (editor *editor) insert(text string, kind editKind) bool {
+	if text == "" {
+		return false
+	}
+	added := typable(text)
 	start, end := editor.selection()
 	if editor.limit > 0 {
 		room := editor.limit - (len(editor.text) - (end - start))

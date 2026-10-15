@@ -110,6 +110,9 @@ func (ui *Context) TextFieldWith(name string, text *string, options TextFieldOpt
 func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fieldEvent {
 	memory := remember(ui, id, func() *fieldMemory { return &fieldMemory{} })
 	memory.editor.limit, memory.weight, memory.secret = options.MaxLength, options.Weight, options.Secret
+	if typed, asked := ui.readerText(id); asked {
+		*text = memory.editor.fitted(typed) // while it is being typed in too: the editor follows below
+	}
 	ui.focusables = append(ui.focusables, id)
 	result := ui.interact(id)
 	if result.pressed && ui.focus != id {

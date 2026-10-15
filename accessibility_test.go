@@ -305,3 +305,42 @@ func TestDescribeAfterAnOpenMenuNamesItsButton(t *testing.T) {
 		t.Fatalf("the button keeps its name while its menu is open: %+v", node)
 	}
 }
+
+func TestAScreenReaderReplacesAFieldsText(t *testing.T) {
+	h := readerHarness(t)
+	name, code := "Keeper", ""
+	changed := false
+	build := func(ui *Context) {
+		changed = ui.TextFieldWith("name", &name, TextFieldOptions{Placeholder: "Name"})
+		ui.TextFieldWith("code", &code, TextFieldOptions{Placeholder: "Code", MaxLength: 4})
+	}
+	h.frame(build)
+	h.ui.ScreenReaderSetText(h.node("Name").ID, "North light 🌊")
+	h.frame(build)
+	if name != "North light 🌊" || !changed {
+		t.Fatalf("the field takes the whole text, as typed: %q, changed %v", name, changed)
+	}
+	if h.ui.WantsKeyboard() {
+		t.Fatal("the field is filled without bringing the keyboard up")
+	}
+	h.ui.ScreenReaderSetText(h.node("Code").ID, "12\n345")
+	h.frame(build)
+	if code != "12 3" {
+		t.Fatalf("one line, cut at the field's limit: %q", code)
+	}
+	h.frame(build)
+	if changed {
+		t.Fatal("once")
+	}
+	h.ui.ScreenReaderAct(h.node("Name").ID, ReaderPress)
+	h.frame(build)
+	h.ui.ScreenReaderSetText(h.node("Name").ID, "")
+	h.frame(build)
+	if name != "" || h.node("Name").Value != "" {
+		t.Fatalf("a field being typed in is emptied too: %q", name)
+	}
+	h.frame(build)
+	if name != "" {
+		t.Fatalf("and stays so as typing goes on: %q", name)
+	}
+}
