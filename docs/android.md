@@ -68,7 +68,9 @@ a dark theme, so a program can follow it; `cmd/mobile` asks at every frame until
 in its settings.
 
 **Typing and notifications.** While a text field is typed in (`Context.Typing`), the window brings
-the phone's on-screen keyboard up, and puts it away after. `window.Notify` shows a notification in
+the phone's on-screen keyboard up, and puts it away after. The keyboard edits the field's text, as
+on the phone's own fields: it suggests words from it, underlines the word it is composing, and its
+suggestion replaces that word (`Context.TypedField`, `Context.EditTypedField`). `window.Notify` shows a notification in
 the phone's shade (in a browser, through the page's notifications), once `window.NotificationsAllowed`;
 `window.AskForNotifications` asks the person. On the desktop they are not shown yet.
 `window.OpenLink(link)` opens a link in the application that shows it, `window.Share(title, text)`

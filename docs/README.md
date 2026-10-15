@@ -303,6 +303,13 @@ Characters come from the system after the keyboard layout and dead keys, so acce
 as anywhere else. Line breaks and tabs pasted in become spaces: the field has one line. Text
 longer than the field slides sideways to keep the caret in sight.
 
+A phone's on-screen keyboard edits the field's text rather than typing key by key: it suggests
+words, keeps the word it is still making underlined (*composing*) and deletes around the caret.
+`TypedField()` tells the window which field is typed in, with its text, selection and composing
+word, and `EditTypedField(edit)` puts the keyboard's edit in, in the next frame, as typing: one
+line, cut at `MaxLength`, its words undone as typed ones are. A key or a touch that changes the
+text ends the composing. The Android window does both ([go-ui on Android](android.md)).
+
 `Focus(path…)` gives the keyboard to a field by its scopes and label, as `Area` finds it, with its
 text selected: the search box on a shortcut, or the first field of a form that just opened. While
 a field has the focus, `End` claims the keyboard, so the viewer's shortcuts and cameras do not

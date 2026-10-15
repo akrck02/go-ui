@@ -72,8 +72,10 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 		context.SetInsets(ui.Insets{Top: bars.Top, Bottom: bars.Bottom, Left: bars.Left, Right: bars.Right})
 		context.SetTextScale(android.TextScale()) // the person's text size, from the phone's settings
 		reader.before(context, app.Input)
+		takeKeyboardEdit(context)
 		err := update(app, step)
 		reader.after(context)
+		sendTypedField(context)
 		android.ShowKeyboard(context.Typing()) // the on-screen keyboard, while a field is typed in
 		return err
 	}
@@ -181,4 +183,32 @@ func readerAction(kind android.ReaderActionKind) ui.ReaderAction {
 		return ui.ReaderBackward
 	}
 	return ui.ReaderPress
+}
+
+// takeKeyboardEdit gives the field typed in what the on-screen keyboard made of its text since the
+// last step: words, the word being composed, deletions.
+func takeKeyboardEdit(context *ui.Context) {
+	field, typing := context.TypedField()
+	if !typing {
+		return
+	}
+	edit, edited := android.TakeTextEdit(uint64(field.Field))
+	if !edited {
+		return
+	}
+	context.EditTypedField(ui.KeyboardText{Field: field.Field, Text: edit.Text,
+		SelectionStart: edit.SelectionStart, SelectionEnd: edit.SelectionEnd,
+		ComposingStart: edit.ComposingStart, ComposingEnd: edit.ComposingEnd})
+}
+
+// sendTypedField tells the on-screen keyboard the text of the field typed in, so it suggests from it
+// and edits it.
+func sendTypedField(context *ui.Context) {
+	field, typing := context.TypedField()
+	if !typing {
+		return
+	}
+	android.EditText(uint64(field.Field), android.TextInput{Text: field.Text,
+		SelectionStart: field.SelectionStart, SelectionEnd: field.SelectionEnd,
+		ComposingStart: field.ComposingStart, ComposingEnd: field.ComposingEnd}, field.Secret)
 }

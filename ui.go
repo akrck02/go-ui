@@ -95,6 +95,7 @@ type Context struct {
 
 	wantsMouse, wantsKeyboard bool
 	typing                    bool // a text field has the focus in this frame
+	keyboard                  keyboardState
 
 	sheets, nextSheets []ID // sheets shown in the last frame and in this one, back to front
 	// the fields of the front sheet, as a range of focusables, so Tab stays inside it
@@ -157,6 +158,7 @@ func (ui *Context) Begin(state *input.State) {
 	ui.frame++
 	ui.beginReading()
 	ui.typing = false
+	ui.beginKeyboard()
 	ui.now = state.Time()
 	ui.texts.turnOver()
 	ui.building = true

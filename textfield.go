@@ -79,8 +79,12 @@ type fieldPaint struct {
 	plain                        bool // no box nor focus ring of its own (TextFieldOptions.Plain)
 	caretX, scroll               float32
 	selectionStart, selectionEnd float32
+	composeStart, composeEnd     float32 // the word an on-screen keyboard is composing, underlined
 	weight                       draw2d.Weight
 }
+
+// composingLine is the thickness of the line under a word being composed.
+const composingLine = 1.5
 
 // fieldPadding is the space between a field's edges and its text.
 const fieldPadding = 10
@@ -135,9 +139,16 @@ func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fiel
 		if *text != memory.editor.String() {
 			memory.editor.load(*text) // the program changed the text while it was being edited
 		}
+		if edit, edited := ui.keyboardEditFor(id); edited {
+			memory.editor.fromKeyboard(edit)
+		}
+		before := memory.editor.snapshot()
 		event = ui.followFieldMouse(id, memory, result)
 		if event == fieldEditing {
 			event = ui.followFieldKeys(id, memory)
+		}
+		if memory.editor.snapshot() != before {
+			memory.editor.endComposing() // a key or a touch changed the text: the keyboard's word is done
 		}
 		switch event {
 		case fieldEditing:
@@ -151,6 +162,7 @@ func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fiel
 	}
 	if focused {
 		ui.focusSeen, ui.typing = true, true
+		ui.noteTyped(id, memory)
 	}
 	memory.hadFocus = focused
 	ui.addField(id, memory, *text, options, result, focused)
@@ -333,6 +345,7 @@ func (ui *Context) addField(id ID, memory *fieldMemory, text string, options Tex
 	if focused {
 		measures := ui.measureField(memory, text)
 		paint.caretX, paint.selectionStart, paint.selectionEnd = measures.caretX, measures.selectionStart, measures.selectionEnd
+		paint.composeStart, paint.composeEnd = measures.composeStart, measures.composeEnd
 		paint.caretShown = ui.blinkCaret(memory)
 		memory.scroll = ui.keepCaretInSight(id, memory.scroll, paint.caretX, measures.textWidth)
 	} else {
@@ -369,6 +382,7 @@ func (ui *Context) addField(id ID, memory *fieldMemory, text string, options Tex
 // fieldMeasures are the widths a focused field paints with, from the start of its text.
 type fieldMeasures struct {
 	caretX, selectionStart, selectionEnd, textWidth float32
+	composeStart, composeEnd                        float32
 }
 
 // fieldMeasureKey is what fieldMeasures depend on: they are worked out again only when it changes,
@@ -376,6 +390,8 @@ type fieldMeasures struct {
 type fieldMeasureKey struct {
 	text          string
 	caret, anchor int
+	composeStart  int
+	composeEnd    int
 	size, scale   float32
 	weight        draw2d.Weight
 }
@@ -383,7 +399,8 @@ type fieldMeasureKey struct {
 // measureField returns the caret's and the selection's offsets and the text's width.
 func (ui *Context) measureField(memory *fieldMemory, text string) fieldMeasures {
 	editor := &memory.editor
-	key := fieldMeasureKey{text: text, caret: editor.caret, anchor: editor.anchor, size: ui.Theme.TextSize, scale: ui.scale, weight: memory.weight}
+	key := fieldMeasureKey{text: text, caret: editor.caret, anchor: editor.anchor, composeStart: editor.composeStart,
+		composeEnd: editor.composeEnd, size: ui.Theme.TextSize, scale: ui.scale, weight: memory.weight}
 	if memory.measuredValid && memory.measuredKey == key {
 		return memory.measured
 	}
@@ -393,6 +410,10 @@ func (ui *Context) measureField(memory *fieldMemory, text string) fieldMeasures 
 		selectionStart: ui.textWidth(memory.shown(editor.text[:start]), memory.weight),
 		selectionEnd:   ui.textWidth(memory.shown(editor.text[:end]), memory.weight),
 		textWidth:      ui.textWidth(memory.shown([]rune(text)), memory.weight),
+	}
+	if editor.composeEnd > editor.composeStart && editor.composeEnd <= len(editor.text) {
+		memory.measured.composeStart = ui.textWidth(memory.shown(editor.text[:editor.composeStart]), memory.weight)
+		memory.measured.composeEnd = ui.textWidth(memory.shown(editor.text[:editor.composeEnd]), memory.weight)
 	}
 	memory.measuredKey, memory.measuredValid = key, true
 	return memory.measured
@@ -453,6 +474,11 @@ func (ui *Context) paintField(element *element) {
 		ui.drawing.Text(paint.placeholder, x, baseline, size, draw2d.Regular, theme.InkQuiet)
 	} else {
 		ui.drawing.Text(paint.text, x, baseline, size, paint.weight, theme.Ink)
+	}
+	if paint.focused && paint.composeEnd > paint.composeStart {
+		// the word the keyboard is still making is underlined, as on the phone's own fields
+		line := draw2d.Rect{X: x + paint.composeStart, Y: baseline + 3, Width: paint.composeEnd - paint.composeStart, Height: composingLine}
+		ui.drawing.Rectangle(line, 0, theme.Ink, draw2d.Transparent, 0)
 	}
 	if paint.focused && paint.caretShown {
 		caret := draw2d.Rect{X: x + paint.caretX - 0.75, Y: baseline - metrics.Ascent - 1, Width: 1.5, Height: metrics.Height() + 2}
