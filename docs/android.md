@@ -1,4 +1,4 @@
-# go-ui on Android
+# 📱 go-ui on Android
 
 **Status:** a first step (October 2026). A go-ui program opens and draws on an Android 16
 emulator, with a 3D scene under its interface, and reacts to taps and drags; the same code runs on
@@ -6,7 +6,9 @@ the desktop and in a browser. The example looks like Android's own apps (Materia
 page started as a plan (what to build, install and try, in which order); *What was built* says how
 it turned out, and *Next* what is left.
 
-![cmd/mobile on the Android emulator: the list of lighthouses, a lighthouse's details, and the island at three in the afternoon](images/android-emulator.jpg)
+<p align="center">
+  <img alt="cmd/mobile on the Android emulator: the list of lighthouses, a lighthouse's details, and the island at three in the afternoon" src="images/android-emulator.jpg" width="720">
+</p>
 
 ## What was built
 
@@ -110,12 +112,21 @@ are a list of lighthouses with their details, a map with the 3D island (drag to 
 come closer, a slider for the time of day) and settings (the dark theme, the screen's size and
 insets).
 
+The same program on the desktop, at a phone's size (`go run ./cmd/mobile -width 400 -height 860`):
+
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/mobile-dark.png">
+  <img alt="cmd/mobile in a desktop window at a phone's size: a list of lighthouses with switches, filter chips and a navigation bar" src="images/mobile-light.png" width="240">
+</picture>
+</p>
+
 ## Screen readers
 
 TalkBack reads a go-ui program as it reads Android's own applications: a finger moved over the
 screen reads what is under it, a swipe goes to the next thing, a double tap presses it, and the
 thing read is ringed. Every frame, while a screen reader is on, the interface makes its list of
-nodes ([screen readers](README.md#screen-readers)); `window/android.go` numbers them as Android's
+nodes ([screen readers](screen-readers.md)); `window/android.go` numbers them as Android's
 virtual views, says what Android widget each reads as (a switch is an `android.widget.Switch`) and
 hands them to go-renderer, which sends them to one small Java class only when they change. What
 TalkBack asks (press, long press, scroll, the thing it is on) comes back the same way.

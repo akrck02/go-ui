@@ -1,10 +1,12 @@
-# In a web browser
+# 🌐 In a web browser
 
 **Status:** a first step (October 2026). go-ui applications run in a browser, built for
 WebAssembly and drawn through WebGL2, with the same code as on the desktop. The desktop is
 unchanged.
 
-![The register application in a browser, unchanged: menu bar, filters, cards, table and inspector](images/web-app.jpg)
+<p align="center">
+  <img alt="The register application in a browser, unchanged: menu bar, filters, cards, table and inspector" src="images/web-app.jpg" width="720">
+</p>
 
 The register above is `cmd/app`, **not changed by a line**: `window.Run` opens a canvas instead
 of a window when the program is built for the browser.
@@ -20,7 +22,9 @@ folder.
 
 ## Over a 3D scene
 
-![A lighthouse panel over the island scene in a browser](images/web-scene.jpg)
+<p align="center">
+  <img alt="A lighthouse panel over the island scene in a browser" src="images/web-scene.jpg" width="360">
+</p>
 
 `cmd/web` is the same kind of program as `cmd/example`: the lighthouse island with a panel to look
 after its light and a status bar. On the desktop, `viewer.Run` draws the scene; it needs GLFW, so

@@ -1,4 +1,4 @@
-# Performance and battery audit
+# ⚡ Performance and battery audit
 
 **Date:** October 2026. **Scope:** go-ui and the 2D path of go-renderer it draws through (draw list,
 painter, atlas, flat renderer, window loop), measured with the register application (`cmd/app`).
