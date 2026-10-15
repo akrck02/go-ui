@@ -141,3 +141,39 @@ func TestAPaintedBoxIsGivenItsArea(t *testing.T) {
 		t.Fatal("what the program painted is not in the frame")
 	}
 }
+
+func TestAModalCoversAnOverlay(t *testing.T) {
+	h := newHarness(t)
+	h.ui.SetScreenReader(true)
+	tool, closed := 0, 0
+	build := func(ui *Context) {
+		ui.Overlay("tools", LayerOptions{AlignX: Center, AlignY: End, Padding: Pad(16)}, func() {
+			if ui.Button("Share") {
+				tool++
+			}
+		})
+		if ui.Modal("drawer", LayerOptions{AlignX: Start}, func() { ui.Label("Places") }) {
+			closed++
+		}
+	}
+	h.frame(build)
+	share, _ := h.textCommand("Share")
+	places, _ := h.textCommand("Places")
+	if share.Layer >= places.Layer {
+		t.Fatalf("the modal is drawn over the overlay: layers %d and %d", share.Layer, places.Layer)
+	}
+	for _, node := range h.ui.ScreenReaderNodes() {
+		if node.Label == "Share" {
+			t.Fatal("an overlay behind a modal is not read")
+		}
+	}
+	button := h.rect(childID(idOf("tools"), "Share"))
+	h.moveTo(float64(button.X+5), float64(button.Y+5))
+	h.press()
+	h.frame(build)
+	h.release()
+	h.frame(build)
+	if tool != 0 || closed != 1 {
+		t.Fatalf("a touch over the overlay is the modal's backdrop's: %d presses, %d closes", tool, closed)
+	}
+}

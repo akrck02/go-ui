@@ -49,17 +49,19 @@ func (ui *Context) Modal(name string, options LayerOptions, content func()) (dis
 	return escaped || touchedOutside
 }
 
-// Overlay shows content over everything without dimming or blocking what is behind it: a note at
-// the bottom with an action in it, a floating toolbar. Its controls work; elsewhere the screen
-// behind does. The program shows it for as long as it wants. name tells overlays apart.
+// Overlay shows content over the screen and its panels without dimming or blocking what is behind
+// it: a note at the bottom with an action in it, a floating toolbar. Its controls work; elsewhere
+// the screen behind does. Modals and sheets cover it, as a dialog or a drawer covers a phone's
+// floating buttons; menus and tooltips go over it. The program shows it for as long as it wants.
+// name tells overlays apart.
 func (ui *Context) Overlay(name string, options LayerOptions, content func()) {
 	id := ui.idFor(name)
 	outside := ui.open
 	ui.open = nil
 	layout := Layout{Direction: Vertical, Width: options.Width, Height: options.Height}
 	index := ui.openElement(element{id: id, kind: boxElement, layout: layout})
-	ui.roots = append(ui.roots, root{id: id, element: index, popup: true, placed: true, options: options})
-	ui.nextPopups = append(ui.nextPopups, id)
+	ui.roots = append(ui.roots, root{id: id, element: index, placed: true, options: options})
+	ui.nextOverlays = append(ui.nextOverlays, id)
 	ui.Push(name)
 	if content != nil {
 		content()
@@ -68,6 +70,9 @@ func (ui *Context) Overlay(name string, options LayerOptions, content func()) {
 	ui.pointerOn(id)
 	ui.open = outside
 }
+
+// overlayLayer is above the panels and under the sheets and the popups.
+const overlayLayer = 40000
 
 // placeInWindow puts an overlay where its options say, inside the window's padding.
 func (ui *Context) placeInWindow(placed *root) {

@@ -79,15 +79,17 @@ type Context struct {
 	memory          map[ID]*remembered
 	popups          []ID // popups that took part in the last frame, back to front
 	nextPopups      []ID
-	scrollUsed      bool                 // a scroll area took this step's wheel movement
-	finger          finger               // the one finger on a touch screen (gestures.go)
-	leaving         map[ID]*leavingLayer // layers that keep their last picture to leave with (leave.go)
-	textScale       float32              // the person's text size (SetTextScale); 0 = 1
-	press           press                // the pointer held down, for a long press (longpress.go)
-	longPressed     ID                   // the control long-pressed in this frame
-	lastHot         ID                   // the control under the pointer in the last frame
-	hotSince        time.Time            // when the pointer came onto it
-	interacted      ID                   // the last control that looked at the mouse, for Tooltip
+	// overlays are the overlays shown in the last frame and in this one, back to front
+	overlays, nextOverlays []ID
+	scrollUsed             bool                 // a scroll area took this step's wheel movement
+	finger                 finger               // the one finger on a touch screen (gestures.go)
+	leaving                map[ID]*leavingLayer // layers that keep their last picture to leave with (leave.go)
+	textScale              float32              // the person's text size (SetTextScale); 0 = 1
+	press                  press                // the pointer held down, for a long press (longpress.go)
+	longPressed            ID                   // the control long-pressed in this frame
+	lastHot                ID                   // the control under the pointer in the last frame
+	hotSince               time.Time            // when the pointer came onto it
+	interacted             ID                   // the last control that looked at the mouse, for Tooltip
 	// surfaces are the painted boxes on the screen (outside panels) in the last frame: bars and
 	// side columns of an application layout. The pointer over one belongs to the interface.
 	surfaces, nextSurfaces []draw2d.Rect
@@ -172,7 +174,7 @@ func (ui *Context) Begin(state *input.State) {
 	ui.hot = 0
 	ui.focusSeen, ui.focusables = false, ui.focusables[:0]
 	ui.scrollUsed = false
-	ui.nextPopups, ui.nextSheets = ui.nextPopups[:0], ui.nextSheets[:0]
+	ui.nextPopups, ui.nextSheets, ui.nextOverlays = ui.nextPopups[:0], ui.nextSheets[:0], ui.nextOverlays[:0]
 	ui.sheetFocusStart, ui.sheetFocusEnd = 0, 0
 	ui.cursor = input.CursorArrow
 	ui.findHoveredRoot()
@@ -209,6 +211,7 @@ func (ui *Context) End() {
 	ui.finishInteraction()
 	ui.popups, ui.nextPopups = ui.nextPopups, ui.popups
 	ui.sheets, ui.nextSheets = ui.nextSheets, ui.sheets
+	ui.overlays, ui.nextOverlays = ui.nextOverlays, ui.overlays
 	ui.forgetUnusedPanels()
 	ui.forgetUnusedMemory()
 }

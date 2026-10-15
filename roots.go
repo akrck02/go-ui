@@ -160,7 +160,7 @@ func (ui *Context) titleBar(title string, memory *panelMemory, options PanelOpti
 // rootSize is a root's size along an axis once its content is measured.
 func (ui *Context) rootSize(placed *root, axis Direction) float32 {
 	window := ui.windowAlong(axis)
-	if placed.popup {
+	if placed.popup || placed.placed {
 		return min(ui.elements[placed.element].sizeAlong(axis), window)
 	}
 	if placed.panel == nil {
@@ -250,6 +250,9 @@ func (ui *Context) layerOf(id ID) int {
 	if position := slices.Index(ui.nextSheets, id); position >= 0 {
 		return sheetLayer + position*10
 	}
+	if position := slices.Index(ui.nextOverlays, id); position >= 0 {
+		return overlayLayer + position
+	}
 	for _, placed := range ui.roots {
 		if placed.id == id && placed.popup {
 			return popupLayer + len(ui.nextPopups) + 1 // a passive popup, over everything
@@ -276,6 +279,12 @@ func (ui *Context) findHoveredRoot() {
 	if len(ui.sheets) > 0 {
 		ui.hoveredRoot = ui.sheets[len(ui.sheets)-1] // the front sheet covers the window
 		return
+	}
+	for position := len(ui.overlays) - 1; position >= 0; position-- {
+		if area, shown := ui.previous[ui.overlays[position]]; shown && area.Contains(x, y) {
+			ui.hoveredRoot = ui.overlays[position]
+			return
+		}
 	}
 	for position := len(ui.order) - 1; position >= 0; position-- {
 		if area, shown := ui.previous[ui.order[position]]; shown && area.Contains(x, y) {

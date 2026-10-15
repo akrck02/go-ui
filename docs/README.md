@@ -435,7 +435,8 @@ cards in a row, a row swiped away), and the control it came down on is then not 
 a second long-presses it (`LongPressed`). Scroll
 areas glide on when let go, and `ScrollPull` measures a pull past a list's top, for a list that
 refreshes; `ScrollOffset` tells how far it is scrolled, for a bar that shrinks over it. `Context.Modal` and `Context.Overlay` put a program's own content over everything, dimming what is
-behind (a dialog) or not (a note at the bottom); with `LayerOptions.Leave` they leave with motion
+behind (a dialog) or not (a note at the bottom). A modal covers the overlays, as a dialog or a
+drawer covers a phone's floating buttons: they are not touched nor read while it is open. With `LayerOptions.Leave` they leave with motion
 once the program stops showing them, fading and moving away (a picture of their last frame, which
 cannot be touched). `Context.Touches()` lists the fingers on a touch screen, for a
 control of a program's own that follows them (an on-screen stick); the first finger is also the
