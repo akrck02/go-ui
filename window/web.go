@@ -63,10 +63,14 @@ func AskForNotifications() {
 
 // FeelLongPress gives a short buzz for a long press, where the browser can (the Vibration API, on
 // phones); elsewhere nothing.
-func FeelLongPress() {
+func FeelLongPress() { Feel(FeelingLongPress) }
+
+// Feel gives a buzz of a kind where the browser can (the Vibration API, on phones); elsewhere
+// nothing.
+func Feel(feeling Feeling) {
 	navigator := js.Global().Get("navigator")
 	if navigator.Get("vibrate").Truthy() {
-		navigator.Call("vibrate", 25)
+		navigator.Call("vibrate", js.ValueOf(vibration(feeling)))
 	}
 }
 

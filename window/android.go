@@ -42,6 +42,10 @@ func AskForNotifications() { android.AskForNotifications() }
 // person has touch feedback on. Call it in the frame a control is long-pressed (ui.LongPressed).
 func FeelLongPress() { android.FeelLongPress() }
 
+// Feel gives a buzz of a kind, as Android's own applications do, if the person has touch feedback
+// on: a tick when something is chosen, a confirm or a reject when something went through or wrong.
+func Feel(feeling Feeling) { android.Feel(android.Feeling(feeling)) }
+
 // OpenLink opens a link in the application that shows it: a web page in the browser, mailto: in
 // the mail, tel: in the phone, geo: in the maps. It returns false when nothing opens it.
 func OpenLink(link string) bool { return android.OpenLink(link) }

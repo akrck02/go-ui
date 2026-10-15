@@ -53,6 +53,9 @@ func Notify(id int, title, text string) bool { return false }
 // FeelLongPress gives the buzz of a long press on a phone; a desktop has nothing to buzz.
 func FeelLongPress() {}
 
+// Feel gives a buzz on a phone; a desktop has nothing to buzz.
+func Feel(Feeling) {}
+
 // NotificationsAllowed tells whether the program may show notifications: not yet on the desktop.
 func NotificationsAllowed() bool { return false }
 

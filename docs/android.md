@@ -85,7 +85,9 @@ text through `Context.SetTextScale`, which the window sets in every frame.
 phone's decoders read it; in a browser, a video element the page never shows; on the desktop it is
 `ErrVideoUnsupported` for now.
 `window.FeelLongPress` gives the short buzz of a long press (`Context.LongPressed`), where the
-person has touch feedback on; in a browser it vibrates where the browser can.
+person has touch feedback on; in a browser it vibrates where the browser can. `window.Feel` gives the
+other buzzes a phone's applications give: `FeelingTick` when something is chosen, `FeelingConfirm`
+when something went through, `FeelingReject` when something went wrong or needs a look.
 
 **The wallpaper's colours.** Android 12 and later make five palettes from the wallpaper (Material
 You), and the system's own applications take their colours from them. `window.SystemPalettes()`
