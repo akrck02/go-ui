@@ -1,163 +1,178 @@
-# Plan: go-ui on Android
+# go-ui on Android
 
-**Status:** a plan, not started. It explains what stops go-ui applications from running on Android
-today, what has to be built, what has to be installed, and in which order, so the work can be
-picked up later.
+**Status:** a first step (October 2026). A go-ui program opens and draws on an Android 16
+emulator, with a 3D scene under its interface, and reacts to taps and drags; the same code runs on
+the desktop and in a browser. The example looks like Android's own apps (Material Design 3). This
+page started as a plan (what to build, install and try, in which order); *What was built* says how
+it turned out, and *Next* what is left.
 
-## Where things stand
+![cmd/mobile on the Android emulator: the list of lighthouses, a lighthouse's details, and the island at three in the afternoon](images/android-emulator.jpg)
 
-| Piece | Runs on Android? | Why |
-|---|---|---|
-| go-ui (context, layout, controls, theme) | **Yes** | Plain Go with no cgo: it only reads an `input.State` and fills a `draw2d.List` |
-| go-renderer `draw2d`, `input`, the overlay painter and measurer | **Yes** | Plain Go: shapes, fonts and the atlas need no graphics context |
-| go-renderer `opengl` (window, flat renderer, scene renderer) | **No** | GLFW and desktop OpenGL 4.1 core; Android has neither: it has OpenGL ES 3 through EGL, inside an activity |
-| go-ui `window` | **No** | Built on go-renderer's GLFW loop |
-
-So the interface itself is portable; what is missing is **a window and a renderer for Android**,
-and **touch** as an input.
-
-## Scope
-
-**First version:** applications that are only an interface (like `cmd/app`), on Android 8.0
-(API 26) or newer, on arm64 devices and the arm64 emulator.
-
-**Not in the first version:**
-
-- The 3D scene renderer (shadows, water, levels of detail) on OpenGL ES: much larger, done later.
-- The on-screen keyboard and text input: it arrives with the text field.
-- iOS: the same route works there (see *Later*), but it is not tried first.
-
-## How it fits together
+## What was built
 
 ```text
-your program            build(context) every frame, the same code as on the desktop
+your program            build(context) every frame: the same code as on the desktop
 go-ui                   unchanged: context, layout, controls, theme
-go-ui/window (mobile)   NEW: the Android app loop: lifecycle, surface, density, touch → input.State
-go-renderer/gles        NEW: FlatRenderer for OpenGL ES 3 (the overlay's atlas and quads)
-go-renderer/input       touch as a pointer, and the kind of pointer (mouse or finger)
-golang.org/x/mobile     the activity, the EGL surface and the events, built into an APK by gomobile
+go-ui/window (android)  window.Run: the interface, and a scene under it, over go-renderer's android
+go-renderer/android     the activity, its window and touches, a thread that draws, direct OpenGL ES
+go-renderer/gles        FlatRenderer and SceneRenderer, shared with the browser
+Android                 its own NativeActivity loads the program, a shared library built with the NDK
 ```
 
-`golang.org/x/mobile/app` gives a Go program an Android activity with an OpenGL ES context and a
-stream of events (lifecycle, size, paint, touch, key). `gomobile build` turns the program into an
-APK. No Java or Kotlin is written.
-
-## The pieces
-
-### 1. An OpenGL ES flat renderer (go-renderer, `feature/` branch)
-
-The overlay painter already produces everything as rectangles of one atlas (`overlay.Quad`). On
-the desktop, `opengl.FlatRenderer` uploads the atlas and draws the rectangles in one call. The
-Android version does the same with OpenGL ES 3:
-
-- A new package (for example `gles`) with `FlatRenderer.Draw(list, background, width, height,
-  scale)`, the same signature as the desktop one.
-- The same two shaders with `#version 300 es` and a precision line; the atlas as a single-channel
-  `R8` texture, as today.
-- It talks to OpenGL ES through `golang.org/x/mobile/gl` (a `gl.Context` from the app's lifecycle)
-  rather than `go-gl/gl`. About 150 lines; the painter, the atlas and the fonts are reused as they
-  are.
-
-### 2. Touch as a pointer (go-renderer `input`, go-ui)
-
-- The first finger down becomes the **pointer**: it moves the cursor and presses and releases the
-  left button, so every control works unchanged. A second finger is ignored for now.
-- `input.State` learns the **kind of pointer** (`PointerMouse` or `PointerTouch`). With a finger
-  there is no hover: go-ui does not show hovered looks or tooltips, and the pressed look shows
-  while the finger is down.
-- Dragging a finger on a list will scroll it once `ScrollArea` exists; until then a drag only
-  moves sliders and panels.
-- Long press as a right click, and pinch, are left for later.
-
-### 3. The Android window (go-ui `window`, built only for Android)
-
-`window.Run` keeps its signature; on Android (`//go:build android`) it runs the x/mobile loop:
-
-| Event | What happens |
+| Piece | Where |
 |---|---|
-| `lifecycle` (visible / not visible) | create the GL context and the renderer, or let them go; the app stops drawing in the background |
-| `size` | window size in layout pixels and the screen's density (`PixelsPerPt`), which becomes the drawing scale; the insets of the status bar and the gesture bar |
-| `touch` | the pointer, as above |
-| `paint` | one interface step (`Begin`, `build`, `End`), draw, publish |
+| The window: renderers made again with each new graphics context, the insets for the interface | `window/android.go` |
+| The activity, the drawing thread, touches, JNI for the bars and the theme, crash reports | go-renderer's `android` package ([its docs](../../go-renderer/docs/android.md)) |
+| A 3D scene under the interface (`Options.Scene`), on every platform | `window/window.go` and each platform's file |
+| An example that looks like an Android app, the same on desktop, web and Android | `cmd/mobile` |
+| Building an installable package, with a window theme | `cmd/mobile/build-apk.sh`, `cmd/mobile/android/` |
 
-Like the desktop window, it **draws only when something happened** (a touch, a resize, or a
-control asking for another frame with `RequestFrame`), which is what a phone's battery needs.
+There is no Java and no golang.org/x/mobile. The first step used x/mobile (gomobile); its way of
+calling OpenGL (every call to another thread, three at a time) was about two thirds of what a 3D view
+cost on a phone, and go-renderer's own activity halved it (see *A cap on frames*).
 
-### 4. A touch theme and narrow layouts (go-ui)
+**Touch.** The first finger down is the pointer: it moves the cursor and presses the left button,
+lifting it releases the button, so every control works unchanged. Other fingers are ignored until
+it lifts. Positions are divided by the screen's density, so layout pixels are Android's
+density-independent pixels (1/160 inch) and an interface is the same size on every phone.
 
-- `TouchTheme()`: the same colours with controls 44–48 px tall, 15 px text and wider gaps, so a
-  finger hits what it aims at.
-- `Context.Width()` and `Context.Height()`: the window's size, so `build` can choose a layout. In
-  immediate mode this is an `if`: on a narrow screen the register shows the list, and the
-  inspector opens over it when a row is touched; on a tablet it keeps three columns.
-- The insets from the window are padding for the top and bottom bars.
+**Drawing on demand.** As on the desktop and in the browser, the window draws only when something
+happens: a touch, a size change, a frame a control asks for (`RequestFrame`) or `window.Wake`. A
+frame that would look like the one shown is not drawn. Idle on a phone, the program uses
+nothing at all: the drawing thread sleeps until a touch or a frame asked for.
 
-### 5. Building and installing
+**A cap on frames.** Phones refresh at 90 or 120 Hz, and a finger dragging a 3D view asks for a
+frame at every touch event (over a hundred a second). The window draws at most
+`Options.MaxFramesPerSecond` frames a second, 60 on a phone by default; the system's own repaints
+do not count. Measured on a Pixel 6 Pro dragging the example's island for 10 seconds:
+well over a core at first (an independent measurement found 125–128 % at about 100 frames a
+second); 82 % with the cap and lighter frames, still through x/mobile; **41 %** with go-renderer's own
+activity and direct OpenGL calls.
+
+**The system's bars.** The window covers the whole screen, under see-through bars, as Android's
+own apps do. `Context.Insets()` says how much of each edge the status bar and the gesture bar
+cover, in layout pixels, so a program paints its own bars' backgrounds under them and keeps its
+controls clear. The window asks Android through JNI (`getRootWindowInsets`); before the window is
+shown it falls back on the bars' standard heights. The window theme in `cmd/mobile/android/res` makes the bars
+see-through, with dark icons in the system's light theme and light ones in its dark theme.
+
+**When it closes on a phone nobody can reach.** On Android the window keeps the report of a crash
+(an unrecovered panic, a fatal error or signal, with the failing goroutine's stack) in the
+application's own folder, through `runtime/debug.SetCrashOutput`, and `window.LastCrash()` gives it
+to the next run; `window.Graphics()` names the phone's OpenGL ES and GPU, or the error that stopped
+the window drawing. `cmd/mobile` shows both in its settings, and warns on its first screen after a
+crash, so a screenshot is enough to know what happened.
+
+**The dark theme.** `window.SystemPrefersDark()` tells whether the phone (or the browser) is set to
+a dark theme, so a program can follow it; `cmd/mobile` asks at every frame until a theme is chosen
+in its settings.
+
+**Typing and notifications.** While a text field is typed in (`Context.Typing`), the window brings
+the phone's on-screen keyboard up, and puts it away after. The keyboard edits the field's text, as
+on the phone's own fields: it suggests words from it, underlines the word it is composing, and its
+suggestion replaces that word (`Context.TypedField`, `Context.EditTypedField`). `window.Notify` shows a notification in
+the phone's shade (in a browser, through the page's notifications), once `window.NotificationsAllowed`;
+`window.AskForNotifications` asks the person. On the desktop they are not shown yet.
+`window.OpenLink(link)` opens a link in the application that shows it, `window.Share(title, text)`
+offers a text through the system's sheet, `Context.Copy` and `Context.ClipboardText` reach the
+phone's clipboard, and `window.Preference` / `window.KeepPreference` keep small values between runs
+(a JSON file in the application's folder; on the desktop, the user's configuration folder; in a
+browser, local storage). `Options.Hidden` is called when the program leaves the screen, the moment
+to keep them, since Android may end the program after that. The person's text size reaches every
+text through `Context.SetTextScale`, which the window sets in every frame.
+`window.OpenVideo(film)` plays a film's pictures (not yet its sound) in a `draw2d.Image` that
+`Context.Image` draws: `Play`, `Pause`, `Loop`, and `Update` in every frame it shows. On Android the
+phone's decoders read it; in a browser, a video element the page never shows; on the desktop it is
+`ErrVideoUnsupported` for now.
+`window.FeelLongPress` gives the short buzz of a long press (`Context.LongPressed`), where the
+person has touch feedback on; in a browser it vibrates where the browser can. `window.Feel` gives the
+other buzzes a phone's applications give: `FeelingTick` when something is chosen, `FeelingConfirm`
+when something went through, `FeelingReject` when something went wrong or needs a look.
+
+**The wallpaper's colours.** Android 12 and later make five palettes from the wallpaper (Material
+You), and the system's own applications take their colours from them. `window.SystemPalettes()`
+returns them, thirteen shades each, from white to black (`window.PaletteTones`), and false on an
+older phone, on the desktop and in a browser. They change with the wallpaper, so read them at every
+frame. go-ui-android's `material.System` builds a Material scheme from them.
+
+**A scene under the interface.** `Options.Scene` returns, at every step, a scene and a camera to
+draw behind the interface, or nil for none. It gets the input the interface did not claim, so a
+drag on an empty part of the screen turns the camera while a drag on a slider moves the slider.
+The scene is drawn by go-renderer's `gles.SceneRenderer` on Android and in browsers, and its
+OpenGL scene renderer on the desktop.
+
+**`cmd/mobile`** is built the way Android's own apps look, out of go-ui boxes, texts and
+clickables (`material.go`): a top app bar and a navigation bar painted under the system's bars,
+list items with a round icon and a Material switch, filter chips, pill-shaped buttons, cards and
+floating buttons, in Material Design 3's baseline colours, light and dark, and in Roboto, Android's
+typeface (embedded under the SIL Open Font License, in `cmd/mobile/fonts`). Its three destinations
+are a list of lighthouses with their details, a map with the 3D island (drag to turn, buttons to
+come closer, a slider for the time of day) and settings (the dark theme, the screen's size and
+insets).
+
+## Screen readers
+
+TalkBack reads a go-ui program as it reads Android's own applications: a finger moved over the
+screen reads what is under it, a swipe goes to the next thing, a double tap presses it, and the
+thing read is ringed. Every frame, while a screen reader is on, the interface makes its list of
+nodes ([screen readers](README.md#screen-readers)); `window/android.go` numbers them as Android's
+virtual views, says what Android widget each reads as (a switch is an `android.widget.Switch`) and
+hands them to go-renderer, which sends them to one small Java class only when they change. What
+TalkBack asks (press, long press, scroll, the thing it is on) comes back the same way.
+
+A package needs that class: `go-ui-apk` in go-ui-android compiles it in. A package made without it
+(`cmd/mobile/build-apk.sh`, which carries no Java) runs as before, without a screen reader.
+
+## Building and trying it
 
 ```bash
-gomobile build -target android/arm64 -androidapi 26 -o register.apk ./cmd/app
-adb install -r register.apk
+export ANDROID_HOME=…/android-sdk ANDROID_NDK_HOME=$ANDROID_HOME/ndk/<version>
+cmd/mobile/build-apk.sh mobile.apk
+adb install -r mobile.apk
+adb shell am start -n io.github.akrck02.goui.mobile/android.app.NativeActivity
+adb exec-out screencap -p > screen.png          # what the screen shows
+adb shell input tap 230 330                     # a tap, in screen pixels
 ```
 
-The application's name and icon come from an `AndroidManifest.xml` and an `assets/` folder next to
-the program, which gomobile picks up.
+`build-apk.sh` builds the program as a shared library with the NDK's compiler (aligned to 16 KB
+pages, which newer phones need), and packs it with the Android SDK's tools (`aapt2`, `zipalign`,
+`apksigner`) under `cmd/mobile/android/AndroidManifest.xml`: Android's own `NativeActivity`, no Java
+code. It signs with the debug key: for trying, not for publishing.
 
-## What has to be installed
+**Installed for this:** the NDK (r29) through `sdkmanager`. The SDK, its build tools, the emulator and
+an arm64 Android 16 image were already there.
 
-None of this is on the development machine yet (only `adb`). About 6–8 GB:
+## What was checked, and what was not
 
-| Tool | Why | How |
+On the emulator (Android 16, arm64, 1080 × 2400 at 420 dots per inch): the window draws with
+sharp text at a density of 2.625, clear of the status bar and the gesture bar (49 and 24
+layout pixels); a tap on a row opens its details and a tap on its switch flips it without
+opening it; the back arrow, the chips, the buttons, the navigation bar and the sliders work; the
+island draws at any time of day, turns with a drag and comes closer with the buttons; the dark
+theme switches every screen. Idle, the program uses about 0.5 % of a core; the map takes 16 draw
+calls a frame.
+
+On a phone (Pixel 6 Pro, Android 16, Mali-G78, 1080 × 2340): the same, in the system's dark theme
+at start, and after going to the background and back. That phone gives an OpenGL ES 3.2 context
+(first asked for version 2, through x/mobile). It found two faults the emulator hid, now fixed: the 3D map
+lost its ground after coming back from the background (meshes kept the buffers of the destroyed
+graphics context), and the program read the system's theme before Android gave it.
+
+Not yet: rotating the screen, and how it feels on other phones and tablets.
+
+## Next
+
+| # | What | Why |
 |---|---|---|
-| A JDK (17) | The Android build tools need it | Homebrew `openjdk@17` |
-| Android command-line tools | `sdkmanager` and `avdmanager` | Homebrew cask `android-commandlinetools`, or Android Studio |
-| SDK platform 34, platform tools, build tools | Compile and install APKs | `sdkmanager "platforms;android-34" "platform-tools" "build-tools;34.0.0"` |
-| NDK | gomobile compiles Go for Android with it | `sdkmanager "ndk;26.3.11579264"` (or the current long-term one) |
-| Emulator and an arm64 system image | Run without a phone | `sdkmanager "emulator" "system-images;android-34;google_apis;arm64-v8a"` then `avdmanager create avd` |
-| gomobile | Builds the APK | `go install golang.org/x/mobile/cmd/gomobile@latest`, then `gomobile init` |
-
-A phone with USB debugging enabled can replace the emulator (and is the better test of touch and
-density).
-
-## Iterations
-
-| # | What | Done when | Effort |
-|---|---|---|---|
-| 0 | Install the tools; build and run x/mobile's own GL example | It shows on the emulator | ½ day |
-| 1 | `gles.FlatRenderer`; the Android `window` with lifecycle, size and paint | A one-panel go-ui program shows crisp text on the emulator, captured with `adb exec-out screencap` | 1 day |
-| 2 | Touch as a pointer, no hover with a finger, drawing on demand (already done on the desktop: frame requests and waking are in place, the Android loop only has to honour them) | Buttons, rows and filters of `cmd/app` react to taps; the app is idle (no frames) when untouched | 1 day |
-| 3 | `TouchTheme`, `Width`/`Height`, insets, a narrow layout for `cmd/app`, name and icon | The register is comfortable on a phone and a tablet, in light and dark | 1 day |
-
-About **3–4 days** in all. Each step keeps the desktop working, with tests and captures.
-
-## Testing
-
-- **Without a device:** unit tests for the touch mapping (a tap is a click; no hover with a
-  finger), for drawing on demand, and for the narrow layout (which boxes exist below a width).
-- **On the emulator:** captures through `adb exec-out screencap -p` at each iteration, taps through
-  `adb shell input tap x y`, and checks that the app stops drawing when idle.
-- **On a phone:** density, touch accuracy, the gesture bar, and how it feels.
-
-## Later
-
-- **The on-screen keyboard**, with the text field: recent versions of x/mobile can show and hide
-  the virtual keyboard; if not, a few lines of JNI do it. Characters then arrive as key events.
-- **The 3D scene on OpenGL ES 3**: shaders ported to ES, shadow maps as depth textures (ES 3 has
-  them), smaller defaults for phones. A separate, larger piece of work.
-- **iOS**: the same x/mobile route builds for iOS with OpenGL ES (deprecated there, but working);
-  Metal would be the long-term answer.
+| 1 | **The bars' icons follow the program's theme**, not only the system's: a JNI call on Android's interface thread | Dark icons on a dark app (when the app's theme differs from the phone's) |
+| 2 | **Material pieces in go-ui itself**: a touch theme, the switch, list items, the navigation bar, now in the example | Every program gets them, not only the example |
+| 3 | ~~The on-screen keyboard~~ | Done: it comes up while a field is typed in (`Context.Typing`) |
+| 4 | ~~Long press~~, **two fingers, the back gesture** | Long press done (`Context.LongPressed`); pinch to zoom the map, back from a lighthouse's details |
+| 5 | **Shadows, sky and waves** on phones, as on the desktop | The scene is go-renderer's simple one on phones and in browsers |
 
 ## Risks
 
-- **x/mobile changes slowly** and some of it is experimental. If it gets in the way, the fallback
-  is a small native activity of our own (cgo, EGL and the NDK's `android_native_app_glue`): more
-  code, more control.
-- **Text sharpness at phone densities** (2.6× to 3.5×, not whole numbers): the painter rounds to
-  pixels and rasterises at the real size, which should hold; checked on the first captures.
-- **Battery**: drawing on demand is a must on a phone, not an extra.
-
-## Decisions to take before starting
-
-1. Emulator, a real phone, or both.
-2. The lowest Android version (API 26, Android 8.0, is proposed).
-3. ~~Whether drawing on demand also goes to the desktop window~~: done, the desktop window draws
-   on demand by default.
+- **Phones differ.** The window was tried on a Mali GPU (Pixel 6 Pro) and the emulator; an Adreno
+  phone closed the first version, for a reason not known yet (the crash report will tell).
+- **Battery**: drawing on demand is a must on a phone, and it is in place, with a cap of 60 frames
+  a second.

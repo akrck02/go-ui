@@ -2,6 +2,7 @@ package ui
 
 import (
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/akrck02/go-renderer/draw2d"
@@ -13,6 +14,35 @@ type TextFieldOptions struct {
 	Placeholder string // shown, quiet, while the field is empty
 	MaxLength   int    // the most characters it takes; 0 = no limit
 	Width       Sizing // the zero value grows across the row or column
+	// Weight is the face the text is written in: draw2d.Mono for a code or a key.
+	Weight draw2d.Weight
+	// Plain draws no box of the field's own, neither fill nor border nor focus ring: for a field
+	// inside a box of the program's (a search bar's pill), which shows where it is.
+	Plain bool
+	// Secret shows a dot for each character (a password), and lets nothing be copied or cut.
+	Secret bool
+}
+
+// FieldFocused tells whether the text field of a name, in the same scope, has the keyboard: a
+// program that draws the field's box itself (a Material field, with its text before and after)
+// colours it by that. Call it before the field: it tells the focus as the last frame left it.
+func (ui *Context) FieldFocused(name string) bool {
+	return ui.focus != 0 && ui.focus == hashString(ui.scopeSeed(), name)
+}
+
+// FocusField gives the keyboard to the text field of a name, in the same scope, from the next
+// time it is built: a search that opens ready to type in. Call it before the field.
+func (ui *Context) FocusField(name string) {
+	ui.focus, ui.focusByKeyboard = hashString(ui.scopeSeed(), name), false
+}
+
+// shown is what a field shows of some of its text: the characters, or a dot for each in a secret
+// field. Every width the field measures is of what it shows.
+func (memory *fieldMemory) shown(runes []rune) string {
+	if !memory.secret {
+		return string(runes)
+	}
+	return strings.Repeat("•", len(runes))
 }
 
 // fieldEvent is how editing a field ended during a step, if it did.
@@ -28,6 +58,7 @@ const (
 // fieldMemory is what a text field keeps between frames.
 type fieldMemory struct {
 	editor        editor
+	secret        bool // dots for the characters (TextFieldOptions.Secret)
 	hadFocus      bool
 	original      string    // the text when the field took the focus, for Escape
 	scroll        float32   // how far the text is moved left to keep the caret in sight
@@ -37,6 +68,8 @@ type fieldMemory struct {
 	measuredKey   fieldMeasureKey
 	measuredValid bool
 	paint         fieldPaint
+	weight        draw2d.Weight // the face of its text, from its options
+	handles       fieldHandles  // a touch screen's handles and bar (handles.go)
 }
 
 // fieldPaint is what painting a field needs, worked out while the field is built; offsets are
@@ -44,9 +77,15 @@ type fieldMemory struct {
 type fieldPaint struct {
 	text, placeholder            string
 	focused, caretShown          bool
+	plain                        bool // no box nor focus ring of its own (TextFieldOptions.Plain)
 	caretX, scroll               float32
 	selectionStart, selectionEnd float32
+	composeStart, composeEnd     float32 // the word an on-screen keyboard is composing, underlined
+	weight                       draw2d.Weight
 }
+
+// composingLine is the thickness of the line under a word being composed.
+const composingLine = 1.5
 
 // fieldPadding is the space between a field's edges and its text.
 const fieldPadding = 10
@@ -75,7 +114,10 @@ func (ui *Context) TextFieldWith(name string, text *string, options TextFieldOpt
 // typed and tells how the edit ended, if it did during this step.
 func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fieldEvent {
 	memory := remember(ui, id, func() *fieldMemory { return &fieldMemory{} })
-	memory.editor.limit = options.MaxLength
+	memory.editor.limit, memory.weight, memory.secret = options.MaxLength, options.Weight, options.Secret
+	if typed, asked := ui.readerText(id); asked {
+		*text = memory.editor.fitted(typed) // while it is being typed in too: the editor follows below
+	}
 	ui.focusables = append(ui.focusables, id)
 	result := ui.interact(id)
 	if result.pressed && ui.focus != id {
@@ -98,9 +140,19 @@ func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fiel
 		if *text != memory.editor.String() {
 			memory.editor.load(*text) // the program changed the text while it was being edited
 		}
+		textBefore := memory.editor.String() // typing, on either keyboard, puts the handles away
+		if edit, edited := ui.keyboardEditFor(id); edited {
+			memory.editor.fromKeyboard(edit)
+		}
+		before := memory.editor.snapshot()
 		event = ui.followFieldMouse(id, memory, result)
 		if event == fieldEditing {
 			event = ui.followFieldKeys(id, memory)
+		}
+		ui.followTouches(id, memory, result, memory.editor.String() != textBefore)
+		ui.addHandles(id, memory)
+		if memory.editor.snapshot() != before {
+			memory.editor.endComposing() // a key or a touch changed the text: the keyboard's word is done
 		}
 		switch event {
 		case fieldEditing:
@@ -113,7 +165,11 @@ func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fiel
 		focused = ui.focus == id
 	}
 	if focused {
-		ui.focusSeen = true
+		ui.focusSeen, ui.typing = true, true
+		ui.noteTyped(id, memory)
+	}
+	if !focused {
+		memory.handles = fieldHandles{}
 	}
 	memory.hadFocus = focused
 	ui.addField(id, memory, *text, options, result, focused)
@@ -125,9 +181,15 @@ func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fiel
 func (ui *Context) followFieldMouse(id ID, memory *fieldMemory, result interaction) fieldEvent {
 	state := ui.state
 	editor := &memory.editor
-	if state.ButtonPressed(input.MouseLeft) && !result.pressed {
+	if state.ButtonPressed(input.MouseLeft) && !result.pressed && !ui.onOwnHandles(id) {
 		ui.focus = 0
 		return fieldLeft
+	}
+	if ui.readerActs(id, ReaderPress) {
+		// a screen reader's double tap has no place in the text: typing goes on at its end
+		editor.moveTo(len(editor.text), false)
+		memory.blinkStart = ui.now
+		return fieldEditing
 	}
 	if !result.pressed && !(result.held && memory.dragging) {
 		memory.dragging = false
@@ -170,20 +232,20 @@ func (ui *Context) fieldPositionAt(id ID, memory *fieldMemory, x float32) int {
 	low, high := 0, len(runes)
 	for low < high { // the first position whose caret is right of the pointer
 		middle := (low + high) / 2
-		if ui.textWidth(string(runes[:middle+1])) < offset {
+		if ui.textWidth(memory.shown(runes[:middle+1]), memory.weight) < offset {
 			low = middle + 1
 		} else {
 			high = middle
 		}
 	}
 	if low > 0 && low <= len(runes) {
-		left, right := ui.textWidth(string(runes[:low-1])), ui.textWidth(string(runes[:low]))
+		left, right := ui.textWidth(memory.shown(runes[:low-1]), memory.weight), ui.textWidth(memory.shown(runes[:low]), memory.weight)
 		if offset-left < right-offset {
 			return low - 1
 		}
 	}
 	if low < len(runes) {
-		left, right := ui.textWidth(string(runes[:low])), ui.textWidth(string(runes[:low+1]))
+		left, right := ui.textWidth(memory.shown(runes[:low]), memory.weight), ui.textWidth(memory.shown(runes[:low+1]), memory.weight)
 		if offset-left > right-offset {
 			return low + 1
 		}
@@ -191,8 +253,8 @@ func (ui *Context) fieldPositionAt(id ID, memory *fieldMemory, x float32) int {
 	return low
 }
 
-func (ui *Context) textWidth(text string) float32 {
-	return ui.measure(text, TextStyle{Size: ui.Theme.TextSize}).Width
+func (ui *Context) textWidth(text string, weight draw2d.Weight) float32 {
+	return ui.measure(text, TextStyle{Size: ui.scaledText(ui.Theme.TextSize), Weight: weight}).Width
 }
 
 // shortcutKey is the key held for copy, paste and undo: Cmd on a Mac, Ctrl elsewhere. wordKey is
@@ -246,9 +308,9 @@ func (ui *Context) followFieldKeys(id ID, memory *fieldMemory) fieldEvent {
 		editor.deleteTo(ui.deletionEnd(editor, 1, word, lineKey))
 	case shortcut && state.Typed(input.KeyA):
 		editor.selectAll()
-	case shortcut && state.Typed(input.KeyC) && editor.hasSelection():
+	case shortcut && state.Typed(input.KeyC) && editor.hasSelection() && !memory.secret:
 		state.SetClipboardText(editor.selectedText())
-	case shortcut && state.Typed(input.KeyX) && editor.hasSelection():
+	case shortcut && state.Typed(input.KeyX) && editor.hasSelection() && !memory.secret:
 		state.SetClipboardText(editor.selectedText())
 		editor.deleteTo(editor.caret)
 	case shortcut && state.Typed(input.KeyV):
@@ -286,10 +348,11 @@ func (ui *Context) deletionEnd(editor *editor, direction int, word, line bool) i
 func (ui *Context) addField(id ID, memory *fieldMemory, text string, options TextFieldOptions, result interaction, focused bool) {
 	theme := ui.Theme
 	paint := &memory.paint
-	*paint = fieldPaint{text: text, placeholder: options.Placeholder, focused: focused}
+	*paint = fieldPaint{text: memory.shown([]rune(text)), placeholder: options.Placeholder, focused: focused}
 	if focused {
 		measures := ui.measureField(memory, text)
 		paint.caretX, paint.selectionStart, paint.selectionEnd = measures.caretX, measures.selectionStart, measures.selectionEnd
+		paint.composeStart, paint.composeEnd = measures.composeStart, measures.composeEnd
 		paint.caretShown = ui.blinkCaret(memory)
 		memory.scroll = ui.keepCaretInSight(id, memory.scroll, paint.caretX, measures.textWidth)
 	} else {
@@ -300,8 +363,11 @@ func (ui *Context) addField(id ID, memory *fieldMemory, text string, options Tex
 	if width == (Sizing{}) {
 		width = Grow()
 	}
-	look := Look{Fill: theme.Surface, Border: theme.Line, BorderWidth: 1, Radius: theme.ControlRadius}
+	paint.weight, paint.plain = options.Weight, options.Plain
+	look := Look{Fill: theme.Surface, Border: theme.ControlLine, BorderWidth: 1, Radius: theme.ControlRadius}
 	switch {
+	case options.Plain:
+		look = Look{}
 	case focused:
 		look.Border, look.BorderWidth = theme.Primary, 1.5
 	case result.hovered:
@@ -313,11 +379,17 @@ func (ui *Context) addField(id ID, memory *fieldMemory, text string, options Tex
 	layout := Layout{Width: width.Between(max(width.Min, 2*fieldPadding+20), width.Max), Height: Fixed(theme.ControlHeight)}
 	index := ui.frameWithID(id, layout, look, nil)
 	ui.elements[index].field = paint
+	read := Description{Role: FieldRole, Label: options.Placeholder, Secret: options.Secret}
+	if !options.Secret {
+		read.Value = text
+	}
+	ui.describeElement(index, read)
 }
 
 // fieldMeasures are the widths a focused field paints with, from the start of its text.
 type fieldMeasures struct {
 	caretX, selectionStart, selectionEnd, textWidth float32
+	composeStart, composeEnd                        float32
 }
 
 // fieldMeasureKey is what fieldMeasures depend on: they are worked out again only when it changes,
@@ -325,22 +397,30 @@ type fieldMeasures struct {
 type fieldMeasureKey struct {
 	text          string
 	caret, anchor int
+	composeStart  int
+	composeEnd    int
 	size, scale   float32
+	weight        draw2d.Weight
 }
 
 // measureField returns the caret's and the selection's offsets and the text's width.
 func (ui *Context) measureField(memory *fieldMemory, text string) fieldMeasures {
 	editor := &memory.editor
-	key := fieldMeasureKey{text: text, caret: editor.caret, anchor: editor.anchor, size: ui.Theme.TextSize, scale: ui.scale}
+	key := fieldMeasureKey{text: text, caret: editor.caret, anchor: editor.anchor, composeStart: editor.composeStart,
+		composeEnd: editor.composeEnd, size: ui.Theme.TextSize, scale: ui.scale, weight: memory.weight}
 	if memory.measuredValid && memory.measuredKey == key {
 		return memory.measured
 	}
 	start, end := editor.selection()
 	memory.measured = fieldMeasures{
-		caretX:         ui.textWidth(string(editor.text[:editor.caret])),
-		selectionStart: ui.textWidth(string(editor.text[:start])),
-		selectionEnd:   ui.textWidth(string(editor.text[:end])),
-		textWidth:      ui.textWidth(text),
+		caretX:         ui.textWidth(memory.shown(editor.text[:editor.caret]), memory.weight),
+		selectionStart: ui.textWidth(memory.shown(editor.text[:start]), memory.weight),
+		selectionEnd:   ui.textWidth(memory.shown(editor.text[:end]), memory.weight),
+		textWidth:      ui.textWidth(memory.shown([]rune(text)), memory.weight),
+	}
+	if editor.composeEnd > editor.composeStart && editor.composeEnd <= len(editor.text) {
+		memory.measured.composeStart = ui.textWidth(memory.shown(editor.text[:editor.composeStart]), memory.weight)
+		memory.measured.composeEnd = ui.textWidth(memory.shown(editor.text[:editor.composeEnd]), memory.weight)
 	}
 	memory.measuredKey, memory.measuredValid = key, true
 	return memory.measured
@@ -382,14 +462,14 @@ func (ui *Context) paintField(element *element) {
 	theme := ui.Theme
 	paint := element.field
 	rect := element.rect
-	if paint.focused {
+	if paint.focused && !paint.plain {
 		ring := draw2d.Rect{X: rect.X - 3, Y: rect.Y - 3, Width: rect.Width + 6, Height: rect.Height + 6}
 		ui.drawing.Rectangle(ring, element.look.Radius+3, draw2d.Transparent, theme.FocusRing, 3)
 	}
 	clip := draw2d.Rect{X: rect.X + fieldPadding - 1, Y: rect.Y, Width: rect.Width - 2*fieldPadding + 2, Height: rect.Height}
 	ui.drawing.PushClip(clip)
 	defer ui.drawing.PopClip()
-	size := theme.TextSize
+	size := ui.scaledText(theme.TextSize)
 	metrics := ui.measure("Hg", TextStyle{Size: size})
 	baseline := rect.Y + (rect.Height-metrics.Height())/2 + metrics.Ascent
 	x := rect.X + fieldPadding - paint.scroll
@@ -400,7 +480,12 @@ func (ui *Context) paintField(element *element) {
 	if paint.text == "" && paint.placeholder != "" {
 		ui.drawing.Text(paint.placeholder, x, baseline, size, draw2d.Regular, theme.InkQuiet)
 	} else {
-		ui.drawing.Text(paint.text, x, baseline, size, draw2d.Regular, theme.Ink)
+		ui.drawing.Text(paint.text, x, baseline, size, paint.weight, theme.Ink)
+	}
+	if paint.focused && paint.composeEnd > paint.composeStart {
+		// the word the keyboard is still making is underlined, as on the phone's own fields
+		line := draw2d.Rect{X: x + paint.composeStart, Y: baseline + 3, Width: paint.composeEnd - paint.composeStart, Height: composingLine}
+		ui.drawing.Rectangle(line, 0, theme.Ink, draw2d.Transparent, 0)
 	}
 	if paint.focused && paint.caretShown {
 		caret := draw2d.Rect{X: x + paint.caretX - 0.75, Y: baseline - metrics.Ascent - 1, Width: 1.5, Height: metrics.Height() + 2}

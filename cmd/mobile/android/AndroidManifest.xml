@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The program is a shared library that Android's own NativeActivity loads: no Java code
+  (hasCode="false"). lib_name is the library's name, libmobile.so (build-apk.sh).
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="io.github.akrck02.goui.mobile"
+    android:versionCode="2"
+    android:versionName="1.1">
+  <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="34" />
+  <application android:label="Lighthouses" android:debuggable="true" android:hasCode="false"
+      android:theme="@style/WindowTheme">
+    <activity android:name="android.app.NativeActivity"
+        android:label="Lighthouses"
+        android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+        android:exported="true">
+      <meta-data android:name="android.app.lib_name" android:value="mobile" />
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>

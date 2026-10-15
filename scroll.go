@@ -1,7 +1,9 @@
 package ui
 
 import (
+	"math"
 	"strconv"
+	"time"
 
 	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
@@ -15,6 +17,12 @@ type scrollMemory struct {
 	view    float32
 	thumbID ID
 	thumbOn bool // the pointer is on the thumb or dragging it: drawn stronger
+
+	glide       float32   // pixels a second the content moves on after a finger let it go
+	lastTime    time.Time // the last step's time, for the glide
+	pull        float32   // how far a finger pulls the content down past its top
+	pulledAt    float32   // how far it was pulled when the finger let go
+	pulledFrame int       // the frame it let go in
 }
 
 // scrollBarWidth is the thumb's width, and scrollBarReach how wide an area around it takes the
@@ -25,8 +33,17 @@ const (
 	minimumThumb   = 24
 )
 
+// A glide slows by glideFriction of its speed every second and stops under glideStop pixels a
+// second. A pull past the top moves half as far as the finger (pullResistance), as a list resists.
+const (
+	glideFriction  = 4
+	glideStop      = 20
+	pullResistance = 0.5
+)
+
 // ScrollArea adds a box whose content scrolls up and down when it is taller than the box: with
-// the wheel or the trackpad over it, or by dragging the thin bar on its right. The box needs a
+// the wheel or the trackpad over it, by dragging the thin bar on its right, or, on a touch screen,
+// by dragging the content with a finger, which glides on when let go. The box needs a
 // height that does not follow its content (Grow, Fixed, Percent, or Fit with a maximum); its
 // children are stacked top to bottom.
 func (ui *Context) ScrollArea(name string, layout Layout, content func()) {
@@ -34,14 +51,89 @@ func (ui *Context) ScrollArea(name string, layout Layout, content func()) {
 }
 
 func (ui *Context) scrollArea(id ID, layout Layout, content func()) *scrollMemory {
-	memory := remember(ui, id, func() *scrollMemory { return &scrollMemory{thumbID: childID(id, "##thumb")} })
+	memory := ui.scrollMemoryOf(id)
 	layout.Direction, layout.Columns = Vertical, 0
 	index := ui.frameWithID(id, layout, Look{Clip: true}, content)
 	ui.elements[index].scroll = memory
 	ui.followWheel(id, memory)
+	ui.scrollForReader(id, memory)
 	ui.followThumb(memory)
+	ui.followFinger(id, memory)
 	return memory
 }
+
+// followFinger drags the content with a finger that went up or down first, and lets it glide on
+// when let go while moving. Pulled down past its top, the content stays and the pull is measured
+// (ScrollPull), for a list that refreshes when pulled. Inner areas see the finger first (they
+// finish first) and keep it.
+func (ui *Context) followFinger(id ID, memory *scrollMemory) {
+	seconds := float32(ui.now.Sub(memory.lastTime).Seconds())
+	memory.lastTime = ui.now
+	finger := &ui.finger
+	if !ui.takeFinger(id, Vertical) {
+		ui.glideOn(memory, seconds)
+		return
+	}
+	if finger.released {
+		memory.glide = -finger.velocityY
+		if memory.pull > 0 {
+			memory.glide = 0
+		}
+		memory.pulledAt, memory.pulledFrame, memory.pull = memory.pull, ui.frame, 0
+		return
+	}
+	moved := finger.y - finger.previousY
+	switch {
+	case memory.pull > 0 || (moved > 0 && memory.offset <= 0):
+		memory.pull = max(memory.pull+moved*pullResistance, 0)
+		memory.offset = 0
+	default:
+		memory.offset -= moved
+	}
+	memory.glide = 0
+}
+
+// ScrollPull tells how far a finger is pulling a scroll area's content down past its top, and, in
+// the frame the finger lets go, how far it was pulled then (zero otherwise): a list refreshes when
+// pulled far enough and let go. name is the scroll area's, in the same scope.
+func (ui *Context) ScrollPull(name string) (pulling, releasedAt float32) {
+	// the area's id, worked out without counting as a use of the name (idFor would make the area's
+	// own a different one)
+	memory := ui.scrollMemoryOf(hashString(ui.scopeSeed(), name))
+	if memory.pulledFrame >= ui.frame-1 && memory.pulledFrame > 0 {
+		releasedAt = memory.pulledAt
+	}
+	return memory.pull, releasedAt
+}
+
+// ScrollOffset tells how far a scroll area's content is scrolled from its top, as of the last
+// frame: a bar over a list shrinks or takes a colour as the list goes up under it. name is the
+// scroll area's, in the same scope.
+func (ui *Context) ScrollOffset(name string) float32 {
+	return ui.scrollMemoryOf(hashString(ui.scopeSeed(), name)).offset
+}
+
+// scrollMemoryOf is a scroll area's memory, made the first time either the area or ScrollPull asks.
+func (ui *Context) scrollMemoryOf(id ID) *scrollMemory {
+	return remember(ui, id, func() *scrollMemory { return &scrollMemory{thumbID: childID(id, "##thumb")} })
+}
+
+// glideOn moves the content on after a finger let go of it, slowing to a stop.
+func (ui *Context) glideOn(memory *scrollMemory, seconds float32) {
+	if memory.glide == 0 || seconds <= 0 || seconds > 0.25 {
+		return
+	}
+	before := memory.offset
+	memory.offset = clamp(memory.offset+memory.glide*seconds, 0, max(memory.content-memory.view, 0))
+	memory.glide *= float32(math.Exp(-glideFriction * float64(seconds)))
+	if abs32(memory.glide) < glideStop || memory.offset == before {
+		memory.glide = 0
+		return
+	}
+	ui.RequestFrame(16 * time.Millisecond)
+}
+
+func abs32(value float32) float32 { return max(value, -value) }
 
 // followWheel scrolls with the wheel when the pointer is over the area. Inner areas see the wheel
 // first (they finish first) and take it, so a list inside a scrolling panel scrolls on its own.
@@ -50,7 +142,7 @@ func (ui *Context) followWheel(id ID, memory *scrollMemory) {
 	if delta == 0 || ui.scrollUsed || ui.sceneDrag || memory.content <= memory.view {
 		return
 	}
-	area, shown := ui.previous[id]
+	area, shown := ui.reachOf(id)
 	x, y := float32(ui.state.CursorX), float32(ui.state.CursorY)
 	if !shown || !area.Contains(x, y) || ui.hoveredRoot != ui.currentRoot() {
 		return
@@ -62,7 +154,7 @@ func (ui *Context) followWheel(id ID, memory *scrollMemory) {
 // followThumb moves the content while the thumb is dragged, as far as the thumb moves times how
 // much taller the content is than the view.
 func (ui *Context) followThumb(memory *scrollMemory) {
-	thumb := ui.interact(memory.thumbID)
+	thumb := ui.pointerOn(memory.thumbID) // a screen reader scrolls the area itself
 	memory.thumbOn = thumb.hovered || ui.active == memory.thumbID
 	if memory.thumbOn {
 		ui.cursor = input.CursorArrow

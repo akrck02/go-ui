@@ -32,6 +32,7 @@ func (ui *Context) Checkbox(label string, value *bool) bool {
 		look.Border = theme.Primary
 	}
 	ui.elements[box].look = look
+	ui.Describe(Description{Role: CheckboxRole, Checked: *value})
 	return ui.flipOnClick(result, value)
 }
 
@@ -61,6 +62,7 @@ func (ui *Context) Toggle(label string, value *bool) bool {
 	}
 	ui.elements[track].look = Look{Fill: trackFill, Radius: 9}
 	ui.elements[knob].look = Look{Fill: theme.Surface, Radius: 7}
+	ui.Describe(Description{Role: SwitchRole, Checked: *value})
 	return ui.flipOnClick(result, value)
 }
 
@@ -99,7 +101,7 @@ func (ui *Context) SliderStep(name string, value *float32, minimum, maximum, ste
 			ui.Frame(Layout{Width: Grow(), Height: Fixed(4)}, Look{Fill: fill, Radius: 2}, nil)
 		})
 	}
-	_, result := ui.pressable(id, Layout{Width: Grow(), Height: Fixed(20), AlignY: Center}, Look{}, func() {
+	slider, result := ui.pressable(id, Layout{Width: Grow(), Height: Fixed(20), AlignY: Center}, Look{}, func() {
 		bar(theme.Primary, fraction)
 		thumb = ui.frameWithID(0, Layout{Width: Fixed(sliderThumb), Height: Fixed(sliderThumb)}, Look{}, nil)
 		bar(theme.Line, 1-fraction)
@@ -110,10 +112,15 @@ func (ui *Context) SliderStep(name string, value *float32, minimum, maximum, ste
 		ui.cursor = input.CursorHand
 	}
 	ui.elements[thumb].look = thumbLook
+	ui.describeElement(slider, Description{Role: SliderRole, Label: displayText(name), Range: Range{Minimum: minimum, Maximum: maximum, Current: *value}})
+	before := *value
+	if steps := ui.readerSteps(id); steps != 0 {
+		*value = snap(clamp(*value+steps*readerStep(minimum, maximum, step), minimum, maximum), minimum, maximum, step)
+		return *value != before
+	}
 	if !result.held {
 		return false
 	}
-	before := *value
 	*value = ui.slideTo(id, result, *value, minimum, maximum)
 	*value = snap(*value, minimum, maximum, step)
 	return *value != before
@@ -180,7 +187,7 @@ func (ui *Context) NumberField(name string, value *float32, minimum, maximum, st
 func (ui *Context) stepNumber(id ID, name string, memory *numberMemory, value *float32, step float32, format string) {
 	theme := ui.Theme
 	layout := Layout{Width: Grow(), Height: Fixed(theme.ControlHeight), Padding: PadXY(2, 0), AlignY: Center}
-	ui.Frame(layout, Look{Fill: theme.Surface, Border: theme.Line, BorderWidth: 1, Radius: theme.ControlRadius}, func() {
+	ui.Frame(layout, Look{Fill: theme.Surface, Border: theme.ControlLine, BorderWidth: 1, Radius: theme.ControlRadius}, func() {
 		ui.Push(name)
 		if ui.FlatIconButton("minus", "") {
 			*value -= step
@@ -225,6 +232,14 @@ func parseNumber(text string) (float32, bool) {
 	return float32(number), true
 }
 
+// readerStep is how far a screen reader moves a slider at a time: a step, or a twentieth of it all.
+func readerStep(minimum, maximum, step float32) float32 {
+	if step > 0 {
+		return step
+	}
+	return (maximum - minimum) / 20
+}
+
 // Tabs adds a row of segments, one per label, with the selected one raised; clicking a segment
 // selects it. It returns true on the step the selection changes.
 func (ui *Context) Tabs(name string, selected *int, labels ...string) bool {
@@ -240,6 +255,7 @@ func (ui *Context) Tabs(name string, selected *int, labels ...string) bool {
 			tab, result := ui.pressable(ui.idFor(label), tabLayout, Look{}, func() {
 				text = ui.addLeaf(ui.textElement(displayText(label), TextStyle{Weight: draw2d.Medium, Color: theme.InkSoft}))
 			})
+			ui.Describe(Description{Role: TabRole, Selected: isSelected})
 			if isSelected {
 				ui.elements[tab].look = Look{Fill: theme.Surface, Border: theme.Line, BorderWidth: 1, Radius: theme.ControlRadius - 1}
 				ui.elements[text].style.Color = theme.Ink

@@ -15,7 +15,8 @@ are sized and placed, and what each control does.
 | [Applications without a scene](#applications-without-a-scene) | A plain window for interface-only programs |
 | [How it is drawn](#how-it-is-drawn) | From boxes to go-renderer's draw list |
 | [Performance and battery audit](performance-audit.md) | What an idle and a busy interface cost, measured, and what to improve in order |
-| [Plan: Android](android.md) | What it would take to run go-ui applications on Android (not started) |
+| [In a web browser](web.md) | Running go-ui applications in a page, built for WebAssembly and drawn through WebGL2 |
+| [On Android](android.md) | Running go-ui applications on Android: the window, touch, building a package, what was tested and what is next |
 
 ## A frame
 
@@ -107,7 +108,9 @@ theme.
 | `Checkbox(label, &value)` | A box to tick, with its label; clicking either flips the value. Returns `true` when it changes |
 | `Toggle(label, &value)` | A settings row: the label on the left, a switch on the right |
 | `Slider(name, &value, minimum, maximum)`, `SliderStep(…, step)` | A track with a knob: click to jump, drag to slide, Shift to slide ten times slower; `SliderStep` keeps whole steps |
-| `TextField(name, &text)`, `TextFieldWith(name, &text, TextFieldOptions{…})` | A line of text to type in, with a `Placeholder`, a `MaxLength` or a `Width`. Returns `true` on the steps the text changes; see [Text fields](#text-fields) |
+| `TextField(name, &text)`, `TextFieldWith(name, &text, TextFieldOptions{…})` | A line of text to type in, with a `Placeholder`, a `MaxLength` or a `Width`, `Secret` for a password (a dot for each character, nothing copied). Returns `true` on the steps the text changes; see [Text fields](#text-fields) |
+| `FieldFocused(name)`, `FocusField(name)` | Whether the field of a name has the keyboard (for a box the program draws around it), and giving it the keyboard (a search that opens ready to type in) |
+| `Popover(name, &open, look, content)` | A box of the program's own floating under the control added just before it (a dropdown's choices); a touch outside, Escape or the back closes it |
 | `NumberField(name, &value, minimum, maximum, step, format)` | A number with − and + on its sides; drag the number sideways for a step every 4 px, or click it to type a value (a point or a comma for decimals; Enter keeps it, Escape does not). Shown with a format such as `"%.1f s"` |
 | `Tabs(name, &selected, labels…)` | A segmented row, the selected segment raised; the program shows what belongs to it with an `if` |
 | `Select(name, &selected, options)` | A field showing the chosen option; clicking opens the list over everything. Click an option, or use the arrows and Enter; Escape or a click elsewhere closes it |
@@ -122,7 +125,9 @@ theme.
 | `Table(name, layout, columns, rows)` | A header and rows that scroll, with group captions and a selected row; see [Tables](#tables) |
 | `DragSource(name, payload, layout, content)`, `DropTarget(name, layout, accepts, content)` | Drag a value of yours from one box to another, or onto the scene; see [Drag and drop](#drag-and-drop) |
 | `Resizable(name, side, &size, minimum, maximum, layout, content)` | A box whose edge can be dragged to change its width or height; see [Resizable boxes](#resizable-boxes) |
+| `Image(picture, layout, radius)` | A picture (`draw2d.Image`) filling a box of the size given, cropped evenly where their shapes differ, its corners rounded |
 | `Tooltip(text)` | Explains the control added just before it, in a small dark note, once the pointer rests on it for half a second |
+| `LongPressed()` | Tells whether the control added just before it was long-pressed in this frame: a finger held still on it for half a second, or the right mouse button. A touch that became a long press is no click |
 
 Controls added outside any panel go on the **screen**, a box the size of the window behind every
 panel: a status bar is a `Spacer()` followed by a full-width `Frame`. The screen can hold a whole
@@ -298,12 +303,70 @@ Characters come from the system after the keyboard layout and dead keys, so acce
 as anywhere else. Line breaks and tabs pasted in become spaces: the field has one line. Text
 longer than the field slides sideways to keep the caret in sight.
 
+A phone's on-screen keyboard edits the field's text rather than typing key by key: it suggests
+words, keeps the word it is still making underlined (*composing*) and deletes around the caret.
+`TypedField()` tells the window which field is typed in, with its text, selection and composing
+word, and `EditTypedField(edit)` puts the keyboard's edit in, in the next frame, as typing: one
+line, cut at `MaxLength`, its words undone as typed ones are. A key or a touch that changes the
+text ends the composing. The Android window does both ([go-ui on Android](android.md)).
+
+On a touch screen, text is chosen as on a phone. A finger held on a word selects it: a drop-shaped
+handle hangs under each end of the selection, and a bar over it offers *Cut*, *Copy*, *Paste* and
+*Select all* (`SetEditingWords` in the person's language, `EditingWords` to read them; a secret
+field cannot be cut or copied).
+A touch shows a handle under the caret. A finger drags a handle to move its end, or the caret; the
+handle hangs under the text, so the finger does not hide what it chooses, and the ends never cross.
+The handles and the bar are popups of the field's own: pressing them keeps the field typed in.
+Typing, on either keyboard, puts them away; a mouse has none.
+
 `Focus(path…)` gives the keyboard to a field by its scopes and label, as `Area` finds it, with its
 text selected: the search box on a shortcut, or the first field of a form that just opened. While
 a field has the focus, `End` claims the keyboard, so the viewer's shortcuts and cameras do not
 take the letters.
 
 ![The register's search box with the text selected, filtering the table](images/app-search.png)
+
+## Screen readers
+
+A screen reader speaks what is on the screen for a person who cannot see it, and lets them act on
+it: on a phone, TalkBack reads what a finger moves over, and a double tap presses it. It needs the
+screen as *things with names*, not pixels. While one is on (`SetScreenReader(true)`, which the
+window does on Android), every frame also makes a list of what can be read, worked out from the
+boxes themselves, at no cost while none is on:
+
+- **A control is a node**, read by the texts inside it: a button reads "Light the lamp, button". A
+  control inside another (a switch in a row) is a node of its own, inside the row.
+- **Texts beside each other in one box are read together**: a row's title and the line under it are
+  one node, and a paragraph is one, not a node per word.
+- **A scroll area holds its rows**, and only those that show are read; the screen reader can scroll
+  it on (`ReaderForward`) or back.
+- **What is behind a modal or a sheet is left out**, as it cannot be touched.
+- **The node the screen reader is on is ringed** (`SetScreenReaderFocus`), dark outside and light
+  inside, over everything, as a phone rings what TalkBack reads.
+
+The controls say what they are and their state: a checkbox ticked, a toggle on (a switch), the tab
+shown, a slider's range, a field's text (not a secret one's). `Describe` says it for a control of
+your own, after it, in every frame:
+
+```go
+if interfaceContext.Clickable("beacon", layout, looks, drawSwitch) {
+	beacon = !beacon
+}
+interfaceContext.Describe(ui.Description{Role: ui.SwitchRole, Label: "Beacon", Checked: beacon})
+```
+
+What `Describe` leaves empty stays as the boxes tell it. `Hidden` leaves out a decoration, or a label
+read already with the field it names. A control with an icon alone and no label is read by the icon's
+name ("arrow left") for want of a better one: describe it with what it does. After a menu button
+or a select, `Describe` describes the button, even while its list is open over it.
+
+What the screen reader asks comes back as `ScreenReaderAct(id, action)`, done in the next frame: a
+press clicks the control as a tap would (a field takes the keyboard), a long press is read by
+`LongPressed`, forward and backward scroll an area or move a slider a step. Text the screen reader
+types, pastes or dictates into a field comes as `ScreenReaderSetText(id, text)`: the field takes it
+whole, as typing (one line, cut at its `MaxLength`), and the keyboard stays down. Nodes keep their ids from
+frame to frame, so the screen reader stays on what it was reading. On Android, the window hands the
+list to go-renderer, which gives it to TalkBack ([go-ui on Android](android.md#screen-readers)).
 
 ## Mouse and keyboard
 
@@ -363,6 +426,30 @@ drawn either: the window compares the draw list's fingerprint with the last one.
 between it sleeps: the register uses no processor while idle, against about 14% of a core
 drawing every frame. `Options.Continuous` (`-continuous`) draws every frame, for an interface that
 animates all the time. Over a 3D view (`viewer.Run`) the scene keeps drawing every frame.
+
+Built for WebAssembly (`GOOS=js GOARCH=wasm`), the same program runs in a web page: the window is
+the page's canvas, drawn through WebGL2 ([in a web browser](web.md)); built for Android, it is the
+application's activity ([on Android](android.md)).
+
+`Options.Scene` puts a 3D scene behind the interface: a function called at every step, with the
+input the interface did not claim, that returns a scene and a camera (or nil for none). On a phone,
+`Context.Insets()` says how much of each edge the system's bars cover, and `Context.Size()` gives
+the window's size, so a layout can paint under the bars and choose itself by the screen. `Context.Paint` adds a box the program paints itself once laid out, for shapes go-ui has no
+control for. `Context.Animate` eases a value to its target and `Context.Appear` eases something in as it is
+shown, asking for frames only while they move; `Context.Fold` opens a box to its content's height
+and closes it to nothing, with motion (more under a list row). `Context.Back` answers a phone's back gesture; modals
+and sheets answer it first. On a touch screen, one finger is followed from where it comes down: the way it goes first
+decides who takes it, the innermost scroll area for up and down, a `SwipeBox` for sideways (pages,
+cards in a row, a row swiped away), and the control it came down on is then not touched; a finger that stays still on a control for half
+a second long-presses it (`LongPressed`). Scroll
+areas glide on when let go, and `ScrollPull` measures a pull past a list's top, for a list that
+refreshes; `ScrollOffset` tells how far it is scrolled, for a bar that shrinks over it. `Context.Modal` and `Context.Overlay` put a program's own content over everything, dimming what is
+behind (a dialog) or not (a note at the bottom). A modal covers the overlays, as a dialog or a
+drawer covers a phone's floating buttons: they are not touched nor read while it is open. With `LayerOptions.Leave` they leave with motion
+once the program stops showing them, fading and moving away (a picture of their last frame, which
+cannot be touched). `Context.Touches()` lists the fingers on a touch screen, for a
+control of a program's own that follows them (an on-screen stick); the first finger is also the
+pointer that clicks.
 
 On macOS the window draws through **Metal**; elsewhere through OpenGL 4.1. `Options.Backend`
 (`-backend automatic|metal|opengl`) chooses; if Metal cannot start, the window says so once and

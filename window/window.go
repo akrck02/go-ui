@@ -1,6 +1,8 @@
 // Package window runs an application that is only an interface: a window with no 3D scene, where
-// go-ui draws everything on the theme's background. It opens the window through go-renderer (so it
-// needs cgo and OpenGL 4.1) and paints the interface in one draw call.
+// go-ui draws everything on the theme's background, in one draw call. On the desktop it opens the
+// window through go-renderer (so it needs cgo, and Metal or OpenGL 4.1); built for WebAssembly
+// (GOOS=js) the window is a canvas in a web page, drawn through WebGL2; built for Android (with
+// gomobile) it is the application's activity, drawn through OpenGL ES.
 //
 // The window draws only when something happens: input, a resize, a frame a control asks for (a
 // caret's blink, a tooltip due) or Wake. In between the program sleeps and uses no processor,
@@ -13,18 +15,15 @@
 package window
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"hash/maphash"
-	"log"
 	"runtime"
 
 	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
-	"github.com/akrck02/go-renderer/metal"
 	"github.com/akrck02/go-renderer/models"
-	"github.com/akrck02/go-renderer/opengl"
+	"github.com/akrck02/go-renderer/scene"
 	ui "github.com/akrck02/go-ui"
 )
 
@@ -42,9 +41,34 @@ type Options struct {
 	// happens: for an interface that animates all the time. It uses far more battery.
 	Continuous bool
 	// Backend is what draws the window: Automatic (Metal on macOS, OpenGL elsewhere), Metal or
-	// OpenGL.
+	// OpenGL. In a web page it is always WebGL2.
 	Backend Backend
+	// Canvas is the id of the page's canvas to draw in, in a web page; empty = the first canvas.
+	// The window is the canvas: Width, Height and Title follow the page.
+	Canvas string
+	// Scene, when set, puts a 3D scene behind the interface. It is called at every step after the
+	// interface, with the input the interface did not claim (so the program can turn its camera
+	// without fighting a slider), and returns what to show this frame: nil for no scene. On the
+	// desktop a window with a scene draws through OpenGL.
+	Scene func(state *input.State, step float64) *SceneView
+	// MaxFramesPerSecond caps how often the window draws, to spare a battery; 0 = 60 on a phone,
+	// the display's own rate elsewhere (where vsync keeps it).
+	MaxFramesPerSecond int
+	// Hidden is called when the program leaves the screen: on a phone, another application comes
+	// up or the phone locks, and the system may end the program after that without a word; in a
+	// browser, the page is hidden; on the desktop, the window closes. Keep what must survive then
+	// (KeepPreference). It runs on the goroutine that builds the interface, except in a browser.
+	Hidden func()
 }
+
+// SceneView is a 3D scene seen from a camera, drawn behind the interface.
+type SceneView struct {
+	World  *scene.Scene
+	Camera models.Camera
+}
+
+// shownScene is the scene the last step asked for, shared by the step and the drawing.
+type shownScene struct{ view *SceneView }
 
 // Backend is the graphics interface a window draws through.
 type Backend string
@@ -91,11 +115,6 @@ func (options *Options) RegisterFlags(flags *flag.FlagSet) {
 	flags.Var(&options.Backend, "backend", "what draws the window: automatic, metal or opengl")
 }
 
-// Wake makes the window draw a frame now: call it when the program's data changes on another
-// goroutine (a file loaded, a message arrived), since the window otherwise sleeps until input.
-// Safe from any goroutine.
-func Wake() { opengl.Wake() } // both backends wait for events in GLFW
-
 // Run opens the window and calls build in every update step, between the interface's Begin and
 // End, until the window is closed. It must be called from the main goroutine.
 func Run(options Options, build func(context *ui.Context)) error {
@@ -109,26 +128,26 @@ func Run(options Options, build func(context *ui.Context)) error {
 	return RunWith(context, options, build)
 }
 
-// RunWith is Run with an interface context of your own (a custom theme or measurer).
-func RunWith(context *ui.Context, options Options, build func(context *ui.Context)) error {
-	width, height := options.Width, options.Height
-	if width <= 0 || height <= 0 {
-		width, height = 1280, 800
-	}
-	shown := shownFrame{seed: maphash.MakeSeed()}
-	app := &models.Application{
+// interfaceApplication is the application every window runs: one interface step (Begin, build,
+// End) per update step, drawing only when something happens unless Continuous, and no frame when
+// it would look like the one shown.
+func interfaceApplication(context *ui.Context, options Options, build func(context *ui.Context), shown *shownFrame, view *shownScene) *models.Application {
+	return &models.Application{
 		Type:         models.WindowApplication,
 		Title:        options.Title,
-		Width:        width,
-		Height:       height,
 		MinWidth:     options.MinWidth,
 		MinHeight:    options.MinHeight,
 		Input:        input.NewState(),
-		Renderer:     &opengl.OpenGLRenderer{},
 		DisableVsync: options.NoVsync,
 		DrawOnDemand: !options.Continuous,
-		FlatOnly:     true,
+		FlatOnly:     options.Scene == nil,
 		Unchanged: func(app *models.Application) bool {
+			if view.view != nil {
+				// a scene can change without the interface changing: the program asks for frames
+				// while its camera moves, and is idle otherwise
+				*shown = shownFrame{seed: shown.seed}
+				return false
+			}
 			width, height, scale := frameSize(app)
 			return shown.same(context.Drawing(), context.Theme.Background, width, height, scale)
 		},
@@ -136,40 +155,21 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 			context.Begin(app.Input)
 			build(context)
 			context.End()
+			view.view = nil
+			if options.Scene != nil {
+				unclaimed := app.Input.Unclaimed()
+				view.view = options.Scene(&unclaimed, step)
+				// the program asks for frames on its copy (while its camera moves): pass them on
+				if delay, wanted := unclaimed.TakeFrameRequest(); wanted {
+					app.Input.RequestFrame(delay)
+				}
+			}
+			if view.view != nil {
+				view.view.World.Overlay.Drawing = context.Drawing() // the interface is painted over the scene
+			}
 			return nil
 		},
 	}
-	if options.CapturePath != "" {
-		app.Type, app.CapturePath = models.HeadlessApplication, options.CapturePath
-	}
-	if options.Backend.usesMetal() {
-		err := runMetal(context, app)
-		if !errors.Is(err, metal.ErrUnavailable) || options.Backend == Metal {
-			return err
-		}
-		log.Printf("window: %v; drawing through OpenGL", err)
-		shown = shownFrame{seed: shown.seed}
-		app.Input = input.NewState()
-	}
-	return runOpenGL(context, app)
-}
-
-// runOpenGL draws the window through OpenGL.
-func runOpenGL(context *ui.Context, app *models.Application) error {
-	var renderer *opengl.FlatRenderer
-	app.Draw = func(app *models.Application) error {
-		if renderer == nil {
-			created, err := opengl.NewFlatRenderer()
-			if err != nil {
-				return err
-			}
-			renderer = created
-		}
-		framebufferWidth, framebufferHeight, scale := frameSize(app)
-		renderer.Draw(context.Drawing(), context.Theme.Background, framebufferWidth, framebufferHeight, scale)
-		return nil
-	}
-	return (&opengl.OpenGL{}).StartLoop(app)
 }
 
 // frameSize is the framebuffer's size in pixels and its pixels per layout pixel.

@@ -53,14 +53,17 @@ type Context struct {
 	scopes   []ID
 	seen     map[ID]int // how many times an id was used this frame, to tell repeats apart
 
-	previous    map[ID]draw2d.Rect // where things were in the last frame
-	current     map[ID]draw2d.Rect
-	order       []ID // panels from back to front
-	hoveredRoot ID
-	hot         ID   // the control under the mouse
-	active      ID   // the control being pressed or dragged
-	focus       ID   // the control the keyboard goes to
-	focusSeen   bool // the focused control was built this frame; if not, it went away
+	previous map[ID]draw2d.Rect // where things were in the last frame
+	current  map[ID]draw2d.Rect
+	// what of a thing showed, where a box around it clipped it: what the pointer could reach in
+	// the last frame (reachOf), for things clipped; the others are reached wholly
+	previousReach, currentReach map[ID]draw2d.Rect
+	order                       []ID // panels from back to front
+	hoveredRoot                 ID
+	hot                         ID   // the control under the mouse
+	active                      ID   // the control being pressed or dragged
+	focus                       ID   // the control the keyboard goes to
+	focusSeen                   bool // the focused control was built this frame; if not, it went away
 	// focusables are the fields that can take the focus, in the order they were built this frame,
 	// for Tab; tabFrom is the field where Tab was pressed (tabBack with Shift), and
 	// focusByKeyboard tells the field taking the focus that it came by Tab.
@@ -69,22 +72,33 @@ type Context struct {
 	tabBack         bool
 	focusByKeyboard bool
 	sceneDrag       bool
+	insets          Insets // what the system draws over the window's edges (SetInsets)
 	cursor          input.CursorShape
 	cursorWasSet    bool // the interface set the pointer's shape, so it puts the arrow back when it leaves
 	panels          map[ID]*panelMemory
 	memory          map[ID]*remembered
 	popups          []ID // popups that took part in the last frame, back to front
 	nextPopups      []ID
-	scrollUsed      bool      // a scroll area took this step's wheel movement
-	lastHot         ID        // the control under the pointer in the last frame
-	hotSince        time.Time // when the pointer came onto it
-	interacted      ID        // the last control that looked at the mouse, for Tooltip
+	// overlays are the overlays shown in the last frame and in this one, back to front
+	overlays, nextOverlays []ID
+	scrollUsed             bool                 // a scroll area took this step's wheel movement
+	finger                 finger               // the one finger on a touch screen (gestures.go)
+	leaving                map[ID]*leavingLayer // layers that keep their last picture to leave with (leave.go)
+	textScale              float32              // the person's text size (SetTextScale); 0 = 1
+	press                  press                // the pointer held down, for a long press (longpress.go)
+	longPressed            ID                   // the control long-pressed in this frame
+	lastHot                ID                   // the control under the pointer in the last frame
+	hotSince               time.Time            // when the pointer came onto it
+	interacted             ID                   // the last control that looked at the mouse, for Tooltip
 	// surfaces are the painted boxes on the screen (outside panels) in the last frame: bars and
 	// side columns of an application layout. The pointer over one belongs to the interface.
 	surfaces, nextSurfaces []draw2d.Rect
 	overSurface            bool
 
 	wantsMouse, wantsKeyboard bool
+	typing                    bool // a text field has the focus in this frame
+	keyboard                  keyboardState
+	editingWords              EditingWords // the bar's labels over a selection on a touch screen
 
 	sheets, nextSheets []ID // sheets shown in the last frame and in this one, back to front
 	// the fields of the front sheet, as a range of focusables, so Tab stays inside it
@@ -93,6 +107,8 @@ type Context struct {
 	menu                           *menuMemory // the menu whose items are being built, if any
 	menuItems                      int         // items added to it so far
 	table                          Table       // the table being built (see Table)
+	finished                       int         // the element closed last, which Describe describes
+	reader                         readerState // what a screen reader is told and asks (accessibility.go)
 }
 
 // New returns an interface that measures text with go-renderer's fonts, in the default theme.
@@ -108,14 +124,16 @@ func New() (*Context, error) {
 // use a fake one, so they need no fonts.
 func NewWithMeasurer(measurer draw2d.Measurer) *Context {
 	return &Context{
-		Theme:    LightTheme(),
-		measurer: measurer,
-		texts:    textCache{entries: map[textKey]draw2d.TextMetrics{}, older: map[textKey]draw2d.TextMetrics{}},
-		seen:     map[ID]int{},
-		previous: map[ID]draw2d.Rect{},
-		current:  map[ID]draw2d.Rect{},
-		panels:   map[ID]*panelMemory{},
-		memory:   map[ID]*remembered{},
+		Theme:         LightTheme(),
+		measurer:      measurer,
+		texts:         textCache{entries: map[textKey]draw2d.TextMetrics{}, older: map[textKey]draw2d.TextMetrics{}},
+		seen:          map[ID]int{},
+		previous:      map[ID]draw2d.Rect{},
+		current:       map[ID]draw2d.Rect{},
+		previousReach: map[ID]draw2d.Rect{},
+		currentReach:  map[ID]draw2d.Rect{},
+		panels:        map[ID]*panelMemory{},
+		memory:        map[ID]*remembered{},
 	}
 }
 
@@ -132,11 +150,18 @@ func (ui *Context) WantsMouse() bool { return ui.wantsMouse }
 // typed in).
 func (ui *Context) WantsKeyboard() bool { return ui.wantsKeyboard }
 
+// Typing tells whether a text field had the focus in the last frame: a phone shows its on-screen
+// keyboard while it does. WantsKeyboard is wider (a sheet open, a list with the focus).
+func (ui *Context) Typing() bool { return ui.typing }
+
 // Begin starts describing the interface for a frame, with the frame's input. Call it in every
 // update step, before the controls.
 func (ui *Context) Begin(state *input.State) {
 	ui.state = state
 	ui.frame++
+	ui.beginReading()
+	ui.typing = false
+	ui.beginKeyboard()
 	ui.now = state.Time()
 	ui.texts.turnOver()
 	ui.building = true
@@ -150,10 +175,12 @@ func (ui *Context) Begin(state *input.State) {
 	ui.hot = 0
 	ui.focusSeen, ui.focusables = false, ui.focusables[:0]
 	ui.scrollUsed = false
-	ui.nextPopups, ui.nextSheets = ui.nextPopups[:0], ui.nextSheets[:0]
+	ui.nextPopups, ui.nextSheets, ui.nextOverlays = ui.nextPopups[:0], ui.nextSheets[:0], ui.nextOverlays[:0]
 	ui.sheetFocusStart, ui.sheetFocusEnd = 0, 0
 	ui.cursor = input.CursorArrow
 	ui.findHoveredRoot()
+	ui.trackFinger()
+	ui.followPress()
 	ui.followPresses()
 	ui.followDrag()
 	ui.openScreen()
@@ -168,9 +195,16 @@ func (ui *Context) End() {
 	ui.building = false
 	ui.showDrag()
 	ui.layOut()
+	ui.readNodes()
 	ui.paint()
+	ui.paintReaderFocus()
+	if ui.moving() {
+		ui.RequestFrame(16 * time.Millisecond) // about sixty frames a second while something eases
+	}
 	ui.previous, ui.current = ui.current, ui.previous
 	clear(ui.current)
+	ui.previousReach, ui.currentReach = ui.currentReach, ui.previousReach
+	clear(ui.currentReach)
 	if !ui.focusSeen {
 		ui.focus = 0
 	}
@@ -178,6 +212,7 @@ func (ui *Context) End() {
 	ui.finishInteraction()
 	ui.popups, ui.nextPopups = ui.nextPopups, ui.popups
 	ui.sheets, ui.nextSheets = ui.nextSheets, ui.sheets
+	ui.overlays, ui.nextOverlays = ui.nextOverlays, ui.overlays
 	ui.forgetUnusedPanels()
 	ui.forgetUnusedMemory()
 }

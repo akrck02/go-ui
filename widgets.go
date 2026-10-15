@@ -23,6 +23,12 @@ func (ui *Context) PrimaryButton(label string) bool {
 	return ui.button(label, displayText(label), "", primaryButton)
 }
 
+// PrimaryIconButton is PrimaryButton with an icon (a Lucide name) before its label: the main action
+// of a panel, such as adding a new thing.
+func (ui *Context) PrimaryIconButton(icon, label string) bool {
+	return ui.button(label, displayText(label), icon, primaryButton)
+}
+
 // IconButton adds a button with an icon (a Lucide name) before its label; with an empty label it
 // is a square button with the icon alone, named by the icon.
 func (ui *Context) IconButton(icon, label string) bool {
@@ -118,7 +124,7 @@ func (ui *Context) buttonColours(variant buttonVariant, result interaction) (fil
 		}
 		return draw2d.Transparent, draw2d.Transparent, theme.InkSoft
 	default:
-		fill, border = theme.Surface, theme.Line
+		fill, border = theme.Surface, theme.ControlLine
 		if pressed {
 			fill = theme.Line
 		} else if result.hovered {
@@ -157,6 +163,7 @@ func (ui *Context) Selectable(icon, label string, selected bool) bool {
 		}
 		ui.Text(displayText(label), TextStyle{Weight: weight, Color: ink})
 	})
+	ui.Describe(Description{Selected: selected})
 	return result.clicked
 }
 

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>go-ui</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #eef1f5; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  #message { position: fixed; inset: 0; display: grid; place-items: center; font: 15px system-ui, sans-serif; color: #4a5768; }
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="message">Loading…</div>
+<script src="wasm_exec.js"></script>
+<script>
+  // ?program=app runs app.wasm, the default web.wasm: one page for every program built here
+  const program = new URLSearchParams(location.search).get("program") || "web";
+  const message = document.getElementById("message");
+  const go = new Go();
+  WebAssembly.instantiateStreaming(fetch(program + ".wasm"), go.importObject)
+    .then((result) => { message.remove(); return go.run(result.instance); })
+    .catch((error) => { message.textContent = "Could not start " + program + ".wasm: " + error; });
+</script>
+</body>
+</html>

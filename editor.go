@@ -13,6 +13,9 @@ type editor struct {
 	undo, redo    []editorSnapshot
 	lastEdit      editKind // what the last change was, so typing a word is undone in one go
 	limit         int      // the most characters the text may have; 0 = no limit
+	// composeStart and composeEnd are the word an on-screen keyboard is still making, underlined;
+	// equal when none is
+	composeStart, composeEnd int
 	// asString is the text as a string, kept until the text changes: a focused field compares and
 	// writes it every frame.
 	asString      string
@@ -43,6 +46,33 @@ func (editor *editor) load(text string) {
 	editor.caret, editor.anchor = len(editor.text), len(editor.text)
 	editor.undo, editor.redo = editor.undo[:0], editor.redo[:0]
 	editor.lastEdit = noEdit
+	editor.endComposing()
+}
+
+// endComposing forgets the word being composed: the text was changed other than by the keyboard.
+func (editor *editor) endComposing() {
+	editor.composeStart, editor.composeEnd = 0, 0
+}
+
+// fromKeyboard puts an on-screen keyboard's edit in: its whole text as the field takes it, its
+// selection and the word it composes, kept inside the text. Its words are undone as typing is. A
+// text the field cut (at its limit, at a line break) is no longer what the keyboard composed.
+func (editor *editor) fromKeyboard(edit KeyboardText) {
+	text := editor.fitted(edit.Text)
+	if text != editor.String() {
+		kind := typingEdit
+		if len([]rune(text)) < len(editor.text) {
+			kind = deletingEdit
+		}
+		editor.remember(kind)
+		editor.setText([]rune(text))
+	}
+	length := len(editor.text)
+	editor.anchor, editor.caret = clampInt(edit.SelectionStart, 0, length), clampInt(edit.SelectionEnd, 0, length)
+	editor.endComposing()
+	if text == edit.Text && edit.ComposingEnd > edit.ComposingStart {
+		editor.composeStart, editor.composeEnd = clampInt(edit.ComposingStart, 0, length), clampInt(edit.ComposingEnd, 0, length)
+	}
 }
 
 func (editor *editor) String() string {
@@ -165,14 +195,10 @@ func (editor *editor) wordAfter(position int) int {
 	return position
 }
 
-// insert types text at the caret, over the selection if there is one. Line breaks and other
-// control characters are left out (the field has one line), and the limit cuts what does not fit.
-// It returns whether the text changed.
-func (editor *editor) insert(text string, kind editKind) bool {
-	if text == "" {
-		return false
-	}
-	added := make([]rune, 0, len(text))
+// typable is text as a one-line field takes it: line breaks and tabs become spaces, and other
+// control characters are left out.
+func typable(text string) []rune {
+	kept := make([]rune, 0, len(text))
 	for _, character := range text {
 		if character == '\n' || character == '\r' || character == '\t' {
 			character = ' '
@@ -180,8 +206,28 @@ func (editor *editor) insert(text string, kind editKind) bool {
 		if unicode.IsControl(character) {
 			continue
 		}
-		added = append(added, character)
+		kept = append(kept, character)
 	}
+	return kept
+}
+
+// fitted is text as the field takes it whole: typable, and cut at the limit.
+func (editor *editor) fitted(text string) string {
+	kept := typable(text)
+	if editor.limit > 0 && len(kept) > editor.limit {
+		kept = kept[:editor.limit]
+	}
+	return string(kept)
+}
+
+// insert types text at the caret, over the selection if there is one. Line breaks and other
+// control characters are left out (the field has one line), and the limit cuts what does not fit.
+// It returns whether the text changed.
+func (editor *editor) insert(text string, kind editKind) bool {
+	if text == "" {
+		return false
+	}
+	added := typable(text)
 	start, end := editor.selection()
 	if editor.limit > 0 {
 		room := editor.limit - (len(editor.text) - (end - start))

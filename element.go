@@ -45,10 +45,12 @@ type element struct {
 
 	parent, firstChild, lastChild, nextSibling int
 	rect                                       draw2d.Rect
-	capped                                     [2]bool       // reached its maximum while growing, per axis
-	content                                    [2]float32    // what the content needs, per axis, padding included
-	scroll                                     *scrollMemory // set on scroll areas
-	field                                      *fieldPaint   // set on text fields
+	capped                                     [2]bool                                      // reached its maximum while growing, per axis
+	content                                    [2]float32                                   // what the content needs, per axis, padding included
+	scroll                                     *scrollMemory                                // set on scroll areas
+	field                                      *fieldPaint                                  // set on text fields
+	painter                                    func(area draw2d.Rect, drawing *draw2d.List) // set on painted boxes (Paint)
+	description                                int                                          // 1 + its index in the screen reader's descriptions; 0 = none
 }
 
 // intrinsic is the size of what the element shows itself (not its children) along an axis.
@@ -123,6 +125,7 @@ func (ui *Context) openElement(added element) int {
 
 // closeElement closes the box opened last.
 func (ui *Context) closeElement() {
+	ui.finished = ui.open[len(ui.open)-1] // what Describe describes
 	if len(ui.open) > 1 {
 		ui.open = ui.open[:len(ui.open)-1]
 	}
@@ -199,6 +202,7 @@ func (ui *Context) textElement(text string, style TextStyle) element {
 	if style.Size <= 0 {
 		style.Size = ui.Theme.TextSize
 	}
+	style.Size = ui.scaledText(style.Size)
 	if !style.Color.IsVisible() {
 		style.Color = ui.Theme.Ink
 	}
@@ -211,6 +215,7 @@ func (ui *Context) Label(text string) { ui.Text(text, TextStyle{}) }
 // Heading adds a line of bold, larger text: the title of a group.
 func (ui *Context) Heading(text string) {
 	ui.Text(text, TextStyle{Size: ui.Theme.HeadingSize, Weight: draw2d.Bold})
+	ui.Describe(Description{Role: HeadingRole})
 }
 
 // Caption adds a line of small, quiet text: a hint or a unit.

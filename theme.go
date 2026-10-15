@@ -16,6 +16,7 @@ type Theme struct {
 	InkSoft     draw2d.Color // secondary text and icons
 	InkQuiet    draw2d.Color // hints and captions
 	Line        draw2d.Color // borders and separators
+	ControlLine draw2d.Color // borders of fields, selects and secondary buttons: stronger than Line, so a control reads as one
 	Primary     draw2d.Color // the main action
 	OnPrimary   draw2d.Color // text on the main action
 	PrimaryTint draw2d.Color // a light wash of the primary colour (a selected row)
@@ -53,6 +54,7 @@ func LightTheme() Theme {
 		InkSoft:       draw2d.Hex("#4a5768"),
 		InkQuiet:      draw2d.Hex("#6b7889"),
 		Line:          draw2d.Hex("#dde3ea"),
+		ControlLine:   draw2d.Hex("#dde3ea"),
 		Primary:       draw2d.Hex("#1f5fc4"),
 		OnPrimary:     draw2d.Hex("#ffffff"),
 		PrimaryTint:   draw2d.Hex("#eaf1fd"),
@@ -90,6 +92,7 @@ func DarkTheme() Theme {
 	theme.InkSoft = draw2d.Hex("#b4c0ce")
 	theme.InkQuiet = draw2d.Hex("#8b98a8")
 	theme.Line = draw2d.Hex("#334355")
+	theme.ControlLine = draw2d.Hex("#334355")
 	theme.Primary = draw2d.Hex("#5b8fe8")
 	theme.OnPrimary = draw2d.Hex("#0d1620")
 	theme.PrimaryTint = draw2d.Hex("#22344d")

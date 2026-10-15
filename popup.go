@@ -1,6 +1,9 @@
 package ui
 
-import "github.com/akrck02/go-renderer/draw2d"
+import (
+	"github.com/akrck02/go-renderer/draw2d"
+	"github.com/akrck02/go-renderer/input"
+)
 
 // A popup is a root that floats over everything else, next to an anchor rectangle: the list of a
 // select, a tooltip. Popups are drawn above every panel and get the mouse before them.
@@ -8,12 +11,20 @@ import "github.com/akrck02/go-renderer/draw2d"
 // popupLayer is far above the panels' layers.
 const popupLayer = 100000
 
+// popupPadding is the space inside a popup around its content, and popupSpacing the gap between a
+// popup and what it opens next to.
+const (
+	popupPadding = 4
+	popupSpacing = 4
+)
+
 // popup adds a floating box under the anchor (or above it when there is no room below), at least
-// minimumWidth wide. A passive popup never takes the mouse (a tooltip).
+// minimumWidth wide. A passive popup never takes the mouse (a tooltip). Describe after it still
+// describes the control it opened from, not the popup's last item.
 func (ui *Context) popup(id ID, anchor draw2d.Rect, minimumWidth float32, passive bool, look Look, content func()) {
-	outside := ui.open
+	outside, opener := ui.open, ui.finished
 	ui.open = nil
-	layout := Layout{Direction: Vertical, Width: Fit().Between(minimumWidth, 0), Padding: Pad(4)}
+	layout := Layout{Direction: Vertical, Width: Fit().Between(minimumWidth, 0), Padding: Pad(popupPadding)}
 	index := ui.openElement(element{id: id, kind: boxElement, layout: layout, look: look})
 	ui.roots = append(ui.roots, root{id: id, element: index, popup: true, passive: passive, anchor: anchor})
 	if !passive {
@@ -22,14 +33,24 @@ func (ui *Context) popup(id ID, anchor draw2d.Rect, minimumWidth float32, passiv
 	if content != nil {
 		content()
 	}
-	ui.open = outside
+	ui.open, ui.finished = outside, opener
+}
+
+// centredPopup is a popup centred on its anchor's x: a bar over what it acts on.
+func (ui *Context) centredPopup(id ID, anchor draw2d.Rect, look Look, content func()) {
+	ui.popup(id, anchor, 0, false, look, content)
+	for index := range ui.roots {
+		if ui.roots[index].id == id {
+			ui.roots[index].centred = true
+		}
+	}
 }
 
 // positionPopup puts a popup under its anchor, or above it when it would leave the window, and
 // keeps it inside the window sideways.
 func (ui *Context) positionPopup(placed *root) {
 	element := &ui.elements[placed.element]
-	const spacing = 4
+	const spacing = popupSpacing
 	x := placed.anchor.X
 	if placed.centred {
 		x -= element.rect.Width / 2
@@ -90,4 +111,28 @@ func (ui *Context) Toast(text string, warning bool) {
 	ui.IconSized(icon, theme.TextSize, iconColour)
 	ui.Text(text, TextStyle{Color: theme.Surface})
 	ui.open = outside
+}
+
+// Popover floats a box of the program's own under the control added just before it, over
+// everything, at least as wide as the control: a dropdown's choices, a small form about a row.
+// While *open is true it shows; a touch outside it and the control, Escape and the system's back
+// close it (*open becomes false). name tells popovers apart; what content adds is named inside it.
+func (ui *Context) Popover(name string, open *bool, look Look, content func()) {
+	anchorID := ui.interacted
+	if !*open || anchorID == 0 {
+		return
+	}
+	id := ui.idFor(name)
+	anchor := ui.previous[anchorID]
+	x, y := float32(ui.state.CursorX), float32(ui.state.CursorY)
+	touchedOutside := ui.state.ButtonPressed(input.MouseLeft) && ui.hoveredRoot != id && !anchor.Contains(x, y)
+	if touchedOutside || ui.state.Pressed(input.KeyEscape) || ui.Back() {
+		*open = false
+		return
+	}
+	ui.popup(id, anchor, anchor.Width, false, look, func() {
+		ui.scopes = append(ui.scopes, id) // what it holds is named inside it
+		content()
+		ui.Pop()
+	})
 }

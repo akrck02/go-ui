@@ -14,11 +14,13 @@ type root struct {
 	element int
 	panel   *panelMemory // nil for the screen and popups
 	dock    Edge
-	popup   bool        // floats over everything, next to anchor
-	sheet   bool        // covers the window over every panel, under the popups (see Sheet)
-	passive bool        // a popup that never takes the mouse (a tooltip)
-	centred bool        // a popup centred on its anchor's x (a toast)
-	anchor  draw2d.Rect // what a popup opens next to
+	popup   bool         // floats over everything, next to anchor
+	sheet   bool         // covers the window over every panel, under the popups (see Sheet)
+	passive bool         // a popup that never takes the mouse (a tooltip)
+	centred bool         // a popup centred on its anchor's x (a toast)
+	anchor  draw2d.Rect  // what a popup opens next to
+	placed  bool         // an overlay, placed in the window by options (see Overlay)
+	options LayerOptions // where an overlay goes, and how a modal or an overlay leaves
 }
 
 // Edge is a side of the window a panel can be docked to.
@@ -144,7 +146,7 @@ func (ui *Context) titleBar(title string, memory *panelMemory, options PanelOpti
 			memory.collapsed = !memory.collapsed
 		}
 	})
-	bar := ui.interact(barID)
+	bar := ui.pointerOn(barID)
 	canMove := options.Dock == Floating && !options.Locked
 	if canMove && (bar.hovered || ui.active == barID) {
 		ui.cursor = input.CursorMove
@@ -158,7 +160,7 @@ func (ui *Context) titleBar(title string, memory *panelMemory, options PanelOpti
 // rootSize is a root's size along an axis once its content is measured.
 func (ui *Context) rootSize(placed *root, axis Direction) float32 {
 	window := ui.windowAlong(axis)
-	if placed.popup {
+	if placed.popup || placed.placed {
 		return min(ui.elements[placed.element].sizeAlong(axis), window)
 	}
 	if placed.panel == nil {
@@ -202,6 +204,10 @@ func (ui *Context) windowAlong(axis Direction) float32 {
 // its edge, a floating panel where it was left, kept within reach (its title bar on screen).
 func (ui *Context) positionRoot(placed *root) {
 	element := &ui.elements[placed.element]
+	if placed.placed {
+		ui.placeInWindow(placed)
+		return
+	}
 	if placed.popup {
 		ui.positionPopup(placed)
 		return
@@ -244,6 +250,9 @@ func (ui *Context) layerOf(id ID) int {
 	if position := slices.Index(ui.nextSheets, id); position >= 0 {
 		return sheetLayer + position*10
 	}
+	if position := slices.Index(ui.nextOverlays, id); position >= 0 {
+		return overlayLayer + position
+	}
 	for _, placed := range ui.roots {
 		if placed.id == id && placed.popup {
 			return popupLayer + len(ui.nextPopups) + 1 // a passive popup, over everything
@@ -270,6 +279,12 @@ func (ui *Context) findHoveredRoot() {
 	if len(ui.sheets) > 0 {
 		ui.hoveredRoot = ui.sheets[len(ui.sheets)-1] // the front sheet covers the window
 		return
+	}
+	for position := len(ui.overlays) - 1; position >= 0; position-- {
+		if area, shown := ui.previous[ui.overlays[position]]; shown && area.Contains(x, y) {
+			ui.hoveredRoot = ui.overlays[position]
+			return
+		}
 	}
 	for position := len(ui.order) - 1; position >= 0; position-- {
 		if area, shown := ui.previous[ui.order[position]]; shown && area.Contains(x, y) {
