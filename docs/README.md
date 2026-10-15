@@ -310,6 +310,14 @@ word, and `EditTypedField(edit)` puts the keyboard's edit in, in the next frame,
 line, cut at `MaxLength`, its words undone as typed ones are. A key or a touch that changes the
 text ends the composing. The Android window does both ([go-ui on Android](android.md)).
 
+On a touch screen, text is chosen as on a phone. A finger held on a word selects it: a drop-shaped
+handle hangs under each end of the selection, and a bar over it offers *Cut*, *Copy*, *Paste* and
+*Select all* (`SetEditingWords` in the person's language; a secret field cannot be cut or copied).
+A touch shows a handle under the caret. A finger drags a handle to move its end, or the caret; the
+handle hangs under the text, so the finger does not hide what it chooses, and the ends never cross.
+The handles and the bar are popups of the field's own: pressing them keeps the field typed in.
+Typing, on either keyboard, puts them away; a mouse has none.
+
 `Focus(path…)` gives the keyboard to a field by its scopes and label, as `Area` finds it, with its
 text selected: the search box on a shortcut, or the first field of a form that just opened. While
 a field has the focus, `End` claims the keyboard, so the viewer's shortcuts and cameras do not

@@ -69,6 +69,7 @@ type fieldMemory struct {
 	measuredValid bool
 	paint         fieldPaint
 	weight        draw2d.Weight // the face of its text, from its options
+	handles       fieldHandles  // a touch screen's handles and bar (handles.go)
 }
 
 // fieldPaint is what painting a field needs, worked out while the field is built; offsets are
@@ -139,6 +140,7 @@ func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fiel
 		if *text != memory.editor.String() {
 			memory.editor.load(*text) // the program changed the text while it was being edited
 		}
+		textBefore := memory.editor.String() // typing, on either keyboard, puts the handles away
 		if edit, edited := ui.keyboardEditFor(id); edited {
 			memory.editor.fromKeyboard(edit)
 		}
@@ -147,6 +149,8 @@ func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fiel
 		if event == fieldEditing {
 			event = ui.followFieldKeys(id, memory)
 		}
+		ui.followTouches(id, memory, result, memory.editor.String() != textBefore)
+		ui.addHandles(id, memory)
 		if memory.editor.snapshot() != before {
 			memory.editor.endComposing() // a key or a touch changed the text: the keyboard's word is done
 		}
@@ -164,6 +168,9 @@ func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fiel
 		ui.focusSeen, ui.typing = true, true
 		ui.noteTyped(id, memory)
 	}
+	if !focused {
+		memory.handles = fieldHandles{}
+	}
 	memory.hadFocus = focused
 	ui.addField(id, memory, *text, options, result, focused)
 	return event
@@ -174,7 +181,7 @@ func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fiel
 func (ui *Context) followFieldMouse(id ID, memory *fieldMemory, result interaction) fieldEvent {
 	state := ui.state
 	editor := &memory.editor
-	if state.ButtonPressed(input.MouseLeft) && !result.pressed {
+	if state.ButtonPressed(input.MouseLeft) && !result.pressed && !ui.onOwnHandles(id) {
 		ui.focus = 0
 		return fieldLeft
 	}

@@ -98,6 +98,7 @@ type Context struct {
 	wantsMouse, wantsKeyboard bool
 	typing                    bool // a text field has the focus in this frame
 	keyboard                  keyboardState
+	editingWords              EditingWords // the bar's labels over a selection on a touch screen
 
 	sheets, nextSheets []ID // sheets shown in the last frame and in this one, back to front
 	// the fields of the front sheet, as a range of focusables, so Tab stays inside it
