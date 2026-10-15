@@ -1,6 +1,6 @@
 <div align="center">
 
-# go-ui
+# Go UI
 
 **Immediate-mode interfaces in Go, drawn over a [go-renderer](https://github.com/akrck02/go-renderer) view.**
 Panels, buttons, tables and fields on top of a 3D scene, or a whole desktop application with no 3D
