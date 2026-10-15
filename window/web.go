@@ -86,16 +86,20 @@ func Share(title, text string) bool {
 	return true
 }
 
-// whenHidden calls the program's Hidden when the page is hidden: another tab, the phone locked,
-// the page closing.
-func whenHidden(hidden func()) {
-	if hidden == nil {
+// whenHiddenOrShown calls the program's Hidden when the page is hidden (another tab, the phone
+// locked, the page closing), and its Shown when it shows again.
+func whenHiddenOrShown(hidden, shown func()) {
+	if hidden == nil && shown == nil {
 		return
 	}
 	document := js.Global().Get("document")
 	document.Call("addEventListener", "visibilitychange", js.FuncOf(func(js.Value, []js.Value) any {
-		if document.Get("visibilityState").String() == "hidden" {
+		visible := document.Get("visibilityState").String() != "hidden"
+		switch {
+		case !visible && hidden != nil:
 			hidden()
+		case visible && shown != nil:
+			shown()
 		}
 		return nil
 	}))
@@ -108,7 +112,7 @@ func SystemPalettes() (Palettes, bool) { return Palettes{}, false }
 // the window is the page's canvas (Options.Canvas); it draws through WebGL2 and returns only when
 // the program stops, which keeps the WebAssembly program alive.
 func RunWith(context *ui.Context, options Options, build func(context *ui.Context)) error {
-	whenHidden(options.Hidden)
+	whenHiddenOrShown(options.Hidden, options.Shown)
 	canvas, err := browser.OpenCanvas(options.Canvas)
 	if err != nil {
 		return err

@@ -78,7 +78,9 @@ offers a text through the system's sheet, `Context.Copy` and `Context.ClipboardT
 phone's clipboard, and `window.Preference` / `window.KeepPreference` keep small values between runs
 (a JSON file in the application's folder; on the desktop, the user's configuration folder; in a
 browser, local storage). `Options.Hidden` is called when the program leaves the screen, the moment
-to keep them, since Android may end the program after that. The person's text size reaches every
+to keep them, since Android may end the program after that; `Options.Shown` is called when it
+comes back (in a browser, when the page shows again), the moment to play again what `Hidden`
+stopped, such as a sound. The person's text size reaches every
 text through `Context.SetTextScale`, which the window sets in every frame.
 `window.OpenVideo(film)` plays a film's pictures (not yet its sound) in a `draw2d.Image` that
 `Context.Image` draws: `Play`, `Pause`, `Loop`, and `Update` in every frame it shows. On Android the
