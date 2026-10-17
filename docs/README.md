@@ -1,7 +1,19 @@
 # go-ui documentation
 
-go-ui draws interfaces over a go-renderer view. This page explains how a frame works, how boxes
-are sized and placed, and what each control does.
+go-ui draws interfaces in immediate mode: over a go-renderer scene, or as a whole application in a
+window, a web page or a phone.
+
+## 🚀 Start here
+
+| | |
+|---|---|
+| **[Get started](get-started.md)** | Install the tools, run the examples, and write your first interface. Fifteen minutes. |
+| **[Tutorial: a register of lighthouses](tutorial/README.md)** | Seven lessons, one application: immediate mode, layout, forms, menus and sheets, controls of your own, a 3D scene, the web and phones. |
+| **[Reference](reference/README.md)** | Every method of the context by what it is for, and every type and function, generated from the doc comments. |
+
+## Guide
+
+This guide explains how a frame works, how boxes are sized and placed, and what each control does.
 
 | Section | What it covers |
 |---|---|
