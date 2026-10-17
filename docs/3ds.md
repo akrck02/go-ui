@@ -3,7 +3,8 @@
 **Status:** a first step (October 2026). Built with a TinyGo that has a `nintendo3ds` target, a
 go-ui program runs on the console as homebrew, from the Homebrew Launcher: `window.Run` opens the
 console's two screens, drawn through go-renderer's `ctr` (citro3d). Checked in the Azahar emulator
-with a large Material program (go-ui-android's pieces) and on a New 3DS XL with a small one.
+with a large Material program (go-ui-android's pieces); not yet on a console. The same drawing,
+with a loop of its own, runs on a New 3DS XL in go-3ds's explorer.
 
 <p align="center">
   <img alt="The emulator's two screens: an island village at nine in the evening above, and below a dark go-ui panel with tabs and the time of day" src="images/3ds-explorer.png" width="320">
