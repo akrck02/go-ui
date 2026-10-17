@@ -2,9 +2,9 @@
 
 **Status:** a first step (October 2026). Built with a TinyGo that has a `nintendo3ds` target, a
 go-ui program runs on the console as homebrew, from the Homebrew Launcher: `window.Run` opens the
-console's two screens, drawn through go-renderer's `ctr` (citro3d). Checked in the Azahar emulator
-with a large Material program (go-ui-android's pieces); not yet on a console. The same drawing,
-with a loop of its own, runs on a New 3DS XL in go-3ds's explorer.
+console's two screens, drawn through go-renderer's `ctr` (citro3d). A large program (a 3D scene
+above, an interface of its own below) runs on a New 3DS XL at full speed; the
+same drawing, with a loop of its own, runs in go-3ds's explorer.
 
 <p align="center">
   <img alt="The emulator's two screens: an island village at nine in the evening above, and below a dark go-ui panel with tabs and the time of day" src="images/3ds-explorer.png" width="320">
@@ -28,6 +28,11 @@ ends the program.
 | L, R | Minus and plus (closer and farther, for most cameras) |
 | A, B | Enter and Escape; B is also the system's back |
 | Touch screen | The pointer: dragging is dragging with a mouse |
+| Circle pad | The stick (`input.State.StickX`, `StickY`): go-renderer's cameras move with it |
+
+The interface may claim the keys a button stands for (A is Enter). A program that wants a button
+whatever the interface does reads `window.ButtonsPressed()`: the buttons pressed this frame, X, Y,
+ZL and ZR among them.
 
 ## What the console has not
 
@@ -41,6 +46,35 @@ builds the interface, asks the program for its scene, and draws both in one fram
 `SceneRenderer.PaintStereo` (or `PaintOn` the bottom screen) and `FlatRenderer.PaintOn`. It draws
 every frame, as fast as the screen shows them, and yields to the program's other goroutines after
 each: TinyGo's scheduler there is cooperative, and waiting for the screen happens in C.
+
+## Writing an interface for the console
+
+What a phone shrugs off costs here: the processor is slower, and TinyGo's collector stops the
+program while it runs. These are what made the difference in a large program.
+
+- **Measure by phase.** `window.LastFrameTimes()` tells how long the last frame waited for the GPU,
+  painted the scene, painted what is drawn over it, painted the interface, and handed over. Show
+  them in the program (a resources screen) and read them on the console: the emulator draws in
+  software and its times are not the console's.
+- **An interface that stands still is free.** go-renderer draws a list that did not change from
+  the frame before without laying it out. Figures that change every second make their screen be
+  laid out again each time; nothing changing every frame keeps it at almost nothing.
+- **Make the theme once.** A theme (a Material one especially) is a kilobyte; keep it in a
+  variable instead of making it in the build function.
+- **Closures capture onto the heap.** Every `func() { … }` given to `Box`, `Frame` or `Clickable`
+  that uses a variable puts that variable on the heap, every frame. Capture the few fields needed
+  rather than a large struct (a whole report), keep the closure's work small, and keep what a
+  frame looks up (a map of states, the texts already formatted) in the program's state, filled
+  again with `clear` rather than made anew.
+- **Labels and figures.** `strings.ToUpper`, `strconv` and `time.Format` make a string each call:
+  keep the texts written while what they show does not change.
+- **Game looks.** `Look.Backdrop` draws a box's background itself (pixel-art windows, keys with a
+  lip that sinks when pressed) and `TextStyle.Shadow` gives text the hard shadow of a game's.
+  Point every look at one kept value of the backdrop. Pixel fonts are crisp only at their own
+  sizes (VT323 at 16, Silkscreen and Press Start 2P at 8 or 16), and positions should fall on
+  whole pixels.
+- **320 × 240 is small.** Touch targets of at least 24 pixels, one line of text per row, figures
+  large, and the buttons' hints on screen: a game's habits read well here.
 
 ## Building
 
