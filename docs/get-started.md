@@ -112,7 +112,7 @@ Between frames the window sleeps: an idle go-ui program uses no processor.
 | If you want to… | Read |
 |---|---|
 | Learn step by step, building a register of lighthouses | [The tutorial](tutorial/README.md) |
-| Understand frames, layout, controls and themes in depth | [The guide](README.md#guide) |
+| Understand frames, layout, controls and themes in depth | [The guide](README.md) |
 | Look up a control or an option | [The reference](reference/README.md) |
 | Put the interface over a 3D scene | [Lesson 6](tutorial/06-over-a-3d-scene.md) |
 | Run it in a browser or on a phone | [In a web browser](web.md), [on Android](android.md), [go-ui-android](https://github.com/akrck02/go-ui-android) |

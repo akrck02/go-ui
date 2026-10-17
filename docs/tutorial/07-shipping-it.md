@@ -99,7 +99,7 @@ where this one ends. On a phone, also look at `context.Insets()` (the system's b
 
 ## Where next
 
-- [The guide](../README.md#guide): everything about layout, text fields, tables, drag and drop,
+- [The guide](../README.md): everything about layout, text fields, tables, drag and drop,
   screen readers, how a frame is drawn.
 - [The reference](../reference/README.md): every control and option.
 - [go-ui-android](https://github.com/akrck02/go-ui-android): Material Design 3 on phones.
