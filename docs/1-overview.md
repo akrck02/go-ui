@@ -1,3 +1,5 @@
+<p align="center"><img alt="" src="images/logo.svg" width="120"></p>
+
 # Welcome to go-ui 👋
 
 **go-ui makes the parts of a program you click and type in**: buttons, panels, lists, forms, menus. Over a 3D scene, or as a whole application in a window, a web page or a phone.

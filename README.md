@@ -1,3 +1,5 @@
+<p align="center"><img alt="" src="docs/images/logo.svg" width="120"></p>
+
 # go-ui
 
 > **Note:** this project was written with an AI assistant and is pending thorough review. See the
