@@ -19,6 +19,14 @@ import (
 // read. START ends the program. The cross is the arrow keys, L and R minus and plus, A Enter and B
 // Escape (ctr.Controls).
 
+// buttonsPressed are the console's buttons pressed this frame (ButtonsPressed).
+var buttonsPressed ctr.Buttons
+
+// ButtonsPressed are the console's buttons pressed this frame, for a program that answers them
+// itself (A to pick, B to go back) whatever the interface does with the keys they stand for.
+// Only on the 3DS.
+func ButtonsPressed() ctr.Buttons { return buttonsPressed }
+
 // Wake: the console draws every frame, so there is nothing to wake.
 func Wake() {}
 
@@ -100,6 +108,7 @@ func (run *consoleRun) loop() {
 			run.swapped = !run.swapped
 		}
 		run.controls.Apply(run.state, reading)
+		buttonsPressed = pressed
 		now := time.Now()
 		step := now.Sub(last).Seconds()
 		last = now
@@ -142,9 +151,11 @@ func (run *consoleRun) step(step float64) *SceneView {
 	}
 	forScene := run.state.Unclaimed()
 	if !run.swapped {
-		// the interface has the touch screen; the scene turns with the keys
+		// the interface has the touch screen; the scene turns with the keys, and its pointer is
+		// off it (no hand to show over what is under the finger on the other screen)
 		forScene.SetButton(input.MouseLeft, false)
 		forScene.ClearTouches()
+		forScene.CursorX, forScene.CursorY, forScene.CursorDeltaX, forScene.CursorDeltaY = -1e6, -1e6, 0, 0
 	}
 	shaped(&forScene, sceneWidth)
 	return run.options.Scene(&forScene, step)
@@ -165,9 +176,28 @@ func (run *consoleRun) draw(view *SceneView) {
 		focus := distance(view.Camera.Position, view.Camera.Target)
 		separation := ctr.Slider3D() * focus * separationAtFullSlider
 		run.scene.PaintStereo(view.World, view.Camera, separation, focus)
+		run.paintOverScene(view, separation > 0)
 		run.flat.Paint(drawing, background)
 	}
 	ctr.EndFrame()
+}
+
+// paintOverScene paints the scene's own drawing (World.Overlay.Drawing: a sight, a name), which
+// a program sets on the console to show something over the scene, on the top screen, in each eye
+// when in 3D.
+func (run *consoleRun) paintOverScene(view *SceneView, stereo bool) {
+	over := view.World.Overlay.Drawing
+	if over == nil || len(over.Commands) == 0 {
+		return
+	}
+	if !stereo {
+		run.flat.PaintOver(run.top, over)
+		return
+	}
+	for _, eye := range []ctr.Eye{ctr.LeftEye, ctr.RightEye} {
+		run.top.DrawOn(eye)
+		run.flat.PaintOver(run.top, over)
+	}
 }
 
 func distance(from, to [4]float32) float32 {
