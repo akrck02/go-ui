@@ -166,25 +166,50 @@ func (run *consoleRun) step(step float64) *SceneView {
 	return run.options.Scene(forScene, step)
 }
 
+// FrameTimes are how long the parts of the last frame took on the console, for a program that
+// shows its own resources: waiting for the GPU to finish the frame before (the frame's GPU time,
+// when it is the bottleneck), painting the scene, the scene's own drawing over it and the
+// interface (the processor's work of making their draw calls), and handing the frame over.
+type FrameTimes struct {
+	WaitForGPU, Scene, OverScene, Interface, Submit time.Duration
+}
+
+var frameTimes FrameTimes
+
+// LastFrameTimes are the parts of the last frame drawn.
+func LastFrameTimes() FrameTimes { return frameTimes }
+
 // draw shows the frame: the scene and the interface, each on its screen.
 func (run *consoleRun) draw(view *SceneView) {
 	drawing, background := run.context.Drawing(), run.context.Theme.Background
+	times := &frameTimes
+	mark := time.Now()
 	ctr.BeginFrame()
+	lap(&times.WaitForGPU, &mark)
 	switch {
 	case view == nil:
 		run.top.Clear(packedBackground(background))
+		times.Scene, times.OverScene = 0, 0
 		run.flat.Paint(drawing, background)
+		lap(&times.Interface, &mark)
 	case run.swapped:
 		run.flat.PaintOn(run.top, drawing, background)
+		lap(&times.Interface, &mark)
 		run.scene.PaintOn(run.bottom, view.World, view.Camera)
+		lap(&times.Scene, &mark)
+		times.OverScene = 0
 	default:
 		focus := distance(view.Camera.Position, view.Camera.Target)
 		separation := ctr.Slider3D() * focus * separationAtFullSlider
 		run.scene.PaintStereo(view.World, view.Camera, separation, focus)
+		lap(&times.Scene, &mark)
 		run.paintOverScene(view, separation > 0)
+		lap(&times.OverScene, &mark)
 		run.flat.Paint(drawing, background)
+		lap(&times.Interface, &mark)
 	}
 	ctr.EndFrame()
+	lap(&times.Submit, &mark)
 }
 
 // paintOverScene paints the scene's own drawing (World.Overlay.Drawing: a sight, a name), which
@@ -203,6 +228,12 @@ func (run *consoleRun) paintOverScene(view *SceneView, stereo bool) {
 		run.top.DrawOn(eye)
 		run.flat.PaintOver(run.top, over)
 	}
+}
+
+// lap puts the time since mark into a frame time, and starts the next lap now.
+func lap(into *time.Duration, mark *time.Time) {
+	now := time.Now()
+	*into, *mark = now.Sub(*mark), now
 }
 
 func distance(from, to [4]float32) float32 {
