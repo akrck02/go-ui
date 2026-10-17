@@ -5,6 +5,10 @@ are sized and placed, and what each control does.
 
 | Section | What it covers |
 |---|---|
+| [Get started](get-started.md) | Installing and a first interface |
+| [Tutorial](tutorial/README.md) | Seven lessons that build a register of lighthouses |
+| [Components](components/README.md) | Every control one by one, with concrete cases |
+| [Reference](reference/README.md) | Every method and type |
 | [A frame](#a-frame) | Immediate mode: describing the interface every step |
 | [Boxes and layout](#boxes-and-layout) | How sizes and positions are worked out, and how to ask for a layout |
 | [Controls](#controls) | Labels, buttons, panels, rows and columns |
