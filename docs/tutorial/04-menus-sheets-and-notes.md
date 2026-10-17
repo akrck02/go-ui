@@ -3,6 +3,14 @@
 A register needs to grow and shrink. In this lesson you add lighthouses from a **menu**, ask before
 removing one with a **sheet**, and confirm it with a short **note** (a toast).
 
+| Mission | Pieces | Time |
+|---|---|---|
+| Adding and removing lighthouses | `MenuButton`, `Sheet`, `Toast` | 15 min |
+
+#### The idea
+
+A sheet is a **clerk who asks before stamping**: while it is open, nothing else on the desk can be touched. It stays exactly as long as your program says (an `if`), and tells you when the person waves it away.
+
 ## A menu
 
 `MenuButton(icon, label, content)` is a flat button that opens a menu under it. Its content is
@@ -99,19 +107,25 @@ everything else it is *fired once*, not described at every frame: go-ui keeps it
 
 `LayerOptions.Leave` makes a modal or an overlay leave with motion once you stop showing it.
 
+#### Checkpoint
+
+*Add* opens a menu that adds a lighthouse; *Remove* dims the window under a sheet that asks first; *Remove* in it takes the lighthouse out and a note says so.
+
+![Achievement unlocked: Harbourmaster](../images/tutorial/quest/achievement-harbourmaster.svg)
+
 ## What you learnt
 
 - A menu's content is described only while open; `MenuItem` returns `true` when chosen.
 - A sheet is shown with an `if`, and returns `true` when the person dismisses it.
 - What is described later is drawn on top; toasts are fired once.
 
-## Practice
+## Bonus (optional)
 
 Give the Remove button a tooltip, "Takes it out of the register, after asking", and show the
 "Copy of the selected one" item only when a lighthouse is selected.
 
 <details>
-<summary>Solution</summary>
+<summary>🔓 Show the solution</summary>
 
 ```go
 if context.Button("Remove") {

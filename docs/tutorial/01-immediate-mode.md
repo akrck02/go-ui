@@ -4,6 +4,14 @@ In this lesson you write the smallest useful go-ui program, a lamp that is switc
 learn the one idea everything else rests on: **the interface is a function of your data, called
 again at every frame**.
 
+| Mission | Pieces | Time |
+|---|---|---|
+| A lamp to switch on and off | `window.Run`, controls that return what happened, ids | 10 min |
+
+#### The idea
+
+Immediate mode is a **whiteboard**: every frame you wipe it and draw it again from your notes (your variables). Nothing on the board can go stale, because nothing on it is kept; a button is simply drawn, and tells you if someone pressed it.
+
 ## A frame
 
 ```go
@@ -94,19 +102,25 @@ where a list is scrolled. It finds it again by each control's **id**, a hash of 
 | `Text(text, ui.TextStyle{Size, Weight, Color})` | Any size, weight (`draw2d.Regular`, `Medium`, `Bold`, `Mono`) and colour |
 | `Icon(name)` | A [Lucide](https://lucide.dev/icons) icon by name |
 
+#### Checkpoint
+
+A window with *North Point*, a line saying whether the lamp is lit, a count, and a button whose words change as you click it.
+
+![Achievement unlocked: Switchman](../images/tutorial/quest/achievement-switchman.svg)
+
 ## What you learnt
 
 - `window.Run` calls your function at every frame; it describes the whole interface.
 - Controls are function calls that return what happened; your variables hold the state.
 - Ids come from labels and scopes; `##` keeps an id while the words change.
 
-## Practice
+## Bonus (optional)
 
 Add a second button, "Reset", that sets the count back to zero, and show it only once the lamp has
 been switched at least once.
 
 <details>
-<summary>Solution</summary>
+<summary>🔓 Show the solution</summary>
 
 ```go
 if switches > 0 && context.Button("Reset") {

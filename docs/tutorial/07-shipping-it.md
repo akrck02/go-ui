@@ -3,6 +3,14 @@
 The register works on your computer. In this last lesson it remembers what it was showing, behaves
 well when it leaves the screen, and runs in a web page and on a phone, **from the same code**.
 
+| Mission | Pieces | Time |
+|---|---|---|
+| The register in a browser and on a phone | preferences, `Hidden`, `GOOS=js`, go-ui-apk | 15 min |
+
+#### The idea
+
+One program, **three harbours**: the same code sails to a window, a web page and a phone; the window package is the pilot that knows each port. Before leaving one, write down where you were (the preferences), because the phone may close the app without asking.
+
 ## Remembering between runs
 
 `window.KeepPreference(name, value)` keeps a short text under a name: in the user's configuration
@@ -90,12 +98,70 @@ Android's own applications do (top bars, navigation bars, lists, sheets), and it
 where this one ends. On a phone, also look at `context.Insets()` (the system's bars), `context.Size()`
 (to choose a layout by the screen) and `context.Back()` (the back gesture) ([on Android](../android.md)).
 
+#### Checkpoint
+
+Close and open the register: the same lighthouse is chosen and the list as wide as you left it. Built for WebAssembly, it runs at `localhost:8080/?program=register`.
+
+![Achievement unlocked: Shipwright](../images/tutorial/quest/achievement-shipwright.svg)
+
 ## What you learnt
 
 - `KeepPreference` and `Preference` keep settings on every platform; `Options.Hidden` is the moment
   to keep them.
 - `window.Wake()` asks for a frame from another goroutine.
 - The same program runs in a page (`GOOS=js GOARCH=wasm`) and on Android (go-ui-apk).
+
+## Final challenge · Register keeper
+
+Give the register a **Settings** sheet, opened from a gear button in the toolbar, with a **Dark theme** toggle. The choice is kept between runs.
+
+> **Hint:** a `bool` in the program, a `Sheet` shown while it is open, `ui.DarkTheme()` and `ui.LightTheme()`, and `KeepPreference` / `Preference` for the choice.
+
+Try it on your own first, then compare with the solution.
+
+![The final challenge: the Settings sheet over the register, in the dark theme](../images/tutorial/final.jpg)
+
+<details>
+<summary>🔓 Show the solution</summary>
+
+```go
+// in the register struct
+settings, dark bool
+
+// at the start of build, before the teal
+if program.dark {
+	context.Theme = ui.DarkTheme()
+} else {
+	context.Theme = ui.LightTheme()
+}
+
+// in the toolbar, after the menu
+if context.FlatIconButton("settings", "") {
+	program.settings = true
+}
+
+// at the end of build
+if program.settings && context.Sheet("Settings", ui.SheetOptions{}, func() {
+	if context.Toggle("Dark theme", &program.dark) {
+		window.KeepPreference("dark", strconv.FormatBool(program.dark))
+	}
+}) {
+	program.settings = false
+}
+
+// in main, before window.Run
+if text, found := window.Preference("dark"); found {
+	program.dark = text == "true"
+}
+```
+
+</details>
+
+![Rare achievement unlocked: Register keeper](../images/tutorial/quest/achievement-final.svg)
+
+## Well done
+
+![Every achievement of the quest](../images/tutorial/quest/achievements-all.svg)
 
 ## Where next
 

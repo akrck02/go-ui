@@ -4,6 +4,14 @@ go-ui's controls are built from the same pieces you can use. In this lesson you 
 star** from a clickable box, tell **screen readers** what it is, **paint** a strip of your own, and
 give the register a **theme** colour of its own.
 
+| Mission | Pieces | Time |
+|---|---|---|
+| A favourite star, and a theme of your own | `Clickable`, `Describe`, `Paint`, `Theme` | 20 min |
+
+#### The idea
+
+go-ui's own buttons are made of the same **bricks** you can use: a box that reacts to the pointer, with a look for each state. And the theme is a **paint chart**: change one swatch and every wall painted with it changes.
+
 ![The finished register in the dark theme, North Point a favourite, its light's character painted under the period](../images/tutorial/05-register-dark.jpg)
 
 ## A clickable box
@@ -120,18 +128,24 @@ target and asks for frames only while it moves; `context.Appear(name, duration)`
 the first time something is shown; `context.Fold(name, open, duration, layout, content)` opens a
 box to its content's height and closes it to nothing.
 
+#### Checkpoint
+
+A star beside the name turns gold when clicked; under the period, a strip shows a mark for every flash; everything primary is teal.
+
+![Achievement unlocked: Craftsman](../images/tutorial/quest/achievement-craftsman.svg)
+
 ## What you learnt
 
 - `Clickable` makes any box a control, with a look for each state.
 - `Describe` tells screen readers what a control of your own is.
 - `Paint` draws your own shapes in a laid-out box; the theme's tokens colour and size everything.
 
-## Practice
+## Bonus (optional)
 
 Make the star grow a little while the pointer is over it, easing between the two sizes.
 
 <details>
-<summary>Solution</summary>
+<summary>🔓 Show the solution</summary>
 
 `Clickable` does not tell you whether it is hovered, but the area it had in the last frame does:
 `context.Area` finds a control by its scopes and name, and `context.Pointer()` says where the

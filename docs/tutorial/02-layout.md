@@ -4,6 +4,14 @@ In this lesson you build the skeleton of the register: a toolbar across the top,
 left that can be made wider, the content in the middle and a status bar at the foot. You learn how
 go-ui sizes and places **boxes**.
 
+| Mission | Pieces | Time |
+|---|---|---|
+| The window's skeleton | `Box`, `Frame`, `Fit`, `Grow`, `Fixed`, `Resizable` | 15 min |
+
+#### The idea
+
+Layout is **packing a suitcase**: some things have a fixed size (a book), some fit what they hold (a bag of socks), and the rest grow into whatever room is left. You say which is which; go-ui does the packing at the end of the frame.
+
 ![The skeleton: a toolbar, the list of lighthouses on the left, a hint in the middle, the status bar](../images/tutorial/register-empty.jpg)
 
 ## The program's data
@@ -185,18 +193,24 @@ stops at `MinWidth`.
 | `Grid(columns, content)` | Rows of equal cells |
 | `Spacer()`, `Separator()` | Free space; a thin line |
 
+#### Checkpoint
+
+A toolbar on top, the list on the left (drag its edge to widen it), a hint in the middle and the status bar at the foot; make the window narrow and the list keeps its width.
+
+![Achievement unlocked: Surveyor](../images/tutorial/quest/achievement-surveyor.svg)
+
 ## What you learnt
 
 - Boxes nest; a `Layout` gives a direction, sizes, padding, gaps and alignment.
 - `Fit`, `Grow`, `Share`, `Fixed`, `Percent`: sizes are worked out at the end of the frame.
 - `Frame` paints a box with a `Look`, in the theme's colours; `Resizable` lets the person size it.
 
-## Practice
+## Bonus (optional)
 
 Put the status bar's count on the left and the word "Saved" on the right of the same bar.
 
 <details>
-<summary>Solution</summary>
+<summary>🔓 Show the solution</summary>
 
 A `Spacer` between them pushes the second to the far end:
 

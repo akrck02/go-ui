@@ -1,5 +1,7 @@
 # Tutorial: a register of lighthouses
 
+![The quest map: Switchman, Surveyor, Clerk, Harbourmaster, Craftsman, Lookout, Shipwright, then the final challenge, Register keeper](../images/tutorial/quest/quest-map.svg)
+
 In seven lessons you build a real desktop application, one step at a time: a register of
 lighthouses with a list to choose one, a form to edit it, a search, a menu, a sheet that asks
 before removing, and a control of your own. Then you put an interface over a 3D scene, and take
@@ -9,6 +11,8 @@ the program to a web page and a phone.
 
 **Before you start**, follow [Get started](../get-started.md). Each lesson takes ten to twenty
 minutes and ends with something you can run.
+
+Every lesson has the same shape, as in a quest: **the idea** in everyday words, **the code**, a **checkpoint** to know it works, a **bonus** with its solution folded, and an **achievement** to unlock. A final challenge waits at the end of lesson 7.
 
 | Lesson | You learn | You end with |
 |---|---|---|

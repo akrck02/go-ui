@@ -3,6 +3,14 @@
 In this lesson the list becomes something you choose from, and the content a form that edits the
 lighthouse chosen: its name, colour, range, period, whether it is lit and whether it has a foghorn.
 
+| Mission | Pieces | Time |
+|---|---|---|
+| A form that edits the lighthouse chosen | `Selectable`, text and number fields, selects, sliders | 15 min |
+
+#### The idea
+
+Each control is a **window onto one of your variables**: the field shows `light.name` and, when you type, writes into it. The list, the heading and the status bar look through their own windows at the same variable, so they always agree.
+
 ![The form of North Point: a name field, a colour select, a range with − and +, a period slider, a switch and a checkbox](../images/tutorial/register-light.jpg)
 
 ## Choosing from a list
@@ -123,18 +131,24 @@ The full list, with buttons, chips, images and tooltips, is in [the reference](.
 > 📝 **The keyboard and the 3D view.** While a field has the keyboard, go-ui *claims* it, so a 3D
 > view's shortcuts do not take the letters you type ([lesson 6](06-over-a-3d-scene.md)).
 
+#### Checkpoint
+
+Click *East Cape*: the form shows its name, colour, range and period; rename it and the list changes as you type; *ea* in the search leaves it alone in the list.
+
+![Achievement unlocked: Clerk](../images/tutorial/quest/achievement-clerk.svg)
+
 ## What you learnt
 
 - `Selectable` rows in a loop, each in a scope of its own (`Push`, `Pop`).
 - Controls edit the value they point to and return `true` when it changed.
 - Every part of the screen reads the same data at every frame, so nothing needs syncing.
 
-## Practice
+## Bonus (optional)
 
 Show a warning under the range when it is above 25 nm, in the theme's warning colour.
 
 <details>
-<summary>Solution</summary>
+<summary>🔓 Show the solution</summary>
 
 ```go
 if light.rangeNM > 25 {

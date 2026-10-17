@@ -4,6 +4,14 @@ go-ui was made to draw interfaces over [go-renderer](https://github.com/akrck02/
 scenes. In this lesson you put a panel over an island that moves the sun and the clouds, and learn
 how the interface and the camera share the mouse.
 
+| Mission | Pieces | Time |
+|---|---|---|
+| A panel that moves the sun over an island | `viewer.Run`, claims, `Options.Scene` | 15 min |
+
+#### The idea
+
+The interface and the camera share one mouse, like **two people and one remote control**: whoever the pointer is over has it. When it is over a panel, go-ui claims it, and the camera gets only what was left.
+
 ![A panel with three sliders over the sample island](../images/tutorial/scene-panel.jpg)
 
 There are two ways in:
@@ -176,6 +184,12 @@ With go-ui in it you get both: panels to choose what to place, the map to place 
 `cmd/plan-editor` places huts on an island that way, and `DragSource` with
 `context.DroppedOnScreen()` drops a value of yours from a panel onto the scene ([the guide](../README.md#drag-and-drop)).
 
+#### Checkpoint
+
+Over the sample island, a *Sky* panel: dragging its sliders moves the sun and the clouds without turning the camera; dragging the island turns it.
+
+![Achievement unlocked: Lookout](../images/tutorial/quest/achievement-lookout.svg)
+
 ## What you learnt
 
 - Over the viewer: `ui.New()`, `Overlay.Drawing = context.Drawing()`, and `Begin` … `End` in the
@@ -183,12 +197,12 @@ With go-ui in it you get both: panels to choose what to place, the map to place 
 - Over go-ui's window: `Options.Scene` returns a scene and a camera, on every platform.
 - go-ui claims the mouse and the keyboard it uses, so cameras get only the rest.
 
-## Practice
+## Bonus (optional)
 
 Add a label to the panel that says whether the mouse is over it, from the context.
 
 <details>
-<summary>Solution</summary>
+<summary>🔓 Show the solution</summary>
 
 `WantsMouse` is decided at `End`, so it tells about the step before, which is what the person sees:
 
