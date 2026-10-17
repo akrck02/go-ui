@@ -94,6 +94,9 @@ type consoleRun struct {
 	state    *input.State
 	controls ctr.Controls
 	swapped  bool // the scene below and the interface above
+	// forScene and keysOnly are the input the scene and the interface get, kept here: made in
+	// step, they would go to the heap every frame
+	forScene, keysOnly input.State
 }
 
 func (run *consoleRun) loop() {
@@ -137,11 +140,12 @@ func (run *consoleRun) step(step float64) *SceneView {
 	shaped(run.state, interfaceWidth)
 	forInterface := run.state
 	if run.swapped {
-		keysOnly := run.state.Unclaimed()
+		run.keysOnly = run.state.Unclaimed()
+		keysOnly := &run.keysOnly
 		keysOnly.SetButton(input.MouseLeft, false)
 		keysOnly.CursorX, keysOnly.CursorY, keysOnly.CursorDeltaX, keysOnly.CursorDeltaY = -1e6, -1e6, 0, 0
 		keysOnly.ClearTouches()
-		forInterface = &keysOnly
+		forInterface = keysOnly
 	}
 	run.context.Begin(forInterface)
 	run.build(run.context)
@@ -149,7 +153,8 @@ func (run *consoleRun) step(step float64) *SceneView {
 	if run.options.Scene == nil {
 		return nil
 	}
-	forScene := run.state.Unclaimed()
+	run.forScene = run.state.Unclaimed()
+	forScene := &run.forScene
 	if !run.swapped {
 		// the interface has the touch screen; the scene turns with the keys, and its pointer is
 		// off it (no hand to show over what is under the finger on the other screen)
@@ -157,8 +162,8 @@ func (run *consoleRun) step(step float64) *SceneView {
 		forScene.ClearTouches()
 		forScene.CursorX, forScene.CursorY, forScene.CursorDeltaX, forScene.CursorDeltaY = -1e6, -1e6, 0, 0
 	}
-	shaped(&forScene, sceneWidth)
-	return run.options.Scene(&forScene, step)
+	shaped(forScene, sceneWidth)
+	return run.options.Scene(forScene, step)
 }
 
 // draw shows the frame: the scene and the interface, each on its screen.
