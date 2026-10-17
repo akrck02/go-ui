@@ -14,6 +14,7 @@ jobs:
         with:
           title: "go-ui"
           description: "Immediate-mode interfaces over go-renderer"
+          logo: "./docs/images/logo.svg"
           path: "./docs"
           isObsidianProject: false
           showFooter: true
