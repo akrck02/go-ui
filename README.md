@@ -1,3 +1,5 @@
+<p align="center"><img alt="" src="docs/images/logo.svg" width="120"></p>
+
 <div align="center">
 
 # Go UI
@@ -110,7 +112,7 @@ cmd/mobile/build-apk.sh mobile.apk    # a phone-sized example on Android: docs/a
 go test ./...
 ```
 
-[More on getting started →](docs/getting-started.md)
+[More on getting started →](docs/4-guides/1-getting-started.md)
 
 ## 🔍 How it works
 
@@ -121,23 +123,25 @@ go test ./...
 There are no button objects to create and keep: showing something is an `if`, a list is a `for`,
 and the interface holds none of your data, so it can never show a stale value. Layout happens at
 `End`, once the whole tree is known, and the result is one `draw2d.List` that go-renderer paints.
-[More on a frame →](docs/getting-started.md#a-frame)
+[More on a frame →](docs/4-guides/1-getting-started.md#a-frame)
 
 ## 📚 Documentation
 
+New here? Start with the [overview](docs/1-overview.md), then [get started](docs/2-get-started.md), [the quest](docs/3-the-quest/0-the-quest.md), [the components one by one](docs/5-components/0-components.md) and [the reference](docs/6-reference/0-reference.md).
+
 | | |
 |---|---|
-| [Getting started](docs/getting-started.md) | A frame in immediate mode, ids and scopes, the examples, how it is drawn. |
-| [Layout](docs/layout.md) | Boxes, how sizes and positions are worked out, and how to ask for a layout. |
-| [Controls](docs/controls.md) | Text, buttons, choices, lists, chips, pictures, tooltips, motion. |
-| [Panels and layers](docs/panels-and-layers.md) | Panels, the screen, popups, menus, sheets, modals and overlays. |
-| [Tables, dragging and resizing](docs/tables-and-dragging.md) | Grouped tables, drag and drop onto the scene, columns resized by their edge. |
-| [Text fields](docs/text-fields.md) | Typing, selecting, the clipboard, undo, Tab, and phones' keyboards. |
-| [Mouse, keyboard and touch](docs/input.md) | Which control gets the pointer, keeping the camera out of the way, fingers. |
-| [Themes](docs/themes.md) | The tokens every control reads. |
-| [Screen readers](docs/screen-readers.md) | How a screen reader reads a go-ui program. |
-| [A window of its own](docs/desktop.md) · [web](docs/web.md) · [Android](docs/android.md) | Interfaces without a scene, Metal or OpenGL, a browser, a phone. |
-| [Performance and battery](docs/performance-audit.md) | What an idle and a busy interface cost, measured. |
+| [Getting started](docs/4-guides/1-getting-started.md) | A frame in immediate mode, ids and scopes, the examples, how it is drawn. |
+| [Layout](docs/4-guides/2-layout.md) | Boxes, how sizes and positions are worked out, and how to ask for a layout. |
+| [Controls](docs/4-guides/3-controls.md) | Text, buttons, choices, lists, chips, pictures, tooltips, motion. |
+| [Panels and layers](docs/4-guides/4-panels-and-layers.md) | Panels, the screen, popups, menus, sheets, modals and overlays. |
+| [Tables, dragging and resizing](docs/4-guides/5-tables-and-dragging.md) | Grouped tables, drag and drop onto the scene, columns resized by their edge. |
+| [Text fields](docs/4-guides/6-text-fields.md) | Typing, selecting, the clipboard, undo, Tab, and phones' keyboards. |
+| [Mouse, keyboard and touch](docs/4-guides/7-input.md) | Which control gets the pointer, keeping the camera out of the way, fingers. |
+| [Themes](docs/4-guides/8-themes.md) | The tokens every control reads. |
+| [Screen readers](docs/4-guides/9-screen-readers.md) | How a screen reader reads a go-ui program. |
+| [A window of its own](docs/4-guides/10-desktop.md) · [web](docs/7-platforms/1-web.md) · [Android](docs/7-platforms/2-android.md) | Interfaces without a scene, Metal or OpenGL, a browser, a phone. |
+| [Performance and battery](docs/8-project/1-performance-audit.md) | What an idle and a busy interface cost, measured. |
 
 ## Licence
 
