@@ -171,7 +171,7 @@ show through, with the camera working inside it. `cmd/scene-app` lays a whole ap
 ## Editing what you see
 
 go-renderer's `viewer.Edit` gives your function a `viewer.View`, which turns the pointer into a
-point on the ground ([go-renderer's tutorial, lesson 5](../../../go-renderer/docs/tutorial/05-editing-with-the-pointer.md)).
+point on the ground ([go-renderer's tutorial, lesson 5](https://github.com/akrck02/go-renderer/blob/main/docs/tutorial/05-editing-with-the-pointer.md)).
 With go-ui in it you get both: panels to choose what to place, the map to place it on.
 `cmd/plan-editor` places huts on an island that way, and `DragSource` with
 `context.DroppedOnScreen()` drops a value of yours from a panel onto the scene ([the guide](../README.md#drag-and-drop)).
