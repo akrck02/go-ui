@@ -11,6 +11,15 @@ type Look struct {
 	Radius      float32
 	Shadow      bool // a soft shadow under it, for things that float over others
 	Clip        bool // children are cut to the box's area
+	// Backdrop, when set, draws more of the box's background, over Fill and Border and under its
+	// children: a frame of several colours, a pattern. A pointer to a style kept from frame to
+	// frame allocates nothing.
+	Backdrop Backdrop
+}
+
+// Backdrop draws a box's background in its area.
+type Backdrop interface {
+	Paint(area draw2d.Rect, drawing *draw2d.List)
 }
 
 type elementKind int
@@ -26,6 +35,9 @@ type TextStyle struct {
 	Size   float32 // in pixels; 0 = the theme's text size
 	Weight draw2d.Weight
 	Color  draw2d.Color // the zero colour = the theme's ink
+	// Shadow, when visible, draws the text a second time a pixel right and down, in this colour,
+	// under it: the hard shadow pixel-art games give their text.
+	Shadow draw2d.Color
 }
 
 // element is one box of this frame's tree: a container, a line of text or an icon. Elements live

@@ -30,6 +30,13 @@ interfaceContext.Frame(layout, ui.Look{Fill: theme.Surface, Border: theme.Line, 
 (`Look`). Because layouts and looks are plain structs, they can come from a file one day, like a
 theme.
 
+When a fill and a border are not enough, `Look.Backdrop` draws the rest of a box's background
+itself: anything with a `Paint(area, drawing)` method, called under the box's children. A
+pixel-art window (an outline, a frame of two colours, corners cut a pixel at a time) or a
+patterned panel is a backdrop. Keep one value of it and point every look at it, so a frame
+allocates nothing. Text can carry a hard shadow the same way pixel-art games draw it:
+`TextStyle{Shadow: colour}` draws it a pixel right and down, under the text.
+
 ## How sizes are worked out
 
 The work is done one axis at a time:
