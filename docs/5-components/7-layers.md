@@ -23,7 +23,7 @@ context.PanelWith("Tools", ui.PanelOptions{Dock: ui.DockRight, Width: ui.Fixed(1
 ![A floating Lamp panel with a switch, and a Tools panel docked on the right](../images/components/layers-panel.png)
 
 Panels are for tools over a scene or a canvas. An application's fixed parts (bars, side columns)
-are better as boxes on the screen ([containers](containers.md)).
+are better as boxes on the screen ([containers](5-containers.md)).
 
 ## `Sheet`
 
@@ -141,4 +141,4 @@ if context.Button("Check the lamp") {
 
 ---
 
-[← Lists and tables](lists-and-tables.md) · [Dragging and resizing →](dragging-and-resizing.md)
+[← Lists and tables](6-lists-and-tables.md) · [Dragging and resizing →](8-dragging-and-resizing.md)

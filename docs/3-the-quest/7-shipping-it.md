@@ -77,7 +77,7 @@ python3 -m http.server -d web 8080      # then open http://localhost:8080/?progr
 ```
 
 go-ui's `web/index.html` runs `name.wasm` from `?program=name`. The canvas follows the page's size;
-the clipboard, the keyboard and preferences are the browser's ([in a web browser](../web.md)).
+the clipboard, the keyboard and preferences are the browser's ([in a web browser](../7-platforms/1-web.md)).
 
 ## On a phone
 
@@ -96,7 +96,7 @@ A desktop layout is not a phone layout, though: the register's side list and for
 each on a phone, with a navigation bar. go-ui-android's `material` package draws pieces as
 Android's own applications do (top bars, navigation bars, lists, sheets), and its tutorial starts
 where this one ends. On a phone, also look at `context.Insets()` (the system's bars), `context.Size()`
-(to choose a layout by the screen) and `context.Back()` (the back gesture) ([on Android](../android.md)).
+(to choose a layout by the screen) and `context.Back()` (the back gesture) ([on Android](../7-platforms/2-android.md)).
 
 #### Checkpoint
 
@@ -165,12 +165,12 @@ if text, found := window.Preference("dark"); found {
 
 ## Where next
 
-- [The guide](../README.md): everything about layout, text fields, tables, drag and drop,
+- [The guide](../4-guide.md): everything about layout, text fields, tables, drag and drop,
   screen readers, how a frame is drawn.
-- [The reference](../reference/README.md): every control and option.
+- [The reference](../6-reference/0-reference.md): every control and option.
 - [go-ui-android](https://github.com/akrck02/go-ui-android): Material Design 3 on phones.
-- [The performance audit](../performance-audit.md): what an interface costs, measured.
+- [The performance audit](../8-project/1-performance-audit.md): what an interface costs, measured.
 
 ---
 
-[← Lesson 6](06-over-a-3d-scene.md) · [Tutorial](README.md) · [Reference →](../reference/README.md)
+[← Lesson 6](6-over-a-3d-scene.md) · [Tutorial](0-the-quest.md) · [Reference →](../6-reference/0-reference.md)

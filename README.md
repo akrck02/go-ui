@@ -48,7 +48,7 @@ go test ./...
 > break. Until go-renderer publishes `draw2d` and the wider input, `go.mod` points at a local copy
 > (`../go-renderer`).
 
-Read the [documentation](docs/README.md): how a frame works, the layout rules and the controls. Also: [get started](docs/get-started.md), [the tutorial](docs/tutorial/README.md), [the components one by one](docs/components/README.md) and [the reference](docs/reference/README.md).
+Read the [documentation](docs/4-guide.md): how a frame works, the layout rules and the controls. Also: [get started](docs/2-get-started.md), [the tutorial](docs/3-the-quest/0-the-quest.md), [the components one by one](docs/5-components/0-components.md) and [the reference](docs/6-reference/0-reference.md).
 
 ## AI disclosure
 

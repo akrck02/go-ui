@@ -10,14 +10,14 @@ variable of your program that lives between frames.
 
 | Page | Components |
 |---|---|
-| [Text, icons and pictures](text.md) | `Heading`, `Label`, `Caption`, `Text`, `Icon`, `IconSized`, `Image`, `Tooltip` |
-| [Buttons](buttons.md) | `Button`, `PrimaryButton`, `IconButton`, `PrimaryIconButton`, `FlatButton`, `FlatIconButton`, `Selectable`, `Chip`, `RemovableChip`, `Clickable`, `LongPressed` |
-| [Choices](choices.md) | `Checkbox`, `Toggle`, `Slider`, `SliderStep`, `NumberField`, `Select`, `Tabs`, `ListBox` |
-| [Text fields](text-fields.md) | `TextField`, `TextFieldWith`, focus, validation, search |
-| [Containers](containers.md) | `Box`, `Frame`, `Row`, `Column`, `Grid`, `Spacer`, `Separator`, `ScrollArea`, `Fold`, `Paint`, `SwipeBox` |
-| [Lists and tables](lists-and-tables.md) | `List`, `Table` |
-| [Layers](layers.md) | `Panel`, `PanelWith`, `Sheet`, `Modal`, `Overlay`, `Popover`, `MenuButton`, `MenuItem`, `Toast` |
-| [Dragging and resizing](dragging-and-resizing.md) | `DragSource`, `DropTarget`, `Dragging`, `DroppedOnScreen`, `Resizable` |
+| [Text, icons and pictures](1-text.md) | `Heading`, `Label`, `Caption`, `Text`, `Icon`, `IconSized`, `Image`, `Tooltip` |
+| [Buttons](2-buttons.md) | `Button`, `PrimaryButton`, `IconButton`, `PrimaryIconButton`, `FlatButton`, `FlatIconButton`, `Selectable`, `Chip`, `RemovableChip`, `Clickable`, `LongPressed` |
+| [Choices](3-choices.md) | `Checkbox`, `Toggle`, `Slider`, `SliderStep`, `NumberField`, `Select`, `Tabs`, `ListBox` |
+| [Text fields](4-text-fields.md) | `TextField`, `TextFieldWith`, focus, validation, search |
+| [Containers](5-containers.md) | `Box`, `Frame`, `Row`, `Column`, `Grid`, `Spacer`, `Separator`, `ScrollArea`, `Fold`, `Paint`, `SwipeBox` |
+| [Lists and tables](6-lists-and-tables.md) | `List`, `Table` |
+| [Layers](7-layers.md) | `Panel`, `PanelWith`, `Sheet`, `Modal`, `Overlay`, `Popover`, `MenuButton`, `MenuItem`, `Toast` |
+| [Dragging and resizing](8-dragging-and-resizing.md) | `DragSource`, `DropTarget`, `Dragging`, `DroppedOnScreen`, `Resizable` |
 
 ## Rules every control follows
 
@@ -32,4 +32,4 @@ variable of your program that lives between frames.
 
 ---
 
-[← Documentation](../README.md)
+[← Documentation](../4-guide.md)

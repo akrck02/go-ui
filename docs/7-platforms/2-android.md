@@ -6,7 +6,7 @@ the desktop and in a browser. The example looks like Android's own apps (Materia
 page started as a plan (what to build, install and try, in which order); *What was built* says how
 it turned out, and *Next* what is left.
 
-![cmd/mobile on the Android emulator: the list of lighthouses, a lighthouse's details, and the island at three in the afternoon](images/android-emulator.jpg)
+![cmd/mobile on the Android emulator: the list of lighthouses, a lighthouse's details, and the island at three in the afternoon](../images/android-emulator.jpg)
 
 ## What was built
 
@@ -22,7 +22,7 @@ Android                 its own NativeActivity loads the program, a shared libra
 | Piece | Where |
 |---|---|
 | The window: renderers made again with each new graphics context, the insets for the interface | `window/android.go` |
-| The activity, the drawing thread, touches, JNI for the bars and the theme, crash reports | go-renderer's `android` package ([its docs](../../go-renderer/docs/android.md)) |
+| The activity, the drawing thread, touches, JNI for the bars and the theme, crash reports | go-renderer's `android` package ([its docs](https://github.com/akrck02/go-renderer/blob/main/docs/4-guides/6-android.md)) |
 | A 3D scene under the interface (`Options.Scene`), on every platform | `window/window.go` and each platform's file |
 | An example that looks like an Android app, the same on desktop, web and Android | `cmd/mobile` |
 | Building an installable package, with a window theme | `cmd/mobile/build-apk.sh`, `cmd/mobile/android/` |
@@ -115,7 +115,7 @@ insets).
 TalkBack reads a go-ui program as it reads Android's own applications: a finger moved over the
 screen reads what is under it, a swipe goes to the next thing, a double tap presses it, and the
 thing read is ringed. Every frame, while a screen reader is on, the interface makes its list of
-nodes ([screen readers](README.md#screen-readers)); `window/android.go` numbers them as Android's
+nodes ([screen readers](../4-guide.md#screen-readers)); `window/android.go` numbers them as Android's
 virtual views, says what Android widget each reads as (a switch is an `android.widget.Switch`) and
 hands them to go-renderer, which sends them to one small Java class only when they change. What
 TalkBack asks (press, long press, scroll, the thing it is on) comes back the same way.

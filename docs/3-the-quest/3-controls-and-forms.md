@@ -54,7 +54,7 @@ context.TextFieldWith("search", &program.search, ui.TextFieldOptions{Placeholder
 ![The search "ea" leaves East Cape alone in the list](../images/tutorial/register-search.jpg)
 
 For thousands of rows, `List(name, layout, count, rowHeight, row)` builds only the rows in sight,
-and `Table` adds a header, columns and groups ([the guide](../README.md#tables)).
+and `Table` adds a header, columns and groups ([the guide](../4-guide.md#tables)).
 
 ## The form
 
@@ -126,10 +126,10 @@ Notice what is *not* there: no "on change" handler copies the name into the list
 | `Tabs(name, &index, labels…)` | An `int` | A segmented row; show the tab's content with an `if` |
 | `ListBox(name, layout, items, &index)` | An `int` | A scrolling list of selectable items |
 
-The full list, with buttons, chips, images and tooltips, is in [the reference](../reference/README.md#controls).
+The full list, with buttons, chips, images and tooltips, is in [the reference](../6-reference/0-reference.md#controls).
 
 > 📝 **The keyboard and the 3D view.** While a field has the keyboard, go-ui *claims* it, so a 3D
-> view's shortcuts do not take the letters you type ([lesson 6](06-over-a-3d-scene.md)).
+> view's shortcuts do not take the letters you type ([lesson 6](6-over-a-3d-scene.md)).
 
 #### Checkpoint
 
@@ -160,4 +160,4 @@ if light.rangeNM > 25 {
 
 ---
 
-[← Lesson 2](02-layout.md) · [Lesson 4: menus, sheets and notes →](04-menus-sheets-and-notes.md)
+[← Lesson 2](2-layout.md) · [Lesson 4: menus, sheets and notes →](4-menus-sheets-and-notes.md)

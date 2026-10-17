@@ -4,7 +4,7 @@
 WebAssembly and drawn through WebGL2, with the same code as on the desktop. The desktop is
 unchanged.
 
-![The register application in a browser, unchanged: menu bar, filters, cards, table and inspector](images/web-app.jpg)
+![The register application in a browser, unchanged: menu bar, filters, cards, table and inspector](../images/web-app.jpg)
 
 The register above is `cmd/app`, **not changed by a line**: `window.Run` opens a canvas instead
 of a window when the program is built for the browser.
@@ -20,7 +20,7 @@ folder.
 
 ## Over a 3D scene
 
-![A lighthouse panel over the island scene in a browser](images/web-scene.jpg)
+![A lighthouse panel over the island scene in a browser](../images/web-scene.jpg)
 
 `cmd/web` is the same kind of program as `cmd/example`: the lighthouse island with a panel to look
 after its light and a status bar. On the desktop, `viewer.Run` draws the scene; it needs GLFW, so

@@ -8,7 +8,7 @@ The short answer: **an idle application now costs nothing**, and a frame of a no
 cheap. What is left to win is work done in frames that change nothing, and work that grows with
 content nobody sees (rows scrolled out of view). A Metal backend was not needed for battery, but
 once built it turned out cheaper than OpenGL on macOS, above all in memory
-([Metal](../../go-renderer/docs/metal.md)).
+([Metal](https://github.com/akrck02/go-renderer/blob/main/docs/4-guides/7-metal.md)).
 
 ## How it was measured
 
@@ -147,4 +147,4 @@ runs on a translation layer over Metal:
 | Still again, memory | 109 MB | **60 MB** |
 
 The details, and what still needs a look on screen, are in go-renderer's
-[docs/metal.md](../../go-renderer/docs/metal.md).
+[docs/metal.md](https://github.com/akrck02/go-renderer/blob/main/docs/4-guides/7-metal.md).

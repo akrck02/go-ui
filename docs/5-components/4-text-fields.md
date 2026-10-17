@@ -80,4 +80,4 @@ found by its scopes, with its text selected.
 
 ---
 
-[← Choices](choices.md) · [Containers →](containers.md)
+[← Choices](3-choices.md) · [Containers →](5-containers.md)
