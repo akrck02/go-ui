@@ -138,12 +138,23 @@ func (ui *Context) slideTo(id ID, result interaction, value, minimum, maximum fl
 	return minimum + fraction*(maximum-minimum)
 }
 
-// snap keeps a value within its range and on whole steps from the minimum.
+// snap keeps a value within its range and on whole steps from the minimum. It counts the steps in
+// float64, from the decimals the numbers were written as: in float32 a value far from its minimum
+// (a position a few metres from a minimum of thousands) lands a little off its step.
 func snap(value, minimum, maximum, step float32) float32 {
 	if step > 0 {
-		value = minimum + float32(math.Round(float64((value-minimum)/step)))*step
+		low, size := decimal(minimum), decimal(step)
+		steps := math.Round((decimal(value) - low) / size)
+		value = float32(low + steps*size)
 	}
 	return clamp(value, minimum, maximum)
+}
+
+// decimal is a float32 as the shortest decimal that reads back as it: 0.1 as 0.1, not as the
+// float32 nearest it, 0.100000001490116…, whose error grows with every step counted.
+func decimal(value float32) float64 {
+	exact, _ := strconv.ParseFloat(strconv.FormatFloat(float64(value), 'g', -1, 32), 64)
+	return exact
 }
 
 // numberMemory is what a number field keeps: the movement of a drag not yet worth a whole step,
@@ -162,6 +173,10 @@ const numberDragPixels = 4
 // with buttons to take a step off or add one. Drag the number sideways to change it a step every
 // few pixels, or click it (or reach it with Tab) to type a value: Enter or a click elsewhere keeps
 // it, Escape leaves the number as it was. It returns true on the steps the value changes.
+//
+// The buttons and the drag keep the number on whole steps from the minimum; a number typed is
+// kept as typed, within the range, and the program's own value is left as it is (only kept within
+// the range) until someone changes it.
 func (ui *Context) NumberField(name string, value *float32, minimum, maximum, step float32, format string) bool {
 	id := ui.idFor(name)
 	memory := remember(ui, id, func() *numberMemory { return &numberMemory{} })
@@ -171,7 +186,7 @@ func (ui *Context) NumberField(name string, value *float32, minimum, maximum, st
 		switch ui.editField(editID, &memory.typed, TextFieldOptions{}) {
 		case fieldSubmitted, fieldLeft:
 			if typed, ok := parseNumber(memory.typed); ok {
-				*value = snap(typed, minimum, maximum, step)
+				*value = clamp(typed, minimum, maximum)
 			}
 		}
 		return *value != before
@@ -179,7 +194,11 @@ func (ui *Context) NumberField(name string, value *float32, minimum, maximum, st
 	ui.focusables = append(ui.focusables, editID)
 	memory.typed = strconv.FormatFloat(float64(*value), 'f', -1, 32)
 	ui.stepNumber(id, name, memory, value, step, format)
-	*value = snap(*value, minimum, maximum, step)
+	if *value != before {
+		*value = snap(*value, minimum, maximum, step)
+	} else {
+		*value = clamp(*value, minimum, maximum)
+	}
 	return *value != before
 }
 

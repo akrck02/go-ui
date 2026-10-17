@@ -317,3 +317,18 @@ func TestSnap(t *testing.T) {
 		t.Fatal("snap rounds to steps and clamps")
 	}
 }
+
+func TestANumberFieldLeavesTheProgramsValueAlone(t *testing.T) {
+	h := newHarness(t)
+	value := float32(1.23) // off the steps, far from a minimum of thousands
+	changed := false
+	h.frame(func(ui *Context) {
+		ui.Box(Layout{Width: Fixed(200)}, func() { changed = ui.NumberField("position", &value, -5000, 5000, 0.1, "%.2f m") })
+	})
+	if changed || value != 1.23 {
+		t.Fatalf("drawing the field changed the value to %v", value)
+	}
+	if got := snap(1.2, -5000, 5000, 0.1); got != 1.2 {
+		t.Fatalf("snapping 1.2 to tenths from -5000 gives %v", got)
+	}
+}
