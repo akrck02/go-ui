@@ -20,7 +20,7 @@ I write most of my code by hand, so I want to be clear about where AI was used h
 
 - **Written by an AI assistant (Claude, by Anthropic) under my direction, since October 2026:**
   all of it so far: the context, the layout, the controls, the theme, the window (and its choice of
-  Metal or OpenGL, and its web and Android versions), the examples and the docs.
+  Metal or OpenGL, and its web, Android and Nintendo 3DS versions), the examples and the docs.
 
 Commits made with AI carry a `Co-Authored-By: Claude` line.
 

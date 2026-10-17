@@ -13,6 +13,7 @@
 | 🗣️ | [Screen readers](screen-readers.md) | How the boxes are read, describing a control of your own, what the screen reader asks. |
 | 🖥️ | [A window of its own](desktop.md) | Interfaces without a scene, drawing only when something happens, Metal or OpenGL. |
 | 🌐 | [In a web browser](web.md) | The same programs built for WebAssembly and drawn through WebGL2. |
+| 🎮 | [On the Nintendo 3DS](3ds.md) | The console's two screens, SELECT to swap them, the buttons as keys, what it has not. |
 | 📱 | [On Android](android.md) | The window, touch, building a package, what was tried and what is next. |
 | ⚡ | [Performance and battery audit](performance-audit.md) | What an idle and a busy interface cost, measured, and what to improve in order. |
 

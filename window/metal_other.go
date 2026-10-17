@@ -1,4 +1,4 @@
-//go:build !darwin && !js && !android
+//go:build !darwin && !js && !android && !nintendo3ds
 
 package window
 
