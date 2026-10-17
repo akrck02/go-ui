@@ -3,7 +3,7 @@
 
 Run from the repository's root after changing a public API:
 
-    python3 docs/reference/generate.py
+    python3 docs/6-reference/generate.py
 
 Each page is the package's comment, then its functions, constants and types, each type with its
 declaration and the first sentence of every constructor's and method's comment. The doc comments
@@ -18,8 +18,8 @@ MODULE = "github.com/akrck02/go-ui"
 
 # (folder, page, operating system for go doc, architecture, group)
 PACKAGES = [
-    (".", "ui.md", "", "", "core"),
-    ("window", "window.md", "", "", "core"),
+    (".", "1-ui.md", "", "", "core"),
+    ("window", "2-window.md", "", "", "core"),
 ]
 
 # Turns `go doc -all` of a package into a Markdown reference: functions, and each type with its
@@ -132,8 +132,8 @@ def write_page(folder, page, goos, goarch):
     import_path = MODULE + ("/" + folder if folder != "." else "")
     built = f"\n> Built only with `GOOS={goos}`.\n" if goos else ""
     text = (f"# {folder if folder != '.' else MODULE.split('/')[-1]}\n\n```go\nimport \"{import_path}\"\n```\n{built}\n"
-            f"{body}\n---\n\n[← Reference](README.md) · generated from the doc comments by `generate.py`\n")
-    with open(os.path.join("docs", "reference", page), "w") as file:
+            f"{body}\n---\n\n[← Reference](0-reference.md) · generated from the doc comments by `generate.py`\n")
+    with open(os.path.join("docs", "6-reference", page), "w") as file:
         file.write(text)
 
 

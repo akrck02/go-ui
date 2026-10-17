@@ -226,4 +226,4 @@ context.Frame(ui.Layout{Width: ui.Grow(), Padding: ui.PadXY(16, 6)}, ui.Look{Fil
 
 ---
 
-[← Lesson 1](01-immediate-mode.md) · [Lesson 3: controls and forms →](03-controls-and-forms.md)
+[← Lesson 1](1-immediate-mode.md) · [Lesson 3: controls and forms →](3-controls-and-forms.md)

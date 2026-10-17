@@ -61,7 +61,7 @@ after the control, says what it really is:
 | `Checked`, `Selected`, `Disabled` | Its state |
 | `Hidden` | Leave it out: a decoration |
 
-It costs nothing while no screen reader is on. The [guide](../README.md#screen-readers) explains
+It costs nothing while no screen reader is on. The [guide](../4-guide.md#screen-readers) explains
 how the screen is read.
 
 ## Painting your own shapes
@@ -387,4 +387,4 @@ func (program *register) remove() {
 
 ---
 
-[← Lesson 4](04-menus-sheets-and-notes.md) · [Lesson 6: over a 3D scene →](06-over-a-3d-scene.md)
+[← Lesson 4](4-menus-sheets-and-notes.md) · [Lesson 6: over a 3D scene →](6-over-a-3d-scene.md)

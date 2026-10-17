@@ -95,4 +95,4 @@ A finger has no hover: on a phone, tooltips never show, so nothing important sho
 
 ---
 
-[← Components](README.md) · [Buttons →](buttons.md)
+[← Components](0-components.md) · [Buttons →](2-buttons.md)

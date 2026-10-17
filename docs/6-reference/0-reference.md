@@ -4,11 +4,11 @@ go-ui has two packages:
 
 | Package | Import | What it is |
 |---|---|---|
-| [`ui`](ui.md) | `ui "github.com/akrck02/go-ui"` | The context, layout, every control, themes, screen readers |
-| [`window`](window.md) | `"github.com/akrck02/go-ui/window"` | A window that runs an interface: on the desktop, in a web page, on Android; preferences, notifications, films |
+| [`ui`](1-ui.md) | `ui "github.com/akrck02/go-ui"` | The context, layout, every control, themes, screen readers |
+| [`window`](2-window.md) | `"github.com/akrck02/go-ui/window"` | A window that runs an interface: on the desktop, in a web page, on Android; preferences, notifications, films |
 
-[`ui.md`](ui.md) and [`window.md`](window.md) list every type and function with the first sentence
-of its comment; they are generated from the doc comments (`python3 docs/reference/generate.py`).
+[`ui.md`](1-ui.md) and [`window.md`](2-window.md) list every type and function with the first sentence
+of its comment; they are generated from the doc comments (`python3 docs/6-reference/generate.py`).
 `go doc github.com/akrck02/go-ui.Context.Table` prints any of them whole. This page is the map:
 the context's methods by what they are for.
 
@@ -123,7 +123,7 @@ clipboard (`Copy(text)`, `ClipboardText()`), and for on-screen keyboards `TypedF
 | `SetScreenReader(on)`, `ScreenReaderOn()`, `ScreenReaderNodes()` | The list of what can be read, made each frame while one is on |
 | `ScreenReaderAct(id, action)`, `ScreenReaderSetText(id, text)`, `SetScreenReaderFocus(id)` | What the screen reader asks, done in the next frame |
 
-The window does all of this on Android; see [the guide](../README.md#screen-readers).
+The window does all of this on Android; see [the guide](../4-guide.md#screen-readers).
 
 ## The window
 
@@ -142,4 +142,4 @@ The window does all of this on Android; see [the guide](../README.md#screen-read
 
 ---
 
-[← Documentation](../README.md)
+[← Documentation](../4-guide.md)

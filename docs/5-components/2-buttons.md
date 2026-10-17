@@ -184,4 +184,4 @@ if context.LongPressed() {
 
 ---
 
-[← Text, icons and pictures](text.md) · [Choices →](choices.md)
+[← Text, icons and pictures](1-text.md) · [Choices →](3-choices.md)

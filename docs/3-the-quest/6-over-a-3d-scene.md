@@ -179,10 +179,10 @@ show through, with the camera working inside it. `cmd/scene-app` lays a whole ap
 ## Editing what you see
 
 go-renderer's `viewer.Edit` gives your function a `viewer.View`, which turns the pointer into a
-point on the ground ([go-renderer's tutorial, lesson 5](https://github.com/akrck02/go-renderer/blob/main/docs/tutorial/05-editing-with-the-pointer.md)).
+point on the ground ([go-renderer's tutorial, lesson 5](https://github.com/akrck02/go-renderer/blob/main/docs/3-the-quest/5-editing-with-the-pointer.md)).
 With go-ui in it you get both: panels to choose what to place, the map to place it on.
 `cmd/plan-editor` places huts on an island that way, and `DragSource` with
-`context.DroppedOnScreen()` drops a value of yours from a panel onto the scene ([the guide](../README.md#drag-and-drop)).
+`context.DroppedOnScreen()` drops a value of yours from a panel onto the scene ([the guide](../4-guide.md#drag-and-drop)).
 
 #### Checkpoint
 
@@ -220,4 +220,4 @@ context.PanelWith("Sky", …, func() {
 
 ---
 
-[← Lesson 5](05-controls-of-your-own.md) · [Lesson 7: shipping it →](07-shipping-it.md)
+[← Lesson 5](5-controls-of-your-own.md) · [Lesson 7: shipping it →](7-shipping-it.md)

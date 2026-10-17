@@ -146,4 +146,4 @@ if program.selected >= 0 && context.MenuItem("copy", "Copy of the selected one",
 
 ---
 
-[← Lesson 3](03-controls-and-forms.md) · [Lesson 5: controls of your own →](05-controls-of-your-own.md)
+[← Lesson 3](3-controls-and-forms.md) · [Lesson 5: controls of your own →](5-controls-of-your-own.md)

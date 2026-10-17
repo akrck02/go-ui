@@ -1,7 +1,7 @@
 # Containers
 
 Boxes arrange what is inside them. Their `ui.Layout` gives a direction, sizes (`Fit`, `Grow`,
-`Share`, `Fixed`, `Percent`), padding, a gap and alignment; the [guide](../README.md#boxes-and-layout)
+`Share`, `Fixed`, `Percent`), padding, a gap and alignment; the [guide](../4-guide.md#boxes-and-layout)
 explains how sizes are worked out.
 
 ## `Box` and `Frame`
@@ -129,4 +129,4 @@ It takes a finger only along its own axis, so a list inside pages still scrolls 
 
 ---
 
-[← Text fields](text-fields.md) · [Lists and tables →](lists-and-tables.md)
+[← Text fields](4-text-fields.md) · [Lists and tables →](6-lists-and-tables.md)

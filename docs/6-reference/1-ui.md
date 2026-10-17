@@ -651,4 +651,4 @@ type Theme struct {
 
 ---
 
-[← Reference](README.md) · generated from the doc comments by `generate.py`
+[← Reference](0-reference.md) · generated from the doc comments by `generate.py`

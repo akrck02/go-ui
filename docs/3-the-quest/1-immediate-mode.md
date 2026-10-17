@@ -66,7 +66,7 @@ func main() {
 Read `build` from top to bottom, as go-ui does at every frame:
 
 1. A **box** that stacks its children vertically, as wide as the window, with 24 pixels of
-   padding and 12 between children. Boxes are the only way go-ui arranges things ([lesson 2](02-layout.md)).
+   padding and 12 between children. Boxes are the only way go-ui arranges things ([lesson 2](2-layout.md)).
 2. A heading, then one of two lines, chosen with an ordinary `if`.
 3. A caption with the count, formatted from your variable.
 4. A button. `PrimaryButton` draws it in the theme's primary colour and returns `true` **on the
@@ -89,7 +89,7 @@ where a list is scrolled. It finds it again by each control's **id**, a hash of 
   press that started on one would end on another). Everything after `##` is part of the id but not
   shown: `"Switch on##switch"` and `"Switch off##switch"` are one button.
 - Two buttons both called "Remove" in a loop would share an id. Open a scope per item with
-  `context.Push(name)` and close it with `context.Pop()`; you will do it in [lesson 3](03-controls-and-forms.md).
+  `context.Push(name)` and close it with `context.Pop()`; you will do it in [lesson 3](3-controls-and-forms.md).
 - Panels open a scope with their title, so "Apply" in two panels never mixes.
 
 ## The text controls
@@ -135,4 +135,4 @@ it is not there.
 
 ---
 
-[← Tutorial](README.md) · [Lesson 2: layout →](02-layout.md)
+[← Tutorial](0-the-quest.md) · [Lesson 2: layout →](2-layout.md)

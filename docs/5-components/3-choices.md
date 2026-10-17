@@ -117,4 +117,4 @@ context.ListBox("keepers", ui.Layout{Width: ui.Grow(), Height: ui.Fixed(130)}, k
 
 ---
 
-[← Buttons](buttons.md) · [Text fields →](text-fields.md)
+[← Buttons](2-buttons.md) · [Text fields →](4-text-fields.md)

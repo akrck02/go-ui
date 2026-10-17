@@ -74,4 +74,4 @@ context.Box(ui.Layout{Width: ui.Grow(), Height: ui.Fixed(140)}, func() {
 
 ---
 
-[← Layers](layers.md) · [Components](README.md)
+[← Layers](7-layers.md) · [Components](0-components.md)

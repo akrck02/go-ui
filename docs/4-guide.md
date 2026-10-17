@@ -1,14 +1,14 @@
-# go-ui documentation
+# The guide
 
-go-ui draws interfaces over a go-renderer view. This page explains how a frame works, how boxes
+This page explains how a frame works, how boxes
 are sized and placed, and what each control does.
 
 | Section | What it covers |
 |---|---|
-| [Get started](get-started.md) | Installing and a first interface |
-| [Tutorial](tutorial/README.md) | Seven lessons that build a register of lighthouses |
-| [Components](components/README.md) | Every control one by one, with concrete cases |
-| [Reference](reference/README.md) | Every method and type |
+| [Get started](2-get-started.md) | Installing and a first interface |
+| [Tutorial](3-the-quest/0-the-quest.md) | Seven lessons that build a register of lighthouses |
+| [Components](5-components/0-components.md) | Every control one by one, with concrete cases |
+| [Reference](6-reference/0-reference.md) | Every method and type |
 | [A frame](#a-frame) | Immediate mode: describing the interface every step |
 | [Boxes and layout](#boxes-and-layout) | How sizes and positions are worked out, and how to ask for a layout |
 | [Controls](#controls) | Labels, buttons, panels, rows and columns |
@@ -18,9 +18,9 @@ are sized and placed, and what each control does.
 | [Themes](#themes) | The tokens every control reads |
 | [Applications without a scene](#applications-without-a-scene) | A plain window for interface-only programs |
 | [How it is drawn](#how-it-is-drawn) | From boxes to go-renderer's draw list |
-| [Performance and battery audit](performance-audit.md) | What an idle and a busy interface cost, measured, and what to improve in order |
-| [In a web browser](web.md) | Running go-ui applications in a page, built for WebAssembly and drawn through WebGL2 |
-| [On Android](android.md) | Running go-ui applications on Android: the window, touch, building a package, what was tested and what is next |
+| [Performance and battery audit](8-project/1-performance-audit.md) | What an idle and a busy interface cost, measured, and what to improve in order |
+| [In a web browser](7-platforms/1-web.md) | Running go-ui applications in a page, built for WebAssembly and drawn through WebGL2 |
+| [On Android](7-platforms/2-android.md) | Running go-ui applications on Android: the window, touch, building a package, what was tested and what is next |
 
 ## A frame
 
@@ -312,7 +312,7 @@ words, keeps the word it is still making underlined (*composing*) and deletes ar
 `TypedField()` tells the window which field is typed in, with its text, selection and composing
 word, and `EditTypedField(edit)` puts the keyboard's edit in, in the next frame, as typing: one
 line, cut at `MaxLength`, its words undone as typed ones are. A key or a touch that changes the
-text ends the composing. The Android window does both ([go-ui on Android](android.md)).
+text ends the composing. The Android window does both ([go-ui on Android](7-platforms/2-android.md)).
 
 On a touch screen, text is chosen as on a phone. A finger held on a word selects it: a drop-shaped
 handle hangs under each end of the selection, and a bar over it offers *Cut*, *Copy*, *Paste* and
@@ -370,7 +370,7 @@ press clicks the control as a tap would (a field takes the keyboard), a long pre
 types, pastes or dictates into a field comes as `ScreenReaderSetText(id, text)`: the field takes it
 whole, as typing (one line, cut at its `MaxLength`), and the keyboard stays down. Nodes keep their ids from
 frame to frame, so the screen reader stays on what it was reading. On Android, the window hands the
-list to go-renderer, which gives it to TalkBack ([go-ui on Android](android.md#screen-readers)).
+list to go-renderer, which gives it to TalkBack ([go-ui on Android](7-platforms/2-android.md#screen-readers)).
 
 ## Mouse and keyboard
 
@@ -432,8 +432,8 @@ drawing every frame. `Options.Continuous` (`-continuous`) draws every frame, for
 animates all the time. Over a 3D view (`viewer.Run`) the scene keeps drawing every frame.
 
 Built for WebAssembly (`GOOS=js GOARCH=wasm`), the same program runs in a web page: the window is
-the page's canvas, drawn through WebGL2 ([in a web browser](web.md)); built for Android, it is the
-application's activity ([on Android](android.md)).
+the page's canvas, drawn through WebGL2 ([in a web browser](7-platforms/1-web.md)); built for Android, it is the
+application's activity ([on Android](7-platforms/2-android.md)).
 
 `Options.Scene` puts a 3D scene behind the interface: a function called at every step, with the
 input the interface did not claim, that returns a scene and a camera (or nil for none). On a phone,
@@ -460,7 +460,7 @@ On macOS the window draws through **Metal**; elsewhere through OpenGL 4.1. `Opti
 uses OpenGL. Both paint the same quads from the same atlas, and their captures match within 1/255
 per channel. Metal needs less: with the register idle, its memory is 66–70 MB against 93–102 MB
 through OpenGL, and with a window that changes every frame it used about a third less processor,
-GPU and memory ([measurements](../../go-renderer/docs/metal.md#measured)).
+GPU and memory ([measurements](https://github.com/akrck02/go-renderer/blob/main/docs/4-guides/7-metal.md#measured)).
 
 The window has no depth or stencil buffer, which flat drawing never uses. Most of what the
 system then counts for the program is the window's own buffers, which grow with its size; the
