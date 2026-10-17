@@ -1,0 +1,95 @@
+<h1 id="text-fields">⌨️ Text fields</h1>
+
+<p>A text field edits your string as it is typed: <code>TextField(&quot;Name&quot;, &amp;entry.name)</code> changes
+<code>entry.name</code> on the step a key is pressed, and returns <code>true</code> then.</p>
+
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/search-dark.png">
+  <img alt="The register's search box with the word north selected, filtering the table down to two lighthouses" src="../images/search-light.png" width="720">
+</picture>
+</p>
+
+<p><code>go run ./cmd/app -demo-search north</code> types in the search box on its second step, as above.</p>
+
+<h2 id="keys">Keys</h2>
+
+<table>
+<thead>
+<tr>
+<th>To</th>
+<th>Do</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Place the caret</td>
+<td>Click; Shift-click selects up to there</td>
+</tr>
+
+<tr>
+<td>Select</td>
+<td>Drag; double-click for a word, triple-click for the whole text</td>
+</tr>
+
+<tr>
+<td>Move</td>
+<td>Arrows; with Alt on a Mac or Ctrl elsewhere, a word at a time; Home and End (or Cmd+arrows on a Mac) to the ends. Shift selects as it moves</td>
+</tr>
+
+<tr>
+<td>Delete</td>
+<td>Backspace and Delete; a word with Alt (Mac) or Ctrl</td>
+</tr>
+
+<tr>
+<td>Copy, cut, paste, select all</td>
+<td>Cmd on a Mac or Ctrl elsewhere, with C, X, V, A</td>
+</tr>
+
+<tr>
+<td>Undo, redo</td>
+<td>Cmd/Ctrl+Z, and Shift+Cmd/Ctrl+Z or Cmd/Ctrl+Y. Typing a run of letters, or of Backspaces, is undone in one step; each field keeps its own history while it has the focus</td>
+</tr>
+
+<tr>
+<td>End the edit</td>
+<td>Enter, or a click anywhere else; Escape puts back the text the field had when it took the focus</td>
+</tr>
+
+<tr>
+<td>Go to the next field</td>
+<td>Tab, or Shift+Tab to go back; it goes round, includes number fields, and selects the text it lands on</td>
+</tr>
+</tbody>
+</table>
+<p>Characters come from the system after the keyboard layout and dead keys, so accents and «ñ» type
+as anywhere else. Line breaks and tabs pasted in become spaces: the field has one line. Text
+longer than the field slides sideways to keep the caret in sight.</p>
+
+<h2 id="focus">Focus</h2>
+
+<p><code>Focus(path…)</code> gives the keyboard to a field by its scopes and label, as <code>Area</code> finds it, with its
+text selected: the search box on a shortcut, or the first field of a form that just opened. While
+a field has the focus, <code>End</code> claims the keyboard, so the viewer&rsquo;s shortcuts and cameras do not
+take the letters. By the field&rsquo;s name instead, <code>FieldFocused(name)</code> tells whether it has the keyboard and
+<code>FocusField(name)</code> gives it the keyboard.</p>
+
+<h2 id="on-a-phone">On a phone</h2>
+
+<p>A phone&rsquo;s on-screen keyboard edits the field&rsquo;s text rather than typing key by key: it suggests
+words, keeps the word it is still making underlined (<em>composing</em>) and deletes around the caret.
+<code>TypedField()</code> tells the window which field is typed in, with its text, selection and composing
+word, and <code>EditTypedField(edit)</code> puts the keyboard&rsquo;s edit in, in the next frame, as typing: one
+line, cut at <code>MaxLength</code>, its words undone as typed ones are. A key or a touch that changes the
+text ends the composing. The Android window does both (<a href="./platforms/android">Android</a>).</p>
+
+<p>On a touch screen, text is chosen as on a phone. A finger held on a word selects it: a drop-shaped
+handle hangs under each end of the selection, and a bar over it offers <em>Cut</em>, <em>Copy</em>, <em>Paste</em> and
+<em>Select all</em> (<code>SetEditingWords</code> in the person&rsquo;s language, <code>EditingWords</code> to read them; a secret
+field cannot be cut or copied).
+A touch shows a handle under the caret. A finger drags a handle to move its end, or the caret; the
+handle hangs under the text, so the finger does not hide what it chooses, and the ends never cross.
+The handles and the bar are popups of the field&rsquo;s own: pressing them keeps the field typed in.
+Typing, on either keyboard, puts them away; a mouse has none.</p>

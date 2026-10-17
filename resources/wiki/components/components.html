@@ -1,0 +1,77 @@
+<h1 id="components">Components</h1>
+
+<p>Every go-ui control, one by one: what it is for, concrete cases with their code, how it behaves
+with the mouse, the keyboard, a finger and a screen reader, and its options. Each case is a real
+program&rsquo;s code; the pictures are captures of it.</p>
+
+<p>All the cases assume the usual frame: <code>context</code> is the <code>*ui.Context</code> your build function gets
+(<code>window.Run</code>) or that you call <code>Begin</code> and <code>End</code> on. State such as <code>tab</code> or <code>foghorn</code> is a
+variable of your program that lives between frames.</p>
+
+<table>
+<thead>
+<tr>
+<th>Page</th>
+<th>Components</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><a href="./components/text">Text, icons and pictures</a></td>
+<td><code>Heading</code>, <code>Label</code>, <code>Caption</code>, <code>Text</code>, <code>Icon</code>, <code>IconSized</code>, <code>Image</code>, <code>Tooltip</code></td>
+</tr>
+
+<tr>
+<td><a href="./components/buttons">Buttons</a></td>
+<td><code>Button</code>, <code>PrimaryButton</code>, <code>IconButton</code>, <code>PrimaryIconButton</code>, <code>FlatButton</code>, <code>FlatIconButton</code>, <code>Selectable</code>, <code>Chip</code>, <code>RemovableChip</code>, <code>Clickable</code>, <code>LongPressed</code></td>
+</tr>
+
+<tr>
+<td><a href="./components/choices">Choices</a></td>
+<td><code>Checkbox</code>, <code>Toggle</code>, <code>Slider</code>, <code>SliderStep</code>, <code>NumberField</code>, <code>Select</code>, <code>Tabs</code>, <code>ListBox</code></td>
+</tr>
+
+<tr>
+<td><a href="./components/text-fields">Text fields</a></td>
+<td><code>TextField</code>, <code>TextFieldWith</code>, focus, validation, search</td>
+</tr>
+
+<tr>
+<td><a href="./components/containers">Containers</a></td>
+<td><code>Box</code>, <code>Frame</code>, <code>Row</code>, <code>Column</code>, <code>Grid</code>, <code>Spacer</code>, <code>Separator</code>, <code>ScrollArea</code>, <code>Fold</code>, <code>Paint</code>, <code>SwipeBox</code></td>
+</tr>
+
+<tr>
+<td><a href="./components/lists-and-tables">Lists and tables</a></td>
+<td><code>List</code>, <code>Table</code></td>
+</tr>
+
+<tr>
+<td><a href="./components/layers">Layers</a></td>
+<td><code>Panel</code>, <code>PanelWith</code>, <code>Sheet</code>, <code>Modal</code>, <code>Overlay</code>, <code>Popover</code>, <code>MenuButton</code>, <code>MenuItem</code>, <code>Toast</code></td>
+</tr>
+
+<tr>
+<td><a href="./components/dragging-and-resizing">Dragging and resizing</a></td>
+<td><code>DragSource</code>, <code>DropTarget</code>, <code>Dragging</code>, <code>DroppedOnScreen</code>, <code>Resizable</code></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="rules-every-control-follows">Rules every control follows</h2>
+
+<ul>
+<li><strong>A control is a call.</strong> It is drawn in the frame it is called in, and gone in the frame it is
+not. Show it with an <code>if</code>; repeat it with a <code>for</code>.</li>
+<li><strong>It answers what happened in this frame.</strong> Buttons return <code>true</code> on the frame they are clicked;
+controls that edit a value take a pointer to it and return <code>true</code> on the frame they change it.</li>
+<li><strong>It is told apart by its label and its scopes</strong> (its <em>id</em>). In a loop, open a scope per item
+with <code>context.Push(name)</code> … <code>context.Pop()</code>. Text after <code>##</code> is part of the id but not shown.</li>
+<li><strong>Colours and sizes come from <code>context.Theme</code>.</strong> Change a token and every control follows.</li>
+<li><strong>The pointer works from the last frame&rsquo;s layout</strong>, so a control reacts where it was drawn.</li>
+</ul>
+
+<hr>
+
+<p><a href="./guides/getting-started">← Documentation</a></p>

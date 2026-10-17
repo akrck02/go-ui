@@ -1,0 +1,190 @@
+<h1 id="lesson-4-menus-sheets-and-notes">Lesson 4: menus, sheets and notes</h1>
+
+<p>A register needs to grow and shrink. In this lesson you add lighthouses from a <strong>menu</strong>, ask before
+removing one with a <strong>sheet</strong>, and confirm it with a short <strong>note</strong> (a toast).</p>
+
+<table>
+<thead>
+<tr>
+<th>Mission</th>
+<th>Pieces</th>
+<th>Time</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Adding and removing lighthouses</td>
+<td><code>MenuButton</code>, <code>Sheet</code>, <code>Toast</code></td>
+<td>15 min</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="the-idea">The idea</h4>
+
+<p>A sheet is a <strong>clerk who asks before stamping</strong>: while it is open, nothing else on the desk can be touched. It stays exactly as long as your program says (an <code>if</code>), and tells you when the person waves it away.</p>
+
+<h2 id="a-menu">A menu</h2>
+
+<p><code>MenuButton(icon, label, content)</code> is a flat button that opens a menu under it. Its content is
+described only while it is open; <code>MenuItem</code> returns <code>true</code> when chosen, and choosing closes it.
+Arrows and Enter work, and Escape or a click elsewhere closes it. It goes at the end of the
+toolbar, after the search box:</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">MenuButton</span><span class="p">(</span><span class="s">&#34;plus&#34;</span><span class="p">,</span> <span class="s">&#34;Add&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">MenuItem</span><span class="p">(</span><span class="s">&#34;lighthouse&#34;</span><span class="p">,</span> <span class="s">&#34;Lighthouse&#34;</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">program</span><span class="p">.</span><span class="nf">add</span><span class="p">()</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">MenuItem</span><span class="p">(</span><span class="s">&#34;copy&#34;</span><span class="p">,</span> <span class="s">&#34;Copy of the selected one&#34;</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">program</span><span class="p">.</span><span class="nx">selected</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">,</span> <span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">[</span><span class="nx">program</span><span class="p">.</span><span class="nx">selected</span><span class="p">])</span>
+		<span class="nx">program</span><span class="p">.</span><span class="nx">selected</span> <span class="p">=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+</code></pre>
+
+<p>The third argument of <code>MenuItem</code> is a hint drawn quietly on the right, such as <code>&quot;Ctrl+N&quot;</code>: the
+program handles the shortcut itself (<code>state.Pressed</code>), go-ui only shows it.</p>
+<pre><code class="language-go"><span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">add</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">program</span><span class="p">.</span><span class="nx">added</span><span class="o">++</span>
+	<span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">,</span> <span class="nx">lighthouse</span><span class="p">{</span><span class="nx">name</span><span class="p">:</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;New lighthouse %d&#34;</span><span class="p">,</span> <span class="nx">program</span><span class="p">.</span><span class="nx">added</span><span class="p">),</span> <span class="nx">rangeNM</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="nx">period</span><span class="p">:</span> <span class="mi">5</span><span class="p">})</span>
+	<span class="nx">program</span><span class="p">.</span><span class="nx">selected</span> <span class="p">=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+	<span class="nx">program</span><span class="p">.</span><span class="nx">search</span> <span class="p">=</span> <span class="s">&#34;&#34;</span>
+<span class="p">}</span>
+</code></pre>
+
+<h2 id="a-sheet-that-asks-first">A sheet that asks first</h2>
+
+<p>A <strong>sheet</strong> is a modal card in the middle of the window. Like everything else it is shown with an
+<code>if</code>, for as long as your program wants: here, while <code>program.removing</code> is true. It dims what is
+behind it and takes the mouse and the keyboard, so nothing behind reacts.</p>
+<pre><code class="language-go"><span class="c1">// confirmRemoval asks before a lighthouse is taken out of the register.</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">confirmRemoval</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="p">!</span><span class="nx">program</span><span class="p">.</span><span class="nx">removing</span> <span class="p">{</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="nx">name</span> <span class="o">:=</span> <span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">[</span><span class="nx">program</span><span class="p">.</span><span class="nx">selected</span><span class="p">].</span><span class="nx">name</span>
+	<span class="nx">dismissed</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Sheet</span><span class="p">(</span><span class="s">&#34;Remove lighthouse&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">SheetOptions</span><span class="p">{},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;Take %s out of the register?&#34;</span><span class="p">,</span> <span class="nx">name</span><span class="p">))</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Spacer</span><span class="p">()</span>
+			<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Button</span><span class="p">(</span><span class="s">&#34;Keep it&#34;</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">program</span><span class="p">.</span><span class="nx">removing</span> <span class="p">=</span> <span class="kc">false</span>
+			<span class="p">}</span>
+			<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">PrimaryButton</span><span class="p">(</span><span class="s">&#34;Remove&#34;</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">program</span><span class="p">.</span><span class="nf">remove</span><span class="p">()</span>
+				<span class="nx">context</span><span class="p">.</span><span class="nf">Toast</span><span class="p">(</span><span class="nx">name</span><span class="o">+</span><span class="s">&#34; was removed&#34;</span><span class="p">,</span> <span class="kc">false</span><span class="p">)</span>
+			<span class="p">}</span>
+		<span class="p">})</span>
+	<span class="p">})</span>
+	<span class="k">if</span> <span class="nx">dismissed</span> <span class="p">{</span>
+		<span class="nx">program</span><span class="p">.</span><span class="nx">removing</span> <span class="p">=</span> <span class="kc">false</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">remove</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">[:</span><span class="nx">program</span><span class="p">.</span><span class="nx">selected</span><span class="p">],</span> <span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">[</span><span class="nx">program</span><span class="p">.</span><span class="nx">selected</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span><span class="o">...</span><span class="p">)</span>
+	<span class="nx">program</span><span class="p">.</span><span class="nx">selected</span> <span class="p">=</span> <span class="nb">min</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">selected</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+	<span class="nx">program</span><span class="p">.</span><span class="nx">removing</span> <span class="p">=</span> <span class="kc">false</span>
+<span class="p">}</span>
+</code></pre>
+
+<p><code>Sheet</code> returns <code>true</code> on the frame the person asks to close it some other way: Escape, the × in
+its title, or a click on the dimmed backdrop. Your program decides what that means; here, the same
+as &ldquo;Keep it&rdquo;.</p>
+
+<p><code>confirmRemoval</code> is called <strong>after</strong> the rest of the window in <code>build</code>, so the sheet is described
+last and drawn over it.</p>
+
+<p><img src="./images/tutorial/register-sheet.jpg" alt="The sheet asking before East Cape is removed, the window dimmed behind it" /></p>
+
+<h2 id="a-note-that-goes-away">A note that goes away</h2>
+
+<p><code>Toast(text, warning)</code> shows a short note at the bottom of the window for a few seconds. Unlike
+everything else it is <em>fired once</em>, not described at every frame: go-ui keeps it until it fades.</p>
+
+<h2 id="more-layers">More layers</h2>
+
+<table>
+<thead>
+<tr>
+<th>Call</th>
+<th>Shows</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Sheet(title, options, content)</code></td>
+<td>A modal card with a title and a ×; returns <code>true</code> when dismissed</td>
+</tr>
+
+<tr>
+<td><code>Modal(name, LayerOptions{…}, content)</code></td>
+<td>Your own content over everything, dimming what is behind (a dialog, a drawer)</td>
+</tr>
+
+<tr>
+<td><code>Overlay(name, LayerOptions{…}, content)</code></td>
+<td>Your own content over everything, without dimming (a note, a floating button)</td>
+</tr>
+
+<tr>
+<td><code>Popover(name, &amp;open, look, content)</code></td>
+<td>A box floating under the control before it (a dropdown of your own)</td>
+</tr>
+
+<tr>
+<td><code>Tooltip(text)</code></td>
+<td>A dark note explaining the control before it, after the pointer rests on it</td>
+</tr>
+
+<tr>
+<td><code>Toast(text, warning)</code></td>
+<td>A short note at the bottom, fired once</td>
+</tr>
+</tbody>
+</table>
+<p><code>LayerOptions.Leave</code> makes a modal or an overlay leave with motion once you stop showing it.</p>
+
+<h4 id="checkpoint">Checkpoint</h4>
+
+<p><em>Add</em> opens a menu that adds a lighthouse; <em>Remove</em> dims the window under a sheet that asks first; <em>Remove</em> in it takes the lighthouse out and a note says so.</p>
+
+<p><img src="./images/tutorial/quest/achievement-harbourmaster.svg" alt="Achievement unlocked: Harbourmaster" /></p>
+
+<h2 id="what-you-learnt">What you learnt</h2>
+
+<ul>
+<li>A menu&rsquo;s content is described only while open; <code>MenuItem</code> returns <code>true</code> when chosen.</li>
+<li>A sheet is shown with an <code>if</code>, and returns <code>true</code> when the person dismisses it.</li>
+<li>What is described later is drawn on top; toasts are fired once.</li>
+</ul>
+
+<h2 id="bonus-optional">Bonus (optional)</h2>
+
+<p>Give the Remove button a tooltip, &ldquo;Takes it out of the register, after asking&rdquo;, and show the
+&ldquo;Copy of the selected one&rdquo; item only when a lighthouse is selected.</p>
+
+<details>
+<summary>🔓 Show the solution</summary>
+
+```go
+if context.Button("Remove") {
+	program.removing = true
+}
+context.Tooltip("Takes it out of the register, after asking")
+```
+
+```go
+if program.selected >= 0 && context.MenuItem("copy", "Copy of the selected one", "") {
+	…
+}
+```
+
+`Tooltip` explains the control added just before it.
+
+</details>
+
+<hr>
+
+<p><a href="./the-quest/controls-and-forms">← Lesson 3</a> · <a href="./the-quest/controls-of-your-own">Lesson 5: controls of your own →</a></p>

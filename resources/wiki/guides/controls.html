@@ -1,0 +1,327 @@
+<h1 id="controls">🎛️ Controls</h1>
+
+<p>Every control is a function call that adds a box and, for those you can act on, tells you what
+happened in this frame. Controls added inside a <a href="./guides/panels-and-layers">panel</a> go in it; added
+outside any panel, they go on the <strong>screen</strong>.</p>
+
+<table>
+<tr>
+<th width="50%">Fields, a select and buttons</th>
+<th width="50%">A switch, a scrolling list and a grid</th>
+</tr>
+<tr>
+<td align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/panel-dark.png">
+  <img alt="A properties panel: General and Advanced tabs, a heading, a text field, an open select with four colours, and Reset and Switch off buttons" src="../images/panel-light.png" width="320">
+</picture>
+</td>
+<td align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/advanced-dark.png">
+  <img alt="The Advanced tab: a toggle, a scrolling list of selectable items and a grid of icon buttons" src="../images/advanced-light.png" width="320">
+</picture>
+</td>
+</tr>
+<tr>
+<td><code>Tabs</code>, <code>Heading</code>, <code>TextField</code>, <code>Select</code> open, <code>Button</code> and <code>PrimaryButton</code> (<code>cmd/example</code>).</td>
+<td><code>Toggle</code>, <code>ListBox</code>, <code>Grid</code> of <code>IconButton</code>s (<code>cmd/example -advanced</code>).</td>
+</tr>
+</table>
+
+<h2 id="text-and-icons">Text and icons</h2>
+
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>What it does</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Label(text)</code>, <code>Heading(text)</code>, <code>Caption(text)</code>, <code>Text(text, style)</code></td>
+<td>Lines of text: body, bold title, small hint, or any size, weight and colour</td>
+</tr>
+
+<tr>
+<td><code>Icon(name)</code>, <code>IconSized(name, size, colour)</code></td>
+<td>A <a href="https://lucide.dev/icons" target="_blank">Lucide</a> icon</td>
+</tr>
+
+<tr>
+<td><code>Image(picture, layout, radius)</code></td>
+<td>A picture (<code>draw2d.Image</code>) filling a box of the size given, cropped evenly where their shapes differ, its corners rounded</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="buttons">Buttons</h2>
+
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>What it does</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Button(label)</code>, <code>PrimaryButton(label)</code>, <code>IconButton(icon, label)</code></td>
+<td>Return <code>true</code> on the step they are clicked; an icon button with an empty label is square</td>
+</tr>
+
+<tr>
+<td><code>FlatButton(label)</code>, <code>FlatIconButton(icon, label)</code></td>
+<td>Buttons with no fill or border until hovered: menu bars and toolbars</td>
+</tr>
+
+<tr>
+<td><code>Selectable(icon, label, selected)</code></td>
+<td>An item that shows whether it is selected and returns <code>true</code> when clicked: full width in a column (a side list), fitted in a row (a group of tools)</td>
+</tr>
+
+<tr>
+<td><code>Clickable(name, layout, Looks{…}, content)</code></td>
+<td>Any box that reacts to the mouse, with its own looks when left alone, hovered and pressed: the building block for controls of your own, like a table row</td>
+</tr>
+
+<tr>
+<td><code>MenuButton(icon, label, content)</code>, <code>MenuItem(icon, label, hint)</code></td>
+<td>A flat button that opens a menu under it; see <a href="./guides/panels-and-layers">menus</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="choices-and-values">Choices and values</h2>
+
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>What it does</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Checkbox(label, &amp;value)</code></td>
+<td>A box to tick, with its label; clicking either flips the value. Returns <code>true</code> when it changes</td>
+</tr>
+
+<tr>
+<td><code>Toggle(label, &amp;value)</code></td>
+<td>A settings row: the label on the left, a switch on the right</td>
+</tr>
+
+<tr>
+<td><code>Slider(name, &amp;value, minimum, maximum)</code>, <code>SliderStep(…, step)</code></td>
+<td>A track with a knob: click to jump, drag to slide, Shift to slide ten times slower; <code>SliderStep</code> keeps whole steps</td>
+</tr>
+
+<tr>
+<td><code>NumberField(name, &amp;value, minimum, maximum, step, format)</code></td>
+<td>A number with − and + on its sides; drag the number sideways for a step every 4 px, or click it to type a value (a point or a comma for decimals; Enter keeps it, Escape does not). Shown with a format such as <code>&quot;%.1f s&quot;</code></td>
+</tr>
+
+<tr>
+<td><code>Tabs(name, &amp;selected, labels…)</code></td>
+<td>A segmented row, the selected segment raised; the program shows what belongs to it with an <code>if</code></td>
+</tr>
+
+<tr>
+<td><code>Select(name, &amp;selected, options)</code></td>
+<td>A field showing the chosen option; clicking opens the list over everything. Click an option, or use the arrows and Enter; Escape or a click elsewhere closes it</td>
+</tr>
+
+<tr>
+<td><code>TextField(name, &amp;text)</code>, <code>TextFieldWith(name, &amp;text, TextFieldOptions{…})</code></td>
+<td>A line of text to type in, with a <code>Placeholder</code>, a <code>MaxLength</code> or a <code>Width</code>, <code>Secret</code> for a password (a dot for each character, nothing copied). Returns <code>true</code> on the steps the text changes; see <a href="./guides/text-fields">text fields</a></td>
+</tr>
+
+<tr>
+<td><code>FieldFocused(name)</code>, <code>FocusField(name)</code></td>
+<td>Whether the field of a name has the keyboard (for a box the program draws around it), and giving it the keyboard (a search that opens ready to type in)</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="lists-and-scrolling">Lists and scrolling</h2>
+
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>What it does</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>ScrollArea(name, layout, content)</code></td>
+<td>Content that scrolls when taller than the box: wheel or trackpad over it, or drag the thin bar on its right</td>
+</tr>
+
+<tr>
+<td><code>List(name, layout, count, rowHeight, row)</code></td>
+<td>A scroll area of equal rows that builds only the rows in sight: ten thousand rows cost what twenty do</td>
+</tr>
+
+<tr>
+<td><code>ListBox(name, layout, items, &amp;selected)</code></td>
+<td>A scrolling list of selectable items</td>
+</tr>
+
+<tr>
+<td><code>Table(name, layout, columns, rows)</code></td>
+<td>A header and rows that scroll, with group captions and a selected row; see <a href="./guides/tables-and-dragging">tables</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="rows-columns-and-grids">Rows, columns and grids</h2>
+
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>What it does</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Row(content)</code>, <code>Column(content)</code></td>
+<td>Shortcuts for full-width boxes with the theme&rsquo;s gap; a row centres its children vertically</td>
+</tr>
+
+<tr>
+<td><code>Spacer()</code></td>
+<td>Takes the free space of its row or column, pushing what follows to the end</td>
+</tr>
+
+<tr>
+<td><code>Separator()</code></td>
+<td>A thin line across its row or column</td>
+</tr>
+
+<tr>
+<td><code>Grid(columns, content)</code></td>
+<td>Rows of equal cells (or any box with <code>Layout.Columns</code>)</td>
+</tr>
+
+<tr>
+<td><code>Box(layout, content)</code>, <code>Frame(layout, look, content)</code></td>
+<td>Any box, arranged or also painted; see <a href="./guides/layout">layout</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="chips-notes-and-gestures">Chips, notes and gestures</h2>
+
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>What it does</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Chip(icon, label, ChipLook{Fill, Ink})</code></td>
+<td>A small rounded label (a tag, a state) in colours of your choice (zero = the theme&rsquo;s quiet ones); returns <code>true</code> when clicked</td>
+</tr>
+
+<tr>
+<td><code>RemovableChip(icon, label, look)</code></td>
+<td>A chip with a small ×: returns <code>clicked, removed</code> apart</td>
+</tr>
+
+<tr>
+<td><code>Tooltip(text)</code></td>
+<td>Explains the control added just before it, in a small dark note, once the pointer rests on it for half a second</td>
+</tr>
+
+<tr>
+<td><code>LongPressed()</code></td>
+<td>Tells whether the control added just before it was long-pressed in this frame: a finger held still on it for half a second, or the right mouse button. A touch that became a long press is no click</td>
+</tr>
+
+<tr>
+<td><code>Popover(name, &amp;open, look, content)</code></td>
+<td>A box of the program&rsquo;s own floating under the control added just before it (a dropdown&rsquo;s choices); a touch outside, Escape or the back closes it</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="panels-sheets-dragging-and-resizing">Panels, sheets, dragging and resizing</h2>
+
+<p>These have pages of their own, <a href="./guides/panels-and-layers">panels and layers</a> and
+<a href="./guides/tables-and-dragging">tables, dragging and resizing</a>:</p>
+
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>What it does</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Panel(title, content)</code>, <code>PanelWith(title, PanelOptions{…}, content)</code></td>
+<td>A floating card with a title bar, moved, folded, placed, sized, locked or docked; see <a href="./guides/panels-and-layers">panels</a></td>
+</tr>
+
+<tr>
+<td><code>Sheet(title, SheetOptions{Width}, content)</code></td>
+<td>A modal card in the middle of the window; returns <code>true</code> when the person asks to close it. See <a href="./guides/panels-and-layers">sheets</a></td>
+</tr>
+
+<tr>
+<td><code>DragSource(name, payload, layout, content)</code>, <code>DropTarget(name, layout, accepts, content)</code></td>
+<td>Drag a value of yours from one box to another, or onto the scene; see <a href="./guides/tables-and-dragging">drag and drop</a></td>
+</tr>
+
+<tr>
+<td><code>Resizable(name, side, &amp;size, minimum, maximum, layout, content)</code></td>
+<td>A box whose edge can be dragged to change its width or height; see <a href="./guides/tables-and-dragging">resizable boxes</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="painting-and-motion">Painting and motion</h2>
+
+<table>
+<thead>
+<tr>
+<th>Call</th>
+<th>What it does</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Context.Paint</code></td>
+<td>Adds a box the program paints itself once laid out, for shapes go-ui has no control for</td>
+</tr>
+
+<tr>
+<td><code>Context.Animate</code></td>
+<td>Eases a value to its target, asking for frames only while it moves</td>
+</tr>
+
+<tr>
+<td><code>Context.Appear</code></td>
+<td>Eases something in as it is shown</td>
+</tr>
+
+<tr>
+<td><code>Context.Fold</code></td>
+<td>Opens a box to its content&rsquo;s height and closes it to nothing, with motion (more under a list row)</td>
+</tr>
+</tbody>
+</table>

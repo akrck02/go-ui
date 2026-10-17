@@ -1,0 +1,173 @@
+<h1 id="buttons">Buttons</h1>
+
+<p>Every button returns <code>true</code> <strong>on the frame it is clicked</strong>: a press and a release over it. A
+pressed button keeps the pointer until the release, even if it strays; letting go outside is no
+click. The pointer turns into a hand over it. A screen reader reads it as &ldquo;label, button&rdquo; and can
+press it.</p>
+
+<h2 id="button-and-primarybutton"><code>Button</code> and <code>PrimaryButton</code></h2>
+
+<p><code>Button</code> for ordinary actions, <code>PrimaryButton</code> for <strong>the one</strong> main action of a place: Save in a
+form, Remove in a sheet that asks first. Put the primary last on the right.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Save the changes to North Point?&#34;</span><span class="p">)</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Spacer</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Button</span><span class="p">(</span><span class="s">&#34;Cancel&#34;</span><span class="p">)</span> <span class="p">{</span>
+		<span class="c1">// close without saving</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">PrimaryButton</span><span class="p">(</span><span class="s">&#34;Save&#34;</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// one primary action per place</span>
+		<span class="nx">saved</span><span class="o">++</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/buttons-dialog.png" alt="Save the changes? with Cancel and a blue Save" /></p>
+
+<p>When the words change but it is the same button (Switch on, Switch off), keep its id with <code>##</code>:
+<code>context.PrimaryButton(label + &quot;##switch&quot;)</code>.</p>
+
+<h2 id="iconbutton-and-primaryiconbutton"><code>IconButton</code> and <code>PrimaryIconButton</code></h2>
+
+<p>An icon before the words, or an icon alone (an empty label makes it square). Use icons alone only
+for actions everyone knows (zoom, close, undo), and give them a tooltip.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">IconButton</span><span class="p">(</span><span class="s">&#34;minus&#34;</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// square: an icon alone</span>
+		<span class="nx">zoom</span><span class="o">--</span>
+	<span class="p">}</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;Zoom %d&#34;</span><span class="p">,</span> <span class="nx">zoom</span><span class="p">))</span>
+	<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">IconButton</span><span class="p">(</span><span class="s">&#34;plus&#34;</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">zoom</span><span class="o">++</span>
+	<span class="p">}</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Spacer</span><span class="p">()</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">IconButton</span><span class="p">(</span><span class="s">&#34;download&#34;</span><span class="p">,</span> <span class="s">&#34;Export&#34;</span><span class="p">)</span> <span class="c1">// an icon before the words</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">PrimaryIconButton</span><span class="p">(</span><span class="s">&#34;plus&#34;</span><span class="p">,</span> <span class="s">&#34;New lighthouse&#34;</span><span class="p">)</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/buttons-icons.png" alt="− Zoom 1 + on the left, Export and a blue New lighthouse on the right" /></p>
+
+<h2 id="flatbutton-and-flaticonbutton"><code>FlatButton</code> and <code>FlatIconButton</code></h2>
+
+<p>No fill or border until the pointer is over them: menu bars, toolbars, and actions inside a row
+that should not shout.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Frame</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">PadXY</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">AlignY</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Center</span><span class="p">},</span>
+	<span class="nx">ui</span><span class="p">.</span><span class="nx">Look</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">Surface</span><span class="p">,</span> <span class="nx">Radius</span><span class="p">:</span> <span class="mi">6</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">FlatIconButton</span><span class="p">(</span><span class="s">&#34;undo-2&#34;</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">)</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">FlatIconButton</span><span class="p">(</span><span class="s">&#34;redo-2&#34;</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">)</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Separator</span><span class="p">()</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">FlatButton</span><span class="p">(</span><span class="s">&#34;File&#34;</span><span class="p">)</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">FlatButton</span><span class="p">(</span><span class="s">&#34;Edit&#34;</span><span class="p">)</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">FlatIconButton</span><span class="p">(</span><span class="s">&#34;eye&#34;</span><span class="p">,</span> <span class="s">&#34;View&#34;</span><span class="p">)</span>
+	<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/buttons-toolbar.png" alt="A toolbar with undo, redo, File, Edit and View" /></p>
+
+<h2 id="selectable"><code>Selectable</code></h2>
+
+<p>An item that shows whether it is chosen, and returns <code>true</code> when clicked. In a <strong>row</strong> it fits its
+content (a group of tools); in a <strong>column</strong> it takes the whole width (a side list). It does not
+change anything itself: your variable decides which one is chosen.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="c1">// in a row: a group of tools, fitted</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">name</span> <span class="o">:=</span> <span class="k">range</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;move&#34;</span><span class="p">,</span> <span class="s">&#34;pencil&#34;</span><span class="p">,</span> <span class="s">&#34;eraser&#34;</span><span class="p">}</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Selectable</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="nx">tool</span> <span class="o">==</span> <span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
+			<span class="nx">tool</span> <span class="p">=</span> <span class="nx">name</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Column</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="c1">// in a column: a side list, full width</span>
+	<span class="k">for</span> <span class="nx">index</span><span class="p">,</span> <span class="nx">name</span> <span class="o">:=</span> <span class="k">range</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;Inbox&#34;</span><span class="p">,</span> <span class="s">&#34;Lighthouses&#34;</span><span class="p">,</span> <span class="s">&#34;Keepers&#34;</span><span class="p">}</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Selectable</span><span class="p">(</span><span class="s">&#34;folder&#34;</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">place</span> <span class="o">==</span> <span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+			<span class="nx">place</span> <span class="p">=</span> <span class="nx">index</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/buttons-selectable.png" alt="Three tool icons, the first chosen; a list of three folders, Inbox chosen" /></p>
+
+<p>A screen reader reads it as selected or not.</p>
+
+<h2 id="chip-and-removablechip"><code>Chip</code> and <code>RemovableChip</code></h2>
+
+<p>Small rounded labels: a state, a filter, a tag. <code>Chip</code> returns <code>true</code> when clicked;
+<code>RemovableChip</code> has a small × and returns <code>clicked, removed</code> apart. <code>ui.ChipLook{Fill, Ink}</code> gives
+their colours (zero: the theme&rsquo;s quiet ones). To let a row of chips flow onto more lines, put them
+in a box with <code>Wrap: true</code> and a width that does not follow its content.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="c1">// filters: click to choose one</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">state</span> <span class="o">:=</span> <span class="k">range</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;All&#34;</span><span class="p">,</span> <span class="s">&#34;Lit&#34;</span><span class="p">,</span> <span class="s">&#34;Dark&#34;</span><span class="p">}</span> <span class="p">{</span>
+		<span class="nx">look</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">ChipLook</span><span class="p">{}</span>
+		<span class="k">if</span> <span class="nx">filter</span> <span class="o">==</span> <span class="nx">state</span> <span class="p">{</span>
+			<span class="nx">look</span> <span class="p">=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">ChipLook</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">PrimaryTint</span><span class="p">,</span> <span class="nx">Ink</span><span class="p">:</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">Primary</span><span class="p">}</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Chip</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">,</span> <span class="nx">state</span><span class="p">,</span> <span class="nx">look</span><span class="p">)</span> <span class="p">{</span>
+			<span class="nx">filter</span> <span class="p">=</span> <span class="nx">state</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Wrap</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">6</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="c1">// tags: remove them</span>
+	<span class="k">for</span> <span class="nx">index</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">index</span> <span class="p">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="nx">tags</span><span class="p">);</span> <span class="nx">index</span><span class="o">++</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">removed</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">RemovableChip</span><span class="p">(</span><span class="s">&#34;tag&#34;</span><span class="p">,</span> <span class="nx">tags</span><span class="p">[</span><span class="nx">index</span><span class="p">],</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">ChipLook</span><span class="p">{});</span> <span class="nx">removed</span> <span class="p">{</span>
+			<span class="nx">tags</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">tags</span><span class="p">[:</span><span class="nx">index</span><span class="p">],</span> <span class="nx">tags</span><span class="p">[</span><span class="nx">index</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span><span class="o">...</span><span class="p">)</span>
+			<span class="nx">index</span><span class="o">--</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Chip</span><span class="p">(</span><span class="s">&#34;circle-alert&#34;</span><span class="p">,</span> <span class="s">&#34;Needs repair&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">ChipLook</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nf">Hex</span><span class="p">(</span><span class="s">&#34;#fdecea&#34;</span><span class="p">),</span> <span class="nx">Ink</span><span class="p">:</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nf">Hex</span><span class="p">(</span><span class="s">&#34;#b3261e&#34;</span><span class="p">)})</span>
+</code></pre>
+
+<p><img src="./images/components/buttons-chips.png" alt="Three filter chips, four tags with ×, a red Needs repair chip" /></p>
+
+<h2 id="clickable"><code>Clickable</code></h2>
+
+<p>Any box that reacts to the pointer, with its own look while left alone, hovered and pressed. It is
+what go-ui&rsquo;s own buttons are made of, and the way to make a card, a row or a tile clickable as a
+whole. Buttons inside it keep their own clicks.</p>
+<pre><code class="language-go"><span class="nx">theme</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span>
+<span class="nx">cards</span> <span class="o">:=</span> <span class="p">[]</span><span class="kd">struct</span><span class="p">{</span> <span class="nx">icon</span><span class="p">,</span> <span class="nx">title</span><span class="p">,</span> <span class="nx">text</span> <span class="kt">string</span> <span class="p">}{</span>
+	<span class="p">{</span><span class="s">&#34;lighthouse&#34;</span><span class="p">,</span> <span class="s">&#34;Lighthouse&#34;</span><span class="p">,</span> <span class="s">&#34;A tower with a light&#34;</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;anchor&#34;</span><span class="p">,</span> <span class="s">&#34;Harbour&#34;</span><span class="p">,</span> <span class="s">&#34;Berths and a mole&#34;</span><span class="p">},</span>
+<span class="p">}</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="nx">index</span><span class="p">,</span> <span class="nx">card</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">cards</span> <span class="p">{</span>
+		<span class="nx">looks</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Looks</span><span class="p">{</span>
+			<span class="nx">Normal</span><span class="p">:</span>  <span class="nx">ui</span><span class="p">.</span><span class="nx">Look</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Surface</span><span class="p">,</span> <span class="nx">Border</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Line</span><span class="p">,</span> <span class="nx">BorderWidth</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">Radius</span><span class="p">:</span> <span class="mi">8</span><span class="p">},</span>
+			<span class="nx">Hovered</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Look</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Surface</span><span class="p">,</span> <span class="nx">Border</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Primary</span><span class="p">,</span> <span class="nx">BorderWidth</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">Radius</span><span class="p">:</span> <span class="mi">8</span><span class="p">},</span>
+			<span class="nx">Pressed</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Look</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">PrimaryTint</span><span class="p">,</span> <span class="nx">Border</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Primary</span><span class="p">,</span> <span class="nx">BorderWidth</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">Radius</span><span class="p">:</span> <span class="mi">8</span><span class="p">},</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nx">index</span> <span class="o">==</span> <span class="nx">chosen</span> <span class="p">{</span>
+			<span class="nx">looks</span><span class="p">.</span><span class="nx">Normal</span> <span class="p">=</span> <span class="nx">looks</span><span class="p">.</span><span class="nx">Pressed</span>
+		<span class="p">}</span>
+		<span class="nx">layout</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Share</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Pad</span><span class="p">(</span><span class="mi">12</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">4</span><span class="p">}</span>
+		<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Clickable</span><span class="p">(</span><span class="nx">card</span><span class="p">.</span><span class="nx">title</span><span class="p">,</span> <span class="nx">layout</span><span class="p">,</span> <span class="nx">looks</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Icon</span><span class="p">(</span><span class="nx">card</span><span class="p">.</span><span class="nx">icon</span><span class="p">)</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Heading</span><span class="p">(</span><span class="nx">card</span><span class="p">.</span><span class="nx">title</span><span class="p">)</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="nx">card</span><span class="p">.</span><span class="nx">text</span><span class="p">)</span>
+		<span class="p">})</span> <span class="p">{</span>
+			<span class="nx">chosen</span> <span class="p">=</span> <span class="nx">index</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/buttons-clickable.png" alt="Two cards, Lighthouse chosen with a blue border, Harbour beside it" /></p>
+
+<p>A screen reader reads the texts inside it as a button. If it is something else (a switch, a tab),
+say so after it with <code>context.Describe(ui.Description{Role: …})</code>.</p>
+
+<h2 id="longpressed"><code>LongPressed</code></h2>
+
+<p>Tells whether the control added just before it was <strong>held</strong>: a finger still on it for half a
+second, or the right mouse button. A touch that became a long press is no click. Use it for a
+second action on the same thing: choosing rows, a context menu.</p>
+<pre><code class="language-go"><span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Selectable</span><span class="p">(</span><span class="s">&#34;file&#34;</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">chosen</span><span class="p">[</span><span class="nx">name</span><span class="p">])</span> <span class="p">{</span>
+	<span class="nf">open</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">LongPressed</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">chosen</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span> <span class="p">=</span> <span class="kc">true</span> <span class="c1">// start choosing several</span>
+<span class="p">}</span>
+</code></pre>
+
+<hr>
+
+<p><a href="./components/text">← Text, icons and pictures</a> · <a href="./components/choices">Choices →</a></p>

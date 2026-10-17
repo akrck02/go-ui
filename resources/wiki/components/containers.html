@@ -1,0 +1,118 @@
+<h1 id="containers">Containers</h1>
+
+<p>Boxes arrange what is inside them. Their <code>ui.Layout</code> gives a direction, sizes (<code>Fit</code>, <code>Grow</code>,
+<code>Share</code>, <code>Fixed</code>, <code>Percent</code>), padding, a gap and alignment; the <a href="./guides/layout">guide</a>
+explains how sizes are worked out.</p>
+
+<h2 id="box-and-frame"><code>Box</code> and <code>Frame</code></h2>
+
+<p><code>Box</code> only arranges. <code>Frame</code> also paints, with a <code>ui.Look</code>: fill, border, corner radius, a shadow
+for things that float, and a clip. Cards side by side with <code>Share(1)</code> come out the same width.</p>
+<pre><code class="language-go"><span class="nx">theme</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span>
+<span class="nx">card</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Look</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Surface</span><span class="p">,</span> <span class="nx">Border</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Line</span><span class="p">,</span> <span class="nx">BorderWidth</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">Radius</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="nx">Shadow</span><span class="p">:</span> <span class="kc">true</span><span class="p">}</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">figure</span> <span class="o">:=</span> <span class="k">range</span> <span class="p">[][</span><span class="mi">2</span><span class="p">]</span><span class="kt">string</span><span class="p">{{</span><span class="s">&#34;Lighthouses&#34;</span><span class="p">,</span> <span class="s">&#34;12&#34;</span><span class="p">},</span> <span class="p">{</span><span class="s">&#34;Lit&#34;</span><span class="p">,</span> <span class="s">&#34;9&#34;</span><span class="p">},</span> <span class="p">{</span><span class="s">&#34;Keepers&#34;</span><span class="p">,</span> <span class="s">&#34;4&#34;</span><span class="p">}}</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Frame</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Share</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Pad</span><span class="p">(</span><span class="mi">12</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">4</span><span class="p">},</span> <span class="nx">card</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="nx">figure</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Text</span><span class="p">(</span><span class="nx">figure</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextStyle</span><span class="p">{</span><span class="nx">Size</span><span class="p">:</span> <span class="mi">24</span><span class="p">,</span> <span class="nx">Weight</span><span class="p">:</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Bold</span><span class="p">})</span>
+		<span class="p">})</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/containers-card.png" alt="Three cards with Lighthouses 12, Lit 9, Keepers 4" /></p>
+
+<h2 id="row-column-spacer-separator"><code>Row</code>, <code>Column</code>, <code>Spacer</code>, <code>Separator</code></h2>
+
+<p><code>Row</code> is a full-width horizontal box with the theme&rsquo;s gap, its children centred vertically;
+<code>Column</code> the same, vertical. <code>Spacer</code> takes the free space and pushes what follows to the far end
+(a button on the right of a bar). <code>Separator</code> is a thin line across its row or column.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Heading</span><span class="p">(</span><span class="s">&#34;North Point&#34;</span><span class="p">)</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Spacer</span><span class="p">()</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Button</span><span class="p">(</span><span class="s">&#34;Edit&#34;</span><span class="p">)</span>
+<span class="p">})</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Separator</span><span class="p">()</span>
+</code></pre>
+
+<h2 id="grid"><code>Grid</code></h2>
+
+<p>Rows of equal cells, left to right and then down: <code>Grid(columns, content)</code>, or any box with
+<code>Layout.Columns</code>.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Grid</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">icon</span> <span class="o">:=</span> <span class="k">range</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;lighthouse&#34;</span><span class="p">,</span> <span class="s">&#34;anchor&#34;</span><span class="p">,</span> <span class="s">&#34;ship&#34;</span><span class="p">,</span> <span class="s">&#34;waves&#34;</span><span class="p">,</span> <span class="s">&#34;sun&#34;</span><span class="p">,</span> <span class="s">&#34;moon&#34;</span><span class="p">,</span> <span class="s">&#34;cloud&#34;</span><span class="p">,</span> <span class="s">&#34;wind&#34;</span><span class="p">}</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Frame</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Pad</span><span class="p">(</span><span class="mi">12</span><span class="p">),</span> <span class="nx">AlignX</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Center</span><span class="p">},</span>
+			<span class="nx">ui</span><span class="p">.</span><span class="nx">Look</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">Sunken</span><span class="p">,</span> <span class="nx">Radius</span><span class="p">:</span> <span class="mi">6</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Icon</span><span class="p">(</span><span class="nx">icon</span><span class="p">)</span> <span class="p">})</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/containers-grid.png" alt="Two rows of four tiles, each with an icon" /></p>
+
+<h2 id="scrollarea"><code>ScrollArea</code></h2>
+
+<p>Content taller than its box scrolls: the wheel or a trackpad over it, the thin bar on its right,
+or a finger, which glides on when let go. Give it a height that does not follow its content
+(<code>Fixed</code>, or <code>Grow</code> in a column), or it simply grows.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">ScrollArea</span><span class="p">(</span><span class="s">&#34;log&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">120</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">4</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="nx">day</span> <span class="o">:=</span> <span class="mi">1</span><span class="p">;</span> <span class="nx">day</span> <span class="o">&lt;=</span> <span class="mi">30</span><span class="p">;</span> <span class="nx">day</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;Day %d: lamp lit at dusk&#34;</span><span class="p">,</span> <span class="nx">day</span><span class="p">))</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/containers-scroll.png" alt="Six lines of a thirty-day log, with a scroll bar" /></p>
+
+<p><code>ScrollOffset(name)</code> says how far it is scrolled (a bar that shrinks over it); <code>ScrollPull(name)</code>
+measures a pull past its top (a list that refreshes).</p>
+
+<h2 id="fold"><code>Fold</code></h2>
+
+<p>A box that opens to its content&rsquo;s height and closes to nothing, with motion: the answer under a
+question, more under a row. While closed, its content is not built at all.</p>
+<pre><code class="language-go"><span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">FlatIconButton</span><span class="p">(</span><span class="s">&#34;chevron-down&#34;</span><span class="p">,</span> <span class="s">&#34;When is the lamp lit?&#34;</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">open</span> <span class="p">=</span> <span class="p">!</span><span class="nx">open</span>
+<span class="p">}</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Fold</span><span class="p">(</span><span class="s">&#34;answer&#34;</span><span class="p">,</span> <span class="nx">open</span><span class="p">,</span> <span class="mi">200</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">PadXY</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span><span class="p">)},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;From sunset to sunrise, and in fog.&#34;</span><span class="p">)</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/containers-fold.png" alt="When is the lamp lit? with its answer open under it" /></p>
+
+<h2 id="paint"><code>Paint</code></h2>
+
+<p>A box laid out like any other, then handed to your function with its final rectangle and a
+<code>draw2d.List</code>: for shapes no control draws (a chart, a gauge, a timeline).</p>
+<pre><code class="language-go"><span class="nx">readings</span> <span class="o">:=</span> <span class="p">[]</span><span class="kt">float32</span><span class="p">{</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">}</span>
+<span class="nx">primary</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">Primary</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Paint</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">80</span><span class="p">)},</span> <span class="kd">func</span><span class="p">(</span><span class="nx">area</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span><span class="p">,</span> <span class="nx">drawing</span> <span class="o">*</span><span class="nx">draw2d</span><span class="p">.</span><span class="nx">List</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">barWidth</span> <span class="o">:=</span> <span class="nx">area</span><span class="p">.</span><span class="nx">Width</span> <span class="o">/</span> <span class="nb">float32</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">readings</span><span class="p">))</span>
+	<span class="k">for</span> <span class="nx">index</span><span class="p">,</span> <span class="nx">reading</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">readings</span> <span class="p">{</span>
+		<span class="nx">height</span> <span class="o">:=</span> <span class="nx">area</span><span class="p">.</span><span class="nx">Height</span> <span class="o">*</span> <span class="nx">reading</span>
+		<span class="nx">bar</span> <span class="o">:=</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span><span class="p">{</span><span class="nx">X</span><span class="p">:</span> <span class="nx">area</span><span class="p">.</span><span class="nx">X</span> <span class="o">+</span> <span class="nb">float32</span><span class="p">(</span><span class="nx">index</span><span class="p">)</span><span class="o">*</span><span class="nx">barWidth</span> <span class="o">+</span> <span class="mi">4</span><span class="p">,</span> <span class="nx">Y</span><span class="p">:</span> <span class="nx">area</span><span class="p">.</span><span class="nf">Bottom</span><span class="p">()</span> <span class="o">-</span> <span class="nx">height</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">barWidth</span> <span class="o">-</span> <span class="mi">8</span><span class="p">,</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">height</span><span class="p">}</span>
+		<span class="nx">drawing</span><span class="p">.</span><span class="nf">Rectangle</span><span class="p">(</span><span class="nx">bar</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="nx">primary</span><span class="p">,</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Transparent</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="s">&#34;Hours of fog, this week&#34;</span><span class="p">)</span>
+</code></pre>
+
+<p><img src="./images/components/containers-paint.png" alt="Seven bars of different heights and Hours of fog, this week" /></p>
+
+<h2 id="swipebox"><code>SwipeBox</code></h2>
+
+<p>A box a finger drags along one axis: pages, cards in a row, a row swiped away. Your content gets a
+<code>ui.Swipe</code> (the offset, the speed, whether it is held or just let go) and places itself by it.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">SwipeBox</span><span class="p">(</span><span class="s">&#34;pages&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">200</span><span class="p">)},</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Horizontal</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">swipe</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Swipe</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">swipe</span><span class="p">.</span><span class="nx">Released</span> <span class="o">&amp;&amp;</span> <span class="nx">swipe</span><span class="p">.</span><span class="nx">Offset</span> <span class="p">&lt;</span> <span class="o">-</span><span class="nx">swipe</span><span class="p">.</span><span class="nx">Area</span><span class="p">.</span><span class="nx">Width</span><span class="o">/</span><span class="mi">3</span> <span class="p">{</span>
+		<span class="nx">page</span><span class="o">++</span> <span class="c1">// let go past a third of the way: the next page</span>
+	<span class="p">}</span>
+	<span class="err">…</span>
+<span class="p">})</span>
+</code></pre>
+
+<p>It takes a finger only along its own axis, so a list inside pages still scrolls up and down.</p>
+
+<hr>
+
+<p><a href="./components/text-fields">← Text fields</a> · <a href="./components/lists-and-tables">Lists and tables →</a></p>

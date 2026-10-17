@@ -1,0 +1,90 @@
+<h1 id="lists-and-tables">Lists and tables</h1>
+
+<h2 id="list"><code>List</code></h2>
+
+<p>A scroll area of rows of <strong>the same height</strong> that builds only the rows in sight: ten thousand rows
+cost what twenty do. The row function gets the index; ids inside it are scoped by it, so no
+<code>Push</code> is needed.</p>
+<pre><code class="language-go"><span class="kd">const</span> <span class="nx">count</span> <span class="p">=</span> <span class="mi">10000</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">List</span><span class="p">(</span><span class="s">&#34;buoys&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">150</span><span class="p">)},</span> <span class="nx">count</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">index</span> <span class="kt">int</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Selectable</span><span class="p">(</span><span class="s">&#34;circle-dot&#34;</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;Buoy %d&#34;</span><span class="p">,</span> <span class="nx">index</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="nx">index</span> <span class="o">==</span> <span class="nx">selected</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">selected</span> <span class="p">=</span> <span class="nx">index</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%d buoys; only the rows in sight are built&#34;</span><span class="p">,</span> <span class="nx">count</span><span class="p">))</span>
+</code></pre>
+
+<p><img src="./images/components/lists-list.png" alt="Buoy 1 to 5 in a scrolling list, Buoy 4 chosen, and a caption" /></p>
+
+<p>For a few dozen rows of different heights, a <code>ScrollArea</code> with a <code>for</code> is simpler.</p>
+
+<h2 id="table"><code>Table</code></h2>
+
+<p>A header that stays while the rows scroll, columns that line up, group captions, a chosen row with
+a strip of the primary colour. <code>Row(id, selected, cells...)</code> returns <code>true</code> when clicked; cells are
+text, and text that does not fit ends in &ldquo;…&rdquo;.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">part</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">group</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">code</span> <span class="kt">string</span>
+	<span class="nx">count</span>             <span class="kt">int</span>
+<span class="p">}</span>
+<span class="nx">parts</span> <span class="o">:=</span> <span class="p">[]</span><span class="nx">part</span><span class="p">{</span>
+	<span class="p">{</span><span class="s">&#34;Lantern&#34;</span><span class="p">,</span> <span class="s">&#34;Lens&#34;</span><span class="p">,</span> <span class="s">&#34;LN-01&#34;</span><span class="p">,</span> <span class="mi">1</span><span class="p">},</span> <span class="p">{</span><span class="s">&#34;Lantern&#34;</span><span class="p">,</span> <span class="s">&#34;Lamp&#34;</span><span class="p">,</span> <span class="s">&#34;LN-02&#34;</span><span class="p">,</span> <span class="mi">2</span><span class="p">},</span> <span class="p">{</span><span class="s">&#34;Lantern&#34;</span><span class="p">,</span> <span class="s">&#34;Clockwork&#34;</span><span class="p">,</span> <span class="s">&#34;LN-03&#34;</span><span class="p">,</span> <span class="mi">1</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;Tower&#34;</span><span class="p">,</span> <span class="s">&#34;Stairs&#34;</span><span class="p">,</span> <span class="s">&#34;TW-01&#34;</span><span class="p">,</span> <span class="mi">112</span><span class="p">},</span> <span class="p">{</span><span class="s">&#34;Tower&#34;</span><span class="p">,</span> <span class="s">&#34;Windows&#34;</span><span class="p">,</span> <span class="s">&#34;TW-02&#34;</span><span class="p">,</span> <span class="mi">8</span><span class="p">},</span>
+<span class="p">}</span>
+<span class="nx">columns</span> <span class="o">:=</span> <span class="p">[]</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Column</span><span class="p">{</span>
+	<span class="p">{</span><span class="nx">Title</span><span class="p">:</span> <span class="s">&#34;Part&#34;</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Share</span><span class="p">(</span><span class="mi">1</span><span class="p">)},</span>
+	<span class="p">{</span><span class="nx">Title</span><span class="p">:</span> <span class="s">&#34;Code&#34;</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">72</span><span class="p">)},</span>
+	<span class="p">{</span><span class="nx">Title</span><span class="p">:</span> <span class="s">&#34;Count&#34;</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">56</span><span class="p">),</span> <span class="nx">Align</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">End</span><span class="p">},</span> <span class="c1">// numbers on the right</span>
+<span class="p">}</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Table</span><span class="p">(</span><span class="s">&#34;parts&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">220</span><span class="p">)},</span> <span class="nx">columns</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">table</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Table</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="nx">index</span><span class="p">,</span> <span class="nx">item</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">parts</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">index</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="nx">item</span><span class="p">.</span><span class="nx">group</span> <span class="o">!=</span> <span class="nx">parts</span><span class="p">[</span><span class="nx">index</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="nx">group</span> <span class="p">{</span>
+			<span class="nx">table</span><span class="p">.</span><span class="nf">Group</span><span class="p">(</span><span class="nx">item</span><span class="p">.</span><span class="nx">group</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nx">table</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="nx">item</span><span class="p">.</span><span class="nx">code</span><span class="p">,</span> <span class="nx">index</span> <span class="o">==</span> <span class="nx">selected</span><span class="p">,</span> <span class="nx">item</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span> <span class="nx">item</span><span class="p">.</span><span class="nx">code</span><span class="p">,</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">Itoa</span><span class="p">(</span><span class="nx">item</span><span class="p">.</span><span class="nx">count</span><span class="p">))</span> <span class="p">{</span>
+			<span class="nx">selected</span> <span class="p">=</span> <span class="nx">index</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/lists-table.png" alt="A table of parts in two groups, Lantern and Tower, with Lamp chosen" /></p>
+
+<table>
+<thead>
+<tr>
+<th><code>ui.Column</code> field</th>
+<th>Means</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Title</code></td>
+<td>The header&rsquo;s words</td>
+</tr>
+
+<tr>
+<td><code>Width</code></td>
+<td><code>Fixed</code> for narrow columns, <code>Share</code> for the rest: header and rows come out the same</td>
+</tr>
+
+<tr>
+<td><code>Align</code></td>
+<td><code>ui.Start</code> for words, <code>ui.End</code> for numbers</td>
+</tr>
+
+<tr>
+<td><code>Weight</code></td>
+<td><code>draw2d.Mono</code> for a column of codes</td>
+</tr>
+</tbody>
+</table>
+<p><code>table.RowWith(id, selected, ui.RowLook{Icon, IconInk, Tile, Indent, Secondary}, cells...)</code> starts
+the first cell with an icon on a tinted tile, a second quieter line, or an indent for a row that
+belongs to the one above. Rows and captions out of sight are only counted, so a few thousand rows
+are fine; give the table a height that does not follow its content.</p>
+
+<hr>
+
+<p><a href="./components/containers">← Containers</a> · <a href="./components/layers">Layers →</a></p>

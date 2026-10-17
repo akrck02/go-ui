@@ -1,0 +1,101 @@
+<h1 id="layout">📐 Layout</h1>
+
+<p>Every control is a <strong>box</strong>, and boxes nest. Layout happens in <code>End</code>, once the whole tree is
+known, so a box can grow into space that depends on boxes declared after it.</p>
+
+<p align="center">
+  <img alt="A row 600 pixels wide with padding 10 and gap 10: Fixed(120) is 120, Fit() is its text's 90, and the 340 left are split 1 to 2 between Grow() (113) and GrowBy(2) (227)" src="../images/layout.svg" width="680">
+</p>
+
+<h2 id="asking-for-a-layout">Asking for a layout</h2>
+
+<p>A box&rsquo;s <code>Layout</code> says:</p>
+
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Direction</code></td>
+<td><code>Horizontal</code> (children left to right, the default) or <code>Vertical</code> (top to bottom)</td>
+</tr>
+
+<tr>
+<td><code>Width</code>, <code>Height</code></td>
+<td><code>Fit()</code> (as big as the content, the default), <code>Grow()</code> / <code>GrowBy(weight)</code> (the content plus a share of the free space), <code>Share(weight)</code> (a share of the free space, starting from nothing: equal shares come out equal, so table columns line up), <code>Fixed(pixels)</code>, <code>Percent(share)</code>; <code>.Between(min, max)</code> bounds any of them</td>
+</tr>
+
+<tr>
+<td><code>Padding</code></td>
+<td>Space inside the edges: <code>Pad(all)</code>, <code>PadXY(horizontal, vertical)</code> or each side</td>
+</tr>
+
+<tr>
+<td><code>Gap</code></td>
+<td>Space between children</td>
+</tr>
+
+<tr>
+<td><code>AlignX</code>, <code>AlignY</code></td>
+<td><code>Start</code>, <code>Center</code> or <code>End</code>: where children sit when there is room to spare</td>
+</tr>
+
+<tr>
+<td><code>Columns</code></td>
+<td>Above 0, a grid: children fill rows of this many equal cells, with <code>Gap</code> both ways</td>
+</tr>
+
+<tr>
+<td><code>Wrap</code></td>
+<td>On a horizontal box, children that would pass the right edge go on to a new line, like words (a row of tags); give the box a width that does not follow its content (<code>Grow</code> in a column, <code>Fixed</code>)</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-go"><span class="nx">interfaceContext</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">8</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="err">…</span> <span class="p">})</span>
+<span class="nx">interfaceContext</span><span class="p">.</span><span class="nf">Frame</span><span class="p">(</span><span class="nx">layout</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Look</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Surface</span><span class="p">,</span> <span class="nx">Border</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Line</span><span class="p">,</span> <span class="nx">BorderWidth</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">Radius</span><span class="p">:</span> <span class="mi">6</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="err">…</span> <span class="p">})</span>
+</code></pre>
+
+<p><code>Box</code> only arranges; <code>Frame</code> also paints a fill, a border, rounded corners, a shadow or a clip
+(<code>Look</code>). Because layouts and looks are plain structs, they can come from a file one day, like a
+theme.</p>
+
+<h2 id="how-sizes-are-worked-out">How sizes are worked out</h2>
+
+<p>The work is done one axis at a time:</p>
+
+<ol>
+<li><strong>Fit</strong>, from the leaves up: a text is as wide as it measures, an icon as its size; a box adds
+up its children along its direction (plus gaps) or takes the biggest across it, plus padding.</li>
+<li><strong>Grow</strong>, from the root down: percentages take their share of the parent; along the
+direction, growing children split the space left in proportion to their weights; across it,
+they take the parent&rsquo;s size. When the content does not fit (a narrow window), the growing
+children <strong>shrink</strong> instead, each giving up part of what it has above its minimum, so fixed
+and fitted boxes around them (a side column, an inspector, a button) keep their size.</li>
+<li><strong>Place</strong>, from the root down, with padding, gaps and alignment.</li>
+</ol>
+
+<p>Text does not wrap yet, so heights never depend on widths, except in a box with <code>Wrap</code>: its height is
+worked out once the widths are known, which the axis-by-axis order allows. Content that still does not fit
+overflows at the end and is cut by the panel. A line of text in a box whose look clips
+(<code>Look{Clip: true}</code>, like a table cell) ends in &ldquo;…&rdquo; where it would pass the box&rsquo;s edge.</p>
+
+<h2 id="a-whole-application">A whole application</h2>
+
+<p>The same boxes lay out a whole window. Here the register (<code>cmd/app</code>) is a column of a menu bar, a
+toolbar and a row; the row holds a fixed navigation list, a growing middle (cards in <code>Share</code>
+columns over a table) and a fixed inspector. Narrow the window and only the middle shrinks.</p>
+
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/hero-dark.png">
+  <img alt="The register: a fixed list on the left, a growing middle with three equal cards over a table, and a fixed inspector on the right" src="../images/hero-light.png" width="720">
+</picture>
+</p>
+
+<p>Shortcuts for the common cases (<code>Row</code>, <code>Column</code>, <code>Spacer</code>, <code>Separator</code>, <code>Grid</code>) are in the
+<a href="./guides/controls">controls</a>.</p>

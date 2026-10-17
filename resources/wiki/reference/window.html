@@ -1,0 +1,317 @@
+<h1 id="window">window</h1>
+<pre><code class="language-go"><span class="kn">import</span> <span class="s">&#34;github.com/akrck02/go-ui/window&#34;</span>
+</code></pre>
+
+<p>Package window runs an application that is only an interface: a window with no
+3D scene, where go-ui draws everything on the theme&rsquo;s background, in one draw
+call. On the desktop it opens the window through go-renderer (so it needs cgo,
+and Metal or OpenGL 4.1); built for WebAssembly (GOOS=js) the window is a canvas
+in a web page, drawn through WebGL2; built for Android (with gomobile) it is the
+application&rsquo;s activity, drawn through OpenGL ES.</p>
+
+<p>The window draws only when something happens: input, a resize, a frame a control
+asks for (a caret&rsquo;s blink, a tooltip due) or Wake. In between the program sleeps
+and uses no processor, which a laptop&rsquo;s or a phone&rsquo;s battery needs from an
+application that is mostly still. Set Options.Continuous for one that animates
+all the time.</p>
+<pre><code>window.Run(window.Options{Title: &#34;Lighthouses&#34;, Width: 1280, Height: 800}, func(context *ui.Context) {
+	context.Label(&#34;Hello&#34;)
+})
+</code></pre>
+
+<h3 id="functions">Functions</h3>
+
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func AskForNotifications()</code></td>
+<td>AskForNotifications asks the person to allow notifications; on the desktop there is nothing to ask.</td>
+</tr>
+
+<tr>
+<td><code>func FeelLongPress()</code></td>
+<td>FeelLongPress gives the buzz of a long press on a phone; a desktop has nothing to buzz.</td>
+</tr>
+
+<tr>
+<td><code>func ForgetPreference(name string) error</code></td>
+<td>ForgetPreference lets go of the value kept under a name.</td>
+</tr>
+
+<tr>
+<td><code>func Graphics() string</code></td>
+<td>Graphics describes a phone&rsquo;s OpenGL ES and GPU; on the desktop it is &ldquo;&rdquo;.</td>
+</tr>
+
+<tr>
+<td><code>func KeepPreference(name, value string) error</code></td>
+<td>KeepPreference keeps a value under a name, replacing the one there was.</td>
+</tr>
+
+<tr>
+<td><code>func LastCrash() string</code></td>
+<td>LastCrash returns the report of the last run&rsquo;s crash; on the desktop the terminal shows it, and this is always &ldquo;&rdquo;.</td>
+</tr>
+
+<tr>
+<td><code>func NotificationsAllowed() bool</code></td>
+<td>NotificationsAllowed tells whether the program may show notifications: not yet on the desktop.</td>
+</tr>
+
+<tr>
+<td><code>func Notify(id int, title, text string) bool</code></td>
+<td>Notify shows a notification; on the desktop it does not yet, and returns false.</td>
+</tr>
+
+<tr>
+<td><code>func OpenLink(link string) bool</code></td>
+<td>OpenLink opens a link in the application that shows it (the browser for a web page), through the computer&rsquo;s own command for that.</td>
+</tr>
+
+<tr>
+<td><code>func Preference(name string) (string, bool)</code></td>
+<td>Preference is the value kept under a name, and whether there is one.</td>
+</tr>
+
+<tr>
+<td><code>func Run(options Options, build func(context *ui.Context)) error</code></td>
+<td>Run opens the window and calls build in every update step, between the interface&rsquo;s Begin and End, until the window is closed.</td>
+</tr>
+
+<tr>
+<td><code>func RunWith(context *ui.Context, options Options, build func(context *ui.Context)) error</code></td>
+<td>RunWith is Run with an interface context of your own (a custom theme or measurer).</td>
+</tr>
+
+<tr>
+<td><code>func Share(title, text string) bool</code></td>
+<td>Share offers a text to other applications; a desktop has no sheet for that, so it returns false (put the text on the clipboard instead).</td>
+</tr>
+
+<tr>
+<td><code>func SystemPrefersDark() bool</code></td>
+<td>SystemPrefersDark tells whether the system is set to a dark theme.</td>
+</tr>
+
+<tr>
+<td><code>func Wake()</code></td>
+<td>Wake makes the window draw a frame now: call it when the program&rsquo;s data changes on another goroutine (a file loaded, a message arrived), since the window otherwise sleeps until input.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="constants-and-variables">Constants and variables</h3>
+<pre><code class="language-go"><span class="kd">var</span> <span class="nx">ErrVideoUnsupported</span> <span class="p">=</span> <span class="nx">errors</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="s">&#34;window: films do not play here yet&#34;</span><span class="p">)</span>
+</code></pre>
+
+<p>ErrVideoUnsupported is OpenVideo&rsquo;s answer where films do not play yet.</p>
+<pre><code class="language-go"><span class="kd">var</span> <span class="nx">PaletteTones</span> <span class="p">=</span> <span class="p">[</span><span class="mi">13</span><span class="p">]</span><span class="kt">int</span><span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">600</span><span class="p">,</span> <span class="mi">700</span><span class="p">,</span> <span class="mi">800</span><span class="p">,</span> <span class="mi">900</span><span class="p">,</span> <span class="mi">1000</span><span class="p">}</span>
+</code></pre>
+
+<p>PaletteTones are the shades&rsquo; numbers in Android&rsquo;s names, in the order of each palette: 0 is white, 500 the middle, 1000 black.</p>
+
+<h3 id="backend">Backend</h3>
+
+<p>Backend is the graphics interface a window draws through.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Backend</span> <span class="kt">string</span>
+</code></pre>
+<pre><code class="language-go"><span class="kd">const</span> <span class="p">(</span>
+	<span class="nx">Automatic</span> <span class="nx">Backend</span> <span class="p">=</span> <span class="s">&#34;&#34;</span>       <span class="c1">// Metal on macOS, falling back to OpenGL if it cannot start; OpenGL elsewhere</span>
+	<span class="nx">Metal</span>     <span class="nx">Backend</span> <span class="p">=</span> <span class="s">&#34;metal&#34;</span>  <span class="c1">// only on macOS</span>
+	<span class="nx">OpenGL</span>    <span class="nx">Backend</span> <span class="p">=</span> <span class="s">&#34;opengl&#34;</span> <span class="c1">// OpenGL 4.1, on every desktop system</span>
+<span class="p">)</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func (backend *Backend) Set(text string) error</code></td>
+<td>Set reads a backend from a flag: automatic, metal or opengl.</td>
+</tr>
+
+<tr>
+<td><code>func (backend *Backend) String() string</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="options">Options</h3>
+
+<p>Options configure the window.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Options</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Title</span>         <span class="kt">string</span>
+	<span class="nx">Width</span><span class="p">,</span> <span class="nx">Height</span> <span class="kt">int</span> <span class="c1">// window size in window pixels; 0 = 1280 × 800</span>
+	<span class="c1">// MinWidth and MinHeight stop the window from being made smaller than the layout needs; 0 = no</span>
+	<span class="c1">// limit.</span>
+	<span class="nx">MinWidth</span><span class="p">,</span> <span class="nx">MinHeight</span> <span class="kt">int</span>
+	<span class="nx">CapturePath</span>         <span class="kt">string</span> <span class="c1">// draw one frame to this PNG (hidden window) and return, for documentation and tests</span>
+	<span class="nx">NoVsync</span>             <span class="kt">bool</span>   <span class="c1">// draw as fast as possible instead of waiting for the display</span>
+	<span class="nx">Dark</span>                <span class="kt">bool</span>   <span class="c1">// start with the dark theme</span>
+	<span class="c1">// Continuous draws every frame, at the display&#39;s rate, instead of only when something</span>
+	<span class="c1">// happens: for an interface that animates all the time. It uses far more battery.</span>
+	<span class="nx">Continuous</span> <span class="kt">bool</span>
+	<span class="c1">// Backend is what draws the window: Automatic (Metal on macOS, OpenGL elsewhere), Metal or</span>
+	<span class="c1">// OpenGL. In a web page it is always WebGL2.</span>
+	<span class="nx">Backend</span> <span class="nx">Backend</span>
+	<span class="c1">// Canvas is the id of the page&#39;s canvas to draw in, in a web page; empty = the first canvas.</span>
+	<span class="c1">// The window is the canvas: Width, Height and Title follow the page.</span>
+	<span class="nx">Canvas</span> <span class="kt">string</span>
+	<span class="c1">// Scene, when set, puts a 3D scene behind the interface. It is called at every step after the</span>
+	<span class="c1">// interface, with the input the interface did not claim (so the program can turn its camera</span>
+	<span class="c1">// without fighting a slider), and returns what to show this frame: nil for no scene. On the</span>
+	<span class="c1">// desktop a window with a scene draws through OpenGL.</span>
+	<span class="nx">Scene</span> <span class="kd">func</span><span class="p">(</span><span class="nx">state</span> <span class="o">*</span><span class="nx">input</span><span class="p">.</span><span class="nx">State</span><span class="p">,</span> <span class="nx">step</span> <span class="kt">float64</span><span class="p">)</span> <span class="o">*</span><span class="nx">SceneView</span>
+	<span class="c1">// MaxFramesPerSecond caps how often the window draws, to spare a battery; 0 = 60 on a phone,</span>
+	<span class="c1">// the display&#39;s own rate elsewhere (where vsync keeps it).</span>
+	<span class="nx">MaxFramesPerSecond</span> <span class="kt">int</span>
+	<span class="c1">// Hidden is called when the program leaves the screen: on a phone, another application comes</span>
+	<span class="c1">// up or the phone locks, and the system may end the program after that without a word; in a</span>
+	<span class="c1">// browser, the page is hidden; on the desktop, the window closes. Keep what must survive then</span>
+	<span class="c1">// (KeepPreference). It runs on the goroutine that builds the interface, except in a browser.</span>
+	<span class="nx">Hidden</span> <span class="kd">func</span><span class="p">()</span>
+	<span class="c1">// Shown is called when the program comes back on the screen after Hidden: on a phone, back from</span>
+	<span class="c1">// another application or the lock screen (and at its start); in a browser, when the page shows</span>
+	<span class="c1">// again. It is the moment to play again what Hidden stopped, such as a sound. On the desktop,</span>
+	<span class="c1">// where a hidden window has closed, it is not called.</span>
+	<span class="nx">Shown</span> <span class="kd">func</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func (options *Options) RegisterFlags(flags *flag.FlagSet)</code></td>
+<td>RegisterFlags declares -width, -height, -capture, -no-vsync, -dark, -continuous and -backend.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="palettes">Palettes</h3>
+
+<p>Palettes are the colours a phone made from its wallpaper (Android 12 and later, Material You): three accent palettes and two neutral ones, each in thirteen shades from white to black, as Android names them (system_accent1_0 … system_accent1_1000). A program that builds its colours from them matches the phone, as the system&rsquo;s own applications do.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Palettes</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Accent1</span><span class="p">,</span> <span class="nx">Accent2</span><span class="p">,</span> <span class="nx">Accent3</span><span class="p">,</span> <span class="nx">Neutral1</span><span class="p">,</span> <span class="nx">Neutral2</span> <span class="p">[</span><span class="mi">13</span><span class="p">]</span><span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func SystemPalettes() (Palettes, bool)</code></td>
+<td>SystemPalettes returns the colours a phone made from its wallpaper; a desktop has none.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="sceneview">SceneView</h3>
+
+<p>SceneView is a 3D scene seen from a camera, drawn behind the interface.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">SceneView</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">World</span>  <span class="o">*</span><span class="nx">scene</span><span class="p">.</span><span class="nx">Scene</span>
+	<span class="nx">Camera</span> <span class="nx">models</span><span class="p">.</span><span class="nx">Camera</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="video">Video</h3>
+
+<p>Video plays a film&rsquo;s pictures (not yet its sound) in a draw2d.Image the program draws, with ui.Context.Image or any piece that shows a picture. A program opens it once, calls Update in every frame it is shown, and plays, pauses or loops it. On Android the phone&rsquo;s own decoders read MP4 and WebM films (H.264, H.265, VP8, VP9, AV1); in a browser, those the browser plays; on the desktop, films do not play yet (OpenVideo says so).</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Video</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Loop</span> <span class="kt">bool</span> <span class="c1">// start again at the end</span>
+
+	<span class="c1">// Has unexported fields.</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func OpenVideo(film []byte) (*Video, error)</code></td>
+<td>OpenVideo opens a film (the bytes of an MP4 or WebM file, often embedded in the program), paused at its start.</td>
+</tr>
+
+<tr>
+<td><code>func (video *Video) Close()</code></td>
+<td>Close lets go of the film&rsquo;s decoder.</td>
+</tr>
+
+<tr>
+<td><code>func (video *Video) Duration() time.Duration</code></td>
+<td>Duration is how long the film lasts; 0 until known.</td>
+</tr>
+
+<tr>
+<td><code>func (video *Video) Ended() bool</code></td>
+<td>Ended tells whether the film reached its end (and does not loop).</td>
+</tr>
+
+<tr>
+<td><code>func (video *Video) Pause()</code></td>
+<td>Pause stops the film where it is.</td>
+</tr>
+
+<tr>
+<td><code>func (video *Video) Picture() *draw2d.Image</code></td>
+<td>Picture is the film&rsquo;s current picture, to draw; nil until the film&rsquo;s size is known.</td>
+</tr>
+
+<tr>
+<td><code>func (video *Video) Play()</code></td>
+<td>Play plays the film from where it is; at its end, from its start.</td>
+</tr>
+
+<tr>
+<td><code>func (video *Video) Playing() bool</code></td>
+<td>Playing tells whether the film is playing.</td>
+</tr>
+
+<tr>
+<td><code>func (video *Video) Position() time.Duration</code></td>
+<td>Position is how far into the film it is.</td>
+</tr>
+
+<tr>
+<td><code>func (video *Video) Update(context *ui.Context)</code></td>
+<td>Update brings the picture to the film&rsquo;s position, and asks for the next frame while it plays.</td>
+</tr>
+</tbody>
+</table>
+
+<hr>
+
+<p><a href="./reference/reference">← Reference</a> · generated from the doc comments by <code>generate.py</code></p>

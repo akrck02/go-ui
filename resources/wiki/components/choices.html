@@ -1,0 +1,108 @@
+<h1 id="choices">Choices</h1>
+
+<p>Controls that edit a value of yours. Each takes a <strong>pointer</strong> to it, writes the new value as the
+person acts, and returns <code>true</code> on the frame it changed: read your variable everywhere else, and
+use the <code>true</code> only for what should happen once (a note, saving).</p>
+
+<h2 id="checkbox-and-toggle"><code>Checkbox</code> and <code>Toggle</code></h2>
+
+<p>Both edit a <code>bool</code>. A <strong>checkbox</strong> is a fact about what is being edited, often one of several in a
+form, applied with the form. A <strong>toggle</strong> (a switch on the right of its label) is a setting that
+takes effect at once.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Checkbox</span><span class="p">(</span><span class="s">&#34;Has a foghorn&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">foghorn</span><span class="p">)</span> <span class="c1">// a fact about the thing being edited</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Separator</span><span class="p">()</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Toggle</span><span class="p">(</span><span class="s">&#34;Notify me when a lamp fails&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">notify</span><span class="p">)</span> <span class="c1">// a setting that takes effect at once</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Toggle</span><span class="p">(</span><span class="s">&#34;Light at dusk on its own&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">autoLight</span><span class="p">)</span>
+</code></pre>
+
+<p><img src="./images/components/choices-checkbox-toggle.png" alt="A ticked checkbox, a line, and two settings rows with switches" /></p>
+
+<p>Clicking the label flips it too. A screen reader says &ldquo;ticked&rdquo; or &ldquo;on&rdquo;.</p>
+
+<h2 id="slider-and-sliderstep"><code>Slider</code> and <code>SliderStep</code></h2>
+
+<p>A value between two ends, dragged. Click the track to jump, drag the knob, hold <strong>Shift</strong> to move
+ten times slower. <code>SliderStep</code> keeps whole steps. A slider shows no number: put one beside it when
+the exact value matters, or use a number field.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Icon</span><span class="p">(</span><span class="s">&#34;volume-1&#34;</span><span class="p">)</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Slider</span><span class="p">(</span><span class="s">&#34;volume&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">volume</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">// any value: a volume, an opacity</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Icon</span><span class="p">(</span><span class="s">&#34;volume-2&#34;</span><span class="p">)</span>
+<span class="p">})</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Period&#34;</span><span class="p">)</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">SliderStep</span><span class="p">(</span><span class="s">&#34;period&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">period</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">// whole seconds only</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%.0f s&#34;</span><span class="p">,</span> <span class="nx">period</span><span class="p">))</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/choices-sliders.png" alt="A volume slider between two speaker icons, and a period slider with 5 s beside it" /></p>
+
+<p>A screen reader reads its range and moves it a step at a time.</p>
+
+<h2 id="numberfield"><code>NumberField</code></h2>
+
+<p>A number with − and + on its sides, for exact values. Click − or +, <strong>drag the number sideways</strong>
+(a step every 4 pixels), or click it and <strong>type</strong> (a point or a comma for decimals; Enter keeps
+it, Escape does not). The format (<code>fmt</code> style) shows the unit.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">90</span><span class="p">)},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Range&#34;</span><span class="p">)</span> <span class="p">})</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">NumberField</span><span class="p">(</span><span class="s">&#34;range&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">rangeNM</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#34;%.0f nm&#34;</span><span class="p">)</span>
+<span class="p">})</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">90</span><span class="p">)},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Height&#34;</span><span class="p">)</span> <span class="p">})</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">NumberField</span><span class="p">(</span><span class="s">&#34;height&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">height</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s">&#34;%.1f m&#34;</span><span class="p">)</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/choices-number.png" alt="Range 18 nm and Height 32.5 m, each with − and +" /></p>
+
+<h2 id="select"><code>Select</code></h2>
+
+<p>One choice of a list, shown in a field; clicking opens the list over everything, under the field
+or above it when there is no room. Choose with a click, or the arrows and Enter; Escape or a click
+elsewhere closes it. While open it holds the keyboard.</p>
+<pre><code class="language-go"><span class="nx">colours</span> <span class="o">:=</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;White&#34;</span><span class="p">,</span> <span class="s">&#34;Red&#34;</span><span class="p">,</span> <span class="s">&#34;Green&#34;</span><span class="p">,</span> <span class="s">&#34;Amber&#34;</span><span class="p">}</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Light colour&#34;</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Select</span><span class="p">(</span><span class="s">&#34;colour&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">colour</span><span class="p">,</span> <span class="nx">colours</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Toast</span><span class="p">(</span><span class="s">&#34;Colour set to &#34;</span><span class="o">+</span><span class="nx">colours</span><span class="p">[</span><span class="nx">colour</span><span class="p">],</span> <span class="kc">false</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/choices-select.png" alt="Light colour: Red, in a field with a chevron" /></p>
+
+<p>For two to four short options always in sight, use <code>Tabs</code> instead.</p>
+
+<h2 id="tabs"><code>Tabs</code></h2>
+
+<p>A segmented row, the chosen segment raised. It only chooses: show what belongs to the tab with an
+<code>if</code> or a <code>switch</code>, like any other content.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Tabs</span><span class="p">(</span><span class="s">&#34;view&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">tab</span><span class="p">,</span> <span class="s">&#34;General&#34;</span><span class="p">,</span> <span class="s">&#34;Light&#34;</span><span class="p">,</span> <span class="s">&#34;History&#34;</span><span class="p">)</span>
+<span class="k">switch</span> <span class="nx">tab</span> <span class="p">{</span>
+<span class="k">case</span> <span class="mi">0</span><span class="p">:</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;North Point, on the northern cliffs.&#34;</span><span class="p">)</span>
+<span class="k">case</span> <span class="mi">1</span><span class="p">:</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;White, every five seconds.&#34;</span><span class="p">)</span>
+<span class="k">case</span> <span class="mi">2</span><span class="p">:</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Built a long time ago.&#34;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+
+<p><img src="./images/components/choices-tabs.png" alt="Tabs General, Light and History, General chosen, and its text" /></p>
+
+<h2 id="listbox"><code>ListBox</code></h2>
+
+<p>A scrolling list of selectable items, for a choice among more options than a select should hold
+and that the person should see at once.</p>
+<pre><code class="language-go"><span class="nx">keepers</span> <span class="o">:=</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;First keeper&#34;</span><span class="p">,</span> <span class="s">&#34;Second keeper&#34;</span><span class="p">,</span> <span class="s">&#34;Relief keeper&#34;</span><span class="p">,</span> <span class="s">&#34;Boatman&#34;</span><span class="p">,</span> <span class="s">&#34;Cook&#34;</span><span class="p">,</span> <span class="s">&#34;Signal officer&#34;</span><span class="p">}</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Who is on duty?&#34;</span><span class="p">)</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">ListBox</span><span class="p">(</span><span class="s">&#34;keepers&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">130</span><span class="p">)},</span> <span class="nx">keepers</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">keeper</span><span class="p">)</span>
+</code></pre>
+
+<p><img src="./images/components/choices-listbox.png" alt="Who is on duty? and a list of keepers with Relief keeper chosen" /></p>
+
+<hr>
+
+<p><a href="./components/buttons">← Buttons</a> · <a href="./components/text-fields">Text fields →</a></p>

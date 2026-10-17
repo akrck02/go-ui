@@ -1,0 +1,131 @@
+<h1 id="tables-dragging-and-resizing">📋 Tables, dragging and resizing</h1>
+
+<p><code>cmd/workbench</code> puts the pieces of an editor together around a 3D view: a list of a lighthouse&rsquo;s
+parts on the left, an inspector with tags on the right, a menu to add a part, and a sheet that asks
+before removing one. Both columns can be resized by their inner edge.</p>
+
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/workbench-dark.png">
+  <img alt="The workbench: a grouped table on the left, tags as chips on the right, the island in the middle" src="../images/workbench-light.png" width="720">
+</picture>
+</p>
+<pre><code class="language-bash">go run ./cmd/workbench                <span class="c1"># -demo menu, -demo sheet or -demo drag open them for a capture</span>
+</code></pre>
+
+<h2 id="tables">Tables</h2>
+
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/table-dark.png">
+  <img alt="A table of parts with Part, Code and Count columns, grouped under Lantern and Tower captions, the first row selected" src="../images/table-light.png" width="300">
+</picture>
+</p>
+<pre><code class="language-go"><span class="nx">columns</span> <span class="o">:=</span> <span class="p">[]</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Column</span><span class="p">{</span>
+	<span class="p">{</span><span class="nx">Title</span><span class="p">:</span> <span class="s">&#34;Part&#34;</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Share</span><span class="p">(</span><span class="mi">1</span><span class="p">)},</span>
+	<span class="p">{</span><span class="nx">Title</span><span class="p">:</span> <span class="s">&#34;Code&#34;</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">64</span><span class="p">)},</span>
+	<span class="p">{</span><span class="nx">Title</span><span class="p">:</span> <span class="s">&#34;Count&#34;</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">56</span><span class="p">),</span> <span class="nx">Align</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">End</span><span class="p">},</span> <span class="c1">// numbers on the right</span>
+<span class="p">}</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Table</span><span class="p">(</span><span class="s">&#34;parts&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">()},</span> <span class="nx">columns</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">table</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Table</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="nx">index</span><span class="p">,</span> <span class="nx">part</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">parts</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">index</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="nx">part</span><span class="p">.</span><span class="nx">group</span> <span class="o">!=</span> <span class="nx">parts</span><span class="p">[</span><span class="nx">index</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="nx">group</span> <span class="p">{</span>
+			<span class="nx">table</span><span class="p">.</span><span class="nf">Group</span><span class="p">(</span><span class="nx">part</span><span class="p">.</span><span class="nx">group</span><span class="p">)</span> <span class="c1">// a caption in small capitals, across the columns</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nx">table</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="nx">part</span><span class="p">.</span><span class="nx">key</span><span class="p">,</span> <span class="nx">index</span> <span class="o">==</span> <span class="nx">selected</span><span class="p">,</span> <span class="nx">part</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span> <span class="nx">part</span><span class="p">.</span><span class="nx">code</span><span class="p">,</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">Itoa</span><span class="p">(</span><span class="nx">part</span><span class="p">.</span><span class="nx">count</span><span class="p">))</span> <span class="p">{</span>
+			<span class="nx">selected</span> <span class="p">=</span> <span class="nx">index</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+</code></pre>
+
+<p>The header stays while the rows scroll. A selected row is tinted, with a strip of the primary
+colour on its left; <code>Row</code> returns <code>true</code> when clicked. <code>Fixed</code> and <code>Share</code> widths make the header
+and every row line up; text that does not fit its cell ends in &ldquo;…&rdquo;. Rows and captions have fixed
+heights, so the table counts the ones out of sight without building them: the loop still runs
+over every row each step (a function call each, and the cells&rsquo; strings are the program&rsquo;s), but
+only the dozen or so in sight become boxes. A few thousand rows are fine. Give the table a height
+that does not follow its content, or every row is built. Cells are text; go-renderer has one
+typeface, so there is no monospaced column yet.</p>
+
+<h2 id="drag-and-drop">Drag and drop</h2>
+
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/drag-dark.png">
+  <img alt="A Checked tag dragged from the inspector's chips over the island, its name following the pointer" src="../images/drag-light.png" width="560">
+</picture>
+</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">DragSource</span><span class="p">(</span><span class="s">&#34;Painted&#34;</span><span class="p">,</span> <span class="nx">tagPainted</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Chip</span><span class="p">(</span><span class="s">&#34;tag&#34;</span><span class="p">,</span> <span class="s">&#34;Painted&#34;</span><span class="p">,</span> <span class="nx">look</span><span class="p">)</span> <span class="p">})</span>
+
+<span class="nx">isTag</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">payload</span> <span class="kt">any</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">payload</span><span class="p">.(</span><span class="nx">tagName</span><span class="p">);</span> <span class="k">return</span> <span class="nx">ok</span> <span class="p">}</span>
+<span class="k">if</span> <span class="nx">payload</span><span class="p">,</span> <span class="nx">dropped</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">DropTarget</span><span class="p">(</span><span class="s">&#34;part tags&#34;</span><span class="p">,</span> <span class="nx">layout</span><span class="p">,</span> <span class="nx">isTag</span><span class="p">,</span> <span class="nx">showTags</span><span class="p">);</span> <span class="nx">dropped</span> <span class="p">{</span>
+	<span class="nf">addTag</span><span class="p">(</span><span class="nx">payload</span><span class="p">.(</span><span class="nx">tagName</span><span class="p">))</span>
+<span class="p">}</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">End</span><span class="p">()</span>
+
+<span class="c1">// the scene&#39;s side, after End</span>
+<span class="k">if</span> <span class="nx">drag</span><span class="p">,</span> <span class="nx">dragging</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Dragging</span><span class="p">();</span> <span class="nx">dragging</span> <span class="o">&amp;&amp;</span> <span class="nx">drag</span><span class="p">.</span><span class="nx">OverScreen</span> <span class="p">{</span>
+	<span class="nf">previewAt</span><span class="p">(</span><span class="nf">groundAt</span><span class="p">(</span><span class="nx">drag</span><span class="p">.</span><span class="nx">X</span><span class="p">,</span> <span class="nx">drag</span><span class="p">.</span><span class="nx">Y</span><span class="p">))</span> <span class="c1">// where it would land, with viewer.View.PointOnGround</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="nx">drop</span><span class="p">,</span> <span class="nx">dropped</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">DroppedOnScreen</span><span class="p">();</span> <span class="nx">dropped</span> <span class="p">{</span>
+	<span class="nf">placeAt</span><span class="p">(</span><span class="nf">groundAt</span><span class="p">(</span><span class="nx">drop</span><span class="p">.</span><span class="nx">X</span><span class="p">,</span> <span class="nx">drop</span><span class="p">.</span><span class="nx">Y</span><span class="p">),</span> <span class="nx">drop</span><span class="p">.</span><span class="nx">Payload</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Call</th>
+<th>What it does</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>DragSource(name, payload, layout, content)</code></td>
+<td>A box that can be dragged, carrying a value of yours; returns <code>true</code> when clicked instead</td>
+</tr>
+
+<tr>
+<td><code>DropTarget(name, layout, accepts, content)</code></td>
+<td>A box that takes the payloads <code>accepts</code> says (nil takes any); returns the payload on the step it is let go there</td>
+</tr>
+
+<tr>
+<td><code>Dragging()</code></td>
+<td>The payload, the pointer and whether it is over the open screen, during a drag</td>
+</tr>
+
+<tr>
+<td><code>DroppedOnScreen()</code></td>
+<td>A payload let go over the open screen, with the pointer&rsquo;s place</td>
+</tr>
+</tbody>
+</table>
+<p>Any box can be a <strong>drag source</strong> carrying a value of yours (<code>any</code>). A press on it that moves four
+pixels or more becomes a drag; less is a click, which <code>DragSource</code> returns, so a chip inside can
+still be clicked. Buttons inside keep their clicks too, but a drag that starts on them takes the
+mouse from them. While dragging, the source&rsquo;s name follows the pointer in a small label, the pointer
+shows four arrows (go-renderer has no closed-hand shape), and the interface holds the mouse and the
+keyboard, so cameras stay still and Escape cancels the drag.</p>
+
+<p>A <strong>drop target</strong> is a box that takes payloads: <code>accepts</code> says which (nil takes any). While one it
+takes is over it, it is highlighted; on the step it is let go there, <code>DropTarget</code> returns it. With
+targets inside targets, the innermost under the pointer takes the drop.</p>
+
+<p>Let go over the <strong>open screen</strong> (no panel, no painted box, no target) and the payload is the
+program&rsquo;s: <code>DroppedOnScreen</code> reports it with the pointer&rsquo;s place on the step of the release, from
+<code>Begin</code> to the next <code>Begin</code>, so it can be asked after <code>End</code>, next to the scene&rsquo;s code. During the
+drag, <code>Dragging</code> tells the payload, the pointer and whether it is over the open screen, to preview
+the drop on the scene.</p>
+
+<h2 id="resizable-boxes">Resizable boxes</h2>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Resizable</span><span class="p">(</span><span class="s">&#34;parts&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">RightSide</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">sideWidth</span><span class="p">,</span> <span class="mi">240</span><span class="p">,</span> <span class="mi">520</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">()},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="err">…</span> <span class="p">})</span>
+</code></pre>
+
+<p>A resizable box has a handle on one side (<code>RightSide</code> for a column on the left of the window,
+<code>LeftSide</code> for one on the right, <code>BottomSide</code> and <code>TopSide</code> for strips): a thin line, drawn like a
+separator, that turns the primary colour and shows the resize pointer under the mouse. Dragging it
+writes the new width or height into your variable, kept between the minimum and the maximum (0 =
+no maximum); the program keeps the variable and can save it. The layout&rsquo;s size along the handle
+comes from the variable; the rest of the layout applies to the content.</p>

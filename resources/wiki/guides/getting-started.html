@@ -1,0 +1,156 @@
+<h1 id="getting-started">🚀 Getting started</h1>
+
+<p>go-ui draws interfaces over a go-renderer view. This page explains how a frame works, shows the
+examples that come with it, and how what you describe ends up on the screen.</p>
+
+<h2 id="a-frame">A frame</h2>
+
+<p align="center">
+  <img alt="Your program describes the interface every frame → go-ui: Begin and the controls add boxes, End lays them out and makes a draw2d list → go-renderer paints it in one draw call; the mouse, keys and touches come back for the next frame" src="../images/how-it-works.svg" width="880">
+</p>
+
+<p>In <strong>immediate mode</strong> there are no button objects to create, keep and update. Each update step,
+the program calls the controls again, with its own variables:</p>
+<pre><code class="language-go"><span class="nx">interfaceContext</span><span class="p">.</span><span class="nf">Begin</span><span class="p">(</span><span class="nx">state</span><span class="p">)</span> <span class="c1">// the step&#39;s mouse and keyboard</span>
+<span class="nx">interfaceContext</span><span class="p">.</span><span class="nf">Panel</span><span class="p">(</span><span class="s">&#34;Lighthouse&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">interfaceContext</span><span class="p">.</span><span class="nf">Heading</span><span class="p">(</span><span class="nx">light</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">interfaceContext</span><span class="p">.</span><span class="nf">PrimaryButton</span><span class="p">(</span><span class="s">&#34;Switch on&#34;</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// true on the step it is clicked</span>
+		<span class="nx">light</span><span class="p">.</span><span class="nx">On</span> <span class="p">=</span> <span class="kc">true</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+<span class="nx">interfaceContext</span><span class="p">.</span><span class="nf">End</span><span class="p">()</span> <span class="c1">// lay out, paint, claim the mouse</span>
+</code></pre>
+
+<p>Showing or hiding something is an <code>if</code>; a list is a <code>for</code>. The interface holds none of your data,
+so it can never show a stale value. What it does remember between frames is small and keyed by
+each control&rsquo;s <strong>id</strong>: which control is being pressed, where a panel was dragged, whether it is
+folded.</p>
+
+<p>Call <code>Begin</code> and <code>End</code> in every update step (the function given to <code>viewer.Run</code>), and set
+<code>world.Overlay.Drawing = interfaceContext.Drawing()</code> once, so go-renderer paints the result.</p>
+
+<h3 id="ids-and-scopes">Ids and scopes</h3>
+
+<p>An id is a hash of the control&rsquo;s label and of the <strong>scopes</strong> around it. Panels open a scope with
+their title, so two &ldquo;Apply&rdquo; buttons in different panels do not mix. Inside a loop, open a scope per
+item with <code>Push(name)</code> and <code>Pop()</code>. Anything after <code>##</code> in a label is part of the id but not shown:
+<code>&quot;Switch off##switch&quot;</code> and <code>&quot;Switch on##switch&quot;</code> are the same button with different words.</p>
+
+<table>
+<thead>
+<tr>
+<th>Call</th>
+<th>What it does</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Push(name)</code>, <code>Pop()</code></td>
+<td>Open and close a scope, so controls with the same label in a loop stay apart</td>
+</tr>
+
+<tr>
+<td><code>&quot;Label##id&quot;</code></td>
+<td>Words after <code>##</code> are part of the id but not shown</td>
+</tr>
+
+<tr>
+<td><code>Area(path…)</code></td>
+<td>Where a control was drawn in the last frame, by its scopes and label (<code>Area(&quot;Properties&quot;, &quot;Apply&quot;)</code>): to place something next to it, or to click it in a test</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="the-examples">The examples</h2>
+
+<p>Every example accepts the window&rsquo;s flags: <code>-width</code>, <code>-height</code>, <code>-dark</code> for the dark theme, and
+<code>-capture file.png</code> to draw one frame to a picture and exit (<code>go run ./cmd/&lt;name&gt; -h</code> lists the rest).</p>
+
+<table>
+<tr>
+<th width="50%"><code>cmd/example</code>: a panel over a scene</th>
+<th width="50%"><code>cmd/app</code>: an application with no 3D</th>
+</tr>
+<tr>
+<td>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/example-dark.png">
+  <img alt="A properties panel with tabs, a field and an open select floating over a lighthouse, and a tools panel on the right" src="../images/example-light.png">
+</picture>
+</td>
+<td>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/hero-dark.png">
+  <img alt="A register of lighthouses: menu bar, toolbar, navigation list, cards, table, inspector and status bar" src="../images/hero-light.png">
+</picture>
+</td>
+</tr>
+<tr>
+<th><code>cmd/scene-app</code>: an application around a 3D view</th>
+<th><code>cmd/plan-editor</code>: editing the scene it shows</th>
+</tr>
+<tr>
+<td>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/scene-app-dark.png">
+  <img alt="A menu bar, a toolbar, a list of lighthouses on the left and an inspector on the right, with the 3D view showing through in the middle" src="../images/scene-app-light.png">
+</picture>
+</td>
+<td>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/plan-editor-dark.png">
+  <img alt="An island seen from above with a hut placed on it, and a panel that lists the huts" src="../images/plan-editor-light.png">
+</picture>
+</td>
+</tr>
+<tr>
+<th><code>cmd/workbench</code>: the pieces of an editor</th>
+<th><code>cmd/mobile</code>: phone-sized, on Android too</th>
+</tr>
+<tr>
+<td>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/workbench-dark.png">
+  <img alt="A grouped table of parts, the island in the middle, tags as chips on the right" src="../images/workbench-light.png">
+</picture>
+</td>
+<td align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/mobile-dark.png">
+  <img alt="A list of lighthouses with switches, filter chips and a navigation bar at the bottom" src="../images/mobile-light.png" width="160">
+</picture>
+</td>
+</tr>
+</table>
+<pre><code class="language-bash">go run ./cmd/app                      <span class="c1"># the application above (-dark for the dark theme)</span>
+go run ./cmd/scene-app                <span class="c1"># the same kind of layout around a 3D view</span>
+go run ./cmd/plan-editor              <span class="c1"># place huts on an island&#39;s map</span>
+go run ./cmd/workbench                <span class="c1"># a grouped table, chips, a menu, a sheet, drag and drop</span>
+go run ./cmd/example                  <span class="c1"># a panel over a scene</span>
+go run ./cmd/example -capture shot.png
+go run ./cmd/mobile -width <span class="m">400</span> -height <span class="m">860</span>
+</code></pre>
+
+<p><code>cmd/web</code> is the scene example put together for a browser (<a href="./platforms/web">web</a>); <code>cmd/mobile</code> builds into
+an Android app (<a href="./platforms/android">Android</a>).</p>
+
+<p>The library itself needs no cgo; the examples do, as they open a go-renderer window. The tests need
+no display: they measure text with a fake measurer.</p>
+<pre><code class="language-bash">go vet ./...
+go <span class="nb">test</span> ./...
+go <span class="nb">test</span> -run xxx -bench .             <span class="c1"># a frame of three hundred controls</span>
+</code></pre>
+
+<h2 id="how-it-is-drawn">How it is drawn</h2>
+
+<p>At <code>End</code> the laid-out boxes become commands of a <code>draw2d.List</code> (rounded rectangles, shadows,
+lines of text, icons), each panel on its own layer and its content clipped to it. go-renderer
+paints that list after the scene, in the same pass and atlas as its labels, so the whole interface
+is one draw call. Text is measured with go-renderer&rsquo;s own fonts (<code>overlay.NewMeasurer</code>) at the
+screen&rsquo;s density, so what is laid out is exactly what is painted.</p>
+
+<p>A frame of three panels with three hundred controls builds, lays out and paints in about 0.1 ms
+(<code>go test -bench .</code>). More in <a href="./project/performance-audit">performance and battery</a>.</p>
+
+<p>Next: <a href="./guides/layout">layout</a>, then the <a href="./guides/controls">controls</a>.</p>

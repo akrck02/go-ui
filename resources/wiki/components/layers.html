@@ -1,0 +1,132 @@
+<h1 id="layers">Layers</h1>
+
+<p>What floats over the rest. What is described later in a frame is drawn on top; popups (menus,
+selects, tooltips) go over everything.</p>
+
+<h2 id="panel-and-panelwith"><code>Panel</code> and <code>PanelWith</code></h2>
+
+<p>A floating card with a title bar: drag the bar to move it, the chevron folds it, pressing it brings
+it to the front. Its title opens a scope, so controls in two panels never mix. <code>PanelOptions</code> places
+it (<code>X</code>, <code>Y</code>), sizes it, <code>Locked</code> stops it moving, and <code>Dock</code> fills a side of the window.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">PanelWith</span><span class="p">(</span><span class="s">&#34;Lamp&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">PanelOptions</span><span class="p">{</span><span class="nx">X</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span> <span class="nx">Y</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">220</span><span class="p">)},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Toggle</span><span class="p">(</span><span class="s">&#34;Lit&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">on</span><span class="p">)</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="s">&#34;Drag the title to move me&#34;</span><span class="p">)</span>
+<span class="p">})</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">PanelWith</span><span class="p">(</span><span class="s">&#34;Tools&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">PanelOptions</span><span class="p">{</span><span class="nx">Dock</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">DockRight</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">160</span><span class="p">)},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Selectable</span><span class="p">(</span><span class="s">&#34;move&#34;</span><span class="p">,</span> <span class="s">&#34;Move&#34;</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Selectable</span><span class="p">(</span><span class="s">&#34;pencil&#34;</span><span class="p">,</span> <span class="s">&#34;Draw&#34;</span><span class="p">,</span> <span class="kc">false</span><span class="p">)</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/layers-panel.png" alt="A floating Lamp panel with a switch, and a Tools panel docked on the right" /></p>
+
+<p>Panels are for tools over a scene or a canvas. An application&rsquo;s fixed parts (bars, side columns)
+are better as boxes on the screen (<a href="./components/containers">containers</a>).</p>
+
+<h2 id="sheet"><code>Sheet</code></h2>
+
+<p>A modal card in the middle of the window, shown with an <code>if</code> for as long as your program wants.
+Everything behind is dimmed and does not react; Tab goes round the sheet&rsquo;s own fields. It returns
+<code>true</code> on the frame the person asks to close it: Escape, the × or a click on the backdrop.</p>
+<pre><code class="language-go"><span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Button</span><span class="p">(</span><span class="s">&#34;Remove North Point&#34;</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">confirming</span> <span class="p">=</span> <span class="kc">true</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="nx">confirming</span> <span class="o">&amp;&amp;</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Sheet</span><span class="p">(</span><span class="s">&#34;Remove lighthouse&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">SheetOptions</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">360</span><span class="p">)},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;North Point leaves the register.&#34;</span><span class="p">)</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Spacer</span><span class="p">()</span>
+		<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Button</span><span class="p">(</span><span class="s">&#34;Keep it&#34;</span><span class="p">)</span> <span class="p">{</span>
+			<span class="nx">confirming</span> <span class="p">=</span> <span class="kc">false</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">PrimaryButton</span><span class="p">(</span><span class="s">&#34;Remove&#34;</span><span class="p">)</span> <span class="p">{</span>
+			<span class="nx">confirming</span> <span class="p">=</span> <span class="kc">false</span>
+		<span class="p">}</span>
+	<span class="p">})</span>
+<span class="p">})</span> <span class="p">{</span>
+	<span class="nx">confirming</span> <span class="p">=</span> <span class="kc">false</span> <span class="c1">// Escape, the × or a click on the dimmed backdrop</span>
+<span class="p">}</span>
+</code></pre>
+
+<p><img src="./images/components/layers-sheet.png" alt="A Remove lighthouse sheet over the dimmed window, with Keep it and Remove" /></p>
+
+<h2 id="modal"><code>Modal</code></h2>
+
+<p>Like a sheet, but drawn entirely by you: a welcome card, a dialog of your own, a drawer. Place it
+with <code>LayerOptions</code> (<code>AlignX</code>, <code>AlignY</code>, <code>Padding</code>, <code>Width</code>, <code>Height</code>); <code>Leave</code> lets it go with
+motion.</p>
+<pre><code class="language-go"><span class="k">if</span> <span class="nx">open</span> <span class="o">&amp;&amp;</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Modal</span><span class="p">(</span><span class="s">&#34;welcome&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">LayerOptions</span><span class="p">{</span><span class="nx">AlignX</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Center</span><span class="p">,</span> <span class="nx">AlignY</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Center</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Frame</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Pad</span><span class="p">(</span><span class="mi">24</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">300</span><span class="p">),</span> <span class="nx">AlignX</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Center</span><span class="p">},</span>
+		<span class="nx">ui</span><span class="p">.</span><span class="nx">Look</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">Surface</span><span class="p">,</span> <span class="nx">Radius</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span> <span class="nx">Shadow</span><span class="p">:</span> <span class="kc">true</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">IconSized</span><span class="p">(</span><span class="s">&#34;lighthouse&#34;</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">Primary</span><span class="p">)</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Heading</span><span class="p">(</span><span class="s">&#34;Welcome to the register&#34;</span><span class="p">)</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="s">&#34;Every lighthouse on the coast, in one place.&#34;</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">PrimaryButton</span><span class="p">(</span><span class="s">&#34;Start&#34;</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">open</span> <span class="p">=</span> <span class="kc">false</span>
+			<span class="p">}</span>
+		<span class="p">})</span>
+<span class="p">})</span> <span class="p">{</span>
+	<span class="nx">open</span> <span class="p">=</span> <span class="kc">false</span>
+<span class="p">}</span>
+</code></pre>
+
+<p><img src="./images/components/layers-modal.png" alt="A welcome card with an icon, a title, a line and a Start button over a dimmed window" /></p>
+
+<p><code>Overlay(name, options, content)</code> is the same without dimming or blocking: a note at the bottom, a
+floating button.</p>
+
+<h2 id="menubutton-and-menuitem"><code>MenuButton</code> and <code>MenuItem</code></h2>
+
+<p>A flat button that opens a menu under it. The menu&rsquo;s content is described only while it is open;
+<code>MenuItem(icon, label, hint)</code> returns <code>true</code> when chosen, and choosing closes it. Arrows and Enter
+work. The hint (a shortcut&rsquo;s keys) is only shown: handle the shortcut yourself.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">MenuButton</span><span class="p">(</span><span class="s">&#34;plus&#34;</span><span class="p">,</span> <span class="s">&#34;Add&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">MenuItem</span><span class="p">(</span><span class="s">&#34;lighthouse&#34;</span><span class="p">,</span> <span class="s">&#34;Lighthouse&#34;</span><span class="p">,</span> <span class="s">&#34;Ctrl+N&#34;</span><span class="p">)</span> <span class="p">{</span>
+			<span class="c1">// add one</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">MenuItem</span><span class="p">(</span><span class="s">&#34;anchor&#34;</span><span class="p">,</span> <span class="s">&#34;Harbour&#34;</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">)</span> <span class="p">{</span>
+			<span class="c1">// add one</span>
+		<span class="p">}</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Separator</span><span class="p">()</span>
+		<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">MenuItem</span><span class="p">(</span><span class="s">&#34;copy&#34;</span><span class="p">,</span> <span class="s">&#34;Copy of the selected one&#34;</span><span class="p">,</span> <span class="s">&#34;Ctrl+D&#34;</span><span class="p">)</span> <span class="p">{</span>
+			<span class="c1">// copy</span>
+		<span class="p">}</span>
+	<span class="p">})</span>
+<span class="p">})</span>
+</code></pre>
+
+<h2 id="popover"><code>Popover</code></h2>
+
+<p>A box of your own floating under the control added just before it, at least as wide: a small form
+about one thing, a dropdown of your own. A click outside, Escape or the back gesture closes it
+(<code>open</code> becomes <code>false</code>).</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">IconButton</span><span class="p">(</span><span class="s">&#34;clock&#34;</span><span class="p">,</span> <span class="s">&#34;Light at dusk&#34;</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">open</span> <span class="p">=</span> <span class="p">!</span><span class="nx">open</span>
+	<span class="p">}</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Popover</span><span class="p">(</span><span class="s">&#34;hour&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">open</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Look</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">Surface</span><span class="p">,</span> <span class="nx">Border</span><span class="p">:</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">Line</span><span class="p">,</span> <span class="nx">BorderWidth</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">Radius</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="nx">Shadow</span><span class="p">:</span> <span class="kc">true</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Pad</span><span class="p">(</span><span class="mi">12</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">220</span><span class="p">)},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="s">&#34;Hour the lamp is lit&#34;</span><span class="p">)</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">NumberField</span><span class="p">(</span><span class="s">&#34;hour&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">hour</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#34;%.0f:00&#34;</span><span class="p">)</span>
+		<span class="p">})</span>
+	<span class="p">})</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/layers-popover.png" alt="A Light at dusk button with a card under it holding the hour, 20:00" /></p>
+
+<h2 id="toast"><code>Toast</code></h2>
+
+<p>A short note at the bottom for a few seconds. Unlike everything else it is <strong>fired once</strong>, when
+something happens, not described at every frame; <code>true</code> as the second argument makes it a warning.</p>
+<pre><code class="language-go"><span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Button</span><span class="p">(</span><span class="s">&#34;Save&#34;</span><span class="p">)</span> <span class="o">||</span> <span class="nx">first</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Toast</span><span class="p">(</span><span class="s">&#34;North Point was saved&#34;</span><span class="p">,</span> <span class="kc">false</span><span class="p">)</span> <span class="c1">// fired once; it fades on its own</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Button</span><span class="p">(</span><span class="s">&#34;Check the lamp&#34;</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Toast</span><span class="p">(</span><span class="s">&#34;The lamp did not answer&#34;</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span> <span class="c1">// a warning</span>
+<span class="p">}</span>
+</code></pre>
+
+<hr>
+
+<p><a href="./components/lists-and-tables">← Lists and tables</a> · <a href="./components/dragging-and-resizing">Dragging and resizing →</a></p>

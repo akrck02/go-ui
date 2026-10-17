@@ -1,0 +1,1058 @@
+<h1 id="go-ui">go-ui</h1>
+<pre><code class="language-go"><span class="kn">import</span> <span class="s">&#34;github.com/akrck02/go-ui&#34;</span>
+</code></pre>
+
+<p>Package ui builds interfaces (panels, buttons, labels…) over a go-renderer view,
+in immediate mode: every frame the program describes the interface again from
+its own variables, and each control answers what happened to it (a button
+returns true on the frame it is clicked). Nothing has to be kept in step with
+the program&rsquo;s data, because the interface holds none of it.</p>
+
+<p>A frame goes:</p>
+<pre><code>ui.Begin(state)              // the frame&#39;s mouse and keyboard
+ui.Panel(&#34;Light&#34;, func() {   // controls, nested in boxes
+	if ui.Button(&#34;Switch on&#34;) { light.On = true }
+})
+ui.End()                     // lay out, paint, claim the mouse if it is over the interface
+</code></pre>
+
+<p>and world.Overlay.Drawing = ui.Drawing() makes go-renderer paint it over the
+scene.</p>
+
+<p>Layout is deferred: controls are boxes in a tree that is sized and placed in
+End, with rules like a flexible box (fit the content, grow into free space,
+fixed or a percentage, padding, gaps, alignment). Controls react to the mouse
+using where they were drawn in the previous frame, a frame earlier than they
+are drawn now: invisible at sixty frames a second, and it lets a box be sized by
+things declared after it.</p>
+
+<h3 id="constants-and-variables">Constants and variables</h3>
+<pre><code class="language-go"><span class="kd">var</span> <span class="nx">EnglishEditingWords</span> <span class="p">=</span> <span class="nx">EditingWords</span><span class="p">{</span><span class="nx">Cut</span><span class="p">:</span> <span class="s">&#34;Cut&#34;</span><span class="p">,</span> <span class="nx">Copy</span><span class="p">:</span> <span class="s">&#34;Copy&#34;</span><span class="p">,</span> <span class="nx">Paste</span><span class="p">:</span> <span class="s">&#34;Paste&#34;</span><span class="p">,</span> <span class="nx">SelectAll</span><span class="p">:</span> <span class="s">&#34;Select all&#34;</span><span class="p">}</span>
+</code></pre>
+
+<p>EnglishEditingWords are the bar&rsquo;s labels unless a program sets others (SetEditingWords).</p>
+
+<h3 id="accessiblenode">AccessibleNode</h3>
+
+<p>AccessibleNode is one thing a screen reader can read and act on.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">AccessibleNode</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">ID</span>     <span class="nx">ID</span>          <span class="c1">// the same from one frame to the next while the thing stays</span>
+	<span class="nx">Parent</span> <span class="nx">ID</span>          <span class="c1">// the scroll area it is in, or 0 for the window</span>
+	<span class="nx">Area</span>   <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span> <span class="c1">// where it shows, in layout pixels: the part a scroll area does not hide</span>
+	<span class="nx">Description</span>
+	<span class="nx">Pressable</span>     <span class="kt">bool</span> <span class="c1">// a double tap presses it (ReaderPress)</span>
+	<span class="nx">LongPressable</span> <span class="kt">bool</span> <span class="c1">// the program reads LongPressed after it (ReaderLongPress)</span>
+	<span class="nx">Scrollable</span>    <span class="kt">bool</span> <span class="c1">// ReaderForward and ReaderBackward scroll it, or move a slider</span>
+	<span class="nx">Typing</span>        <span class="kt">bool</span> <span class="c1">// the keyboard types in it now</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="align">Align</h3>
+
+<p>Align places children inside the free space of their box, along one axis.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Align</span> <span class="kt">int</span>
+</code></pre>
+<pre><code class="language-go"><span class="kd">const</span> <span class="p">(</span>
+	<span class="nx">Start</span>  <span class="nx">Align</span> <span class="p">=</span> <span class="kc">iota</span> <span class="c1">// left or top</span>
+	<span class="nx">Center</span>              <span class="c1">// in the middle</span>
+	<span class="nx">End</span>                 <span class="c1">// right or bottom</span>
+<span class="p">)</span>
+</code></pre>
+
+<h3 id="chiplook">ChipLook</h3>
+
+<p>ChipLook is a chip&rsquo;s own colours: its fill and the ink of its text and icon. The zero value uses the theme&rsquo;s quiet colours (Sunken and InkSoft).</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">ChipLook</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Fill</span><span class="p">,</span> <span class="nx">Ink</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="column">Column</h3>
+
+<p>Column is one column of a table: its title, its width and where its cells sit.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Column</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Title</span> <span class="kt">string</span>
+	<span class="c1">// Width is the column&#39;s width. Use Fixed for narrow columns and Share for the rest: shares</span>
+	<span class="c1">// start from nothing, so the header and every row come out the same.</span>
+	<span class="nx">Width</span> <span class="nx">Sizing</span>
+	<span class="nx">Align</span> <span class="nx">Align</span> <span class="c1">// Start for words, End for numbers</span>
+	<span class="c1">// Weight is the face of its cells: draw2d.Mono for a column of codes.</span>
+	<span class="nx">Weight</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Weight</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="context">Context</h3>
+
+<p>Context holds an interface between frames: what was where, what the mouse is on, which panel is in front, and the small state controls keep (a panel&rsquo;s position). Use one per window, from the goroutine that runs the update steps.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Context</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Theme</span> <span class="nx">Theme</span>
+
+	<span class="c1">// Has unexported fields.</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func New() (*Context, error)</code></td>
+<td>New returns an interface that measures text with go-renderer&rsquo;s fonts, in the default theme.</td>
+</tr>
+
+<tr>
+<td><code>func NewWithMeasurer(measurer draw2d.Measurer) *Context</code></td>
+<td>NewWithMeasurer returns an interface that measures text with a measurer of your choice: tests use a fake one, so they need no fonts.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Animate(name string, target float32, duration time.Duration) float32</code></td>
+<td>Animate eases a value towards a target over a duration, starting again from where it is when the target changes: a switch&rsquo;s handle going across, a tab&rsquo;s underline moving to the tab chosen.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Appear(name string, duration time.Duration) float32</code></td>
+<td>Appear goes from 0 to 1 over a duration from the frame something was first shown after it was not: a dialog fading and rising in, a note sliding up.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Area(path ...string) (draw2d.Rect, bool)</code></td>
+<td>Area tells where a control was drawn in the last frame, found by its label and the scopes around it, outermost first: Area(&ldquo;Properties&rdquo;, &ldquo;Apply&rdquo;) is the Apply button of the Properties panel (panels open a scope with their title).</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Back() bool</code></td>
+<td>Back answers the system&rsquo;s back (a phone&rsquo;s back gesture or button) in this frame, and tells whether there was one: the part of the interface the person is in goes back (a screen returns to the one before) and returns true.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Begin(state *input.State)</code></td>
+<td>Begin starts describing the interface for a frame, with the frame&rsquo;s input.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Box(layout Layout, content func())</code></td>
+<td>Box adds a box with a layout, and what content adds goes inside it.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Button(label string) bool</code></td>
+<td>Button adds a button and returns true on the frame it is clicked (pressed and let go over it).</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Caption(text string)</code></td>
+<td>Caption adds a line of small, quiet text: a hint or a unit.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Checkbox(label string, value *bool) bool</code></td>
+<td>Checkbox adds a box to tick with a label after it; clicking either flips value.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Chip(icon, label string, look ChipLook) bool</code></td>
+<td>Chip adds a small rounded label with an optional icon (a Lucide name), in its own colours: a tag, a state, a filter.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Clickable(name string, layout Layout, looks Looks, content func()) bool</code></td>
+<td>Clickable adds a box that reacts to the mouse, with whatever content, and returns true on the step it is clicked: the building block for controls of your own (a table row, a card).</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) ClipboardText() string</code></td>
+<td>ClipboardText is the text on the system&rsquo;s clipboard, &ldquo;&rdquo; when there is none.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Column(content func())</code></td>
+<td>Column stacks what content adds from top to bottom, across the whole width.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Copy(text string)</code></td>
+<td>Copy puts a text on the system&rsquo;s clipboard (a link, a code, what a row holds), to paste in another application.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Describe(description Description)</code></td>
+<td>Describe tells a screen reader more about the box added just before it (a control, a text): what it is, its name, its value and its state.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) DragSource(name string, payload any, layout Layout, content func()) bool</code></td>
+<td>DragSource adds a box whose content can be dragged away, carrying payload: press it and move the pointer a few pixels.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Dragging() (Drag, bool)</code></td>
+<td>Dragging tells whether a payload is being dragged, and where the pointer is: a program shows where it would land on its scene while Drag.OverScreen is true.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Drawing() *draw2d.List</code></td>
+<td>Drawing is the draw list the interface paints into; give it to the scene&rsquo;s overlay once (world.Overlay.Drawing = ui.Drawing()) and go-renderer draws it after every frame.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) DropTarget(name string, layout Layout, accepts func(payload any) bool, content func()) (payload any, dropped bool)</code></td>
+<td>DropTarget adds a box that takes dragged payloads.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) DroppedOnScreen() (Drag, bool)</code></td>
+<td>DroppedOnScreen tells, on the step the button is let go, whether a payload was dropped on the open screen, with the pointer&rsquo;s place: the program drops it on its scene there.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) EditTypedField(edit KeyboardText)</code></td>
+<td>EditTypedField puts what an on-screen keyboard made of the field&rsquo;s text in it, in the next frame: the field takes the whole text as typing (one line, cut at its MaxLength), the selection and the word being composed.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) EditingWords() EditingWords</code></td>
+<td>EditingWords are the labels the bar over a selection shows: the ones set, or English.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) End()</code></td>
+<td>End lays the interface out, paints it into the draw list and tells the input state whether the interface has the mouse or the keyboard.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) FieldFocused(name string) bool</code></td>
+<td>FieldFocused tells whether the text field of a name, in the same scope, has the keyboard: a program that draws the field&rsquo;s box itself (a Material field, with its text before and after) colours it by that.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) FlatButton(label string) bool</code></td>
+<td>FlatButton adds a button with no fill or border until hovered: menu bars and toolbars.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) FlatIconButton(icon, label string) bool</code></td>
+<td>FlatIconButton is FlatButton with an icon; with an empty label it is a square icon button.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Focus(path ...string)</code></td>
+<td>Focus gives the keyboard to a text field or a number field, found by its scopes and label as Area finds it, with its whole text selected: to start typing in a search box on a shortcut, or in the first field of a form that just opened.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) FocusField(name string)</code></td>
+<td>FocusField gives the keyboard to the text field of a name, in the same scope, from the next time it is built: a search that opens ready to type in.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Fold(name string, open bool, duration time.Duration, layout Layout, content func())</code></td>
+<td>Fold lays content out in a box that opens to the content&rsquo;s height and closes to nothing with motion, clipping what does not show yet: the answer under a question, more under a list row.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Frame(layout Layout, look Look, content func())</code></td>
+<td>Frame adds a box with a layout and a look (fill, border, corners, shadow).</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Grid(columns int, content func())</code></td>
+<td>Grid lays out what content adds in rows of a number of equal columns, across the whole width.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Heading(text string)</code></td>
+<td>Heading adds a line of bold, larger text: the title of a group.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Icon(name string)</code></td>
+<td>Icon adds an icon (a Lucide name, <a href="https://lucide.dev" target="_blank">https://lucide.dev</a>) at the theme&rsquo;s icon size.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) IconButton(icon, label string) bool</code></td>
+<td>IconButton adds a button with an icon (a Lucide name) before its label; with an empty label it is a square button with the icon alone, named by the icon.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) IconSized(name string, size float32, color draw2d.Color)</code></td>
+<td>IconSized adds an icon of a size and colour.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Image(picture *draw2d.Image, layout Layout, radius float32)</code></td>
+<td>Image adds a picture filling a box laid out as any other (a photo in a card, a person&rsquo;s avatar): scaled to cover it and cropped evenly where their shapes differ, its corners rounded by radius.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Insets() Insets</code></td>
+<td>Insets returns what the system draws over the window&rsquo;s edges.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Label(text string)</code></td>
+<td>Label adds a line of body text.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) List(name string, layout Layout, count int, rowHeight float32, row func(index int))</code></td>
+<td>List shows count rows of the same height in a scroll area and builds only the rows that can be seen, so a list of ten thousand rows costs what a list of twenty does.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) ListBox(name string, layout Layout, items []string, selected *int) bool</code></td>
+<td>ListBox shows items as a scrolling list of selectable rows and returns true when the selection changes.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) LongPressed() bool</code></td>
+<td>LongPressed tells whether the control added just before it was long-pressed in this frame: a finger held still on it for half a second, or the right mouse button pressed on it.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) MenuButton(icon, label string, content func())</code></td>
+<td>MenuButton adds a flat button with an optional icon (a Lucide name); clicking it opens a menu under it, over everything, whose items content adds with MenuItem (and Separator between groups).</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) MenuItem(icon, label, hint string) bool</code></td>
+<td>MenuItem adds an item to the menu being built: an optional icon, a label and an optional hint on the right (a keyboard shortcut, say).</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Modal(name string, options LayerOptions, content func()) (dismissed bool)</code></td>
+<td>Modal shows content over everything with what is behind it dimmed, as Sheet does, but drawn entirely by the program: a dialog, a sheet from the bottom of a phone.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) NumberField(name string, value *float32, minimum, maximum, step float32, format string) bool</code></td>
+<td>NumberField adds a number between minimum and maximum, shown with format (for example &ldquo;%.0f nm&rdquo;), with buttons to take a step off or add one.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Overlay(name string, options LayerOptions, content func())</code></td>
+<td>Overlay shows content over the screen and its panels without dimming or blocking what is behind it: a note at the bottom with an action in it, a floating toolbar.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Paint(layout Layout, paint func(area draw2d.Rect, drawing *draw2d.List))</code></td>
+<td>Paint adds a box laid out as any other, which the program paints itself once the layout knows where it is: a shape go-ui has no control for (a loading indicator, a wave, a chart).</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Panel(title string, content func())</code></td>
+<td>Panel adds a floating panel with a title bar; drag the bar to move it, click the chevron to fold it.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) PanelWith(title string, options PanelOptions, content func())</code></td>
+<td>PanelWith adds a panel placed and sized by options.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Pointer() (x, y float32)</code></td>
+<td>Pointer is where the pointer is, in the window&rsquo;s layout pixels: a finger on a touch screen.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Pop()</code></td>
+<td>Pop closes the scope opened last.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Popover(name string, open *bool, look Look, content func())</code></td>
+<td>Popover floats a box of the program&rsquo;s own under the control added just before it, over everything, at least as wide as the control: a dropdown&rsquo;s choices, a small form about a row.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Pressing() bool</code></td>
+<td>Pressing tells whether the pointer is pressed now: a finger is on a touch screen, the mouse&rsquo;s left button is down.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) PrimaryButton(label string) bool</code></td>
+<td>PrimaryButton adds a button for the main action of a panel.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) PrimaryIconButton(icon, label string) bool</code></td>
+<td>PrimaryIconButton is PrimaryButton with an icon (a Lucide name) before its label: the main action of a panel, such as adding a new thing.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Push(name string)</code></td>
+<td>Push opens a scope: ids of the controls added until Pop are made from this name too.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) RemovableChip(icon, label string, look ChipLook) (clicked, removed bool)</code></td>
+<td>RemovableChip is a Chip with a small × after its label.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) RequestFrame(delay time.Duration)</code></td>
+<td>RequestFrame asks the window for another frame within a delay, even if no input arrives: for a program that animates something of its own (a clock, a replay).</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Resizable(name string, side Side, size *float32, minimum, maximum float32, layout Layout, content func()) bool</code></td>
+<td>Resizable adds a box whose width (with its handle on the right or left side) or height (bottom or top) the person changes by dragging its edge, between minimum and maximum pixels (0 = no maximum).</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Row(content func())</code></td>
+<td>Row lines up what content adds from left to right, across the whole width, centred vertically.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) ScreenReaderAct(id ID, action ReaderAction)</code></td>
+<td>ScreenReaderAct does what a screen reader asks of a node, in the next frame: a press clicks the control as a tap would, so whatever the program does on a click happens.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) ScreenReaderNodes() []AccessibleNode</code></td>
+<td>ScreenReaderNodes is what the last frame showed, for a screen reader, in reading order: the window&rsquo;s own first, then what panels, sheets and popups hold, front-most last.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) ScreenReaderOn() bool</code></td>
+<td>ScreenReaderOn tells whether a screen reader is on (SetScreenReader).</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) ScreenReaderSetText(id ID, text string)</code></td>
+<td>ScreenReaderSetText replaces a field&rsquo;s whole text with what a screen reader typed, pasted or dictated into it, in the next frame, without bringing the keyboard up.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) ScrollArea(name string, layout Layout, content func())</code></td>
+<td>ScrollArea adds a box whose content scrolls up and down when it is taller than the box: with the wheel or the trackpad over it, by dragging the thin bar on its right, or, on a touch screen, by dragging the content with a finger, which glides on when let go.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) ScrollOffset(name string) float32</code></td>
+<td>ScrollOffset tells how far a scroll area&rsquo;s content is scrolled from its top, as of the last frame: a bar over a list shrinks or takes a colour as the list goes up under it.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) ScrollPull(name string) (pulling, releasedAt float32)</code></td>
+<td>ScrollPull tells how far a finger is pulling a scroll area&rsquo;s content down past its top, and, in the frame the finger lets go, how far it was pulled then (zero otherwise): a list refreshes when pulled far enough and let go.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Select(name string, selected *int, options []string) bool</code></td>
+<td>Select adds a field showing the selected option; clicking it opens the list of options over everything.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Selectable(icon, label string, selected bool) bool</code></td>
+<td>Selectable adds an item with an optional icon that shows whether it is selected, and returns true on the step it is clicked.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Separator()</code></td>
+<td>Separator draws a thin line across the row or column it is in.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) SetEditingWords(words EditingWords)</code></td>
+<td>SetEditingWords sets the labels of the bar over a selection, in the person&rsquo;s language.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) SetInsets(insets Insets)</code></td>
+<td>SetInsets tells the interface what the system draws over the window; the window calls it.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) SetScreenReader(on bool)</code></td>
+<td>SetScreenReader tells the interface whether a screen reader is on; the window does, on a phone.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) SetScreenReaderFocus(id ID)</code></td>
+<td>SetScreenReaderFocus says which node the screen reader is on (0 for none), so the interface rings it, as a phone rings what TalkBack reads.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) SetTextScale(scale float32)</code></td>
+<td>SetTextScale sets how much larger than its size each text is drawn: the person&rsquo;s text size, as a phone&rsquo;s settings give it (1.3 for a larger text).</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Sheet(title string, options SheetOptions, content func()) (dismissed bool)</code></td>
+<td>Sheet shows a card in the middle of the window, over everything, with what is behind it dimmed: a question to confirm, a short form.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Size() (width, height float32)</code></td>
+<td>Size returns the window&rsquo;s size in this frame, in layout pixels: a program chooses a layout by it (a list alone on a phone, a list and its details side by side on a tablet).</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Slider(name string, value *float32, minimum, maximum float32) bool</code></td>
+<td>Slider adds a track with a knob to drag between minimum and maximum, across the width it is given.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) SliderStep(name string, value *float32, minimum, maximum, step float32) bool</code></td>
+<td>SliderStep is Slider with the value kept to whole steps (0 = any value).</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Spacer()</code></td>
+<td>Spacer takes the free space of the row or column it is in, pushing what follows to the end.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) SwipeBox(name string, layout Layout, axis Direction, content func(swipe Swipe))</code></td>
+<td>SwipeBox lays content out in a box a finger drags along an axis (sideways, for pages, cards in a row, a row swiped away): content is given what the finger does in this frame, and places itself by it.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Table(name string, layout Layout, columns []Column, rows func(table *Table))</code></td>
+<td>Table adds a table with a header and rows that scroll under it: rows adds the rows, with table.Row, and table.Group for a caption between groups of rows.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Tabs(name string, selected *int, labels ...string) bool</code></td>
+<td>Tabs adds a row of segments, one per label, with the selected one raised; clicking a segment selects it.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Text(text string, style TextStyle)</code></td>
+<td>Text adds a line of text in a style.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) TextField(name string, text *string) bool</code></td>
+<td>TextField adds a one-line field to type text in.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) TextFieldWith(name string, text *string, options TextFieldOptions) bool</code></td>
+<td>TextFieldWith is TextField with a placeholder, a length limit or a width.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) TextScale() float32</code></td>
+<td>TextScale is the text size SetTextScale gave, 1 by default: a control of a program&rsquo;s own whose height holds text grows by it.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Toast(text string, warning bool)</code></td>
+<td>Toast shows a short note centred near the bottom of the window, over everything, without taking the mouse: what an action did, or (warning) why it could not be done.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Toggle(label string, value *bool) bool</code></td>
+<td>Toggle adds a row with a label on the left and a switch on the right; clicking the row flips value.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Tooltip(text string)</code></td>
+<td>Tooltip explains the control added just before it: when the pointer rests on that control for a moment (Theme.TooltipDelay), a small dark note with the text shows under the pointer.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Touches() []input.Touch</code></td>
+<td>Touches returns the fingers on a touch screen in this frame, in layout pixels, all of them: those on controls too.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) TypedField() (KeyboardText, bool)</code></td>
+<td>TypedField is the field typed in during the frame, for an on-screen keyboard (the window hands it on): its text, its selection and the word being composed.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) Typing() bool</code></td>
+<td>Typing tells whether a text field had the focus in the last frame: a phone shows its on-screen keyboard while it does.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) WantsKeyboard() bool</code></td>
+<td>WantsKeyboard tells whether a control had the keyboard in the last frame (a text field being typed in).</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) WantsMouse() bool</code></td>
+<td>WantsMouse tells whether the interface used the mouse in the last frame: the pointer was over a panel or a control, or dragging one.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="description">Description</h3>
+
+<p>Description is what a screen reader says about a thing, beyond what its boxes tell.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Description</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Role</span>  <span class="nx">Role</span>
+	<span class="nx">Label</span> <span class="kt">string</span> <span class="c1">// what it is called; empty = the texts inside it</span>
+	<span class="nx">Value</span> <span class="kt">string</span> <span class="c1">// what it holds, read after the label: a field&#39;s text</span>
+	<span class="c1">// Checked is a checkbox ticked, a switch on or a radio button chosen.</span>
+	<span class="nx">Checked</span>  <span class="kt">bool</span>
+	<span class="nx">Selected</span> <span class="kt">bool</span> <span class="c1">// the tab, the destination or the choice shown</span>
+	<span class="nx">Disabled</span> <span class="kt">bool</span> <span class="c1">// shown, but does nothing now</span>
+	<span class="nx">Secret</span>   <span class="kt">bool</span> <span class="c1">// a field whose text is not read aloud (a password)</span>
+	<span class="c1">// Hidden leaves it out, with all it holds: a decoration, or something repeated just beside it.</span>
+	<span class="nx">Hidden</span> <span class="kt">bool</span>
+	<span class="nx">Range</span>  <span class="nx">Range</span> <span class="c1">// a slider&#39;s; Maximum above Minimum when it has one</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="direction">Direction</h3>
+
+<p>Direction is the way a box lines up its children.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Direction</span> <span class="kt">int</span>
+</code></pre>
+<pre><code class="language-go"><span class="kd">const</span> <span class="p">(</span>
+	<span class="nx">Horizontal</span> <span class="nx">Direction</span> <span class="p">=</span> <span class="kc">iota</span> <span class="c1">// left to right</span>
+	<span class="nx">Vertical</span>                    <span class="c1">// top to bottom</span>
+<span class="p">)</span>
+</code></pre>
+
+<h3 id="drag">Drag</h3>
+
+<p>Drag is a payload being dragged, or dropped, and where the pointer is, in layout pixels.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Drag</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Payload</span> <span class="kt">any</span>
+	<span class="nx">X</span><span class="p">,</span> <span class="nx">Y</span>    <span class="kt">float32</span>
+	<span class="c1">// OverScreen tells whether the pointer is over the open screen, where no panel, painted box</span>
+	<span class="c1">// or drop target is: where letting go drops the payload on the program&#39;s scene.</span>
+	<span class="nx">OverScreen</span> <span class="kt">bool</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="edge">Edge</h3>
+
+<p>Edge is a side of the window a panel can be docked to.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Edge</span> <span class="kt">int</span>
+</code></pre>
+<pre><code class="language-go"><span class="kd">const</span> <span class="p">(</span>
+	<span class="nx">Floating</span> <span class="nx">Edge</span> <span class="p">=</span> <span class="kc">iota</span> <span class="c1">// not docked: the panel floats where it is put, and can be dragged</span>
+	<span class="nx">DockLeft</span>
+	<span class="nx">DockRight</span>
+	<span class="nx">DockTop</span>
+	<span class="nx">DockBottom</span>
+<span class="p">)</span>
+</code></pre>
+
+<h3 id="editingwords">EditingWords</h3>
+
+<p>EditingWords are the labels of the bar over a selection on a touch screen.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">EditingWords</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Cut</span><span class="p">,</span> <span class="nx">Copy</span><span class="p">,</span> <span class="nx">Paste</span><span class="p">,</span> <span class="nx">SelectAll</span> <span class="kt">string</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="id">ID</h3>
+
+<p>ID names a control from one frame to the next, so the interface can remember that the mouse is pressing it or where a panel was left. It is a hash of the control&rsquo;s label and of the scopes it is in (see Push), so two &ldquo;Apply&rdquo; buttons in different panels do not mix.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">ID</span> <span class="kt">uint64</span>
+</code></pre>
+
+<h3 id="insets">Insets</h3>
+
+<p>Insets are how far in from each edge of the window the system draws over it, in layout pixels: a phone&rsquo;s status bar at the top and its gesture bar at the bottom. A window that covers the whole screen paints its own bars&rsquo; backgrounds under them, and keeps its controls clear of them. On a desktop and in a browser they are zero.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Insets</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Top</span><span class="p">,</span> <span class="nx">Bottom</span><span class="p">,</span> <span class="nx">Left</span><span class="p">,</span> <span class="nx">Right</span> <span class="kt">float32</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="keyboardtext">KeyboardText</h3>
+
+<p>KeyboardText is the field being typed in, as an on-screen keyboard sees and edits it: a phone&rsquo;s keyboard suggests words from the text around the caret, keeps the word it is still making (composing: a prediction, a Chinese or Japanese reading) until it commits it, and deletes around the caret. Positions count characters (runes); the selection runs from SelectionStart, where it began, to SelectionEnd, the caret.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">KeyboardText</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Field</span>                        <span class="nx">ID</span> <span class="c1">// which field: an edit of another field is dropped</span>
+	<span class="nx">Text</span>                         <span class="kt">string</span>
+	<span class="nx">SelectionStart</span><span class="p">,</span> <span class="nx">SelectionEnd</span> <span class="kt">int</span>
+	<span class="nx">ComposingStart</span><span class="p">,</span> <span class="nx">ComposingEnd</span> <span class="kt">int</span>  <span class="c1">// the word being composed, underlined; equal when none</span>
+	<span class="nx">Secret</span>                       <span class="kt">bool</span> <span class="c1">// a password: the keyboard suggests nothing</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="layeroptions">LayerOptions</h3>
+
+<p>LayerOptions place what a layer holds in the window.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">LayerOptions</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">AlignX</span><span class="p">,</span> <span class="nx">AlignY</span> <span class="nx">Align</span>   <span class="c1">// Center, Center for a dialog; Center, End for a sheet from the bottom</span>
+	<span class="nx">Padding</span>        <span class="nx">Padding</span> <span class="c1">// how far it keeps from the window&#39;s edges</span>
+	<span class="nx">Width</span>          <span class="nx">Sizing</span>  <span class="c1">// its width; the zero value is as wide as its content</span>
+	<span class="nx">Height</span>         <span class="nx">Sizing</span>  <span class="c1">// its height; the zero value is as tall as its content, Grow() all of it</span>
+	<span class="c1">// Hidden is how much of a modal&#39;s dimming is not shown yet, from 0 (all of it, the zero value)</span>
+	<span class="c1">// to 1 (none): a modal fading in as it opens (see Appear).</span>
+	<span class="nx">Hidden</span> <span class="kt">float32</span>
+	<span class="c1">// Leave is how it goes when the program stops showing it (leave.go); at once by default.</span>
+	<span class="nx">Leave</span> <span class="nx">Leave</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="layout">Layout</h3>
+
+<p>Layout says how a box sizes itself and places its children. The zero value is a box that lines its children up left to right, fits them, and has no padding or gap.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Layout</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Direction</span>     <span class="nx">Direction</span>
+	<span class="nx">Width</span><span class="p">,</span> <span class="nx">Height</span> <span class="nx">Sizing</span>
+	<span class="nx">Padding</span>       <span class="nx">Padding</span>
+	<span class="nx">Gap</span>           <span class="kt">float32</span> <span class="c1">// space between two children, in pixels</span>
+	<span class="c1">// Wrap, on a horizontal box, starts a new line when the next child would pass the box&#39;s</span>
+	<span class="c1">// right edge, like words in a paragraph (a row of tags). Gap is kept between children and</span>
+	<span class="c1">// between lines. The box needs a width that does not follow its content (Grow in a column,</span>
+	<span class="c1">// Fixed, Percent), or it is one line as wide as all its children.</span>
+	<span class="c1">// (Next to Gap, it takes the padding the compiler leaves there: boxes stay as small.)</span>
+	<span class="nx">Wrap</span>   <span class="kt">bool</span>
+	<span class="nx">AlignX</span> <span class="nx">Align</span> <span class="c1">// where the children sit horizontally when there is room to spare</span>
+	<span class="nx">AlignY</span> <span class="nx">Align</span> <span class="c1">// where the children sit vertically when there is room to spare</span>
+	<span class="c1">// Columns, when above 0, makes a grid: children fill rows of this many equal cells, left to</span>
+	<span class="c1">// right and then down, with Gap between cells both ways. Direction is not used then.</span>
+	<span class="nx">Columns</span> <span class="kt">int</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="leave">Leave</h3>
+
+<p>Leave is how a layer goes when the program stops showing it: over Duration it fades out, dimming and all, as it moves by X and Y (a sheet sliding back down, a drawer back off the side). Its zero value goes at once.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Leave</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Duration</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span>
+	<span class="nx">X</span><span class="p">,</span> <span class="nx">Y</span>     <span class="kt">float32</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="look">Look</h3>
+
+<p>Look is how a box is painted: a fill, a border, rounded corners and a shadow. The zero value paints nothing, so a box is only a way to arrange its children.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Look</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Fill</span>        <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
+	<span class="nx">Border</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
+	<span class="nx">BorderWidth</span> <span class="kt">float32</span>
+	<span class="nx">Radius</span>      <span class="kt">float32</span>
+	<span class="nx">Shadow</span>      <span class="kt">bool</span> <span class="c1">// a soft shadow under it, for things that float over others</span>
+	<span class="nx">Clip</span>        <span class="kt">bool</span> <span class="c1">// children are cut to the box&#39;s area</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="looks">Looks</h3>
+
+<p>Looks are a box&rsquo;s looks while it is left alone, under the pointer and pressed.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Looks</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Normal</span><span class="p">,</span> <span class="nx">Hovered</span><span class="p">,</span> <span class="nx">Pressed</span> <span class="nx">Look</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="padding">Padding</h3>
+
+<p>Padding is the empty space between a box&rsquo;s edges and its children, in pixels.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Padding</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Left</span><span class="p">,</span> <span class="nx">Top</span><span class="p">,</span> <span class="nx">Right</span><span class="p">,</span> <span class="nx">Bottom</span> <span class="kt">float32</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func Pad(all float32) Padding</code></td>
+<td>Pad is the same padding on every side.</td>
+</tr>
+
+<tr>
+<td><code>func PadXY(horizontal, vertical float32) Padding</code></td>
+<td>PadXY is one padding on the left and right and another on the top and bottom.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="paneloptions">PanelOptions</h3>
+
+<p>PanelOptions place and size a panel.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">PanelOptions</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">X</span><span class="p">,</span> <span class="nx">Y</span>   <span class="kt">float32</span> <span class="c1">// where it first appears, in pixels from the window&#39;s top-left corner</span>
+	<span class="nx">Width</span>  <span class="nx">Sizing</span>  <span class="c1">// zero = as wide as its content</span>
+	<span class="nx">Height</span> <span class="nx">Sizing</span>  <span class="c1">// zero = as tall as its content</span>
+	<span class="nx">Dock</span>   <span class="nx">Edge</span>    <span class="c1">// docked panels fill a side of the window and cannot be dragged</span>
+	<span class="nx">Locked</span> <span class="kt">bool</span>    <span class="c1">// a floating panel that cannot be dragged</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="range">Range</h3>
+
+<p>Range is a slider&rsquo;s span and where it is now.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Range</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Minimum</span><span class="p">,</span> <span class="nx">Maximum</span><span class="p">,</span> <span class="nx">Current</span> <span class="kt">float32</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="readeraction">ReaderAction</h3>
+
+<p>ReaderAction is what a screen reader asks of a node.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">ReaderAction</span> <span class="kt">int</span>
+</code></pre>
+<pre><code class="language-go"><span class="kd">const</span> <span class="p">(</span>
+	<span class="nx">ReaderPress</span>     <span class="nx">ReaderAction</span> <span class="p">=</span> <span class="kc">iota</span> <span class="o">+</span> <span class="mi">1</span> <span class="c1">// a double tap: the control is clicked</span>
+	<span class="nx">ReaderLongPress</span>                         <span class="c1">// a double tap held: the control is long-pressed</span>
+	<span class="nx">ReaderForward</span>                           <span class="c1">// a scroll area shows what comes next; a slider goes up a step</span>
+	<span class="nx">ReaderBackward</span>                          <span class="c1">// a scroll area shows what came before; a slider goes down a step</span>
+<span class="p">)</span>
+</code></pre>
+
+<h3 id="role">Role</h3>
+
+<p>Role is what a thing on the screen is, which a screen reader says after its name: &ldquo;Wi-Fi, switch, on&rdquo;.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Role</span> <span class="kt">int</span>
+</code></pre>
+<pre><code class="language-go"><span class="kd">const</span> <span class="p">(</span>
+	<span class="nx">NoRole</span>       <span class="nx">Role</span> <span class="p">=</span> <span class="kc">iota</span> <span class="c1">// worked out from the box: a control is a button, anything else text</span>
+	<span class="nx">ButtonRole</span>               <span class="c1">// pressed to do something</span>
+	<span class="nx">CheckboxRole</span>             <span class="c1">// ticked or not</span>
+	<span class="nx">SwitchRole</span>               <span class="c1">// on or off</span>
+	<span class="nx">RadioRole</span>                <span class="c1">// one of a few choices, of which one is chosen</span>
+	<span class="nx">SliderRole</span>               <span class="c1">// a value between two ends (Range)</span>
+	<span class="nx">FieldRole</span>                <span class="c1">// typed in</span>
+	<span class="nx">TabRole</span>                  <span class="c1">// one of the pages over a screen, one of them selected</span>
+	<span class="nx">HeadingRole</span>              <span class="c1">// the title of what follows</span>
+	<span class="nx">ImageRole</span>                <span class="c1">// a picture, read by its label</span>
+	<span class="nx">TextRole</span>                 <span class="c1">// something to read</span>
+	<span class="nx">ScrollRole</span>               <span class="c1">// an area that scrolls (ScrollArea)</span>
+<span class="p">)</span>
+</code></pre>
+
+<h3 id="rowlook">RowLook</h3>
+
+<p>RowLook is how a row&rsquo;s first cell starts: an icon on a tinted tile, and an indent for a row that belongs to the one above it (an attribute under its type).</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">RowLook</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Icon</span>            <span class="kt">string</span>
+	<span class="nx">IconInk</span><span class="p">,</span> <span class="nx">Tile</span>   <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// the icon&#39;s colour and its tile&#39;s; zero = the theme&#39;s soft ink, no tile</span>
+	<span class="nx">Indent</span>          <span class="kt">float32</span>
+	<span class="nx">Secondary</span>       <span class="kt">string</span> <span class="c1">// a quieter second line under the first cell&#39;s text</span>
+	<span class="nx">SecondaryWeight</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Weight</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="sheetoptions">SheetOptions</h3>
+
+<p>SheetOptions size a sheet.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">SheetOptions</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Width</span> <span class="nx">Sizing</span> <span class="c1">// the card&#39;s width; zero = 420 pixels</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="side">Side</h3>
+
+<p>Side is the side of a resizable box its handle is on.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Side</span> <span class="kt">int</span>
+</code></pre>
+<pre><code class="language-go"><span class="kd">const</span> <span class="p">(</span>
+	<span class="nx">RightSide</span>  <span class="nx">Side</span> <span class="p">=</span> <span class="kc">iota</span> <span class="c1">// the box grows to the right: a column on the left of a window</span>
+	<span class="nx">LeftSide</span>               <span class="c1">// the box grows to the left: a column on the right</span>
+	<span class="nx">BottomSide</span>             <span class="c1">// the box grows down: a strip at the top</span>
+	<span class="nx">TopSide</span>                <span class="c1">// the box grows up: a strip at the bottom</span>
+<span class="p">)</span>
+</code></pre>
+
+<h3 id="sizing">Sizing</h3>
+
+<p>Sizing says how big a box is along one axis. The zero value fits the content.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Sizing</span> <span class="kd">struct</span> <span class="p">{</span>
+
+	<span class="c1">// Min and Max bound the size, in pixels; 0 = no bound.</span>
+	<span class="nx">Min</span><span class="p">,</span> <span class="nx">Max</span> <span class="kt">float32</span>
+	<span class="c1">// Has unexported fields.</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func Fit() Sizing</code></td>
+<td>Fit makes a box as big as its content (the default).</td>
+</tr>
+
+<tr>
+<td><code>func Fixed(pixels float32) Sizing</code></td>
+<td>Fixed makes a box exactly this many pixels.</td>
+</tr>
+
+<tr>
+<td><code>func Grow() Sizing</code></td>
+<td>Grow makes a box take the space its parent has left, shared equally with its growing siblings.</td>
+</tr>
+
+<tr>
+<td><code>func GrowBy(weight float32) Sizing</code></td>
+<td>GrowBy is Grow with a weight: a box with weight 2 takes twice the share of one with weight 1.</td>
+</tr>
+
+<tr>
+<td><code>func Percent(share float32) Sizing</code></td>
+<td>Percent makes a box a share (0 to 1) of its parent&rsquo;s inner size.</td>
+</tr>
+
+<tr>
+<td><code>func Share(weight float32) Sizing</code></td>
+<td>Share makes a box take weight shares of the free space, starting from nothing rather than from its content: boxes with equal shares come out equal whatever they hold, so table columns line up from row to row and cards in a row match.</td>
+</tr>
+
+<tr>
+<td><code>func (sizing Sizing) Between(minimum, maximum float32) Sizing</code></td>
+<td>Between returns the sizing bounded by a minimum and a maximum, in pixels (0 = no bound).</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="swipe">Swipe</h3>
+
+<p>Swipe is what a finger does to a swipe box in a frame.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Swipe</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Offset</span>   <span class="kt">float32</span> <span class="c1">// how far the finger has moved along the box&#39;s axis since it took the box</span>
+	<span class="nx">Velocity</span> <span class="kt">float32</span> <span class="c1">// pixels a second along the axis, as it last moved</span>
+	<span class="nx">Held</span>     <span class="kt">bool</span>    <span class="c1">// a finger is dragging the box</span>
+	<span class="nx">Released</span> <span class="kt">bool</span>    <span class="c1">// the finger let go in this frame; Offset and Velocity are its last</span>
+	<span class="c1">// Area is where the box was laid out in the last frame (zero in its first): its width is a</span>
+	<span class="c1">// page&#39;s, for content that moves a page at a time.</span>
+	<span class="nx">Area</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="table">Table</h3>
+
+<p>Table is a table being built, handed to the function that adds its rows. Rows and group captions out of sight are only counted, not built, so a table of a few thousand rows costs what the rows in sight do.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Table</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="c1">// Has unexported fields.</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func (table *Table) Group(caption string)</code></td>
+<td>Group adds a caption across all the columns, in small capitals, above the rows of a group.</td>
+</tr>
+
+<tr>
+<td><code>func (table *Table) Row(id string, selected bool, cells ...string) bool</code></td>
+<td>Row adds a row with a text per column, named by id (unique in the table: the item&rsquo;s key), and returns true on the step it is clicked.</td>
+</tr>
+
+<tr>
+<td><code>func (table *Table) RowWith(id string, selected bool, look RowLook, cells ...string) bool</code></td>
+<td>RowWith adds a row as Row does, its first cell starting as look says.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="textfieldoptions">TextFieldOptions</h3>
+
+<p>TextFieldOptions shape a text field.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">TextFieldOptions</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Placeholder</span> <span class="kt">string</span> <span class="c1">// shown, quiet, while the field is empty</span>
+	<span class="nx">MaxLength</span>   <span class="kt">int</span>    <span class="c1">// the most characters it takes; 0 = no limit</span>
+	<span class="nx">Width</span>       <span class="nx">Sizing</span> <span class="c1">// the zero value grows across the row or column</span>
+	<span class="c1">// Weight is the face the text is written in: draw2d.Mono for a code or a key.</span>
+	<span class="nx">Weight</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Weight</span>
+	<span class="c1">// Plain draws no box of the field&#39;s own, neither fill nor border nor focus ring: for a field</span>
+	<span class="c1">// inside a box of the program&#39;s (a search bar&#39;s pill), which shows where it is.</span>
+	<span class="nx">Plain</span> <span class="kt">bool</span>
+	<span class="c1">// Secret shows a dot for each character (a password), and lets nothing be copied or cut.</span>
+	<span class="nx">Secret</span> <span class="kt">bool</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="textstyle">TextStyle</h3>
+
+<p>TextStyle is how a text is written.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">TextStyle</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Size</span>   <span class="kt">float32</span> <span class="c1">// in pixels; 0 = the theme&#39;s text size</span>
+	<span class="nx">Weight</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Weight</span>
+	<span class="nx">Color</span>  <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// the zero colour = the theme&#39;s ink</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="theme">Theme</h3>
+
+<p>Theme holds the tokens every control reads its colours, sizes and corners from, so an interface changes look in one place. Sizes are layout pixels.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Theme</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Background</span>  <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// behind everything, in a window with no scene (see package window)</span>
+	<span class="nx">Surface</span>     <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// panels and secondary buttons</span>
+	<span class="nx">Sunken</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// hovered secondary controls, tracks, wells</span>
+	<span class="nx">Ink</span>         <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// body text</span>
+	<span class="nx">InkSoft</span>     <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// secondary text and icons</span>
+	<span class="nx">InkQuiet</span>    <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// hints and captions</span>
+	<span class="nx">Line</span>        <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// borders and separators</span>
+	<span class="nx">ControlLine</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// borders of fields, selects and secondary buttons: stronger than Line, so a control reads as one</span>
+	<span class="nx">Primary</span>     <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// the main action</span>
+	<span class="nx">OnPrimary</span>   <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// text on the main action</span>
+	<span class="nx">PrimaryTint</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// a light wash of the primary colour (a selected row)</span>
+	<span class="nx">Positive</span>    <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
+	<span class="nx">Warning</span>     <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
+	<span class="nx">Danger</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
+	<span class="nx">FocusRing</span>   <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
+	<span class="nx">Selection</span>   <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// behind selected text</span>
+	<span class="nx">Shadow</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
+	<span class="nx">Scrim</span>       <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// over everything behind a sheet, dimming it</span>
+
+	<span class="nx">TextSize</span>      <span class="kt">float32</span>
+	<span class="nx">SmallTextSize</span> <span class="kt">float32</span>
+	<span class="nx">HeadingSize</span>   <span class="kt">float32</span>
+	<span class="nx">IconSize</span>      <span class="kt">float32</span>
+	<span class="nx">ControlHeight</span> <span class="kt">float32</span> <span class="c1">// buttons, fields, selects</span>
+	<span class="nx">Gap</span>           <span class="kt">float32</span> <span class="c1">// between controls</span>
+	<span class="nx">Padding</span>       <span class="kt">float32</span> <span class="c1">// inside panels</span>
+	<span class="nx">ControlRadius</span> <span class="kt">float32</span>
+	<span class="nx">PanelRadius</span>   <span class="kt">float32</span>
+	<span class="nx">PanelMinWidth</span> <span class="kt">float32</span>
+	<span class="nx">ShadowBlur</span>    <span class="kt">float32</span>
+	<span class="nx">ShadowDrop</span>    <span class="kt">float32</span>
+	<span class="nx">ScrollStep</span>    <span class="kt">float32</span>       <span class="c1">// pixels a scroll area moves per notch of the wheel</span>
+	<span class="nx">TooltipDelay</span>  <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span> <span class="c1">// how long the pointer rests on a control before its tooltip shows</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func DarkTheme() Theme</code></td>
+<td>DarkTheme is the light theme&rsquo;s tokens for a dark look, with the same sizes.</td>
+</tr>
+
+<tr>
+<td><code>func LightTheme() Theme</code></td>
+<td>LightTheme is the default: a light, quiet look that reads well over any scene.</td>
+</tr>
+</tbody>
+</table>
+
+<hr>
+
+<p><a href="./reference/reference">← Reference</a> · generated from the doc comments by <code>generate.py</code></p>

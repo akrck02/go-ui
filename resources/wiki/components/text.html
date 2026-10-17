@@ -1,0 +1,110 @@
+<h1 id="text-icons-and-pictures">Text, icons and pictures</h1>
+
+<h2 id="heading-label-caption"><code>Heading</code>, <code>Label</code>, <code>Caption</code></h2>
+
+<p>Three levels of text for nearly everything: a bold title, body text, and a small quiet line for
+hints, counts and dates.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Heading</span><span class="p">(</span><span class="s">&#34;North Point&#34;</span><span class="p">)</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;A white light every five seconds, seen from 18 nautical miles.&#34;</span><span class="p">)</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="s">&#34;Last inspected in spring&#34;</span><span class="p">)</span>
+</code></pre>
+
+<p><img src="./images/components/text-levels.png" alt="A heading, a line of body text and a caption" /></p>
+
+<ul>
+<li>One line each: text does not wrap. A line too long for a box that clips (<code>Look{Clip: true}</code>, a
+table cell) ends in &ldquo;…&rdquo;.</li>
+<li>Sizes come from the theme: <code>HeadingSize</code>, <code>TextSize</code>, <code>SmallTextSize</code>.</li>
+<li>A screen reader reads texts beside each other in one box together, as one sentence.</li>
+</ul>
+
+<h2 id="text"><code>Text</code></h2>
+
+<p>Any size, weight and colour, for the cases the three levels do not cover: a big figure with its
+unit, a code in a monospaced face, a state in its colour.</p>
+<pre><code class="language-go"><span class="nx">theme</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Text</span><span class="p">(</span><span class="s">&#34;18&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextStyle</span><span class="p">{</span><span class="nx">Size</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span> <span class="nx">Weight</span><span class="p">:</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Bold</span><span class="p">})</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Text</span><span class="p">(</span><span class="s">&#34;nm&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextStyle</span><span class="p">{</span><span class="nx">Size</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span> <span class="nx">Color</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">InkSoft</span><span class="p">})</span>
+<span class="p">})</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Text</span><span class="p">(</span><span class="s">&#34;NP-0042&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextStyle</span><span class="p">{</span><span class="nx">Weight</span><span class="p">:</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Mono</span><span class="p">})</span>                             <span class="c1">// a code</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Text</span><span class="p">(</span><span class="s">&#34;Lamp failure&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextStyle</span><span class="p">{</span><span class="nx">Weight</span><span class="p">:</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Medium</span><span class="p">,</span> <span class="nx">Color</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Danger</span><span class="p">})</span> <span class="c1">// a state</span>
+</code></pre>
+
+<p><img src="./images/components/text-styled.png" alt="A large 18 with nm beside it, a code in monospace and a red state" /></p>
+
+<table>
+<thead>
+<tr>
+<th><code>ui.TextStyle</code> field</th>
+<th>Means</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Size</code></td>
+<td>Pixels; 0 = the theme&rsquo;s text size</td>
+</tr>
+
+<tr>
+<td><code>Weight</code></td>
+<td><code>draw2d.Regular</code>, <code>Medium</code>, <code>Bold</code>, or <code>Mono</code> for codes and keys</td>
+</tr>
+
+<tr>
+<td><code>Color</code></td>
+<td>Zero = the theme&rsquo;s ink. Use the theme&rsquo;s tokens (<code>Danger</code>, <code>Warning</code>, <code>InkSoft</code>) so the dark theme follows</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="icon-iconsized"><code>Icon</code>, <code>IconSized</code></h2>
+
+<p>A <a href="https://lucide.dev/icons" target="_blank">Lucide</a> icon by name. <code>Icon</code> draws it at the theme&rsquo;s icon size in the
+soft ink; <code>IconSized(name, size, colour)</code> chooses both.</p>
+<pre><code class="language-go"><span class="nx">theme</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Icon</span><span class="p">(</span><span class="s">&#34;lightbulb&#34;</span><span class="p">)</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Lit&#34;</span><span class="p">)</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Spacer</span><span class="p">()</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">IconSized</span><span class="p">(</span><span class="s">&#34;triangle-alert&#34;</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Warning</span><span class="p">)</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Foghorn silent&#34;</span><span class="p">)</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/text-icons.png" alt="A bulb and Lit on the left, a warning triangle and Foghorn silent on the right" /></p>
+
+<p>An icon alone says nothing to a screen reader but its name (&ldquo;triangle alert&rdquo;): put words beside
+it, or describe the control it belongs to (<code>Describe</code>).</p>
+
+<h2 id="image"><code>Image</code></h2>
+
+<p>A photo or any picture (<code>draw2d.Image</code>) filling a box, cropped evenly where their shapes differ,
+with rounded corners. Decode it once and keep it: the picture is uploaded once.</p>
+<pre><code class="language-go"><span class="cp">//go:embed north-point.jpg</span>
+<span class="kd">var</span> <span class="nx">northPointFile</span> <span class="p">[]</span><span class="kt">byte</span>
+
+<span class="nx">photo</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nf">DecodeImage</span><span class="p">(</span><span class="nx">bytes</span><span class="p">.</span><span class="nf">NewReader</span><span class="p">(</span><span class="nx">northPointFile</span><span class="p">))</span> <span class="c1">// once, at the start</span>
+<span class="err">…</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Image</span><span class="p">(</span><span class="nx">photo</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">160</span><span class="p">),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">100</span><span class="p">)},</span> <span class="mi">8</span><span class="p">)</span>
+</code></pre>
+
+<p>To show other pixels in it (a video&rsquo;s next frame), write them into <code>photo.Pixels</code> and call
+<code>photo.Changed()</code>.</p>
+
+<h2 id="tooltip"><code>Tooltip</code></h2>
+
+<p>Explains the control added just before it, in a small dark note, once the pointer rests on it for
+half a second (the theme&rsquo;s <code>TooltipDelay</code>). For an icon button, it is the button&rsquo;s words.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">IconButton</span><span class="p">(</span><span class="s">&#34;rotate-ccw&#34;</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">)</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Tooltip</span><span class="p">(</span><span class="s">&#34;Back to 18 nm and 5 s&#34;</span><span class="p">)</span>
+<span class="p">})</span>
+</code></pre>
+
+<p>A finger has no hover: on a phone, tooltips never show, so nothing important should be only in one.</p>
+
+<hr>
+
+<p><a href="./components/components">← Components</a> · <a href="./components/buttons">Buttons →</a></p>

@@ -1,0 +1,129 @@
+<h1 id="in-a-web-browser">🌐 In a web browser</h1>
+
+<p><strong>Status:</strong> a first step (October 2026). go-ui applications run in a browser, built for
+WebAssembly and drawn through WebGL2, with the same code as on the desktop. The desktop is
+unchanged.</p>
+
+<p align="center">
+  <img alt="The register application in a browser, unchanged: menu bar, filters, cards, table and inspector" src="../images/web-app.jpg" width="720">
+</p>
+
+<p>The register above is <code>cmd/app</code>, <strong>not changed by a line</strong>: <code>window.Run</code> opens a canvas instead
+of a window when the program is built for the browser.</p>
+<pre><code class="language-bash"><span class="nv">GOOS</span><span class="o">=</span>js <span class="nv">GOARCH</span><span class="o">=</span>wasm go build -o web/app.wasm ./cmd/app
+cp <span class="s2">&#34;</span><span class="k">$(</span>go env GOROOT<span class="k">)</span><span class="s2">/lib/wasm/wasm_exec.js&#34;</span> web/
+python3 -m http.server -d web <span class="m">8080</span>        <span class="c1"># then open http://localhost:8080/?program=app</span>
+</code></pre>
+
+<p><code>web/index.html</code> is one page for every program: <code>?program=name</code> runs <code>name.wasm</code> from the same
+folder.</p>
+
+<h2 id="over-a-3d-scene">Over a 3D scene</h2>
+
+<p align="center">
+  <img alt="A lighthouse panel over the island scene in a browser" src="../images/web-scene.jpg" width="360">
+</p>
+
+<p><code>cmd/web</code> is the same kind of program as <code>cmd/example</code>: the lighthouse island with a panel to look
+after its light and a status bar. On the desktop, <code>viewer.Run</code> draws the scene; it needs GLFW, so
+in a browser the program puts the pieces together itself, in about thirty lines:</p>
+<pre><code class="language-go"><span class="nx">canvas</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">browser</span><span class="p">.</span><span class="nf">OpenCanvas</span><span class="p">(</span><span class="s">&#34;view&#34;</span><span class="p">)</span>
+<span class="nx">functions</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">canvas</span><span class="p">.</span><span class="nf">WebGL</span><span class="p">(</span><span class="kc">true</span><span class="p">)</span>              <span class="c1">// antialiased, for the 3D edges</span>
+<span class="nx">renderer</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">gles</span><span class="p">.</span><span class="nf">NewSceneRenderer</span><span class="p">(</span><span class="nx">functions</span><span class="p">)</span>
+<span class="nx">world</span><span class="p">.</span><span class="nx">Overlay</span><span class="p">.</span><span class="nx">Drawing</span> <span class="p">=</span> <span class="nx">interfaceContext</span><span class="p">.</span><span class="nf">Drawing</span><span class="p">()</span>
+
+<span class="nx">app</span><span class="p">.</span><span class="nx">Update</span> <span class="p">=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">app</span> <span class="o">*</span><span class="nx">models</span><span class="p">.</span><span class="nx">Application</span><span class="p">,</span> <span class="nx">step</span> <span class="kt">float64</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nx">interfaceContext</span><span class="p">.</span><span class="nf">Begin</span><span class="p">(</span><span class="nx">app</span><span class="p">.</span><span class="nx">Input</span><span class="p">)</span>
+	<span class="nf">lighthousePanel</span><span class="p">(</span><span class="nx">interfaceContext</span><span class="p">,</span> <span class="nx">light</span><span class="p">)</span>
+	<span class="nx">interfaceContext</span><span class="p">.</span><span class="nf">End</span><span class="p">()</span>
+	<span class="nx">unclaimed</span> <span class="o">:=</span> <span class="nx">app</span><span class="p">.</span><span class="nx">Input</span><span class="p">.</span><span class="nf">Unclaimed</span><span class="p">()</span>          <span class="c1">// the camera gets what the panel did not take</span>
+	<span class="nx">orbit</span><span class="p">.</span><span class="nf">Update</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">unclaimed</span><span class="p">,</span> <span class="nx">step</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">app</span><span class="p">.</span><span class="nx">Camera</span><span class="p">)</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+<span class="nx">browser</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">canvas</span><span class="p">,</span> <span class="nx">app</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nx">renderer</span><span class="p">.</span><span class="nf">Draw</span><span class="p">(</span><span class="nx">world</span><span class="p">,</span> <span class="nx">app</span><span class="p">.</span><span class="nx">Camera</span><span class="p">,</span> <span class="nx">width</span><span class="p">,</span> <span class="nx">height</span><span class="p">)</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">})</span>
+</code></pre>
+<pre><code class="language-bash"><span class="nv">GOOS</span><span class="o">=</span>js <span class="nv">GOARCH</span><span class="o">=</span>wasm go build -o web/web.wasm ./cmd/web     <span class="c1"># then ?program=web</span>
+</code></pre>
+
+<p>The scene is drawn by go-renderer&rsquo;s simple OpenGL ES renderer: light, fog and water, but no
+shadows or sky yet (see go-renderer&rsquo;s <code>docs/web.md</code>).</p>
+
+<h2 id="how-the-window-works-in-a-page">How the window works in a page</h2>
+
+<table>
+<thead>
+<tr>
+<th>On the desktop</th>
+<th>In a browser</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>A GLFW window, sized by <code>Options.Width</code> and <code>Height</code></td>
+<td>The page&rsquo;s canvas (<code>Options.Canvas</code>, its id; the first canvas when empty), sized by the page</td>
+</tr>
+
+<tr>
+<td>Metal or OpenGL 4.1</td>
+<td>WebGL2, through go-renderer&rsquo;s <code>gles.FlatRenderer</code>: the same atlas and quads, one draw call</td>
+</tr>
+
+<tr>
+<td><code>Options.Title</code> is the window&rsquo;s title</td>
+<td>It becomes the page&rsquo;s title</td>
+</tr>
+
+<tr>
+<td>Sleeps in <code>glfw.WaitEvents</code> between frames</td>
+<td>Asks for an animation frame only when something happens</td>
+</tr>
+
+<tr>
+<td><code>window.Wake()</code> posts an empty event</td>
+<td><code>window.Wake()</code> asks for an animation frame</td>
+</tr>
+
+<tr>
+<td>Closing the window ends <code>Run</code></td>
+<td><code>window.Stop()</code> ends <code>Run</code>, for a page that takes the canvas away (below)</td>
+</tr>
+</tbody>
+</table>
+<p>Everything else is shared: one interface step per frame, no frame when the draw list&rsquo;s
+fingerprint says it would look the same, <code>Options.Continuous</code> to draw every frame. Measured in the
+register: <strong>no frames at all in two seconds of idling</strong>.</p>
+
+<p><strong>One screen of a larger web application.</strong> Give the program the page&rsquo;s canvas by id
+(<code>Options.Canvas</code>) and leave <code>Options.Title</code> empty, so the page keeps its own title. When the page
+leaves that screen, it asks the program to stop (a function the program hands the page through
+<code>syscall/js</code> calls <code>window.Stop()</code>): <code>Run</code> returns, the canvas&rsquo;s listeners come off the page and the
+program exits. Opening the screen again starts a new one.</p>
+
+<p>The window&rsquo;s code is split by build tags: <code>window.go</code> (options, the interface application, frames
+that look the same) for everyone, <code>desktop.go</code>, <code>thread.go</code> and the Metal files for desktops, and
+<code>web.go</code> for WebAssembly.</p>
+
+<h2 id="text-keys-and-the-clipboard">Text, keys and the clipboard</h2>
+
+<p>Keys arrive by their place on the keyboard, as on the desktop, and typed characters as the
+browser gives them, so accents and other layouts work. Copy (Cmd or Ctrl and C) offers the text to
+the system clipboard too; paste takes what the browser&rsquo;s paste event brings.</p>
+
+<h2 id="what-was-checked-and-what-was-not">What was checked, and what was not</h2>
+
+<p>Checked in Chromium on macOS: the register (filters, selecting rows, the inspector), the scene
+example (buttons, a checkbox, a slider, typing and deleting in a text field, turning the camera
+around the panel), sharp text on a high-density screen, and no frames while idle.</p>
+
+<p>Not yet: other browsers, phones and tablets (touch arrives as a pointer, but go-ui has no touch
+theme yet), the on-screen keyboard, and very large tables (each frame copies the draw list into
+JavaScript once, which should be fine).</p>
+
+<h2 id="size">Size</h2>
+
+<p>A program is one <code>.wasm</code> file of about 5.8 MB, about 1.9 MB compressed (web servers usually
+compress on the fly). The fonts and icons are inside; the page loads nothing else.</p>

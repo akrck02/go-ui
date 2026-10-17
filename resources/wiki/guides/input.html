@@ -1,0 +1,80 @@
+<h1 id="mouse-keyboard-and-touch">🖱️ Mouse, keyboard and touch</h1>
+
+<p>go-ui shares the mouse and the keyboard with what is behind it: a 3D view&rsquo;s camera, the viewer&rsquo;s
+shortcuts. This page says who gets them, and how fingers are followed on a touch screen.</p>
+
+<h2 id="who-gets-the-mouse">Who gets the mouse</h2>
+
+<p>Controls react to the mouse using where they were laid out in the <strong>previous</strong> frame (sizes are
+only known at <code>End</code>). The pointer is a frame behind what is drawn, which nobody notices at sixty
+frames a second.</p>
+
+<ul>
+<li><strong>Hover</strong>: the front-most panel under the pointer is the only one whose controls can be hovered.
+Within it, the first control to find the pointer over it takes it; containers that react to the
+mouse (a title bar) look after their content, so the buttons inside them win.</li>
+<li><strong>Press and click</strong>: a pressed control keeps the mouse until the button is let go, even if the
+pointer strays. A click is a press and a release over the same control.</li>
+<li><strong>The scene keeps its drags</strong>: a press on empty screen belongs to the camera until it is let go;
+panels it passes over do not take it.</li>
+<li><strong>Claims</strong>: at <code>End</code>, when the pointer is over a panel or a control is pressed, the interface
+calls <code>state.ClaimMouse()</code>. go-renderer&rsquo;s viewer then gives its cameras and shortcuts the input
+without the mouse, so dragging inside a panel does not turn the view. A text field with the focus
+claims the keyboard the same way. <code>WantsMouse()</code> and <code>WantsKeyboard()</code> tell your own code.</li>
+<li><strong>Pointer shape</strong>: a hand over buttons, four arrows over a title bar that can be dragged and
+while dragging a payload, an I-beam over a text field, a two-headed arrow over a resize handle.</li>
+<li><strong>Modal and dragging</strong>: while a sheet is open or a payload is dragged, the interface claims the
+mouse and the keyboard wherever the pointer is.</li>
+</ul>
+
+<p>Which layer is in front, and so gets the mouse first, is drawn in
+<a href="./guides/panels-and-layers">panels and layers</a>.</p>
+
+<h2 id="fingers">Fingers</h2>
+
+<p>On a touch screen, one finger is followed from where it comes down: the way it goes first decides
+who takes it, the innermost scroll area for up and down, a <code>SwipeBox</code> for sideways (pages, cards in
+a row, a row swiped away), and the control it came down on is then not touched. A finger that stays
+still on a control for half a second long-presses it (<code>LongPressed</code>).</p>
+
+<table>
+<thead>
+<tr>
+<th>Call</th>
+<th>What it does</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>SwipeBox(name, layout, axis, content)</code></td>
+<td>Takes sideways swipes: pages, cards in a row, a row swiped away</td>
+</tr>
+
+<tr>
+<td><code>LongPressed()</code></td>
+<td>Whether the control just added was long-pressed: a finger held still for half a second, or the right mouse button</td>
+</tr>
+
+<tr>
+<td><code>ScrollPull(name)</code></td>
+<td>Measures a pull past a list&rsquo;s top, for a list that refreshes</td>
+</tr>
+
+<tr>
+<td><code>ScrollOffset(name)</code></td>
+<td>How far an area is scrolled, for a bar that shrinks over it</td>
+</tr>
+
+<tr>
+<td><code>Context.Touches()</code></td>
+<td>The fingers on a touch screen, for a control of a program&rsquo;s own that follows them (an on-screen stick); the first finger is also the pointer that clicks</td>
+</tr>
+
+<tr>
+<td><code>Context.Back</code></td>
+<td>Answers a phone&rsquo;s back gesture; modals and sheets answer it first</td>
+</tr>
+</tbody>
+</table>
+<p>Scroll areas glide on when let go. How touches reach go-ui on a phone is in <a href="./platforms/android">Android</a>.</p>

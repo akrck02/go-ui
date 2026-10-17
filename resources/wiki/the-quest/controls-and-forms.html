@@ -1,0 +1,221 @@
+<h1 id="lesson-3-controls-and-forms">Lesson 3: controls and forms</h1>
+
+<p>In this lesson the list becomes something you choose from, and the content a form that edits the
+lighthouse chosen: its name, colour, range, period, whether it is lit and whether it has a foghorn.</p>
+
+<table>
+<thead>
+<tr>
+<th>Mission</th>
+<th>Pieces</th>
+<th>Time</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>A form that edits the lighthouse chosen</td>
+<td><code>Selectable</code>, text and number fields, selects, sliders</td>
+<td>15 min</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="the-idea">The idea</h4>
+
+<p>Each control is a <strong>window onto one of your variables</strong>: the field shows <code>light.name</code> and, when you type, writes into it. The list, the heading and the status bar look through their own windows at the same variable, so they always agree.</p>
+
+<p><img src="./images/tutorial/register-light.jpg" alt="The form of North Point: a name field, a colour select, a range with − and +, a period slider, a switch and a checkbox" /></p>
+
+<h2 id="choosing-from-a-list">Choosing from a list</h2>
+
+<p><code>Selectable(icon, label, selected)</code> is a row that shows whether it is chosen and returns <code>true</code>
+when clicked. In a loop, each row needs an id of its own: two lighthouses could share a name, so
+each row opens a <strong>scope</strong> with its index.</p>
+<pre><code class="language-go"><span class="c1">// sideList lists the lighthouses that match the search; a click selects one. Its right edge can</span>
+<span class="c1">// be dragged to make it wider.</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">sideList</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">column</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Pad</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Resizable</span><span class="p">(</span><span class="s">&#34;side&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">RightSide</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">program</span><span class="p">.</span><span class="nx">sideWidth</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="nx">column</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">for</span> <span class="nx">index</span><span class="p">,</span> <span class="nx">light</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span> <span class="p">{</span>
+			<span class="k">if</span> <span class="p">!</span><span class="nx">strings</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="nx">strings</span><span class="p">.</span><span class="nf">ToLower</span><span class="p">(</span><span class="nx">light</span><span class="p">.</span><span class="nx">name</span><span class="p">),</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">ToLower</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">search</span><span class="p">))</span> <span class="p">{</span>
+				<span class="k">continue</span>
+			<span class="p">}</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Push</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprint</span><span class="p">(</span><span class="nx">index</span><span class="p">))</span> <span class="c1">// two lighthouses may share a name: give each row its own id</span>
+			<span class="nx">icon</span> <span class="o">:=</span> <span class="s">&#34;lightbulb-off&#34;</span>
+			<span class="k">if</span> <span class="nx">light</span><span class="p">.</span><span class="nx">lit</span> <span class="p">{</span>
+				<span class="nx">icon</span> <span class="p">=</span> <span class="s">&#34;lightbulb&#34;</span>
+			<span class="p">}</span>
+			<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Selectable</span><span class="p">(</span><span class="nx">icon</span><span class="p">,</span> <span class="nx">light</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span> <span class="nx">index</span> <span class="o">==</span> <span class="nx">program</span><span class="p">.</span><span class="nx">selected</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">program</span><span class="p">.</span><span class="nx">selected</span> <span class="p">=</span> <span class="nx">index</span>
+			<span class="p">}</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Pop</span><span class="p">()</span>
+		<span class="p">}</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>The search box goes in the toolbar, after the <code>Spacer</code>. A text field edits your string in place
+and returns <code>true</code> on the frames it changes; here the list simply reads <code>program.search</code> at the
+next frame:</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">TextFieldWith</span><span class="p">(</span><span class="s">&#34;search&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">program</span><span class="p">.</span><span class="nx">search</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextFieldOptions</span><span class="p">{</span><span class="nx">Placeholder</span><span class="p">:</span> <span class="s">&#34;Search&#34;</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">200</span><span class="p">)})</span>
+</code></pre>
+
+<p><img src="./images/tutorial/register-search.jpg" alt="The search &ldquo;ea&rdquo; leaves East Cape alone in the list" /></p>
+
+<p>For thousands of rows, <code>List(name, layout, count, rowHeight, row)</code> builds only the rows in sight,
+and <code>Table</code> adds a header, columns and groups (<a href="./guides/tables-and-dragging">the guide</a>).</p>
+
+<h2 id="the-form">The form</h2>
+
+<p>Each control takes a <strong>pointer</strong> to the value it edits, and returns <code>true</code> when the person changed
+it. A small helper lines the labels up in a column of their own:</p>
+<pre><code class="language-go"><span class="c1">// field is a row of the form: a label in a column of its own width, then the control.</span>
+<span class="kd">func</span> <span class="nf">field</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">label</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">control</span> <span class="kd">func</span><span class="p">())</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">80</span><span class="p">)},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="nx">label</span><span class="p">)</span> <span class="p">})</span>
+		<span class="nf">control</span><span class="p">()</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+</code></pre>
+<pre><code class="language-go"><span class="c1">// details is the form of the lighthouse selected.</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">details</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">area</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Pad</span><span class="p">(</span><span class="mi">24</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">12</span><span class="p">}</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">area</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">program</span><span class="p">.</span><span class="nx">selected</span> <span class="p">&lt;</span> <span class="mi">0</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="s">&#34;Choose a lighthouse on the left, or add one.&#34;</span><span class="p">)</span>
+			<span class="k">return</span>
+		<span class="p">}</span>
+		<span class="nx">light</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">[</span><span class="nx">program</span><span class="p">.</span><span class="nx">selected</span><span class="p">]</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Heading</span><span class="p">(</span><span class="nx">light</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Spacer</span><span class="p">()</span>
+			<span class="nf">favouriteButton</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">light</span><span class="p">.</span><span class="nx">favourite</span><span class="p">)</span> <span class="c1">// lesson 5</span>
+		<span class="p">})</span>
+		<span class="nf">field</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="s">&#34;Name&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">TextFieldWith</span><span class="p">(</span><span class="s">&#34;name&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">light</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextFieldOptions</span><span class="p">{</span><span class="nx">MaxLength</span><span class="p">:</span> <span class="mi">40</span><span class="p">})</span>
+		<span class="p">})</span>
+		<span class="nf">field</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="s">&#34;Colour&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Select</span><span class="p">(</span><span class="s">&#34;colour&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">light</span><span class="p">.</span><span class="nx">colour</span><span class="p">,</span> <span class="nx">colours</span><span class="p">)</span> <span class="p">})</span>
+		<span class="nf">field</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="s">&#34;Range&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">context</span><span class="p">.</span><span class="nf">NumberField</span><span class="p">(</span><span class="s">&#34;range&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">light</span><span class="p">.</span><span class="nx">rangeNM</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s">&#34;%.1f nm&#34;</span><span class="p">)</span> <span class="p">})</span>
+		<span class="nf">field</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="s">&#34;Period&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">SliderStep</span><span class="p">(</span><span class="s">&#34;period&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">light</span><span class="p">.</span><span class="nx">period</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%.0f s&#34;</span><span class="p">,</span> <span class="nx">light</span><span class="p">.</span><span class="nx">period</span><span class="p">))</span>
+		<span class="p">})</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Toggle</span><span class="p">(</span><span class="s">&#34;Lit&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">light</span><span class="p">.</span><span class="nx">lit</span><span class="p">)</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Checkbox</span><span class="p">(</span><span class="s">&#34;Foghorn&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">light</span><span class="p">.</span><span class="nx">foghorn</span><span class="p">)</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Spacer</span><span class="p">()</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Spacer</span><span class="p">()</span>
+			<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Button</span><span class="p">(</span><span class="s">&#34;Remove&#34;</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">program</span><span class="p">.</span><span class="nx">removing</span> <span class="p">=</span> <span class="kc">true</span> <span class="c1">// lesson 4 asks first</span>
+			<span class="p">}</span>
+		<span class="p">})</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>Until lesson 5, leave out the <code>favouriteButton</code> line.</p>
+
+<p>Notice what is <em>not</em> there: no &ldquo;on change&rdquo; handler copies the name into the list. The field writes
+<code>light.name</code>, and the list, the heading and the status bar read it at the next frame.</p>
+
+<h3 id="the-controls-you-used">The controls you used</h3>
+
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Edits</th>
+<th>Feels like</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>TextField(name, &amp;text)</code>, <code>TextFieldWith(…, options)</code></td>
+<td>A <code>string</code></td>
+<td>Selection, the clipboard, undo, Tab to the next field; <code>Placeholder</code>, <code>MaxLength</code>, <code>Secret</code></td>
+</tr>
+
+<tr>
+<td><code>Select(name, &amp;index, options)</code></td>
+<td>An <code>int</code></td>
+<td>A field that opens its list over everything; arrows and Enter work</td>
+</tr>
+
+<tr>
+<td><code>NumberField(name, &amp;value, minimum, maximum, step, format)</code></td>
+<td>A <code>float32</code></td>
+<td>− and +, drag sideways, or click and type</td>
+</tr>
+
+<tr>
+<td><code>Slider(name, &amp;value, minimum, maximum)</code>, <code>SliderStep(…, step)</code></td>
+<td>A <code>float32</code></td>
+<td>Click to jump, drag, Shift for fine steps</td>
+</tr>
+
+<tr>
+<td><code>Toggle(label, &amp;on)</code></td>
+<td>A <code>bool</code></td>
+<td>A settings row with a switch</td>
+</tr>
+
+<tr>
+<td><code>Checkbox(label, &amp;on)</code></td>
+<td>A <code>bool</code></td>
+<td>A box to tick</td>
+</tr>
+
+<tr>
+<td><code>Tabs(name, &amp;index, labels…)</code></td>
+<td>An <code>int</code></td>
+<td>A segmented row; show the tab&rsquo;s content with an <code>if</code></td>
+</tr>
+
+<tr>
+<td><code>ListBox(name, layout, items, &amp;index)</code></td>
+<td>An <code>int</code></td>
+<td>A scrolling list of selectable items</td>
+</tr>
+</tbody>
+</table>
+<p>The full list, with buttons, chips, images and tooltips, is in <a href="./reference/reference">the reference</a>.</p>
+
+<blockquote>
+<p>📝 <strong>The keyboard and the 3D view.</strong> While a field has the keyboard, go-ui <em>claims</em> it, so a 3D
+view&rsquo;s shortcuts do not take the letters you type (<a href="./the-quest/over-a-3d-scene">lesson 6</a>).</p>
+</blockquote>
+
+<h4 id="checkpoint">Checkpoint</h4>
+
+<p>Click <em>East Cape</em>: the form shows its name, colour, range and period; rename it and the list changes as you type; <em>ea</em> in the search leaves it alone in the list.</p>
+
+<p><img src="./images/tutorial/quest/achievement-clerk.svg" alt="Achievement unlocked: Clerk" /></p>
+
+<h2 id="what-you-learnt">What you learnt</h2>
+
+<ul>
+<li><code>Selectable</code> rows in a loop, each in a scope of its own (<code>Push</code>, <code>Pop</code>).</li>
+<li>Controls edit the value they point to and return <code>true</code> when it changed.</li>
+<li>Every part of the screen reads the same data at every frame, so nothing needs syncing.</li>
+</ul>
+
+<h2 id="bonus-optional">Bonus (optional)</h2>
+
+<p>Show a warning under the range when it is above 25 nm, in the theme&rsquo;s warning colour.</p>
+
+<details>
+<summary>🔓 Show the solution</summary>
+
+```go
+if light.rangeNM > 25 {
+	context.Text("A range this long needs a tall tower", ui.TextStyle{Color: context.Theme.Warning})
+}
+```
+
+</details>
+
+<hr>
+
+<p><a href="./the-quest/layout">← Lesson 2</a> · <a href="./the-quest/menus-sheets-and-notes">Lesson 4: menus, sheets and notes →</a></p>

@@ -1,0 +1,257 @@
+<h1 id="lesson-6-over-a-3d-scene">Lesson 6: over a 3D scene</h1>
+
+<p>go-ui was made to draw interfaces over <a href="https://github.com/akrck02/go-renderer" target="_blank">go-renderer</a>&rsquo;s
+scenes. In this lesson you put a panel over an island that moves the sun and the clouds, and learn
+how the interface and the camera share the mouse.</p>
+
+<table>
+<thead>
+<tr>
+<th>Mission</th>
+<th>Pieces</th>
+<th>Time</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>A panel that moves the sun over an island</td>
+<td><code>viewer.Run</code>, claims, <code>Options.Scene</code></td>
+<td>15 min</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="the-idea">The idea</h4>
+
+<p>The interface and the camera share one mouse, like <strong>two people and one remote control</strong>: whoever the pointer is over has it. When it is over a panel, go-ui claims it, and the camera gets only what was left.</p>
+
+<p><img src="./images/tutorial/scene-panel.jpg" alt="A panel with three sliders over the sample island" /></p>
+
+<p>There are two ways in:</p>
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th><code>viewer.Run</code> (go-renderer)</th>
+<th><code>window.Options.Scene</code> (go-ui)</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>The cameras</td>
+<td>The viewer&rsquo;s: orbit, walking, map, its keys and flags</td>
+<td>Yours: a <code>camera.Orbit</code> or anything that fills a <code>models.Camera</code></td>
+</tr>
+
+<tr>
+<td>Runs on</td>
+<td>The desktop</td>
+<td>The desktop, a web page and Android</td>
+</tr>
+
+<tr>
+<td>Good for</td>
+<td>Tools over a scene: editors, inspectors, simulations</td>
+<td>Applications with a scene inside: a phone app with a map</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="with-the-viewer">With the viewer</h2>
+
+<p>The viewer calls your update function at every step; go-ui&rsquo;s frame goes inside it, between <code>Begin</code>
+and <code>End</code>. You make the context yourself with <code>ui.New()</code>, and hand its drawing to the scene&rsquo;s
+overlay once:</p>
+<pre><code class="language-go"><span class="c1">// An interface over a go-renderer scene: a panel that moves the sun and the clouds over the sample</span>
+<span class="c1">// island.</span>
+<span class="kn">package</span> <span class="nx">main</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+	<span class="s">&#34;flag&#34;</span>
+	<span class="s">&#34;fmt&#34;</span>
+	<span class="s">&#34;log&#34;</span>
+	<span class="s">&#34;math&#34;</span>
+
+	<span class="s">&#34;github.com/akrck02/go-renderer/graphics&#34;</span>
+	<span class="s">&#34;github.com/akrck02/go-renderer/input&#34;</span>
+	<span class="s">&#34;github.com/akrck02/go-renderer/scene&#34;</span>
+	<span class="s">&#34;github.com/akrck02/go-renderer/scene/sample&#34;</span>
+	<span class="s">&#34;github.com/akrck02/go-renderer/viewer&#34;</span>
+	<span class="nx">ui</span> <span class="s">&#34;github.com/akrck02/go-ui&#34;</span>
+<span class="p">)</span>
+
+<span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">options</span> <span class="o">:=</span> <span class="nx">viewer</span><span class="p">.</span><span class="nf">DefaultOptions</span><span class="p">()</span>
+	<span class="nx">options</span><span class="p">.</span><span class="nf">RegisterFlags</span><span class="p">(</span><span class="nx">flag</span><span class="p">.</span><span class="nx">CommandLine</span><span class="p">)</span>
+	<span class="nx">flag</span><span class="p">.</span><span class="nf">Parse</span><span class="p">()</span>
+
+	<span class="nx">context</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">New</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">world</span> <span class="o">:=</span> <span class="nx">sample</span><span class="p">.</span><span class="nf">Island</span><span class="p">()</span>
+	<span class="nx">world</span><span class="p">.</span><span class="nx">Overlay</span><span class="p">.</span><span class="nx">Drawing</span> <span class="p">=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Drawing</span><span class="p">()</span> <span class="c1">// go-renderer paints what go-ui lays out</span>
+
+	<span class="nx">elevation</span><span class="p">,</span> <span class="nx">azimuth</span> <span class="o">:=</span> <span class="nb">float32</span><span class="p">(</span><span class="mi">35</span><span class="p">),</span> <span class="nb">float32</span><span class="p">(</span><span class="mi">220</span><span class="p">)</span> <span class="c1">// degrees</span>
+	<span class="nx">clouds</span> <span class="o">:=</span> <span class="nx">world</span><span class="p">.</span><span class="nx">Environment</span><span class="p">.</span><span class="nf">EffectiveSky</span><span class="p">().</span><span class="nx">Clouds</span><span class="p">.</span><span class="nx">Coverage</span>
+
+	<span class="nx">update</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">world</span> <span class="o">*</span><span class="nx">scene</span><span class="p">.</span><span class="nx">Scene</span><span class="p">,</span> <span class="nx">state</span> <span class="o">*</span><span class="nx">input</span><span class="p">.</span><span class="nx">State</span><span class="p">,</span> <span class="nx">step</span> <span class="kt">float64</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Begin</span><span class="p">(</span><span class="nx">state</span><span class="p">)</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">PanelWith</span><span class="p">(</span><span class="s">&#34;Sky&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">PanelOptions</span><span class="p">{</span><span class="nx">X</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span> <span class="nx">Y</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">260</span><span class="p">)},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Sun height&#34;</span><span class="p">)</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Slider</span><span class="p">(</span><span class="s">&#34;elevation&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">elevation</span><span class="p">,</span> <span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">90</span><span class="p">)</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Sun bearing&#34;</span><span class="p">)</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Slider</span><span class="p">(</span><span class="s">&#34;azimuth&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">azimuth</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">360</span><span class="p">)</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Clouds&#34;</span><span class="p">)</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Slider</span><span class="p">(</span><span class="s">&#34;clouds&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">clouds</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Separator</span><span class="p">()</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+				<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%.0f° up, %.0f° from north&#34;</span><span class="p">,</span> <span class="nx">elevation</span><span class="p">,</span> <span class="nx">azimuth</span><span class="p">))</span>
+				<span class="nx">context</span><span class="p">.</span><span class="nf">Spacer</span><span class="p">()</span>
+				<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Button</span><span class="p">(</span><span class="s">&#34;Night&#34;</span><span class="p">)</span> <span class="p">{</span>
+					<span class="nx">elevation</span> <span class="p">=</span> <span class="o">-</span><span class="mi">15</span>
+				<span class="p">}</span>
+			<span class="p">})</span>
+		<span class="p">})</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">End</span><span class="p">()</span> <span class="c1">// lays out, paints, and claims the mouse when it is over the panel</span>
+
+		<span class="nx">world</span><span class="p">.</span><span class="nx">Environment</span><span class="p">.</span><span class="nx">SunDirection</span> <span class="p">=</span> <span class="nf">sunDirection</span><span class="p">(</span><span class="nx">elevation</span><span class="p">,</span> <span class="nx">azimuth</span><span class="p">)</span>
+		<span class="nx">world</span><span class="p">.</span><span class="nx">Environment</span><span class="p">.</span><span class="nf">EffectiveSky</span><span class="p">().</span><span class="nx">Clouds</span><span class="p">.</span><span class="nx">Coverage</span> <span class="p">=</span> <span class="nx">clouds</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">viewer</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">world</span><span class="p">,</span> <span class="nx">options</span><span class="p">,</span> <span class="s">&#34;Sky&#34;</span><span class="p">,</span> <span class="nx">update</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// sunDirection points towards a sun at an elevation and an azimuth (clockwise from north, −z), in</span>
+<span class="c1">// degrees.</span>
+<span class="kd">func</span> <span class="nf">sunDirection</span><span class="p">(</span><span class="nx">elevation</span><span class="p">,</span> <span class="nx">azimuth</span> <span class="kt">float32</span><span class="p">)</span> <span class="nx">graphics</span><span class="p">.</span><span class="nx">Vec4</span> <span class="p">{</span>
+	<span class="nx">up</span> <span class="o">:=</span> <span class="nb">float64</span><span class="p">(</span><span class="nx">elevation</span><span class="p">)</span> <span class="o">*</span> <span class="nx">math</span><span class="p">.</span><span class="nx">Pi</span> <span class="o">/</span> <span class="mi">180</span>
+	<span class="nx">around</span> <span class="o">:=</span> <span class="nb">float64</span><span class="p">(</span><span class="nx">azimuth</span><span class="p">)</span> <span class="o">*</span> <span class="nx">math</span><span class="p">.</span><span class="nx">Pi</span> <span class="o">/</span> <span class="mi">180</span>
+	<span class="k">return</span> <span class="nx">graphics</span><span class="p">.</span><span class="nx">Vec4</span><span class="p">{</span>
+		<span class="nb">float32</span><span class="p">(</span><span class="nx">math</span><span class="p">.</span><span class="nf">Cos</span><span class="p">(</span><span class="nx">up</span><span class="p">)</span> <span class="o">*</span> <span class="nx">math</span><span class="p">.</span><span class="nf">Sin</span><span class="p">(</span><span class="nx">around</span><span class="p">)),</span>
+		<span class="nb">float32</span><span class="p">(</span><span class="nx">math</span><span class="p">.</span><span class="nf">Sin</span><span class="p">(</span><span class="nx">up</span><span class="p">)),</span>
+		<span class="nb">float32</span><span class="p">(</span><span class="o">-</span><span class="nx">math</span><span class="p">.</span><span class="nf">Cos</span><span class="p">(</span><span class="nx">up</span><span class="p">)</span> <span class="o">*</span> <span class="nx">math</span><span class="p">.</span><span class="nf">Cos</span><span class="p">(</span><span class="nx">around</span><span class="p">)),</span>
+		<span class="mi">0</span><span class="p">,</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre><code class="language-bash">go run .               <span class="c1"># needs go-renderer&#39;s scene/sample: no files</span>
+go run . -walk -dark   <span class="c1"># every viewer flag works</span>
+</code></pre>
+
+<p><code>PanelWith</code> is a floating card with a title bar: drag the bar to move it, the chevron folds it.
+<code>PanelOptions</code> places it (<code>X</code>, <code>Y</code>), sizes it, locks it, or docks it to an edge (<code>Dock: ui.DockLeft</code>).</p>
+
+<h3 id="who-gets-the-mouse">Who gets the mouse</h3>
+
+<p>Dragging a slider must not turn the camera. At <code>End</code>, when the pointer is over a panel or a control
+is held, go-ui <strong>claims</strong> the mouse for that step (<code>state.ClaimMouse()</code>); while a field has the
+keyboard, it claims the keyboard. The viewer then gives its cameras and shortcuts
+<code>state.Unclaimed()</code>, a copy without what was claimed. A press that starts on the open scene belongs
+to the camera until it is let go, even if it passes over a panel.</p>
+
+<p>In your own code, <code>context.WantsMouse()</code> and <code>context.WantsKeyboard()</code> say the same, for shortcuts
+of your own.</p>
+
+<h2 id="with-a-window-of-go-ui-s">With a window of go-ui&rsquo;s</h2>
+
+<p><code>window.Options.Scene</code> puts a scene behind the interface. It is called at every step <strong>after</strong> the
+interface, with the input the interface did not claim, and returns what to show:</p>
+<pre><code class="language-go"><span class="kn">package</span> <span class="nx">main</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+	<span class="s">&#34;flag&#34;</span>
+	<span class="s">&#34;log&#34;</span>
+
+	<span class="s">&#34;github.com/akrck02/go-renderer/camera&#34;</span>
+	<span class="s">&#34;github.com/akrck02/go-renderer/graphics&#34;</span>
+	<span class="s">&#34;github.com/akrck02/go-renderer/input&#34;</span>
+	<span class="s">&#34;github.com/akrck02/go-renderer/models&#34;</span>
+	<span class="s">&#34;github.com/akrck02/go-renderer/scene/sample&#34;</span>
+	<span class="nx">ui</span> <span class="s">&#34;github.com/akrck02/go-ui&#34;</span>
+	<span class="s">&#34;github.com/akrck02/go-ui/window&#34;</span>
+<span class="p">)</span>
+
+<span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">options</span> <span class="o">:=</span> <span class="nx">window</span><span class="p">.</span><span class="nx">Options</span><span class="p">{</span><span class="nx">Title</span><span class="p">:</span> <span class="s">&#34;Island&#34;</span><span class="p">}</span>
+	<span class="nx">options</span><span class="p">.</span><span class="nf">RegisterFlags</span><span class="p">(</span><span class="nx">flag</span><span class="p">.</span><span class="nx">CommandLine</span><span class="p">)</span>
+	<span class="nx">flag</span><span class="p">.</span><span class="nf">Parse</span><span class="p">()</span>
+
+	<span class="nx">world</span> <span class="o">:=</span> <span class="nx">sample</span><span class="p">.</span><span class="nf">Island</span><span class="p">()</span>
+	<span class="nx">minimum</span><span class="p">,</span> <span class="nx">maximum</span> <span class="o">:=</span> <span class="nx">world</span><span class="p">.</span><span class="nf">Bounds</span><span class="p">()</span>
+	<span class="nx">middle</span> <span class="o">:=</span> <span class="nx">graphics</span><span class="p">.</span><span class="nx">Vec4</span><span class="p">{(</span><span class="nx">minimum</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="nx">maximum</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="nx">minimum</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="nx">maximum</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">}</span>
+	<span class="nx">orbit</span> <span class="o">:=</span> <span class="nx">camera</span><span class="p">.</span><span class="nf">NewOrbit</span><span class="p">(</span><span class="nx">middle</span><span class="p">,</span> <span class="nb">float64</span><span class="p">(</span><span class="nx">maximum</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="nx">minimum</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+	<span class="nx">view</span> <span class="o">:=</span> <span class="nx">models</span><span class="p">.</span><span class="nx">Camera</span><span class="p">{</span><span class="nx">Up</span><span class="p">:</span> <span class="nx">graphics</span><span class="p">.</span><span class="nx">Vec4</span><span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">}}</span>
+
+	<span class="nx">options</span><span class="p">.</span><span class="nx">Scene</span> <span class="p">=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">state</span> <span class="o">*</span><span class="nx">input</span><span class="p">.</span><span class="nx">State</span><span class="p">,</span> <span class="nx">step</span> <span class="kt">float64</span><span class="p">)</span> <span class="o">*</span><span class="nx">window</span><span class="p">.</span><span class="nx">SceneView</span> <span class="p">{</span>
+		<span class="nx">orbit</span><span class="p">.</span><span class="nf">Update</span><span class="p">(</span><span class="nx">state</span><span class="p">,</span> <span class="nx">step</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">view</span><span class="p">)</span> <span class="c1">// state holds only what the interface did not claim</span>
+		<span class="k">return</span> <span class="o">&amp;</span><span class="nx">window</span><span class="p">.</span><span class="nx">SceneView</span><span class="p">{</span><span class="nx">World</span><span class="p">:</span> <span class="nx">world</span><span class="p">,</span> <span class="nx">Camera</span><span class="p">:</span> <span class="nx">view</span><span class="p">}</span>
+	<span class="p">}</span>
+	<span class="nx">err</span> <span class="o">:=</span> <span class="nx">window</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">options</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">PanelWith</span><span class="p">(</span><span class="s">&#34;Island&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">PanelOptions</span><span class="p">{</span><span class="nx">X</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span> <span class="nx">Y</span><span class="p">:</span> <span class="mi">16</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Drag the island to turn it.&#34;</span><span class="p">)</span>
+		<span class="p">})</span>
+	<span class="p">})</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+<p><img src="./images/tutorial/scene-window.jpg" alt="The same island behind a panel, through go-ui&rsquo;s window" /></p>
+
+<p>Boxes painted with a fill take the mouse like panels; a growing box left transparent lets the scene
+show through, with the camera working inside it. <code>cmd/scene-app</code> lays a whole application around a
+3D view this way.</p>
+
+<h2 id="editing-what-you-see">Editing what you see</h2>
+
+<p>go-renderer&rsquo;s <code>viewer.Edit</code> gives your function a <code>viewer.View</code>, which turns the pointer into a
+point on the ground (<a href="https://github.com/akrck02/go-renderer/blob/main/docs/3-the-quest/5-editing-with-the-pointer.md" target="_blank">go-renderer&rsquo;s tutorial, lesson 5</a>).
+With go-ui in it you get both: panels to choose what to place, the map to place it on.
+<code>cmd/plan-editor</code> places huts on an island that way, and <code>DragSource</code> with
+<code>context.DroppedOnScreen()</code> drops a value of yours from a panel onto the scene (<a href="./guides/tables-and-dragging">the guide</a>).</p>
+
+<h4 id="checkpoint">Checkpoint</h4>
+
+<p>Over the sample island, a <em>Sky</em> panel: dragging its sliders moves the sun and the clouds without turning the camera; dragging the island turns it.</p>
+
+<p><img src="./images/tutorial/quest/achievement-lookout.svg" alt="Achievement unlocked: Lookout" /></p>
+
+<h2 id="what-you-learnt">What you learnt</h2>
+
+<ul>
+<li>Over the viewer: <code>ui.New()</code>, <code>Overlay.Drawing = context.Drawing()</code>, and <code>Begin</code> … <code>End</code> in the
+update function.</li>
+<li>Over go-ui&rsquo;s window: <code>Options.Scene</code> returns a scene and a camera, on every platform.</li>
+<li>go-ui claims the mouse and the keyboard it uses, so cameras get only the rest.</li>
+</ul>
+
+<h2 id="bonus-optional">Bonus (optional)</h2>
+
+<p>Add a label to the panel that says whether the mouse is over it, from the context.</p>
+
+<details>
+<summary>🔓 Show the solution</summary>
+
+`WantsMouse` is decided at `End`, so it tells about the step before, which is what the person sees:
+
+```go
+over := context.WantsMouse()
+context.PanelWith("Sky", …, func() {
+	if over {
+		context.Caption("The panel has the mouse")
+	}
+	…
+})
+```
+
+</details>
+
+<hr>
+
+<p><a href="./the-quest/controls-of-your-own">← Lesson 5</a> · <a href="./the-quest/shipping-it">Lesson 7: shipping it →</a></p>

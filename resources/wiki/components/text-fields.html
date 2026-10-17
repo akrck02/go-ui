@@ -1,0 +1,108 @@
+<h1 id="text-fields">Text fields</h1>
+
+<p><code>TextField(name, &amp;text)</code> and <code>TextFieldWith(name, &amp;text, options)</code> edit your string in place, and
+return <code>true</code> on the frames it changes. The name is the field&rsquo;s id, not shown.</p>
+
+<h2 id="a-form">A form</h2>
+
+<p>A label column of its own width, then the fields. <code>MaxLength</code> caps what is typed, <code>Weight:
+draw2d.Mono</code> writes codes in a monospaced face, <code>Width</code> fixes a short field, <code>Secret</code> hides a
+password (a dot per character, nothing can be copied or cut).</p>
+<pre><code class="language-go"><span class="nx">row</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">label</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">field</span> <span class="kd">func</span><span class="p">())</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">90</span><span class="p">)},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="nx">label</span><span class="p">)</span> <span class="p">})</span>
+		<span class="nf">field</span><span class="p">()</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+<span class="nf">row</span><span class="p">(</span><span class="s">&#34;Name&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">context</span><span class="p">.</span><span class="nf">TextFieldWith</span><span class="p">(</span><span class="s">&#34;name&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">name</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextFieldOptions</span><span class="p">{</span><span class="nx">MaxLength</span><span class="p">:</span> <span class="mi">40</span><span class="p">})</span> <span class="p">})</span>
+<span class="nf">row</span><span class="p">(</span><span class="s">&#34;Code&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">TextFieldWith</span><span class="p">(</span><span class="s">&#34;code&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">code</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextFieldOptions</span><span class="p">{</span><span class="nx">Weight</span><span class="p">:</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Mono</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">120</span><span class="p">)})</span>
+<span class="p">})</span>
+<span class="nf">row</span><span class="p">(</span><span class="s">&#34;Password&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">context</span><span class="p">.</span><span class="nf">TextFieldWith</span><span class="p">(</span><span class="s">&#34;password&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">password</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextFieldOptions</span><span class="p">{</span><span class="nx">Secret</span><span class="p">:</span> <span class="kc">true</span><span class="p">})</span> <span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/fields-form.png" alt="Name, Code in monospace and a hidden Password" /></p>
+
+<h2 id="a-search">A search</h2>
+
+<p>Nothing needs to &ldquo;listen&rdquo; to the field: the list below reads <code>search</code> in the same frame.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">TextFieldWith</span><span class="p">(</span><span class="s">&#34;search&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">search</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextFieldOptions</span><span class="p">{</span><span class="nx">Placeholder</span><span class="p">:</span> <span class="s">&#34;Search lighthouses&#34;</span><span class="p">})</span>
+<span class="nx">found</span> <span class="o">:=</span> <span class="mi">0</span>
+<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">name</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">names</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="nx">strings</span><span class="p">.</span><span class="nf">ToLower</span><span class="p">(</span><span class="nx">name</span><span class="p">),</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">ToLower</span><span class="p">(</span><span class="nx">search</span><span class="p">))</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span>
+		<span class="nx">found</span><span class="o">++</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%d of %d&#34;</span><span class="p">,</span> <span class="nx">found</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">names</span><span class="p">)))</span>
+</code></pre>
+
+<p><img src="./images/components/fields-search.png" alt="A search box with cape, two results and 2 of 4" /></p>
+
+<p><code>Placeholder</code> shows, quiet, while the field is empty. To open a search ready to type in (a
+shortcut, a screen just shown), call <code>context.FocusField(&quot;search&quot;)</code>.</p>
+
+<h2 id="checking-what-was-typed">Checking what was typed</h2>
+
+<p>Say what is wrong right under the field, in the theme&rsquo;s danger colour, while it is wrong.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">TextFieldWith</span><span class="p">(</span><span class="s">&#34;name&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">name</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextFieldOptions</span><span class="p">{</span><span class="nx">Placeholder</span><span class="p">:</span> <span class="s">&#34;Name&#34;</span><span class="p">,</span> <span class="nx">MaxLength</span><span class="p">:</span> <span class="mi">40</span><span class="p">})</span>
+<span class="k">if</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">TrimSpace</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span> <span class="o">==</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Text</span><span class="p">(</span><span class="s">&#34;A lighthouse needs a name&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextStyle</span><span class="p">{</span><span class="nx">Size</span><span class="p">:</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">SmallTextSize</span><span class="p">,</span> <span class="nx">Color</span><span class="p">:</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">Danger</span><span class="p">})</span>
+<span class="p">}</span>
+</code></pre>
+
+<p><img src="./images/components/fields-validate.png" alt="An empty Name field and A lighthouse needs a name in red" /></p>
+
+<h2 id="typing-everywhere">Typing, everywhere</h2>
+
+<table>
+<thead>
+<tr>
+<th>To</th>
+<th>Do</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Place the caret, select</td>
+<td>Click; Shift-click; drag; double-click a word, triple-click all</td>
+</tr>
+
+<tr>
+<td>Move by words, to the ends</td>
+<td>Alt (Mac) or Ctrl with the arrows; Home, End</td>
+</tr>
+
+<tr>
+<td>Copy, cut, paste, select all</td>
+<td>Cmd or Ctrl with C, X, V, A</td>
+</tr>
+
+<tr>
+<td>Undo, redo</td>
+<td>Cmd/Ctrl+Z, Shift+Cmd/Ctrl+Z or Cmd/Ctrl+Y</td>
+</tr>
+
+<tr>
+<td>Finish</td>
+<td>Enter or a click elsewhere; <strong>Escape puts back</strong> the text it had when it took the keyboard</td>
+</tr>
+
+<tr>
+<td>Next field</td>
+<td>Tab, Shift+Tab: round the fields of the panel or sheet</td>
+</tr>
+</tbody>
+</table>
+<p>Accents and «ñ» type as anywhere (characters come after the keyboard layout). Pasted line breaks
+become spaces. On a phone the on-screen keyboard comes up, suggests words and underlines the one
+it composes; a finger held on a word selects it, with handles and a bar to cut, copy and paste.</p>
+
+<p>While a field has the keyboard, go-ui <strong>claims</strong> it, so a 3D view&rsquo;s shortcuts do not take the
+letters. <code>FieldFocused(name)</code> tells whether a field has it; <code>Focus(path...)</code> gives it to a field
+found by its scopes, with its text selected.</p>
+
+<hr>
+
+<p><a href="./components/choices">← Choices</a> · <a href="./components/containers">Containers →</a></p>

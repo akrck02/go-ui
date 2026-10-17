@@ -1,0 +1,512 @@
+<h1 id="reference">Reference</h1>
+
+<p>go-ui has two packages:</p>
+
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Import</th>
+<th>What it is</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><a href="./reference/ui"><code>ui</code></a></td>
+<td><code>ui &quot;github.com/akrck02/go-ui&quot;</code></td>
+<td>The context, layout, every control, themes, screen readers</td>
+</tr>
+
+<tr>
+<td><a href="./reference/window"><code>window</code></a></td>
+<td><code>&quot;github.com/akrck02/go-ui/window&quot;</code></td>
+<td>A window that runs an interface: on the desktop, in a web page, on Android; preferences, notifications, films</td>
+</tr>
+</tbody>
+</table>
+<p><a href="./reference/ui"><code>ui.md</code></a> and <a href="./reference/window"><code>window.md</code></a> list every type and function with the first sentence
+of its comment; they are generated from the doc comments (<code>python3 docs/6-reference/generate.py</code>).
+<code>go doc github.com/akrck02/go-ui.Context.Table</code> prints any of them whole. This page is the map:
+the context&rsquo;s methods by what they are for.</p>
+
+<h2 id="the-frame">The frame</h2>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>ui.New() (*Context, error)</code></td>
+<td>A context that measures text with go-renderer&rsquo;s fonts; <code>NewWithMeasurer</code> takes another (tests)</td>
+</tr>
+
+<tr>
+<td><code>Begin(state *input.State)</code>, <code>End()</code></td>
+<td>Open and close a frame: <code>End</code> lays out, paints and claims the mouse and keyboard. <code>window.Run</code> calls both for you</td>
+</tr>
+
+<tr>
+<td><code>Drawing() *draw2d.List</code></td>
+<td>What go-renderer paints: give it to <code>scene.Overlay.Drawing</code> once</td>
+</tr>
+
+<tr>
+<td><code>Push(name)</code>, <code>Pop()</code></td>
+<td>Open and close a scope, so controls in a loop have ids of their own</td>
+</tr>
+
+<tr>
+<td><code>Area(path...) (draw2d.Rect, bool)</code></td>
+<td>Where a control was drawn in the last frame, by its scopes and label</td>
+</tr>
+
+<tr>
+<td><code>RequestFrame(delay)</code></td>
+<td>Ask for another frame within a delay, for something that moves</td>
+</tr>
+
+<tr>
+<td><code>Size() (width, height)</code>, <code>Insets()</code></td>
+<td>The window&rsquo;s size, and how much of each edge the system&rsquo;s bars cover</td>
+</tr>
+
+<tr>
+<td><code>Theme</code> (field)</td>
+<td>The tokens every control reads: <code>ui.LightTheme()</code>, <code>ui.DarkTheme()</code></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="layout">Layout</h2>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Box(layout, content)</code></td>
+<td>Arranges its children</td>
+</tr>
+
+<tr>
+<td><code>Frame(layout, look, content)</code></td>
+<td>Arranges and paints: fill, border, radius, shadow, clip</td>
+</tr>
+
+<tr>
+<td><code>Row(content)</code>, <code>Column(content)</code>, <code>Grid(columns, content)</code></td>
+<td>Shortcuts with the theme&rsquo;s gap</td>
+</tr>
+
+<tr>
+<td><code>Spacer()</code>, <code>Separator()</code></td>
+<td>Free space; a thin line</td>
+</tr>
+
+<tr>
+<td><code>ScrollArea(name, layout, content)</code></td>
+<td>Content that scrolls; <code>ScrollOffset(name)</code>, <code>ScrollPull(name)</code></td>
+</tr>
+
+<tr>
+<td><code>Resizable(name, side, &amp;size, minimum, maximum, layout, content)</code></td>
+<td>A box with an edge to drag</td>
+</tr>
+
+<tr>
+<td><code>Fold(name, open, duration, layout, content)</code></td>
+<td>A box that opens to its content&rsquo;s height and closes, with motion</td>
+</tr>
+
+<tr>
+<td><code>SwipeBox(name, layout, axis, content)</code></td>
+<td>A box a finger swipes sideways: pages, cards</td>
+</tr>
+</tbody>
+</table>
+<p>Sizes: <code>ui.Fit()</code>, <code>ui.Grow()</code>, <code>ui.GrowBy(weight)</code>, <code>ui.Share(weight)</code>, <code>ui.Fixed(pixels)</code>,
+<code>ui.Percent(share)</code>, each <code>.Between(minimum, maximum)</code>. Padding: <code>ui.Pad(all)</code>,
+<code>ui.PadXY(horizontal, vertical)</code>. Alignment: <code>ui.Start</code>, <code>ui.Center</code>, <code>ui.End</code>.</p>
+
+<h2 id="text-and-pictures">Text and pictures</h2>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Heading(text)</code>, <code>Label(text)</code>, <code>Caption(text)</code></td>
+<td>A title, body text, a quiet hint</td>
+</tr>
+
+<tr>
+<td><code>Text(text, ui.TextStyle{Size, Weight, Color})</code></td>
+<td>Any size, weight and colour</td>
+</tr>
+
+<tr>
+<td><code>Icon(name)</code>, <code>IconSized(name, size, colour)</code></td>
+<td>A <a href="https://lucide.dev/icons" target="_blank">Lucide</a> icon</td>
+</tr>
+
+<tr>
+<td><code>Image(picture, layout, radius)</code></td>
+<td>A <code>draw2d.Image</code>, cropped to fill its box</td>
+</tr>
+
+<tr>
+<td><code>Paint(layout, paint func(area, drawing))</code></td>
+<td>A box you paint yourself, once laid out</td>
+</tr>
+
+<tr>
+<td><code>SetTextScale(scale)</code>, <code>TextScale()</code></td>
+<td>Every text larger or smaller (the system&rsquo;s font size)</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="controls">Controls</h2>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Returns <code>true</code> when</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Button(label)</code>, <code>PrimaryButton(label)</code></td>
+<td>Clicked</td>
+</tr>
+
+<tr>
+<td><code>IconButton(icon, label)</code>, <code>PrimaryIconButton(icon, label)</code></td>
+<td>Clicked; square with an empty label</td>
+</tr>
+
+<tr>
+<td><code>FlatButton(label)</code>, <code>FlatIconButton(icon, label)</code></td>
+<td>Clicked; no fill until hovered (toolbars)</td>
+</tr>
+
+<tr>
+<td><code>Selectable(icon, label, selected)</code></td>
+<td>Clicked</td>
+</tr>
+
+<tr>
+<td><code>Clickable(name, layout, looks, content)</code></td>
+<td>Clicked: any box, with a look per state</td>
+</tr>
+
+<tr>
+<td><code>Checkbox(label, &amp;value)</code>, <code>Toggle(label, &amp;value)</code></td>
+<td>Changed</td>
+</tr>
+
+<tr>
+<td><code>Slider(name, &amp;value, minimum, maximum)</code>, <code>SliderStep(…, step)</code></td>
+<td>Changed</td>
+</tr>
+
+<tr>
+<td><code>NumberField(name, &amp;value, minimum, maximum, step, format)</code></td>
+<td>Changed</td>
+</tr>
+
+<tr>
+<td><code>TextField(name, &amp;text)</code>, <code>TextFieldWith(name, &amp;text, ui.TextFieldOptions{…})</code></td>
+<td>Changed</td>
+</tr>
+
+<tr>
+<td><code>Select(name, &amp;selected, options)</code></td>
+<td>Changed</td>
+</tr>
+
+<tr>
+<td><code>Tabs(name, &amp;selected, labels...)</code></td>
+<td>Changed</td>
+</tr>
+
+<tr>
+<td><code>ListBox(name, layout, items, &amp;selected)</code></td>
+<td>Changed</td>
+</tr>
+
+<tr>
+<td><code>Chip(icon, label, ui.ChipLook{…})</code></td>
+<td>Clicked; <code>RemovableChip</code> returns <code>clicked, removed</code></td>
+</tr>
+
+<tr>
+<td><code>MenuButton(icon, label, content)</code> with <code>MenuItem(icon, label, hint)</code></td>
+<td><code>MenuItem</code>: chosen</td>
+</tr>
+
+<tr>
+<td><code>Tooltip(text)</code></td>
+<td>Explains the control before it</td>
+</tr>
+
+<tr>
+<td><code>LongPressed()</code></td>
+<td>The control before it was held, or right-clicked</td>
+</tr>
+</tbody>
+</table>
+<p>Text fields also have <code>FieldFocused(name)</code>, <code>FocusField(name)</code>, <code>Focus(path...)</code>, <code>Typing()</code>, the
+clipboard (<code>Copy(text)</code>, <code>ClipboardText()</code>), and for on-screen keyboards <code>TypedField()</code> and
+<code>EditTypedField(edit)</code>; the bar over a selection is worded by <code>SetEditingWords</code>.</p>
+
+<h2 id="lists-and-tables">Lists and tables</h2>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>List(name, layout, count, rowHeight, row func(index))</code></td>
+<td>Equal rows, only those in sight built</td>
+</tr>
+
+<tr>
+<td><code>Table(name, layout, columns, rows func(*ui.Table))</code></td>
+<td>A header and rows; <code>table.Group(caption)</code>, <code>table.Row(key, selected, cells...)</code> returns <code>true</code> when clicked</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="layers">Layers</h2>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>PanelWith(title, ui.PanelOptions{…}, content)</code>, <code>Panel(title, content)</code></td>
+<td>A floating card with a title bar, or docked to an edge</td>
+</tr>
+
+<tr>
+<td><code>Sheet(title, ui.SheetOptions{Width}, content) (dismissed bool)</code></td>
+<td>A modal card</td>
+</tr>
+
+<tr>
+<td><code>Modal(name, ui.LayerOptions{…}, content) (dismissed bool)</code></td>
+<td>Your content over everything, dimming the rest</td>
+</tr>
+
+<tr>
+<td><code>Overlay(name, ui.LayerOptions{…}, content)</code></td>
+<td>Your content over everything, without dimming</td>
+</tr>
+
+<tr>
+<td><code>Popover(name, &amp;open, look, content)</code></td>
+<td>A box under the control before it</td>
+</tr>
+
+<tr>
+<td><code>Toast(text, warning)</code></td>
+<td>A short note at the bottom, fired once</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="pointer-touch-and-keyboard">Pointer, touch and keyboard</h2>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>WantsMouse()</code>, <code>WantsKeyboard()</code></td>
+<td>Whether the interface claimed them in the last frame</td>
+</tr>
+
+<tr>
+<td><code>Pointer() (x, y)</code>, <code>Pressing()</code></td>
+<td>Where the pointer is; whether it is held</td>
+</tr>
+
+<tr>
+<td><code>Touches()</code></td>
+<td>The fingers on a touch screen</td>
+</tr>
+
+<tr>
+<td><code>Back()</code></td>
+<td>Answers the system&rsquo;s back (a phone&rsquo;s gesture); sheets and modals answer first</td>
+</tr>
+
+<tr>
+<td><code>DragSource(name, payload, layout, content)</code>, <code>DropTarget(name, layout, accepts, content)</code></td>
+<td>Drag a value of yours from a box to another</td>
+</tr>
+
+<tr>
+<td><code>Dragging()</code>, <code>DroppedOnScreen()</code></td>
+<td>A drag in progress; a drop on the open screen (the scene)</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="motion">Motion</h2>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Animate(name, target, duration) float32</code></td>
+<td>Eases a value to its target, asking for frames while it moves</td>
+</tr>
+
+<tr>
+<td><code>Appear(name, duration) float32</code></td>
+<td>Eases from 0 to 1 the first time something is shown</td>
+</tr>
+
+<tr>
+<td><code>LayerOptions.Leave</code></td>
+<td>A modal or overlay leaves with motion</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="screen-readers">Screen readers</h2>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Describe(ui.Description{Role, Label, Value, Checked, …})</code></td>
+<td>What the control before it is, for a screen reader</td>
+</tr>
+
+<tr>
+<td><code>SetScreenReader(on)</code>, <code>ScreenReaderOn()</code>, <code>ScreenReaderNodes()</code></td>
+<td>The list of what can be read, made each frame while one is on</td>
+</tr>
+
+<tr>
+<td><code>ScreenReaderAct(id, action)</code>, <code>ScreenReaderSetText(id, text)</code>, <code>SetScreenReaderFocus(id)</code></td>
+<td>What the screen reader asks, done in the next frame</td>
+</tr>
+</tbody>
+</table>
+<p>The window does all of this on Android; see <a href="./guides/screen-readers">the guide</a>.</p>
+
+<h2 id="the-window">The window</h2>
+
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>window.Run(options, build)</code></td>
+<td>Opens the window and calls <code>build</code> every frame</td>
+</tr>
+
+<tr>
+<td><code>window.RunWith(context, options, build)</code></td>
+<td>The same with a context you made (to set a theme or a measurer first)</td>
+</tr>
+
+<tr>
+<td><code>window.Options{…}</code></td>
+<td><code>Title</code>, <code>Width</code>, <code>Height</code>, <code>MinWidth</code>, <code>MinHeight</code>, <code>Dark</code>, <code>Continuous</code>, <code>Backend</code>, <code>Canvas</code>, <code>Scene</code>, <code>MaxFramesPerSecond</code>, <code>Hidden</code>, <code>Shown</code>, <code>CapturePath</code>; <code>RegisterFlags(flags)</code></td>
+</tr>
+
+<tr>
+<td><code>window.Wake()</code></td>
+<td>A frame, from another goroutine</td>
+</tr>
+
+<tr>
+<td><code>window.KeepPreference</code>, <code>Preference</code>, <code>ForgetPreference</code></td>
+<td>Settings kept between runs</td>
+</tr>
+
+<tr>
+<td><code>window.SystemPrefersDark()</code>, <code>SystemPalettes()</code></td>
+<td>The system&rsquo;s theme and, on Android 12+, the wallpaper&rsquo;s colours</td>
+</tr>
+
+<tr>
+<td><code>window.Notify</code>, <code>AskForNotifications</code>, <code>NotificationsAllowed</code></td>
+<td>Notifications on a phone</td>
+</tr>
+
+<tr>
+<td><code>window.OpenLink(link)</code>, <code>Share(title, text)</code>, <code>FeelLongPress()</code></td>
+<td>The system&rsquo;s browser, its share sheet, a buzz</td>
+</tr>
+
+<tr>
+<td><code>window.OpenVideo(film)</code></td>
+<td>A film the phone or the browser decodes</td>
+</tr>
+
+<tr>
+<td><code>window.Graphics()</code>, <code>LastCrash()</code></td>
+<td>What draws; the last crash&rsquo;s report, on a phone</td>
+</tr>
+</tbody>
+</table>
+
+<hr>
+
+<p><a href="./guides/getting-started">← Documentation</a></p>

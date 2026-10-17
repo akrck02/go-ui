@@ -1,0 +1,186 @@
+<h1 id="lesson-1-immediate-mode">Lesson 1: immediate mode</h1>
+
+<p>In this lesson you write the smallest useful go-ui program, a lamp that is switched on and off, and
+learn the one idea everything else rests on: <strong>the interface is a function of your data, called
+again at every frame</strong>.</p>
+
+<table>
+<thead>
+<tr>
+<th>Mission</th>
+<th>Pieces</th>
+<th>Time</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>A lamp to switch on and off</td>
+<td><code>window.Run</code>, controls that return what happened, ids</td>
+<td>10 min</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="the-idea">The idea</h4>
+
+<p>Immediate mode is a <strong>whiteboard</strong>: every frame you wipe it and draw it again from your notes (your variables). Nothing on the board can go stale, because nothing on it is kept; a button is simply drawn, and tells you if someone pressed it.</p>
+
+<h2 id="a-frame">A frame</h2>
+<pre><code class="language-go"><span class="c1">// The first go-ui program: a lighthouse whose lamp is switched on and off, counting the switches.</span>
+<span class="kn">package</span> <span class="nx">main</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+	<span class="s">&#34;flag&#34;</span>
+	<span class="s">&#34;fmt&#34;</span>
+	<span class="s">&#34;log&#34;</span>
+
+	<span class="nx">ui</span> <span class="s">&#34;github.com/akrck02/go-ui&#34;</span>
+	<span class="s">&#34;github.com/akrck02/go-ui/window&#34;</span>
+<span class="p">)</span>
+
+<span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">options</span> <span class="o">:=</span> <span class="nx">window</span><span class="p">.</span><span class="nx">Options</span><span class="p">{</span><span class="nx">Title</span><span class="p">:</span> <span class="s">&#34;Lighthouse&#34;</span><span class="p">}</span>
+	<span class="nx">options</span><span class="p">.</span><span class="nf">RegisterFlags</span><span class="p">(</span><span class="nx">flag</span><span class="p">.</span><span class="nx">CommandLine</span><span class="p">)</span> <span class="c1">// -capture, -dark, -width, -height…</span>
+	<span class="nx">flag</span><span class="p">.</span><span class="nf">Parse</span><span class="p">()</span>
+
+	<span class="nx">lit</span> <span class="o">:=</span> <span class="kc">false</span> <span class="c1">// the program&#39;s own data: go-ui keeps none of it</span>
+	<span class="nx">switches</span> <span class="o">:=</span> <span class="mi">0</span>
+
+	<span class="nx">build</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Pad</span><span class="p">(</span><span class="mi">24</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">12</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Heading</span><span class="p">(</span><span class="s">&#34;North Point&#34;</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nx">lit</span> <span class="p">{</span>
+				<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;The lamp is lit.&#34;</span><span class="p">)</span>
+			<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+				<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;The lamp is dark.&#34;</span><span class="p">)</span>
+			<span class="p">}</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;Switched %d times&#34;</span><span class="p">,</span> <span class="nx">switches</span><span class="p">))</span>
+
+			<span class="nx">label</span> <span class="o">:=</span> <span class="s">&#34;Switch on&#34;</span>
+			<span class="k">if</span> <span class="nx">lit</span> <span class="p">{</span>
+				<span class="nx">label</span> <span class="p">=</span> <span class="s">&#34;Switch off&#34;</span>
+			<span class="p">}</span>
+			<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">PrimaryButton</span><span class="p">(</span><span class="nx">label</span> <span class="o">+</span> <span class="s">&#34;##switch&#34;</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">lit</span> <span class="p">=</span> <span class="p">!</span><span class="nx">lit</span>
+				<span class="nx">switches</span><span class="o">++</span>
+			<span class="p">}</span>
+		<span class="p">})</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">window</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">options</span><span class="p">,</span> <span class="nx">build</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+<p><img src="./images/tutorial/01-switch-light.png" alt="The program in the light and the dark theme: a title, two lines and a button" /> <img src="./images/tutorial/01-switch-dark.png" alt="" /></p>
+
+<p>Read <code>build</code> from top to bottom, as go-ui does at every frame:</p>
+
+<ol>
+<li>A <strong>box</strong> that stacks its children vertically, as wide as the window, with 24 pixels of
+padding and 12 between children. Boxes are the only way go-ui arranges things (<a href="./the-quest/layout">lesson 2</a>).</li>
+<li>A heading, then one of two lines, chosen with an ordinary <code>if</code>.</li>
+<li>A caption with the count, formatted from your variable.</li>
+<li>A button. <code>PrimaryButton</code> draws it in the theme&rsquo;s primary colour and returns <code>true</code> <strong>on the
+frame it is clicked</strong>: that is where you change your data.</li>
+</ol>
+
+<p>There is no <code>OnClick</code>, no button object, no &ldquo;update the label&rdquo; step. The next frame calls <code>build</code>
+again, which reads <code>lit</code> and <code>switches</code> again, and the screen follows.</p>
+
+<blockquote>
+<p>📝 <strong>When is <code>build</code> called?</strong> Whenever something could have changed: input, a resize, a frame a
+control asks for (a caret&rsquo;s blink). In between, the window sleeps and the program uses no
+processor. From another goroutine (a download finished) call <code>window.Wake()</code>.</p>
+</blockquote>
+
+<h2 id="ids-how-go-ui-tells-controls-apart">Ids: how go-ui tells controls apart</h2>
+
+<p>go-ui keeps a little state between frames: which control is pressed, which field has the keyboard,
+where a list is scrolled. It finds it again by each control&rsquo;s <strong>id</strong>, a hash of its label and the
+<strong>scopes</strong> around it.</p>
+
+<ul>
+<li>The button&rsquo;s label changes, &ldquo;Switch on&rdquo; or &ldquo;Switch off&rdquo;, but it must stay the same button (or a
+press that started on one would end on another). Everything after <code>##</code> is part of the id but not
+shown: <code>&quot;Switch on##switch&quot;</code> and <code>&quot;Switch off##switch&quot;</code> are one button.</li>
+<li>Two buttons both called &ldquo;Remove&rdquo; in a loop would share an id. Open a scope per item with
+<code>context.Push(name)</code> and close it with <code>context.Pop()</code>; you will do it in <a href="./the-quest/controls-and-forms">lesson 3</a>.</li>
+<li>Panels open a scope with their title, so &ldquo;Apply&rdquo; in two panels never mixes.</li>
+</ul>
+
+<h2 id="the-text-controls">The text controls</h2>
+
+<table>
+<thead>
+<tr>
+<th>Call</th>
+<th>Draws</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Heading(text)</code></td>
+<td>A bold title</td>
+</tr>
+
+<tr>
+<td><code>Label(text)</code></td>
+<td>Body text</td>
+</tr>
+
+<tr>
+<td><code>Caption(text)</code></td>
+<td>Small, quiet text: hints and counts</td>
+</tr>
+
+<tr>
+<td><code>Text(text, ui.TextStyle{Size, Weight, Color})</code></td>
+<td>Any size, weight (<code>draw2d.Regular</code>, <code>Medium</code>, <code>Bold</code>, <code>Mono</code>) and colour</td>
+</tr>
+
+<tr>
+<td><code>Icon(name)</code></td>
+<td>A <a href="https://lucide.dev/icons" target="_blank">Lucide</a> icon by name</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="checkpoint">Checkpoint</h4>
+
+<p>A window with <em>North Point</em>, a line saying whether the lamp is lit, a count, and a button whose words change as you click it.</p>
+
+<p><img src="./images/tutorial/quest/achievement-switchman.svg" alt="Achievement unlocked: Switchman" /></p>
+
+<h2 id="what-you-learnt">What you learnt</h2>
+
+<ul>
+<li><code>window.Run</code> calls your function at every frame; it describes the whole interface.</li>
+<li>Controls are function calls that return what happened; your variables hold the state.</li>
+<li>Ids come from labels and scopes; <code>##</code> keeps an id while the words change.</li>
+</ul>
+
+<h2 id="bonus-optional">Bonus (optional)</h2>
+
+<p>Add a second button, &ldquo;Reset&rdquo;, that sets the count back to zero, and show it only once the lamp has
+been switched at least once.</p>
+
+<details>
+<summary>🔓 Show the solution</summary>
+
+```go
+if switches > 0 && context.Button("Reset") {
+	switches = 0
+}
+```
+
+Showing a control is an `if`; when the condition is false the button simply is not described, so
+it is not there.
+
+</details>
+
+<hr>
+
+<p><a href="./the-quest/the-quest">← Tutorial</a> · <a href="./the-quest/layout">Lesson 2: layout →</a></p>

@@ -1,0 +1,324 @@
+<h1 id="lesson-2-layout">Lesson 2: layout</h1>
+
+<p>In this lesson you build the skeleton of the register: a toolbar across the top, a list down the
+left that can be made wider, the content in the middle and a status bar at the foot. You learn how
+go-ui sizes and places <strong>boxes</strong>.</p>
+
+<table>
+<thead>
+<tr>
+<th>Mission</th>
+<th>Pieces</th>
+<th>Time</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>The window&rsquo;s skeleton</td>
+<td><code>Box</code>, <code>Frame</code>, <code>Fit</code>, <code>Grow</code>, <code>Fixed</code>, <code>Resizable</code></td>
+<td>15 min</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="the-idea">The idea</h4>
+
+<p>Layout is <strong>packing a suitcase</strong>: some things have a fixed size (a book), some fit what they hold (a bag of socks), and the rest grow into whatever room is left. You say which is which; go-ui does the packing at the end of the frame.</p>
+
+<p><img src="./images/tutorial/register-empty.jpg" alt="The skeleton: a toolbar, the list of lighthouses on the left, a hint in the middle, the status bar" /></p>
+
+<h2 id="the-program-s-data">The program&rsquo;s data</h2>
+
+<p>From here on the program keeps its state in a struct, and <code>build</code> is a method on it:</p>
+<pre><code class="language-go"><span class="c1">// lighthouse is the program&#39;s own data: the interface shows it and changes it, and keeps none.</span>
+<span class="kd">type</span> <span class="nx">lighthouse</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">name</span>      <span class="kt">string</span>
+	<span class="nx">colour</span>    <span class="kt">int</span>     <span class="c1">// an index into colours</span>
+	<span class="nx">rangeNM</span>   <span class="kt">float32</span> <span class="c1">// how far the light is seen, in nautical miles</span>
+	<span class="nx">period</span>    <span class="kt">float32</span> <span class="c1">// seconds between flashes</span>
+	<span class="nx">lit</span>       <span class="kt">bool</span>
+	<span class="nx">foghorn</span>   <span class="kt">bool</span>
+	<span class="nx">favourite</span> <span class="kt">bool</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">colours</span> <span class="p">=</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;White&#34;</span><span class="p">,</span> <span class="s">&#34;Red&#34;</span><span class="p">,</span> <span class="s">&#34;Green&#34;</span><span class="p">,</span> <span class="s">&#34;Amber&#34;</span><span class="p">}</span>
+
+<span class="c1">// register is everything the program remembers between frames.</span>
+<span class="kd">type</span> <span class="nx">register</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">lighthouses</span> <span class="p">[]</span><span class="nx">lighthouse</span>
+	<span class="nx">selected</span>    <span class="kt">int</span> <span class="c1">// -1 = none</span>
+	<span class="nx">search</span>      <span class="kt">string</span>
+	<span class="nx">sideWidth</span>   <span class="kt">float32</span>
+	<span class="nx">removing</span>    <span class="kt">bool</span> <span class="c1">// the sheet asking before a removal is open</span>
+	<span class="nx">added</span>       <span class="kt">int</span>  <span class="c1">// how many were added, to name new ones</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">options</span> <span class="o">:=</span> <span class="nx">window</span><span class="p">.</span><span class="nx">Options</span><span class="p">{</span><span class="nx">Title</span><span class="p">:</span> <span class="s">&#34;Lighthouse register&#34;</span><span class="p">}</span>
+	<span class="nx">options</span><span class="p">.</span><span class="nf">RegisterFlags</span><span class="p">(</span><span class="nx">flag</span><span class="p">.</span><span class="nx">CommandLine</span><span class="p">)</span>
+	<span class="nx">flag</span><span class="p">.</span><span class="nf">Parse</span><span class="p">()</span>
+	<span class="nx">options</span><span class="p">.</span><span class="nx">MinWidth</span><span class="p">,</span> <span class="nx">options</span><span class="p">.</span><span class="nx">MinHeight</span> <span class="p">=</span> <span class="mi">640</span><span class="p">,</span> <span class="mi">400</span> <span class="c1">// the smallest the layout still works at</span>
+
+	<span class="nx">program</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">register</span><span class="p">{</span>
+		<span class="nx">lighthouses</span><span class="p">:</span> <span class="p">[]</span><span class="nx">lighthouse</span><span class="p">{</span>
+			<span class="p">{</span><span class="nx">name</span><span class="p">:</span> <span class="s">&#34;North Point&#34;</span><span class="p">,</span> <span class="nx">rangeNM</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="nx">period</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="nx">lit</span><span class="p">:</span> <span class="kc">true</span><span class="p">},</span>
+			<span class="p">{</span><span class="nx">name</span><span class="p">:</span> <span class="s">&#34;East Cape&#34;</span><span class="p">,</span> <span class="nx">colour</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">rangeNM</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span> <span class="nx">period</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="nx">lit</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nx">foghorn</span><span class="p">:</span> <span class="kc">true</span><span class="p">},</span>
+			<span class="p">{</span><span class="nx">name</span><span class="p">:</span> <span class="s">&#34;Harbour Mole&#34;</span><span class="p">,</span> <span class="nx">colour</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">rangeNM</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="nx">period</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+			<span class="p">{</span><span class="nx">name</span><span class="p">:</span> <span class="s">&#34;South Reef&#34;</span><span class="p">,</span> <span class="nx">colour</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="nx">rangeNM</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span> <span class="nx">period</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="nx">lit</span><span class="p">:</span> <span class="kc">true</span><span class="p">},</span>
+		<span class="p">},</span>
+		<span class="nx">sideWidth</span><span class="p">:</span> <span class="mi">240</span><span class="p">,</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">window</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">options</span><span class="p">,</span> <span class="nx">program</span><span class="p">.</span><span class="nx">build</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+<h2 id="boxes">Boxes</h2>
+
+<p>Every control is a box, and boxes nest. A <code>ui.Layout</code> says how a box sizes itself and places its
+children:</p>
+
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Means</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Direction</code></td>
+<td><code>ui.Horizontal</code> (left to right, the default) or <code>ui.Vertical</code> (top to bottom)</td>
+</tr>
+
+<tr>
+<td><code>Width</code>, <code>Height</code></td>
+<td>How big it is: see the table below</td>
+</tr>
+
+<tr>
+<td><code>Padding</code></td>
+<td>Space inside its edges: <code>ui.Pad(all)</code>, <code>ui.PadXY(horizontal, vertical)</code></td>
+</tr>
+
+<tr>
+<td><code>Gap</code></td>
+<td>Space between its children</td>
+</tr>
+
+<tr>
+<td><code>AlignX</code>, <code>AlignY</code></td>
+<td><code>ui.Start</code>, <code>ui.Center</code> or <code>ui.End</code>: where children sit when there is room to spare</td>
+</tr>
+
+<tr>
+<td><code>Columns</code></td>
+<td>Above 0, a grid of that many equal columns</td>
+</tr>
+
+<tr>
+<td><code>Wrap</code></td>
+<td>Children that pass the right edge go on to a new line, like words</td>
+</tr>
+</tbody>
+</table>
+
+<table>
+<thead>
+<tr>
+<th>Size</th>
+<th>Means</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>ui.Fit()</code></td>
+<td>As big as its content: the default</td>
+</tr>
+
+<tr>
+<td><code>ui.Grow()</code></td>
+<td>Its content plus a share of the space left; <code>GrowBy(2)</code> takes twice the share</td>
+</tr>
+
+<tr>
+<td><code>ui.Share(weight)</code></td>
+<td>A share of the space left, starting from nothing (equal shares come out equal: table columns)</td>
+</tr>
+
+<tr>
+<td><code>ui.Fixed(pixels)</code></td>
+<td>Exactly that many layout pixels</td>
+</tr>
+
+<tr>
+<td><code>ui.Percent(0.3)</code></td>
+<td>A share of the parent</td>
+</tr>
+
+<tr>
+<td><code>….Between(minimum, maximum)</code></td>
+<td>Bounds any of them</td>
+</tr>
+</tbody>
+</table>
+<p>Sizes are worked out once the whole frame is described, at the end of the frame: a box can grow
+into space that depends on boxes described after it. When the window is too narrow, growing boxes
+shrink first, so fixed and fitted ones keep their size.</p>
+
+<h2 id="the-skeleton">The skeleton</h2>
+
+<p>The window is a vertical box that fills it: the toolbar, then a horizontal box that grows to take
+the height left (the list and the content), then the status bar.</p>
+<pre><code class="language-go"><span class="c1">// build describes the whole interface, in every frame.</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">build</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">()},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">program</span><span class="p">.</span><span class="nf">toolbar</span><span class="p">(</span><span class="nx">context</span><span class="p">)</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">()},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">program</span><span class="p">.</span><span class="nf">sideList</span><span class="p">(</span><span class="nx">context</span><span class="p">)</span>
+			<span class="nx">program</span><span class="p">.</span><span class="nf">details</span><span class="p">(</span><span class="nx">context</span><span class="p">)</span>
+		<span class="p">})</span>
+		<span class="nx">program</span><span class="p">.</span><span class="nf">statusBar</span><span class="p">(</span><span class="nx">context</span><span class="p">)</span>
+	<span class="p">})</span>
+	<span class="nx">program</span><span class="p">.</span><span class="nf">confirmRemoval</span><span class="p">(</span><span class="nx">context</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="painting-a-box-frame">Painting a box: <code>Frame</code></h3>
+
+<p><code>Box</code> only arranges. <code>Frame</code> also paints, with a <code>ui.Look</code>: a fill, a border, rounded corners, a
+shadow, a clip. Colours come from the <strong>theme</strong>, so the dark theme follows on its own:</p>
+<pre><code class="language-go"><span class="c1">// statusBar sums the register up at the foot of the window.</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">statusBar</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">lit</span> <span class="o">:=</span> <span class="mi">0</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">light</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">light</span><span class="p">.</span><span class="nx">lit</span> <span class="p">{</span>
+			<span class="nx">lit</span><span class="o">++</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Separator</span><span class="p">()</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Frame</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">PadXY</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">6</span><span class="p">)},</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Look</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">Surface</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%d lighthouses, %d lit&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">),</span> <span class="nx">lit</span><span class="p">))</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+</code></pre>
+
+<p><code>Separator()</code> draws a thin line across its box. <code>Spacer()</code> takes all the free space of its row or
+column, pushing what follows to the far end: the toolbar puts one between its title and its search
+box.</p>
+<pre><code class="language-go"><span class="c1">// toolbar is the bar across the top: the title, a search box and a menu to add a lighthouse.</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">toolbar</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">theme</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span>
+	<span class="nx">bar</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">PadXY</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="nx">AlignY</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Center</span><span class="p">}</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Frame</span><span class="p">(</span><span class="nx">bar</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Look</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Surface</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Icon</span><span class="p">(</span><span class="s">&#34;lighthouse&#34;</span><span class="p">)</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Heading</span><span class="p">(</span><span class="s">&#34;Lighthouses&#34;</span><span class="p">)</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Spacer</span><span class="p">()</span>
+		<span class="c1">// the search box and the Add menu come in lessons 3 and 4</span>
+	<span class="p">})</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Separator</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="a-column-you-can-resize">A column you can resize</h3>
+
+<p><code>Resizable</code> is a box with a handle on one side. Dragging it writes the new width into your
+variable, between a minimum and a maximum; the program keeps the variable (and could save it).</p>
+<pre><code class="language-go"><span class="c1">// sideList lists the lighthouses; lesson 3 makes the rows selectable.</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">sideList</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">column</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Pad</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Resizable</span><span class="p">(</span><span class="s">&#34;side&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">RightSide</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">program</span><span class="p">.</span><span class="nx">sideWidth</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="nx">column</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">light</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="nx">light</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>And the content, for now a hint:</p>
+<pre><code class="language-go"><span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">details</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">area</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Pad</span><span class="p">(</span><span class="mi">24</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">12</span><span class="p">}</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">area</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="s">&#34;Choose a lighthouse on the left, or add one.&#34;</span><span class="p">)</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">confirmRemoval</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{}</span> <span class="c1">// lesson 4</span>
+</code></pre>
+
+<p>Run it and make the window narrow: the content shrinks, the list keeps its width, and the window
+stops at <code>MinWidth</code>.</p>
+
+<h2 id="shortcuts">Shortcuts</h2>
+
+<table>
+<thead>
+<tr>
+<th>Call</th>
+<th>Is</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Row(content)</code></td>
+<td>A full-width horizontal box with the theme&rsquo;s gap, its children centred vertically</td>
+</tr>
+
+<tr>
+<td><code>Column(content)</code></td>
+<td>A full-width vertical box with the theme&rsquo;s gap</td>
+</tr>
+
+<tr>
+<td><code>Grid(columns, content)</code></td>
+<td>Rows of equal cells</td>
+</tr>
+
+<tr>
+<td><code>Spacer()</code>, <code>Separator()</code></td>
+<td>Free space; a thin line</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="checkpoint">Checkpoint</h4>
+
+<p>A toolbar on top, the list on the left (drag its edge to widen it), a hint in the middle and the status bar at the foot; make the window narrow and the list keeps its width.</p>
+
+<p><img src="./images/tutorial/quest/achievement-surveyor.svg" alt="Achievement unlocked: Surveyor" /></p>
+
+<h2 id="what-you-learnt">What you learnt</h2>
+
+<ul>
+<li>Boxes nest; a <code>Layout</code> gives a direction, sizes, padding, gaps and alignment.</li>
+<li><code>Fit</code>, <code>Grow</code>, <code>Share</code>, <code>Fixed</code>, <code>Percent</code>: sizes are worked out at the end of the frame.</li>
+<li><code>Frame</code> paints a box with a <code>Look</code>, in the theme&rsquo;s colours; <code>Resizable</code> lets the person size it.</li>
+</ul>
+
+<h2 id="bonus-optional">Bonus (optional)</h2>
+
+<p>Put the status bar&rsquo;s count on the left and the word &ldquo;Saved&rdquo; on the right of the same bar.</p>
+
+<details>
+<summary>🔓 Show the solution</summary>
+
+A `Spacer` between them pushes the second to the far end:
+
+```go
+context.Frame(ui.Layout{Width: ui.Grow(), Padding: ui.PadXY(16, 6)}, ui.Look{Fill: context.Theme.Surface}, func() {
+	context.Caption(fmt.Sprintf("%d lighthouses, %d lit", len(program.lighthouses), lit))
+	context.Spacer()
+	context.Caption("Saved")
+})
+```
+
+</details>
+
+<hr>
+
+<p><a href="./the-quest/immediate-mode">← Lesson 1</a> · <a href="./the-quest/controls-and-forms">Lesson 3: controls and forms →</a></p>

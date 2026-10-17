@@ -1,0 +1,455 @@
+<h1 id="lesson-5-controls-of-your-own">Lesson 5: controls of your own</h1>
+
+<p>go-ui&rsquo;s controls are built from the same pieces you can use. In this lesson you make a <strong>favourite
+star</strong> from a clickable box, tell <strong>screen readers</strong> what it is, <strong>paint</strong> a strip of your own, and
+give the register a <strong>theme</strong> colour of its own.</p>
+
+<table>
+<thead>
+<tr>
+<th>Mission</th>
+<th>Pieces</th>
+<th>Time</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>A favourite star, and a theme of your own</td>
+<td><code>Clickable</code>, <code>Describe</code>, <code>Paint</code>, <code>Theme</code></td>
+<td>20 min</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="the-idea">The idea</h4>
+
+<p>go-ui&rsquo;s own buttons are made of the same <strong>bricks</strong> you can use: a box that reacts to the pointer, with a look for each state. And the theme is a <strong>paint chart</strong>: change one swatch and every wall painted with it changes.</p>
+
+<p><img src="./images/tutorial/05-register-dark.jpg" alt="The finished register in the dark theme, North Point a favourite, its light&rsquo;s character painted under the period" /></p>
+
+<h2 id="a-clickable-box">A clickable box</h2>
+
+<p><code>Clickable(name, layout, looks, content)</code> is any box that reacts to the pointer: it is painted with
+one of three <code>Look</code>s (left alone, hovered, pressed) and returns <code>true</code> when clicked. Inside, put
+anything. go-ui&rsquo;s own buttons are made this way.</p>
+<pre><code class="language-go"><span class="c1">// favouriteButton is a control of the program&#39;s own: a star, golden while the lighthouse is a</span>
+<span class="c1">// favourite. A click flips it.</span>
+<span class="kd">func</span> <span class="nf">favouriteButton</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">favourite</span> <span class="o">*</span><span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">theme</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span>
+	<span class="nx">square</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">36</span><span class="p">),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">36</span><span class="p">),</span> <span class="nx">AlignX</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Center</span><span class="p">,</span> <span class="nx">AlignY</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Center</span><span class="p">}</span>
+	<span class="nx">looks</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Looks</span><span class="p">{</span>
+		<span class="nx">Hovered</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Look</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Sunken</span><span class="p">,</span> <span class="nx">Radius</span><span class="p">:</span> <span class="mi">18</span><span class="p">},</span>
+		<span class="nx">Pressed</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Look</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Line</span><span class="p">,</span> <span class="nx">Radius</span><span class="p">:</span> <span class="mi">18</span><span class="p">},</span>
+	<span class="p">}</span>
+	<span class="nx">colour</span> <span class="o">:=</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">InkQuiet</span>
+	<span class="k">if</span> <span class="o">*</span><span class="nx">favourite</span> <span class="p">{</span>
+		<span class="nx">colour</span> <span class="p">=</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nf">Hex</span><span class="p">(</span><span class="s">&#34;#e8a317&#34;</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Clickable</span><span class="p">(</span><span class="s">&#34;favourite&#34;</span><span class="p">,</span> <span class="nx">square</span><span class="p">,</span> <span class="nx">looks</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">IconSized</span><span class="p">(</span><span class="s">&#34;star&#34;</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="nx">colour</span><span class="p">)</span>
+	<span class="p">})</span> <span class="p">{</span>
+		<span class="o">*</span><span class="nx">favourite</span> <span class="p">=</span> <span class="p">!</span><span class="o">*</span><span class="nx">favourite</span>
+	<span class="p">}</span>
+	<span class="c1">// a screen reader would only hear &#34;star&#34;: say what it is and whether it is on</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Describe</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Description</span><span class="p">{</span><span class="nx">Role</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">SwitchRole</span><span class="p">,</span> <span class="nx">Label</span><span class="p">:</span> <span class="s">&#34;Favourite&#34;</span><span class="p">,</span> <span class="nx">Checked</span><span class="p">:</span> <span class="o">*</span><span class="nx">favourite</span><span class="p">})</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>It goes in the heading row of the form, after a <code>Spacer</code> (lesson 3 already calls it).</p>
+
+<h2 id="screen-readers">Screen readers</h2>
+
+<p>A screen reader (TalkBack on Android) speaks what is on the screen for someone who cannot see it.
+go-ui works out what to say from the boxes: a button reads its text, a checkbox says whether it is
+ticked. A box of your own holds only an icon, which would be read as &ldquo;star&rdquo;. <code>Describe</code>, right
+after the control, says what it really is:</p>
+
+<table>
+<thead>
+<tr>
+<th><code>ui.Description</code> field</th>
+<th>Says</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Role</code></td>
+<td>What kind of thing: <code>ButtonRole</code>, <code>SwitchRole</code>, <code>CheckboxRole</code>, <code>SliderRole</code>, <code>FieldRole</code>…</td>
+</tr>
+
+<tr>
+<td><code>Label</code></td>
+<td>Its name</td>
+</tr>
+
+<tr>
+<td><code>Value</code></td>
+<td>What it holds</td>
+</tr>
+
+<tr>
+<td><code>Checked</code>, <code>Selected</code>, <code>Disabled</code></td>
+<td>Its state</td>
+</tr>
+
+<tr>
+<td><code>Hidden</code></td>
+<td>Leave it out: a decoration</td>
+</tr>
+</tbody>
+</table>
+<p>It costs nothing while no screen reader is on. The <a href="./guides/screen-readers">guide</a> explains
+how the screen is read.</p>
+
+<h2 id="painting-your-own-shapes">Painting your own shapes</h2>
+
+<p>When no control draws what you need, <code>Paint(layout, paint)</code> adds a box that is laid out like any
+other and then handed to your function, with its final rectangle and go-renderer&rsquo;s <code>draw2d.List</code>
+to draw into: rounded rectangles, shadows, text, icons, pictures.</p>
+
+<p>The register shows a light&rsquo;s <em>character</em>, a mark for every flash in twenty seconds:</p>
+<pre><code class="language-go"><span class="c1">// flashes paints the light&#39;s character over twenty seconds: a mark for every flash.</span>
+<span class="kd">func</span> <span class="nf">flashes</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">period</span> <span class="kt">float32</span><span class="p">,</span> <span class="nx">colour</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">theme</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Paint</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">24</span><span class="p">)},</span> <span class="kd">func</span><span class="p">(</span><span class="nx">area</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span><span class="p">,</span> <span class="nx">drawing</span> <span class="o">*</span><span class="nx">draw2d</span><span class="p">.</span><span class="nx">List</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">drawing</span><span class="p">.</span><span class="nf">Rectangle</span><span class="p">(</span><span class="nx">area</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Sunken</span><span class="p">,</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Transparent</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+		<span class="kd">const</span> <span class="nx">seconds</span> <span class="p">=</span> <span class="mi">20</span>
+		<span class="k">for</span> <span class="nx">second</span> <span class="o">:=</span> <span class="nb">float32</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span> <span class="nx">second</span> <span class="p">&lt;</span> <span class="nx">seconds</span><span class="p">;</span> <span class="nx">second</span> <span class="o">+=</span> <span class="nx">period</span> <span class="p">{</span>
+			<span class="nx">x</span> <span class="o">:=</span> <span class="nx">area</span><span class="p">.</span><span class="nx">X</span> <span class="o">+</span> <span class="nx">area</span><span class="p">.</span><span class="nx">Width</span><span class="o">*</span><span class="nx">second</span><span class="o">/</span><span class="nx">seconds</span>
+			<span class="nx">drawing</span><span class="p">.</span><span class="nf">Rectangle</span><span class="p">(</span><span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span><span class="p">{</span><span class="nx">X</span><span class="p">:</span> <span class="nx">x</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">Y</span><span class="p">:</span> <span class="nx">area</span><span class="p">.</span><span class="nx">Y</span> <span class="o">+</span> <span class="mi">4</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">area</span><span class="p">.</span><span class="nx">Height</span> <span class="o">-</span> <span class="mi">8</span><span class="p">},</span> <span class="mi">3</span><span class="p">,</span> <span class="nx">colour</span><span class="p">,</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Transparent</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+
+<span class="c1">// lampColours are the colours a flash is painted in, by colours&#39; order.</span>
+<span class="kd">var</span> <span class="nx">lampColours</span> <span class="p">=</span> <span class="p">[]</span><span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span><span class="p">{</span><span class="nx">draw2d</span><span class="p">.</span><span class="nf">Hex</span><span class="p">(</span><span class="s">&#34;#f5f0d0&#34;</span><span class="p">),</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nf">Hex</span><span class="p">(</span><span class="s">&#34;#d64545&#34;</span><span class="p">),</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nf">Hex</span><span class="p">(</span><span class="s">&#34;#3f9b5b&#34;</span><span class="p">),</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nf">Hex</span><span class="p">(</span><span class="s">&#34;#e8a317&#34;</span><span class="p">)}</span>
+</code></pre>
+<pre><code class="language-go"><span class="nf">field</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="s">&#34;Character&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nf">flashes</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">light</span><span class="p">.</span><span class="nx">period</span><span class="p">,</span> <span class="nx">lampColours</span><span class="p">[</span><span class="nx">light</span><span class="p">.</span><span class="nx">colour</span><span class="p">])</span> <span class="p">})</span>
+</code></pre>
+
+<p>Coordinates are layout pixels from the window&rsquo;s top-left corner, like everything in go-ui.</p>
+
+<h2 id="themes">Themes</h2>
+
+<p>Every control reads its colours and sizes from <code>context.Theme</code>: surfaces, inks, lines, the primary
+colour, text sizes, the height of a control, gaps, padding and corner radii. <code>ui.LightTheme()</code> is
+the default and <code>ui.DarkTheme()</code> its dark twin (<code>-dark</code>, or <code>window.SystemPrefersDark()</code>). Change a
+token and every control follows:</p>
+<pre><code class="language-go"><span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">build</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">Primary</span> <span class="p">=</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nf">Hex</span><span class="p">(</span><span class="s">&#34;#00796b&#34;</span><span class="p">)</span> <span class="c1">// a teal of the register&#39;s own</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">PrimaryTint</span> <span class="p">=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">Primary</span><span class="p">.</span><span class="nf">WithAlpha</span><span class="p">(</span><span class="mf">0.12</span><span class="p">)</span>
+	<span class="err">…</span>
+</code></pre>
+
+<p><img src="./images/tutorial/05-register.jpg" alt="The register in its own teal" /></p>
+
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Used for</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Background</code>, <code>Surface</code>, <code>Sunken</code></td>
+<td>Behind everything; panels and bars; wells and hovered controls</td>
+</tr>
+
+<tr>
+<td><code>Ink</code>, <code>InkSoft</code>, <code>InkQuiet</code></td>
+<td>Body text; secondary text and icons; hints</td>
+</tr>
+
+<tr>
+<td><code>Line</code>, <code>ControlLine</code></td>
+<td>Separators; the borders of fields and buttons</td>
+</tr>
+
+<tr>
+<td><code>Primary</code>, <code>OnPrimary</code>, <code>PrimaryTint</code></td>
+<td>The main action, the text on it, a light wash of it</td>
+</tr>
+
+<tr>
+<td><code>Positive</code>, <code>Warning</code>, <code>Danger</code></td>
+<td>States</td>
+</tr>
+
+<tr>
+<td><code>TextSize</code>, <code>HeadingSize</code>, <code>ControlHeight</code>, <code>Gap</code>, <code>Padding</code>, <code>ControlRadius</code>…</td>
+<td>Sizes, in layout pixels</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="moving-things">Moving things</h2>
+
+<p>Controls of your own can move. <code>context.Animate(name, target, duration)</code> eases a value towards a
+target and asks for frames only while it moves; <code>context.Appear(name, duration)</code> eases from 0 to 1
+the first time something is shown; <code>context.Fold(name, open, duration, layout, content)</code> opens a
+box to its content&rsquo;s height and closes it to nothing.</p>
+
+<h4 id="checkpoint">Checkpoint</h4>
+
+<p>A star beside the name turns gold when clicked; under the period, a strip shows a mark for every flash; everything primary is teal.</p>
+
+<p><img src="./images/tutorial/quest/achievement-craftsman.svg" alt="Achievement unlocked: Craftsman" /></p>
+
+<h2 id="what-you-learnt">What you learnt</h2>
+
+<ul>
+<li><code>Clickable</code> makes any box a control, with a look for each state.</li>
+<li><code>Describe</code> tells screen readers what a control of your own is.</li>
+<li><code>Paint</code> draws your own shapes in a laid-out box; the theme&rsquo;s tokens colour and size everything.</li>
+</ul>
+
+<h2 id="bonus-optional">Bonus (optional)</h2>
+
+<p>Make the star grow a little while the pointer is over it, easing between the two sizes.</p>
+
+<details>
+<summary>🔓 Show the solution</summary>
+
+`Clickable` does not tell you whether it is hovered, but the area it had in the last frame does:
+`context.Area` finds a control by its scopes and name, and `context.Pointer()` says where the
+pointer is.
+
+```go
+area, found := context.Area("favourite")
+pointerX, pointerY := context.Pointer()
+target := float32(20)
+if found && area.Contains(pointerX, pointerY) {
+	target = 24
+}
+size := context.Animate("favourite size", target, 120*time.Millisecond)
+… context.IconSized("star", size, colour) …
+```
+
+</details>
+
+<h2 id="the-whole-program">The whole program</h2>
+
+<p><code>main.go</code>:</p>
+<pre><code class="language-go"><span class="c1">// Command register is the go-ui tutorial&#39;s program: a register of lighthouses, with a list to</span>
+<span class="c1">// choose one, a form to edit it, a search, a menu to add one and a sheet that asks before removing.</span>
+<span class="kn">package</span> <span class="nx">main</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+	<span class="s">&#34;flag&#34;</span>
+	<span class="s">&#34;fmt&#34;</span>
+	<span class="s">&#34;github.com/akrck02/go-renderer/draw2d&#34;</span>
+	<span class="s">&#34;log&#34;</span>
+	<span class="s">&#34;strings&#34;</span>
+
+	<span class="nx">ui</span> <span class="s">&#34;github.com/akrck02/go-ui&#34;</span>
+	<span class="s">&#34;github.com/akrck02/go-ui/window&#34;</span>
+<span class="p">)</span>
+
+<span class="c1">// lighthouse is the program&#39;s own data: the interface shows it and changes it, and keeps none.</span>
+<span class="kd">type</span> <span class="nx">lighthouse</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">name</span>      <span class="kt">string</span>
+	<span class="nx">colour</span>    <span class="kt">int</span>     <span class="c1">// an index into colours</span>
+	<span class="nx">rangeNM</span>   <span class="kt">float32</span> <span class="c1">// how far the light is seen, in nautical miles</span>
+	<span class="nx">period</span>    <span class="kt">float32</span> <span class="c1">// seconds between flashes</span>
+	<span class="nx">lit</span>       <span class="kt">bool</span>
+	<span class="nx">foghorn</span>   <span class="kt">bool</span>
+	<span class="nx">favourite</span> <span class="kt">bool</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">colours</span> <span class="p">=</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;White&#34;</span><span class="p">,</span> <span class="s">&#34;Red&#34;</span><span class="p">,</span> <span class="s">&#34;Green&#34;</span><span class="p">,</span> <span class="s">&#34;Amber&#34;</span><span class="p">}</span>
+
+<span class="c1">// register is everything the program remembers between frames.</span>
+<span class="kd">type</span> <span class="nx">register</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">lighthouses</span> <span class="p">[]</span><span class="nx">lighthouse</span>
+	<span class="nx">selected</span>    <span class="kt">int</span> <span class="c1">// -1 = none</span>
+	<span class="nx">search</span>      <span class="kt">string</span>
+	<span class="nx">sideWidth</span>   <span class="kt">float32</span>
+	<span class="nx">removing</span>    <span class="kt">bool</span> <span class="c1">// the sheet asking before a removal is open</span>
+	<span class="nx">added</span>       <span class="kt">int</span>  <span class="c1">// how many were added, to name new ones</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">options</span> <span class="o">:=</span> <span class="nx">window</span><span class="p">.</span><span class="nx">Options</span><span class="p">{</span><span class="nx">Title</span><span class="p">:</span> <span class="s">&#34;Lighthouse register&#34;</span><span class="p">}</span>
+	<span class="nx">options</span><span class="p">.</span><span class="nf">RegisterFlags</span><span class="p">(</span><span class="nx">flag</span><span class="p">.</span><span class="nx">CommandLine</span><span class="p">)</span>
+	<span class="nx">flag</span><span class="p">.</span><span class="nf">Parse</span><span class="p">()</span>
+	<span class="nx">options</span><span class="p">.</span><span class="nx">MinWidth</span><span class="p">,</span> <span class="nx">options</span><span class="p">.</span><span class="nx">MinHeight</span> <span class="p">=</span> <span class="mi">640</span><span class="p">,</span> <span class="mi">400</span> <span class="c1">// the smallest the layout still works at</span>
+
+	<span class="nx">program</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">register</span><span class="p">{</span>
+		<span class="nx">lighthouses</span><span class="p">:</span> <span class="p">[]</span><span class="nx">lighthouse</span><span class="p">{</span>
+			<span class="p">{</span><span class="nx">name</span><span class="p">:</span> <span class="s">&#34;North Point&#34;</span><span class="p">,</span> <span class="nx">rangeNM</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="nx">period</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="nx">lit</span><span class="p">:</span> <span class="kc">true</span><span class="p">},</span>
+			<span class="p">{</span><span class="nx">name</span><span class="p">:</span> <span class="s">&#34;East Cape&#34;</span><span class="p">,</span> <span class="nx">colour</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">rangeNM</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span> <span class="nx">period</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="nx">lit</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nx">foghorn</span><span class="p">:</span> <span class="kc">true</span><span class="p">},</span>
+			<span class="p">{</span><span class="nx">name</span><span class="p">:</span> <span class="s">&#34;Harbour Mole&#34;</span><span class="p">,</span> <span class="nx">colour</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">rangeNM</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="nx">period</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+			<span class="p">{</span><span class="nx">name</span><span class="p">:</span> <span class="s">&#34;South Reef&#34;</span><span class="p">,</span> <span class="nx">colour</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="nx">rangeNM</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span> <span class="nx">period</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="nx">lit</span><span class="p">:</span> <span class="kc">true</span><span class="p">},</span>
+		<span class="p">},</span>
+		<span class="nx">sideWidth</span><span class="p">:</span> <span class="mi">240</span><span class="p">,</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">window</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">options</span><span class="p">,</span> <span class="nx">program</span><span class="p">.</span><span class="nx">build</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// build describes the whole interface, in every frame.</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">build</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">Primary</span> <span class="p">=</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nf">Hex</span><span class="p">(</span><span class="s">&#34;#00796b&#34;</span><span class="p">)</span> <span class="c1">// a teal of the register&#39;s own</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">PrimaryTint</span> <span class="p">=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">Primary</span><span class="p">.</span><span class="nf">WithAlpha</span><span class="p">(</span><span class="mf">0.12</span><span class="p">)</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">()},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">program</span><span class="p">.</span><span class="nf">toolbar</span><span class="p">(</span><span class="nx">context</span><span class="p">)</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">()},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">program</span><span class="p">.</span><span class="nf">sideList</span><span class="p">(</span><span class="nx">context</span><span class="p">)</span>
+			<span class="nx">program</span><span class="p">.</span><span class="nf">details</span><span class="p">(</span><span class="nx">context</span><span class="p">)</span>
+		<span class="p">})</span>
+		<span class="nx">program</span><span class="p">.</span><span class="nf">statusBar</span><span class="p">(</span><span class="nx">context</span><span class="p">)</span>
+	<span class="p">})</span>
+	<span class="nx">program</span><span class="p">.</span><span class="nf">confirmRemoval</span><span class="p">(</span><span class="nx">context</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// toolbar is the bar across the top: the title, a search box and a menu to add a lighthouse.</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">toolbar</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">theme</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span>
+	<span class="nx">bar</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">PadXY</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="nx">AlignY</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Center</span><span class="p">}</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Frame</span><span class="p">(</span><span class="nx">bar</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Look</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Surface</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Icon</span><span class="p">(</span><span class="s">&#34;lighthouse&#34;</span><span class="p">)</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Heading</span><span class="p">(</span><span class="s">&#34;Lighthouses&#34;</span><span class="p">)</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Spacer</span><span class="p">()</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">TextFieldWith</span><span class="p">(</span><span class="s">&#34;search&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">program</span><span class="p">.</span><span class="nx">search</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextFieldOptions</span><span class="p">{</span><span class="nx">Placeholder</span><span class="p">:</span> <span class="s">&#34;Search&#34;</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">200</span><span class="p">)})</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">MenuButton</span><span class="p">(</span><span class="s">&#34;plus&#34;</span><span class="p">,</span> <span class="s">&#34;Add&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">MenuItem</span><span class="p">(</span><span class="s">&#34;lighthouse&#34;</span><span class="p">,</span> <span class="s">&#34;Lighthouse&#34;</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">program</span><span class="p">.</span><span class="nf">add</span><span class="p">()</span>
+			<span class="p">}</span>
+			<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">MenuItem</span><span class="p">(</span><span class="s">&#34;copy&#34;</span><span class="p">,</span> <span class="s">&#34;Copy of the selected one&#34;</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">program</span><span class="p">.</span><span class="nx">selected</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="p">{</span>
+				<span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">,</span> <span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">[</span><span class="nx">program</span><span class="p">.</span><span class="nx">selected</span><span class="p">])</span>
+				<span class="nx">program</span><span class="p">.</span><span class="nx">selected</span> <span class="p">=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+			<span class="p">}</span>
+		<span class="p">})</span>
+	<span class="p">})</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Separator</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="c1">// sideList lists the lighthouses that match the search; a click selects one. Its right edge can</span>
+<span class="c1">// be dragged to make it wider.</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">sideList</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">column</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Pad</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Resizable</span><span class="p">(</span><span class="s">&#34;side&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">RightSide</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">program</span><span class="p">.</span><span class="nx">sideWidth</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="nx">column</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">for</span> <span class="nx">index</span><span class="p">,</span> <span class="nx">light</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span> <span class="p">{</span>
+			<span class="k">if</span> <span class="p">!</span><span class="nx">strings</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="nx">strings</span><span class="p">.</span><span class="nf">ToLower</span><span class="p">(</span><span class="nx">light</span><span class="p">.</span><span class="nx">name</span><span class="p">),</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">ToLower</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">search</span><span class="p">))</span> <span class="p">{</span>
+				<span class="k">continue</span>
+			<span class="p">}</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Push</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprint</span><span class="p">(</span><span class="nx">index</span><span class="p">))</span> <span class="c1">// two lighthouses may share a name: give each row its own id</span>
+			<span class="nx">icon</span> <span class="o">:=</span> <span class="s">&#34;lightbulb-off&#34;</span>
+			<span class="k">if</span> <span class="nx">light</span><span class="p">.</span><span class="nx">lit</span> <span class="p">{</span>
+				<span class="nx">icon</span> <span class="p">=</span> <span class="s">&#34;lightbulb&#34;</span>
+			<span class="p">}</span>
+			<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Selectable</span><span class="p">(</span><span class="nx">icon</span><span class="p">,</span> <span class="nx">light</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span> <span class="nx">index</span> <span class="o">==</span> <span class="nx">program</span><span class="p">.</span><span class="nx">selected</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">program</span><span class="p">.</span><span class="nx">selected</span> <span class="p">=</span> <span class="nx">index</span>
+			<span class="p">}</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Pop</span><span class="p">()</span>
+		<span class="p">}</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+
+<span class="c1">// details is the form of the lighthouse selected.</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">details</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">area</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Pad</span><span class="p">(</span><span class="mi">24</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">12</span><span class="p">}</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">area</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">program</span><span class="p">.</span><span class="nx">selected</span> <span class="p">&lt;</span> <span class="mi">0</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="s">&#34;Choose a lighthouse on the left, or add one.&#34;</span><span class="p">)</span>
+			<span class="k">return</span>
+		<span class="p">}</span>
+		<span class="nx">light</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">[</span><span class="nx">program</span><span class="p">.</span><span class="nx">selected</span><span class="p">]</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Heading</span><span class="p">(</span><span class="nx">light</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Spacer</span><span class="p">()</span>
+			<span class="nf">favouriteButton</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">light</span><span class="p">.</span><span class="nx">favourite</span><span class="p">)</span>
+		<span class="p">})</span>
+		<span class="nf">field</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="s">&#34;Name&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">TextFieldWith</span><span class="p">(</span><span class="s">&#34;name&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">light</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextFieldOptions</span><span class="p">{</span><span class="nx">MaxLength</span><span class="p">:</span> <span class="mi">40</span><span class="p">})</span>
+		<span class="p">})</span>
+		<span class="nf">field</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="s">&#34;Colour&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Select</span><span class="p">(</span><span class="s">&#34;colour&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">light</span><span class="p">.</span><span class="nx">colour</span><span class="p">,</span> <span class="nx">colours</span><span class="p">)</span> <span class="p">})</span>
+		<span class="nf">field</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="s">&#34;Range&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">context</span><span class="p">.</span><span class="nf">NumberField</span><span class="p">(</span><span class="s">&#34;range&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">light</span><span class="p">.</span><span class="nx">rangeNM</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s">&#34;%.1f nm&#34;</span><span class="p">)</span> <span class="p">})</span>
+		<span class="nf">field</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="s">&#34;Period&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">SliderStep</span><span class="p">(</span><span class="s">&#34;period&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">light</span><span class="p">.</span><span class="nx">period</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%.0f s&#34;</span><span class="p">,</span> <span class="nx">light</span><span class="p">.</span><span class="nx">period</span><span class="p">))</span>
+		<span class="p">})</span>
+		<span class="nf">field</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="s">&#34;Character&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nf">flashes</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">light</span><span class="p">.</span><span class="nx">period</span><span class="p">,</span> <span class="nx">lampColours</span><span class="p">[</span><span class="nx">light</span><span class="p">.</span><span class="nx">colour</span><span class="p">])</span> <span class="p">})</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Toggle</span><span class="p">(</span><span class="s">&#34;Lit&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">light</span><span class="p">.</span><span class="nx">lit</span><span class="p">)</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Checkbox</span><span class="p">(</span><span class="s">&#34;Foghorn&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">light</span><span class="p">.</span><span class="nx">foghorn</span><span class="p">)</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Spacer</span><span class="p">()</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Spacer</span><span class="p">()</span>
+			<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Button</span><span class="p">(</span><span class="s">&#34;Remove&#34;</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">program</span><span class="p">.</span><span class="nx">removing</span> <span class="p">=</span> <span class="kc">true</span>
+			<span class="p">}</span>
+		<span class="p">})</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+
+<span class="c1">// field is a row of the form: a label in a column of its own width, then the control.</span>
+<span class="kd">func</span> <span class="nf">field</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">label</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">control</span> <span class="kd">func</span><span class="p">())</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">80</span><span class="p">)},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="nx">label</span><span class="p">)</span> <span class="p">})</span>
+		<span class="nf">control</span><span class="p">()</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+
+<span class="c1">// statusBar sums the register up at the foot of the window.</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">statusBar</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">lit</span> <span class="o">:=</span> <span class="mi">0</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">light</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">light</span><span class="p">.</span><span class="nx">lit</span> <span class="p">{</span>
+			<span class="nx">lit</span><span class="o">++</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Separator</span><span class="p">()</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Frame</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">PadXY</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">6</span><span class="p">)},</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Look</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span><span class="p">.</span><span class="nx">Surface</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%d lighthouses, %d lit&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">),</span> <span class="nx">lit</span><span class="p">))</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+
+<span class="c1">// confirmRemoval asks before a lighthouse is taken out of the register.</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">confirmRemoval</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="p">!</span><span class="nx">program</span><span class="p">.</span><span class="nx">removing</span> <span class="p">{</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="nx">name</span> <span class="o">:=</span> <span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">[</span><span class="nx">program</span><span class="p">.</span><span class="nx">selected</span><span class="p">].</span><span class="nx">name</span>
+	<span class="nx">dismissed</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Sheet</span><span class="p">(</span><span class="s">&#34;Remove lighthouse&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">SheetOptions</span><span class="p">{},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;Take %s out of the register?&#34;</span><span class="p">,</span> <span class="nx">name</span><span class="p">))</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Spacer</span><span class="p">()</span>
+			<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Button</span><span class="p">(</span><span class="s">&#34;Keep it&#34;</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">program</span><span class="p">.</span><span class="nx">removing</span> <span class="p">=</span> <span class="kc">false</span>
+			<span class="p">}</span>
+			<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">PrimaryButton</span><span class="p">(</span><span class="s">&#34;Remove&#34;</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">program</span><span class="p">.</span><span class="nf">remove</span><span class="p">()</span>
+				<span class="nx">context</span><span class="p">.</span><span class="nf">Toast</span><span class="p">(</span><span class="nx">name</span><span class="o">+</span><span class="s">&#34; was removed&#34;</span><span class="p">,</span> <span class="kc">false</span><span class="p">)</span>
+			<span class="p">}</span>
+		<span class="p">})</span>
+	<span class="p">})</span>
+	<span class="k">if</span> <span class="nx">dismissed</span> <span class="p">{</span>
+		<span class="nx">program</span><span class="p">.</span><span class="nx">removing</span> <span class="p">=</span> <span class="kc">false</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">add</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">program</span><span class="p">.</span><span class="nx">added</span><span class="o">++</span>
+	<span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">,</span> <span class="nx">lighthouse</span><span class="p">{</span><span class="nx">name</span><span class="p">:</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;New lighthouse %d&#34;</span><span class="p">,</span> <span class="nx">program</span><span class="p">.</span><span class="nx">added</span><span class="p">),</span> <span class="nx">rangeNM</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="nx">period</span><span class="p">:</span> <span class="mi">5</span><span class="p">})</span>
+	<span class="nx">program</span><span class="p">.</span><span class="nx">selected</span> <span class="p">=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+	<span class="nx">program</span><span class="p">.</span><span class="nx">search</span> <span class="p">=</span> <span class="s">&#34;&#34;</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">remove</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">[:</span><span class="nx">program</span><span class="p">.</span><span class="nx">selected</span><span class="p">],</span> <span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">[</span><span class="nx">program</span><span class="p">.</span><span class="nx">selected</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span><span class="o">...</span><span class="p">)</span>
+	<span class="nx">program</span><span class="p">.</span><span class="nx">selected</span> <span class="p">=</span> <span class="nb">min</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">selected</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+	<span class="nx">program</span><span class="p">.</span><span class="nx">removing</span> <span class="p">=</span> <span class="kc">false</span>
+<span class="p">}</span>
+</code></pre>
+
+<p><code>favourite.go</code> and <code>flashes.go</code> are above, each with <code>package main</code> and its imports
+(<code>github.com/akrck02/go-renderer/draw2d</code> and <code>ui &quot;github.com/akrck02/go-ui&quot;</code>).</p>
+
+<hr>
+
+<p><a href="./the-quest/menus-sheets-and-notes">← Lesson 4</a> · <a href="./the-quest/over-a-3d-scene">Lesson 6: over a 3D scene →</a></p>

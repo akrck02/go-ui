@@ -1,0 +1,71 @@
+<h1 id="dragging-and-resizing">Dragging and resizing</h1>
+
+<h2 id="dragsource-and-droptarget"><code>DragSource</code> and <code>DropTarget</code></h2>
+
+<p>Drag a value of yours (<code>any</code>) from one box to another. A press that moves four pixels becomes a
+drag; less is a click, which <code>DragSource</code> returns, so a chip inside can still be clicked. While
+dragging, the source&rsquo;s name follows the pointer, the interface holds the mouse and the keyboard,
+and Escape cancels.</p>
+
+<p>A target says which payloads it takes (<code>accepts</code>; nil takes any), is highlighted while one is
+over it, and returns it on the frame it is let go there. With targets inside targets, the innermost
+takes it.</p>
+<pre><code class="language-go"><span class="nx">theme</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="s">&#34;Drag a tag onto the lens&#34;</span><span class="p">)</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Row</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">tag</span> <span class="o">:=</span> <span class="k">range</span> <span class="p">[]</span><span class="nx">tagName</span><span class="p">{</span><span class="s">&#34;Stone&#34;</span><span class="p">,</span> <span class="s">&#34;Painted&#34;</span><span class="p">,</span> <span class="s">&#34;Listed&#34;</span><span class="p">}</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">DragSource</span><span class="p">(</span><span class="nb">string</span><span class="p">(</span><span class="nx">tag</span><span class="p">),</span> <span class="nx">tag</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Chip</span><span class="p">(</span><span class="s">&#34;tag&#34;</span><span class="p">,</span> <span class="nb">string</span><span class="p">(</span><span class="nx">tag</span><span class="p">),</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">ChipLook</span><span class="p">{})</span>
+		<span class="p">})</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+<span class="nx">isTag</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">payload</span> <span class="kt">any</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">payload</span><span class="p">.(</span><span class="nx">tagName</span><span class="p">);</span> <span class="k">return</span> <span class="nx">ok</span> <span class="p">}</span>
+<span class="nx">target</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Pad</span><span class="p">(</span><span class="mi">12</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">6</span><span class="p">}</span>
+<span class="nx">payload</span><span class="p">,</span> <span class="nx">dropped</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">DropTarget</span><span class="p">(</span><span class="s">&#34;lens&#34;</span><span class="p">,</span> <span class="nx">target</span><span class="p">,</span> <span class="nx">isTag</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Frame</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Pad</span><span class="p">(</span><span class="mi">12</span><span class="p">),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">6</span><span class="p">},</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Look</span><span class="p">{</span><span class="nx">Border</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Line</span><span class="p">,</span> <span class="nx">BorderWidth</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">Radius</span><span class="p">:</span> <span class="mi">8</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Lens:&#34;</span><span class="p">)</span>
+		<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">tag</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">onPart</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Chip</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">,</span> <span class="nb">string</span><span class="p">(</span><span class="nx">tag</span><span class="p">),</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">ChipLook</span><span class="p">{</span><span class="nx">Fill</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">PrimaryTint</span><span class="p">,</span> <span class="nx">Ink</span><span class="p">:</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Primary</span><span class="p">})</span>
+		<span class="p">}</span>
+	<span class="p">})</span>
+<span class="p">})</span>
+<span class="k">if</span> <span class="nx">dropped</span> <span class="p">{</span>
+	<span class="nx">onPart</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">onPart</span><span class="p">,</span> <span class="nx">payload</span><span class="p">.(</span><span class="nx">tagName</span><span class="p">))</span>
+<span class="p">}</span>
+</code></pre>
+
+<p><img src="./images/components/drag-tags.png" alt="Three tags to drag, and the lens&rsquo;s box with Stone on it" /></p>
+
+<h3 id="onto-the-scene">Onto the scene</h3>
+
+<p>Let go over the open screen (no panel, painted box or target) and the payload is the program&rsquo;s:
+<code>DroppedOnScreen()</code> gives it with the pointer&rsquo;s place, to put it in a 3D scene
+(<code>viewer.View.PointOnGround</code>). <code>Dragging()</code> tells about a drag in progress, to preview where it
+would land.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">End</span><span class="p">()</span>
+<span class="k">if</span> <span class="nx">drop</span><span class="p">,</span> <span class="nx">dropped</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">DroppedOnScreen</span><span class="p">();</span> <span class="nx">dropped</span> <span class="p">{</span>
+	<span class="nf">placeAt</span><span class="p">(</span><span class="nf">groundAt</span><span class="p">(</span><span class="nx">drop</span><span class="p">.</span><span class="nx">X</span><span class="p">,</span> <span class="nx">drop</span><span class="p">.</span><span class="nx">Y</span><span class="p">),</span> <span class="nx">drop</span><span class="p">.</span><span class="nx">Payload</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+
+<h2 id="resizable"><code>Resizable</code></h2>
+
+<p>A box with a handle on one side: <code>RightSide</code> for a column on the left of the window, <code>LeftSide</code>
+for one on the right, <code>BottomSide</code> and <code>TopSide</code> for strips. Dragging the handle writes the new
+size into your variable, between a minimum and a maximum (0 = none); keep the variable and save it
+if you like.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Fixed</span><span class="p">(</span><span class="mi">140</span><span class="p">)},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">column</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Direction</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Vertical</span><span class="p">,</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Pad</span><span class="p">(</span><span class="mi">8</span><span class="p">)}</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Resizable</span><span class="p">(</span><span class="s">&#34;side&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">RightSide</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">width</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">320</span><span class="p">,</span> <span class="nx">column</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Side list&#34;</span><span class="p">)</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Caption</span><span class="p">(</span><span class="s">&#34;Drag my right edge&#34;</span><span class="p">)</span>
+	<span class="p">})</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Box</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Padding</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Pad</span><span class="p">(</span><span class="mi">8</span><span class="p">)},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Content&#34;</span><span class="p">)</span> <span class="p">})</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><img src="./images/components/drag-resizable.png" alt="A side list with a line on its right edge, and the content beside it" /></p>
+
+<hr>
+
+<p><a href="./components/layers">← Layers</a> · <a href="./components/components">Components</a></p>

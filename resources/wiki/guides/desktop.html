@@ -1,0 +1,140 @@
+<h1 id="a-window-of-its-own">🖥️ A window of its own</h1>
+
+<p>Package <code>window</code> opens a plain window with no 3D at all and runs the interface in it, painted on
+the theme&rsquo;s <code>Background</code>. The same program also runs <a href="./platforms/web">in a web page</a> and
+<a href="./platforms/android">on Android</a>.</p>
+
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/hero-dark.png">
+  <img alt="The register application: a menu bar, a toolbar with filters and a search box, a navigation list, summary cards, a table, an inspector and a status bar" src="../images/hero-light.png" width="720">
+</picture>
+</p>
+<pre><code class="language-go"><span class="nx">options</span> <span class="o">:=</span> <span class="nx">window</span><span class="p">.</span><span class="nx">Options</span><span class="p">{</span><span class="nx">Title</span><span class="p">:</span> <span class="s">&#34;Lighthouse register&#34;</span><span class="p">}</span>
+<span class="nx">options</span><span class="p">.</span><span class="nx">MinWidth</span><span class="p">,</span> <span class="nx">options</span><span class="p">.</span><span class="nx">MinHeight</span> <span class="p">=</span> <span class="mi">960</span><span class="p">,</span> <span class="mi">560</span> <span class="c1">// the smallest the layout still works at</span>
+<span class="nx">options</span><span class="p">.</span><span class="nf">RegisterFlags</span><span class="p">(</span><span class="nx">flag</span><span class="p">.</span><span class="nx">CommandLine</span><span class="p">)</span> <span class="c1">// -width, -height, -capture, -no-vsync, -dark, -continuous, -backend</span>
+<span class="nx">flag</span><span class="p">.</span><span class="nf">Parse</span><span class="p">()</span>
+<span class="nx">window</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">options</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="s">&#34;Hello&#34;</span><span class="p">)</span>
+<span class="p">})</span>
+</code></pre>
+
+<p><code>cmd/app</code> is a complete example: a menu bar, a toolbar with filters and a search box, a navigation
+list, summary cards, a table whose rows are <code>Clickable</code> boxes with <code>Share</code> columns, an inspector
+with fields to rename a lighthouse and a status bar.</p>
+
+<p>Built for WebAssembly (<code>GOOS=js GOARCH=wasm</code>), the same program runs in a web page: the window is
+the page&rsquo;s canvas, drawn through WebGL2 (<a href="./platforms/web">in a web browser</a>); built for Android, it is the
+application&rsquo;s activity (<a href="./platforms/android">on Android</a>).</p>
+
+<h2 id="the-window-s-options">The window&rsquo;s options</h2>
+
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Flag</th>
+<th>What it does</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Title</code></td>
+<td></td>
+<td>The window&rsquo;s title (a page&rsquo;s title in a browser)</td>
+</tr>
+
+<tr>
+<td><code>Width</code>, <code>Height</code>, <code>MinWidth</code>, <code>MinHeight</code></td>
+<td><code>-width</code>, <code>-height</code></td>
+<td>The window&rsquo;s size (1280 × 800 when 0), and the smallest the layout still works at</td>
+</tr>
+
+<tr>
+<td><code>Continuous</code></td>
+<td><code>-continuous</code></td>
+<td>Draws every frame, for an interface that animates all the time</td>
+</tr>
+
+<tr>
+<td><code>Backend</code></td>
+<td><code>-backend automatic\|metal\|opengl</code></td>
+<td>What draws the window (below)</td>
+</tr>
+
+<tr>
+<td><code>CapturePath</code></td>
+<td><code>-capture file.png</code></td>
+<td>Draws one frame to a picture, in a hidden window, and returns</td>
+</tr>
+
+<tr>
+<td><code>NoVsync</code></td>
+<td><code>-no-vsync</code></td>
+<td>Draws as fast as possible instead of waiting for the display</td>
+</tr>
+
+<tr>
+<td><code>Dark</code></td>
+<td><code>-dark</code></td>
+<td>Starts in the dark theme</td>
+</tr>
+
+<tr>
+<td><code>Scene</code></td>
+<td></td>
+<td>A 3D scene behind the interface (below)</td>
+</tr>
+
+<tr>
+<td><code>Canvas</code></td>
+<td></td>
+<td>In a browser, the page&rsquo;s canvas to draw in (<a href="./platforms/web">web</a>)</td>
+</tr>
+
+<tr>
+<td><code>MaxFramesPerSecond</code>, <code>Hidden</code></td>
+<td></td>
+<td>A cap on frames, and a function called when the program leaves the screen (<a href="./platforms/android">Android</a>)</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="drawing-only-when-something-happens">Drawing only when something happens</h2>
+
+<p>The window <strong>draws only when something happens</strong>: input, a resize, a frame a control asks for
+(the caret&rsquo;s next blink, a tooltip coming due, through <code>input.State.RequestFrame</code>), or
+<code>window.Wake()</code>, which a program calls from another goroutine when its data changes there. A frame
+that would look exactly like the one shown (the pointer moving over still parts, say) is not
+drawn either: the window compares the draw list&rsquo;s fingerprint with the last one. In
+between it sleeps: the register uses no processor while idle, against about 14% of a core
+drawing every frame. <code>Options.Continuous</code> (<code>-continuous</code>) draws every frame, for an interface that
+animates all the time. Over a 3D view (<code>viewer.Run</code>) the scene keeps drawing every frame.
+Measured in detail in <a href="./project/performance-audit">performance and battery</a>.</p>
+
+<h2 id="a-scene-behind-the-interface">A scene behind the interface</h2>
+
+<p><code>Options.Scene</code> puts a 3D scene behind the interface: a function called at every step, with the
+input the interface did not claim, that returns a scene and a camera (or nil for none). A drag on an
+empty part of the screen turns the camera while a drag on a slider moves the slider.</p>
+
+<h2 id="screens-of-every-size">Screens of every size</h2>
+
+<p>On a phone, <code>Context.Insets()</code> says how much of each edge the system&rsquo;s bars cover, and
+<code>Context.Size()</code> gives the window&rsquo;s size, so a layout can paint under the bars and choose itself by
+the screen. The <a href="./platforms/android">Android</a> page has the rest of what a phone adds: the keyboard,
+notifications, the clipboard, preferences, films and the wallpaper&rsquo;s colours.</p>
+
+<h2 id="metal-or-opengl">Metal or OpenGL</h2>
+
+<p>On macOS the window draws through <strong>Metal</strong>; elsewhere through OpenGL 4.1. <code>Options.Backend</code>
+(<code>-backend automatic|metal|opengl</code>) chooses; if Metal cannot start, the window says so once and
+uses OpenGL. Both paint the same quads from the same atlas, and their captures match within <sup>1</sup>&frasl;<sub>255</sub>
+per channel. Metal needs less: with the register idle, its memory is 66–70 MB against 93–102 MB
+through OpenGL, and with a window that changes every frame it used about a third less processor,
+GPU and memory (<a href="../../../go-renderer/docs/4-guides/7-metal.md#measured">measurements</a>).</p>
+
+<p>The window has no depth or stencil buffer, which flat drawing never uses. Most of what the
+system then counts for the program is the window&rsquo;s own buffers, which grow with its size; the
+program itself (fonts, the atlas, its data) is about 25 MB.</p>

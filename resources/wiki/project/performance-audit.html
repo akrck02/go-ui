@@ -1,0 +1,461 @@
+<h1 id="performance-and-battery-audit">⚡ Performance and battery audit</h1>
+
+<p><strong>Date:</strong> October 2026. <strong>Scope:</strong> go-ui and the 2D path of go-renderer it draws through (draw list,
+painter, atlas, flat renderer, window loop), measured with the register application (<code>cmd/app</code>).
+<strong>Machine:</strong> a laptop with an Apple M4 and a 60 Hz built-in screen, macOS 26, Go 1.25.</p>
+
+<p>The short answer: <strong>an idle application now costs nothing</strong>, and a frame of a normal interface is
+cheap. What is left to win is work done in frames that change nothing, and work that grows with
+content nobody sees (rows scrolled out of view). A Metal backend was not needed for battery, but
+once built it turned out cheaper than OpenGL on macOS, above all in memory
+(<a href="../../../go-renderer/docs/4-guides/7-metal.md">Metal</a>).</p>
+
+<h2 id="how-it-was-measured">How it was measured</h2>
+
+<ul>
+<li><strong>The whole program</strong>, in a real window at 1280 × 720: processor time (<code>ps</code>), idle wakeups and
+energy (<code>top -stats cpu,idlew,power</code>), GPU use (<code>ioreg</code>, &ldquo;Device Utilization %&rdquo;), memory
+(<code>footprint</code>), frames per second (a probe program counting frames).</li>
+<li><strong>One frame</strong>, without a window: Go benchmarks with the real fonts at a 2560 × 1440 framebuffer,
+CPU and allocation profiles (<code>go test -bench -cpuprofile -memprofile</code>, <code>go tool pprof</code>).</li>
+</ul>
+
+<p>The benchmark files stay in the repositories so the numbers can be measured again:</p>
+
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it measures</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>go-ui/cmd/app/audit_bench_test.go</code></td>
+<td>A frame of the register: idle, pointer moving, a field focused, typing, a search, 11 to 3000 rows; the painter on that frame</td>
+</tr>
+
+<tr>
+<td><code>go-ui/audit_frame_test.go</code></td>
+<td>Struct sizes, <code>ScrollArea</code> against <code>List</code> from 11 to 10 000 rows, the phases of a frame, the text field, cache misses</td>
+</tr>
+
+<tr>
+<td><code>go-ui/audit_render_test.go</code></td>
+<td>The update step, painting, the whole frame&rsquo;s CPU, hashing the draw list, whether an idle pointer move changes it</td>
+</tr>
+
+<tr>
+<td><code>go-renderer/opengl/overlay/audit_painter_test.go</code></td>
+<td>The painter on 2000 commands, vertex filling (now and packed), sorting, clipping, glyphs, shadows, atlas growth</td>
+</tr>
+
+<tr>
+<td><code>go-renderer/opengl/overlay/audit_register_paint_test.go</code></td>
+<td>The painter on the register&rsquo;s draw list, per text line and per character</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-bash">go <span class="nb">test</span> ./cmd/app -run Audit -bench Audit -benchmem
+go <span class="nb">test</span> . -run Audit -bench Audit -benchmem
+</code></pre>
+
+<h2 id="the-whole-program">The whole program</h2>
+
+<table>
+<thead>
+<tr>
+<th>Register at 1280 × 720</th>
+<th>Draws on demand (default)</th>
+<th>Draws every frame (<code>-continuous</code>)</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Processor, idle</td>
+<td><strong>0.14 %</strong> (0.10 s in 60 s)</td>
+<td>3.9 % (2.45 s in 60 s)</td>
+</tr>
+
+<tr>
+<td>GPU, idle</td>
+<td><strong>0 %</strong></td>
+<td>16 %</td>
+</tr>
+
+<tr>
+<td>Idle wakeups</td>
+<td>0</td>
+<td>0</td>
+</tr>
+
+<tr>
+<td>Frames while idle</td>
+<td><strong>0</strong> (6 at start-up)</td>
+<td>60 to 120 per second, for 60 updates</td>
+</tr>
+
+<tr>
+<td>Memory (system footprint)</td>
+<td>116 MB</td>
+<td>166 MB</td>
+</tr>
+</tbody>
+</table>
+<p>Memory was 186 MB before this audit: the window asked for a depth and stencil buffer that flat
+drawing never uses. <code>FlatOnly</code> now leaves it out. Of what remains, about 70 MB is the window&rsquo;s own
+buffers that macOS keeps (they grow with the window) and about 25 MB the program itself.</p>
+
+<h2 id="one-frame">One frame</h2>
+
+<table>
+<thead>
+<tr>
+<th>Frame</th>
+<th>go-ui (build, layout, draw list)</th>
+<th>Painter (draw list to quads)</th>
+<th>Vertex filling</th>
+<th>OpenGL calls</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Register, 11 rows</td>
+<td>44 µs, 114 allocations</td>
+<td>85 µs</td>
+<td>13 µs</td>
+<td>about 0.1–0.2 ms</td>
+</tr>
+
+<tr>
+<td>Register, 1000 rows</td>
+<td>1.9 ms, 4077 allocations</td>
+<td>3.65 ms</td>
+<td>13 µs</td>
+<td>the same</td>
+</tr>
+
+<tr>
+<td>Register, 1000 rows in a <code>List</code></td>
+<td>77 µs, 65 allocations</td>
+<td>about 0.1 ms</td>
+<td>13 µs</td>
+<td>the same</td>
+</tr>
+</tbody>
+</table>
+<p>Hovering, typing and a focused field cost about the same as an idle frame. At 120 pointer events
+a second, the 11-row register spends about 1.7 % of a core; with 1000 rows in a <code>ScrollArea</code>, about
+67 %, and from about 2000 rows it no longer fits in a frame.</p>
+
+<h2 id="findings">Findings</h2>
+
+<p>Ranked by what they cost the battery. Effort: S under half a day, M one or two days, L more.</p>
+
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Finding</th>
+<th>Where</th>
+<th>Impact</th>
+<th>Fix</th>
+<th>Effort</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Frames that change nothing are painted and shown.</strong> A pointer moving over still areas, the frame that follows input, and in continuous mode up to half of all frames (60 to 120 shown for 60 updates) produce a draw list identical to the last</td>
+<td><code>opengl/opengl.go</code> loop, <code>waitForWork</code></td>
+<td>High: each is a full paint, upload, draw and swap</td>
+<td>Hash the draw list (6 µs) with the background, size and scale; when unchanged, skip painting, drawing and the swap. In continuous mode, draw only after an update step</td>
+<td>S–M</td>
+</tr>
+
+<tr>
+<td>2</td>
+<td><strong>Rows out of sight are built, laid out and painted.</strong> A table in a <code>ScrollArea</code> costs 1.9 µs per row whether seen or not</td>
+<td><code>go-ui/scroll.go</code>, <code>paint.go</code>; <code>cmd/app</code> table</td>
+<td>High for long lists: 25 to 47 times less with <code>List</code></td>
+<td>Use <code>List</code> for long tables (the example should); in <code>paintBox</code>, skip children outside the clip</td>
+<td>S (app), M (library)</td>
+</tr>
+
+<tr>
+<td>3</td>
+<td><strong>Text cut away by a clip is laid out glyph by glyph, then thrown away.</strong> 29 % of the quads of a scrolled panel, 98 % at 1000 rows</td>
+<td><code>draw2d/list.go</code> (texts are never culled), <code>overlay/drawing.go</code></td>
+<td>High for long lists: 3.65 ms to about 0.1 ms at 1000 rows</td>
+<td>Reject a text whose line (baseline minus size to baseline plus a third) misses the clip, before laying it out</td>
+<td>S</td>
+</tr>
+
+<tr>
+<td>4</td>
+<td><strong>The text measure cache empties itself when full</strong>, in the middle of a frame, past 4096 texts</td>
+<td><code>go-ui/paint.go</code></td>
+<td>Medium: +37 % frame time from 1900 to 2100 rows</td>
+<td>Keep two generations, so texts used this frame are never dropped</td>
+<td>S</td>
+</tr>
+
+<tr>
+<td>5</td>
+<td><strong>Each character is looked up twice</strong>, with a <code>[]rune</code> conversion per text</td>
+<td><code>overlay/layout.go</code> (<code>drawable</code>, <code>hasGlyph</code>), <code>overlay/drawing.go</code></td>
+<td>Medium: 64 ns per character, 62 % of painting</td>
+<td>One atlas lookup that also knows a missing glyph; a direct table for ASCII</td>
+<td>M</td>
+</tr>
+
+<tr>
+<td>6</td>
+<td><strong>192 bytes per quad, in a buffer reallocated every frame</strong> (0.5–1.2 MB a frame)</td>
+<td><code>opengl/overlay.go</code></td>
+<td>Medium in continuous mode</td>
+<td>Instanced quads of about 32 bytes; keep the buffer and use <code>BufferSubData</code></td>
+<td>M</td>
+</tr>
+
+<tr>
+<td>7</td>
+<td><strong>Rendering at the display rate is not guaranteed by vsync</strong> on macOS: 60, 90 and 120 fps were measured on a 60 Hz screen, even with <code>SwapInterval(1)</code> (now set explicitly)</td>
+<td><code>opengl/window.go</code></td>
+<td>Medium in continuous mode</td>
+<td>Finding 1 caps it: no update, no frame</td>
+<td>S</td>
+</tr>
+
+<tr>
+<td>8</td>
+<td><strong>Large structs copied by value</strong>: an element is 344 bytes, a draw command 136; copying is about 20 % of a frame</td>
+<td><code>go-ui/element.go</code>, <code>layout.go</code>, <code>draw2d/list.go</code></td>
+<td>Low to medium, grows with the tree</td>
+<td>Build elements in place; smaller enums; cold fields apart</td>
+<td>M</td>
+</tr>
+
+<tr>
+<td>9</td>
+<td><strong>The whole atlas is uploaded again</strong> when one glyph or corner is added (1 MB, 16 MB at its largest), and nothing is ever evicted</td>
+<td><code>opengl/overlay.go</code>, <code>overlay/atlas.go</code></td>
+<td>Low: one-off pauses, not steady cost</td>
+<td>Upload only the changed rectangle (<code>TexSubImage2D</code>)</td>
+<td>S</td>
+</tr>
+
+<tr>
+<td>10</td>
+<td><strong>The flat path does 3D work</strong>: a second full-screen clear, the 3D program bound, the 3D shaders compiled at start</td>
+<td><code>opengl/opengl.go</code></td>
+<td>Low</td>
+<td>When <code>FlatOnly</code>, let the flat renderer own the frame</td>
+<td>S</td>
+</tr>
+
+<tr>
+<td>11</td>
+<td><strong>A dual-GPU Intel Mac stays on the discrete GPU</strong> while an OpenGL window is open: GLFW does not opt into graphics switching by default</td>
+<td><code>opengl/window.go</code></td>
+<td>High on those Macs, none on Apple silicon</td>
+<td><code>glfw.WindowHint(glfw.CocoaGraphicsSwitching, glfw.True)</code> for flat windows</td>
+<td>S</td>
+</tr>
+
+<tr>
+<td>12</td>
+<td><strong>The caret wakes the window twice a second</strong> for as long as a field has the focus</td>
+<td><code>go-ui/textfield.go</code></td>
+<td>Low</td>
+<td>Stop blinking after a while without typing, as macOS does</td>
+<td>S</td>
+</tr>
+
+<tr>
+<td>13</td>
+<td><strong>A focused field measures prefixes every frame</strong>, needed only while clicking or dragging</td>
+<td><code>go-ui/textfield.go</code></td>
+<td>Low (16 allocations a frame with a long text)</td>
+<td>Measure only on press or drag; keep widths until the text or caret changes</td>
+<td>S</td>
+</tr>
+
+<tr>
+<td>14</td>
+<td><strong>The example application allocates every frame</strong>: the dark theme built twice to compare it, <code>fmt</code> per cell, the order sorted and the search lower-cased three times per row</td>
+<td><code>cmd/app</code></td>
+<td>Low, but it is the code people copy</td>
+<td>Keep themes in variables; work out the shown rows once; make <code>ParseHex</code> allocation-free</td>
+<td>S</td>
+</tr>
+
+<tr>
+<td>15</td>
+<td><strong>Small per-frame bookkeeping</strong>: the painter sorts commands that are already in order; <code>rootElementOf</code> walks up for every element; memory maps are scanned every frame</td>
+<td>several</td>
+<td>Very low</td>
+<td>Check before sorting; record the root while building; sweep every 60 frames</td>
+<td>S</td>
+</tr>
+
+<tr>
+<td>16</td>
+<td><strong><code>StartLoop</code> crashes when not called on the main thread</strong> (macOS needs it), and says nothing about it</td>
+<td><code>opengl/opengl.go</code></td>
+<td>Robustness, not speed</td>
+<td>Document it and check it at start</td>
+<td>S</td>
+</tr>
+</tbody>
+</table>
+<p>Measured and found fine: one draw call and one program per frame, uniform locations cached, no
+<code>glGetError</code>, cursor shape and lock changed only when they change, the window title updated only in
+continuous mode, no busy waiting when idle, theme changes and window resizes do not rasterise
+glyphs again. A partial redraw (repainting only what changed) is not worth it: after a swap the
+back buffer is undefined on macOS, so it would need a full copy each frame.</p>
+
+<h2 id="done-steps-1-to-4">Done: steps 1 to 4</h2>
+
+<p>Applied in October 2026, with tests for each; the documentation captures came out identical, pixel
+for pixel.</p>
+
+<table>
+<thead>
+<tr>
+<th>Measured again</th>
+<th>Before</th>
+<th>After</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Register frame, 11 rows (go-ui)</td>
+<td>44 µs, 114 allocations</td>
+<td>37 µs, 109 allocations</td>
+</tr>
+
+<tr>
+<td>Register frame, 1000 rows (go-ui)</td>
+<td>1.9 ms</td>
+<td><strong>55 µs</strong></td>
+</tr>
+
+<tr>
+<td>Register frame, 3000 rows (go-ui)</td>
+<td>7.5 ms</td>
+<td><strong>109 µs</strong></td>
+</tr>
+
+<tr>
+<td>Painter, register with 1000 rows</td>
+<td>3.65 ms</td>
+<td><strong>69 µs</strong></td>
+</tr>
+
+<tr>
+<td>Continuous mode, frames shown</td>
+<td>60 to 120 a second</td>
+<td>60, one per update, and none when nothing changed</td>
+</tr>
+
+<tr>
+<td>Continuous mode, GPU</td>
+<td>16 %</td>
+<td><strong>0 %</strong> while nothing changes</td>
+</tr>
+
+<tr>
+<td>Memory (system footprint)</td>
+<td>116 MB</td>
+<td><strong>93 MB</strong></td>
+</tr>
+</tbody>
+</table>
+<p>What changed:</p>
+
+<ul>
+<li><strong>Frames that would look the same are skipped</strong> (1, 7). <code>draw2d.List.Fingerprint</code> sums up a draw
+list; go-ui&rsquo;s window answers go-renderer&rsquo;s new <code>Application.Unchanged</code> with it, and the loop then
+neither draws nor presents. In continuous mode a frame is drawn only after an update step, and
+the loop sleeps until the next one.</li>
+<li><strong>What is out of sight costs nothing</strong> (2, 3). The draw list drops texts whose line misses the
+clip; go-ui does not paint elements wholly outside a clipping box; the example&rsquo;s table is a
+<code>List</code>, and works out its rows once a frame.</li>
+<li><strong>The text cache keeps two generations</strong> (4), and a focused field measures only when something
+changed (13), keeps its text as a string, and <strong>stops blinking after ten seconds</strong> without a key
+or a click (12).</li>
+<li><strong>The flat window is flat</strong> (10, 11, 16): no 3D shaders, matrices or second clear; automatic
+graphics switching on Macs with two GPUs; <code>StartLoop</code> returns an error off the main thread
+instead of crashing.</li>
+</ul>
+
+<h2 id="what-to-do-in-order">What to do, in order</h2>
+
+<ol>
+<li><strong>Skip unchanged frames</strong> (finding 1), with continuous mode drawing only after an update (7).</li>
+<li><strong>Stop paying for what is out of sight</strong>: cull texts by the clip in the painter (3), skip
+children outside the clip in go-ui (2), and move the example&rsquo;s table to <code>List</code>.</li>
+<li><strong>The text cache&rsquo;s generations</strong> (4) and the <strong>field&rsquo;s measuring</strong> (13).</li>
+<li><strong>Graphics switching</strong> for flat windows (11) and <strong>the flat path&rsquo;s own frame</strong> (10).</li>
+<li><strong>The painter&rsquo;s per-character work</strong> (5), <strong>packed instanced quads</strong> (6) and <strong>partial atlas
+uploads</strong> (9).</li>
+<li>Smaller items: copies (8), the caret (12), the example (14), bookkeeping (15), the main thread (16).</li>
+</ol>
+
+<p>Steps 1 to 4 are done (above); step 5 and the smaller items are left.</p>
+
+<h2 id="metal">Metal</h2>
+
+<p>Built after this audit, as insurance against OpenGL leaving macOS: go-ui&rsquo;s window now draws
+through Metal on macOS (<code>-backend opengl</code> goes back). It costs less than OpenGL, which on macOS
+runs on a translation layer over Metal:</p>
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th>OpenGL</th>
+<th>Metal</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Register idle, memory</td>
+<td>93–102 MB</td>
+<td><strong>66–70 MB</strong></td>
+</tr>
+
+<tr>
+<td>Changing every frame: processor</td>
+<td>13.6 % of a core</td>
+<td><strong>9 %</strong></td>
+</tr>
+
+<tr>
+<td>Changing every frame: GPU</td>
+<td>19–20 %</td>
+<td><strong>12–16 %</strong></td>
+</tr>
+
+<tr>
+<td>Changing every frame: memory</td>
+<td>163 MB</td>
+<td><strong>107 MB</strong></td>
+</tr>
+
+<tr>
+<td>Still again, memory</td>
+<td>109 MB</td>
+<td><strong>60 MB</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The details, and what still needs a look on screen, are in go-renderer&rsquo;s
+<a href="../../../go-renderer/docs/4-guides/7-metal.md">docs/metal.md</a>.</p>

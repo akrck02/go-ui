@@ -1,0 +1,73 @@
+<h1 id="screen-readers">🗣️ Screen readers</h1>
+
+<p>A screen reader speaks what is on the screen for a person who cannot see it, and lets them act on
+it: on a phone, TalkBack reads what a finger moves over, and a double tap presses it. It needs the
+screen as <em>things with names</em>, not pixels. While one is on (<code>SetScreenReader(true)</code>, which the
+window does on Android), every frame also makes a list of what can be read, worked out from the
+boxes themselves, at no cost while none is on.</p>
+
+<h2 id="how-the-boxes-are-read">How the boxes are read</h2>
+
+<ul>
+<li><strong>A control is a node</strong>, read by the texts inside it: a button reads &ldquo;Light the lamp, button&rdquo;. A
+control inside another (a switch in a row) is a node of its own, inside the row.</li>
+<li><strong>Texts beside each other in one box are read together</strong>: a row&rsquo;s title and the line under it are
+one node, and a paragraph is one, not a node per word.</li>
+<li><strong>A scroll area holds its rows</strong>, and only those that show are read; the screen reader can scroll
+it on (<code>ReaderForward</code>) or back.</li>
+<li><strong>What is behind a modal or a sheet is left out</strong>, as it cannot be touched.</li>
+<li><strong>The node the screen reader is on is ringed</strong> (<code>SetScreenReaderFocus</code>), dark outside and light
+inside, over everything, as a phone rings what TalkBack reads.</li>
+</ul>
+
+<h2 id="describing-a-control-of-your-own">Describing a control of your own</h2>
+
+<p>The controls say what they are and their state: a checkbox ticked, a toggle on (a switch), the tab
+shown, a slider&rsquo;s range, a field&rsquo;s text (not a secret one&rsquo;s). <code>Describe</code> says it for a control of
+your own, after it, in every frame:</p>
+<pre><code class="language-go"><span class="k">if</span> <span class="nx">interfaceContext</span><span class="p">.</span><span class="nf">Clickable</span><span class="p">(</span><span class="s">&#34;beacon&#34;</span><span class="p">,</span> <span class="nx">layout</span><span class="p">,</span> <span class="nx">looks</span><span class="p">,</span> <span class="nx">drawSwitch</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">beacon</span> <span class="p">=</span> <span class="p">!</span><span class="nx">beacon</span>
+<span class="p">}</span>
+<span class="nx">interfaceContext</span><span class="p">.</span><span class="nf">Describe</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Description</span><span class="p">{</span><span class="nx">Role</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">SwitchRole</span><span class="p">,</span> <span class="nx">Label</span><span class="p">:</span> <span class="s">&#34;Beacon&#34;</span><span class="p">,</span> <span class="nx">Checked</span><span class="p">:</span> <span class="nx">beacon</span><span class="p">})</span>
+</code></pre>
+
+<p>What <code>Describe</code> leaves empty stays as the boxes tell it. <code>Hidden</code> leaves out a decoration, or a label
+read already with the field it names. A control with an icon alone and no label is read by the icon&rsquo;s
+name (&ldquo;arrow left&rdquo;) for want of a better one: describe it with what it does. After a menu button
+or a select, <code>Describe</code> describes the button, even while its list is open over it.</p>
+
+<h2 id="what-the-screen-reader-asks">What the screen reader asks</h2>
+
+<table>
+<thead>
+<tr>
+<th>Call</th>
+<th>What it does</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>SetScreenReader(on)</code></td>
+<td>Makes the list of nodes every frame while a screen reader is on</td>
+</tr>
+
+<tr>
+<td><code>SetScreenReaderFocus(id)</code></td>
+<td>Rings the node the screen reader is on</td>
+</tr>
+
+<tr>
+<td><code>ScreenReaderAct(id, action)</code></td>
+<td>Done in the next frame: a press clicks the control as a tap would (a field takes the keyboard), a long press is read by <code>LongPressed</code>, forward and backward scroll an area or move a slider a step</td>
+</tr>
+
+<tr>
+<td><code>ScreenReaderSetText(id, text)</code></td>
+<td>Text the screen reader types, pastes or dictates into a field: the field takes it whole, as typing (one line, cut at its <code>MaxLength</code>), and the keyboard stays down</td>
+</tr>
+</tbody>
+</table>
+<p>Nodes keep their ids from frame to frame, so the screen reader stays on what it was reading. On
+Android, the window hands the list to go-renderer, which gives it to TalkBack
+(<a href="./platforms/android">Android</a>).</p>
