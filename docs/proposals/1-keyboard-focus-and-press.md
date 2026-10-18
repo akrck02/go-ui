@@ -80,8 +80,8 @@ and corners.
 - [x] T5 — `FieldFocusEdge` · `textfield.go`, `theme.go` · R5 · test: `TestAFieldCanLightItsOwnBorder`
 - [x] T6 — `PressScale`, and less motion · `paint.go`, `theme.go`, `context.go` · R6 · tests: `TestAHeldButtonShrinks`, `TestLessMotionKeepsAHeldButtonStill`
 - [x] T7 — Docs: a guide «Who has the keyboard» (`docs/5-components/`), with a game over a 3D view and a settings app side by side, what a click does, Escape and `TakeKeyboard`, and a table of keys per mode; the components' keyboard sections and the design-system tokens table; a line in the README's example · R1–R6 R11
-- [ ] T8 — Bubble's adapter sets the tokens; compare the showcase with the browser · `bubble/goui/theme.go` · R8 · test: `TestABubbleThemeLightsFieldsAndShrinksWhenPressed`
-- [ ] T9 — Measure: the 300-control benchmark and the register's audit benchmarks before and after, written into `docs/8-project/1-performance-audit.md` · R10
+- [x] T8 — Bubble's adapter sets the tokens; compare the showcase with the browser · `bubble/goui/theme.go` · R8 · test: `TestABubbleThemeLightsFieldsAndShrinksWhenPressed`
+- [x] T9 — Measure: the 300-control benchmark and the register's audit benchmarks before and after, written into `docs/8-project/1-performance-audit.md` · R10
 
 ## Result
 
