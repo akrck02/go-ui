@@ -21,7 +21,7 @@ Every lesson has the same shape, as in a quest: **the idea** in everyday words, 
 | [3. Controls and forms](3-controls-and-forms.md) | Selectable rows, text and number fields, selects, sliders, toggles | A form that edits the lighthouse chosen |
 | [4. Menus, sheets and notes](4-menus-sheets-and-notes.md) | Menus, modal sheets, toasts, the search | Adding and removing lighthouses |
 | [5. Controls of your own](5-controls-of-your-own.md) | `Clickable`, looks, `Describe` for screen readers, `Paint`, themes | A favourite star, and a theme of your own |
-| [6. Over a 3D scene](6-over-a-3d-scene.md) | go-ui with go-renderer's viewer, claims, `Options.Scene` | A panel that moves the sun over an island |
+| [6. Over a 3D scene](6-over-a-3d-scene.md) | Go UI with Go Renderer's viewer, claims, `Options.Scene` | A panel that moves the sun over an island |
 | [7. Shipping it](7-shipping-it.md) | Preferences, leaving the screen, the web, Android | The register in a browser and on a phone |
 
 Lessons end with **practice**, with a solution folded under it. The complete program is at the end

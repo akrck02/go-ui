@@ -131,7 +131,7 @@ context.Chip("circle-alert", "Needs repair", ui.ChipLook{Fill: draw2d.Hex("#fdec
 ## `Clickable`
 
 Any box that reacts to the pointer, with its own look while left alone, hovered and pressed. It is
-what go-ui's own buttons are made of, and the way to make a card, a row or a tile clickable as a
+what Go UI's own buttons are made of, and the way to make a card, a row or a tile clickable as a
 whole. Buttons inside it keep their own clicks.
 
 ```go

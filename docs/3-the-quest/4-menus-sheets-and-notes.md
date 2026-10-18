@@ -31,7 +31,7 @@ context.MenuButton("plus", "Add", func() {
 ```
 
 The third argument of `MenuItem` is a hint drawn quietly on the right, such as `"Ctrl+N"`: the
-program handles the shortcut itself (`state.Pressed`), go-ui only shows it.
+program handles the shortcut itself (`state.Pressed`), Go UI only shows it.
 
 ```go
 func (program *register) add() {
@@ -92,7 +92,7 @@ last and drawn over it.
 ## A note that goes away
 
 `Toast(text, warning)` shows a short note at the bottom of the window for a few seconds. Unlike
-everything else it is *fired once*, not described at every frame: go-ui keeps it until it fades.
+everything else it is *fired once*, not described at every frame: Go UI keeps it until it fades.
 
 ## More layers
 

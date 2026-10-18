@@ -1,6 +1,6 @@
 # 🌐 In a web browser
 
-**Status:** a first step (October 2026). go-ui applications run in a browser, built for
+**Status:** a first step (October 2026). Go UI applications run in a browser, built for
 WebAssembly and drawn through WebGL2, with the same code as on the desktop. The desktop is
 unchanged.
 
@@ -54,15 +54,15 @@ browser.Run(canvas, app, func() error {
 GOOS=js GOARCH=wasm go build -o web/web.wasm ./cmd/web     # then ?program=web
 ```
 
-The scene is drawn by go-renderer's simple OpenGL ES renderer: light, fog and water, but no
-shadows or sky yet (see go-renderer's `docs/web.md`).
+The scene is drawn by Go Renderer's simple OpenGL ES renderer: light, fog and water, but no
+shadows or sky yet (see Go Renderer's `docs/web.md`).
 
 ## How the window works in a page
 
 | On the desktop | In a browser |
 |---|---|
 | A GLFW window, sized by `Options.Width` and `Height` | The page's canvas (`Options.Canvas`, its id; the first canvas when empty), sized by the page |
-| Metal or OpenGL 4.1 | WebGL2, through go-renderer's `gles.FlatRenderer`: the same atlas and quads, one draw call |
+| Metal or OpenGL 4.1 | WebGL2, through Go Renderer's `gles.FlatRenderer`: the same atlas and quads, one draw call |
 | `Options.Title` is the window's title | It becomes the page's title |
 | Sleeps in `glfw.WaitEvents` between frames | Asks for an animation frame only when something happens |
 | `window.Wake()` posts an empty event | `window.Wake()` asks for an animation frame |
@@ -94,7 +94,7 @@ Checked in Chromium on macOS: the register (filters, selecting rows, the inspect
 example (buttons, a checkbox, a slider, typing and deleting in a text field, turning the camera
 around the panel), sharp text on a high-density screen, and no frames while idle.
 
-Not yet: other browsers, phones and tablets (touch arrives as a pointer, but go-ui has no touch
+Not yet: other browsers, phones and tablets (touch arrives as a pointer, but Go UI has no touch
 theme yet), the on-screen keyboard, and very large tables (each frame copies the draw list into
 JavaScript once, which should be fine).
 

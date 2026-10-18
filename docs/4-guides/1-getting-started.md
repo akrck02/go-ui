@@ -1,12 +1,12 @@
 # 🚀 Getting started
 
-go-ui draws interfaces over a go-renderer view. This page explains how a frame works, shows the
+Go UI draws interfaces over a Go Renderer view. This page explains how a frame works, shows the
 examples that come with it, and how what you describe ends up on the screen.
 
 ## A frame
 
 <p align="center">
-  <img alt="Your program describes the interface every frame → go-ui: Begin and the controls add boxes, End lays them out and makes a draw2d list → go-renderer paints it in one draw call; the mouse, keys and touches come back for the next frame" src="../images/how-it-works.svg" width="880">
+  <img alt="Your program describes the interface every frame → Go UI: Begin and the controls add boxes, End lays them out and makes a draw2d list → Go Renderer paints it in one draw call; the mouse, keys and touches come back for the next frame" src="../images/how-it-works.svg" width="880">
 </p>
 
 In **immediate mode** there are no button objects to create, keep and update. Each update step,
@@ -29,7 +29,7 @@ each control's **id**: which control is being pressed, where a panel was dragged
 folded.
 
 Call `Begin` and `End` in every update step (the function given to `viewer.Run`), and set
-`world.Overlay.Drawing = interfaceContext.Drawing()` once, so go-renderer paints the result.
+`world.Overlay.Drawing = interfaceContext.Drawing()` once, so Go Renderer paints the result.
 
 ### Ids and scopes
 
@@ -119,7 +119,7 @@ go run ./cmd/mobile -width 400 -height 860
 `cmd/web` is the scene example put together for a browser ([web](../7-platforms/1-web.md)); `cmd/mobile` builds into
 an Android app ([Android](../7-platforms/2-android.md)).
 
-The library itself needs no cgo; the examples do, as they open a go-renderer window. The tests need
+The library itself needs no cgo; the examples do, as they open a Go Renderer window. The tests need
 no display: they measure text with a fake measurer.
 
 ```bash
@@ -131,9 +131,9 @@ go test -run xxx -bench .             # a frame of three hundred controls
 ## How it is drawn
 
 At `End` the laid-out boxes become commands of a `draw2d.List` (rounded rectangles, shadows,
-lines of text, icons), each panel on its own layer and its content clipped to it. go-renderer
+lines of text, icons), each panel on its own layer and its content clipped to it. Go Renderer
 paints that list after the scene, in the same pass and atlas as its labels, so the whole interface
-is one draw call. Text is measured with go-renderer's own fonts (`overlay.NewMeasurer`) at the
+is one draw call. Text is measured with Go Renderer's own fonts (`overlay.NewMeasurer`) at the
 screen's density, so what is laid out is exactly what is painted.
 
 A frame of three panels with three hundred controls builds, lays out and paints in about 0.1 ms

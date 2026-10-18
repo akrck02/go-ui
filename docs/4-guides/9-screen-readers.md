@@ -46,5 +46,5 @@ or a select, `Describe` describes the button, even while its list is open over i
 | `ScreenReaderSetText(id, text)` | Text the screen reader types, pastes or dictates into a field: the field takes it whole, as typing (one line, cut at its `MaxLength`), and the keyboard stays down |
 
 Nodes keep their ids from frame to frame, so the screen reader stays on what it was reading. On
-Android, the window hands the list to go-renderer, which gives it to TalkBack
+Android, the window hands the list to Go Renderer, which gives it to TalkBack
 ([Android](../7-platforms/2-android.md#screen-readers)).

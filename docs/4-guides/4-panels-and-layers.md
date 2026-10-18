@@ -34,7 +34,7 @@ working inside it (`cmd/scene-app`).
 
 ### Editing the scene it shows
 
-A program that **edits** the scene it shows runs through go-renderer's `viewer.Edit`: the
+A program that **edits** the scene it shows runs through Go Renderer's `viewer.Edit`: the
 interface is built in its function, and `viewer.View` turns the pointer into a point on the ground.
 `cmd/plan-editor` places huts on an island by clicking on the map (a drag still moves the map),
 and a panel lists them to select, rename and remove; at rest it uses no processor or GPU.

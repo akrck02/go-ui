@@ -1,6 +1,6 @@
 # Components
 
-Every go-ui control, one by one: what it is for, concrete cases with their code, how it behaves
+Every Go UI control, one by one: what it is for, concrete cases with their code, how it behaves
 with the mouse, the keyboard, a finger and a screen reader, and its options. Each case is a real
 program's code; the pictures are captures of it.
 

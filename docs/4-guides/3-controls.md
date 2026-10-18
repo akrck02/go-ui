@@ -105,7 +105,7 @@ These have pages of their own, [panels and layers](4-panels-and-layers.md) and
 
 | Call | What it does |
 |---|---|
-| `Context.Paint` | Adds a box the program paints itself once laid out, for shapes go-ui has no control for |
+| `Context.Paint` | Adds a box the program paints itself once laid out, for shapes Go UI has no control for |
 | `Context.Animate` | Eases a value to its target, asking for frames only while it moves |
 | `Context.Appear` | Eases something in as it is shown |
 | `Context.Fold` | Opens a box to its content's height and closes it to nothing, with motion (more under a list row) |

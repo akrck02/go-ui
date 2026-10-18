@@ -2,7 +2,7 @@
 
 In this lesson you build the skeleton of the register: a toolbar across the top, a list down the
 left that can be made wider, the content in the middle and a status bar at the foot. You learn how
-go-ui sizes and places **boxes**.
+Go UI sizes and places **boxes**.
 
 | Mission | Pieces | Time |
 |---|---|---|
@@ -10,7 +10,7 @@ go-ui sizes and places **boxes**.
 
 #### The idea
 
-Layout is **packing a suitcase**: some things have a fixed size (a book), some fit what they hold (a bag of socks), and the rest grow into whatever room is left. You say which is which; go-ui does the packing at the end of the frame.
+Layout is **packing a suitcase**: some things have a fixed size (a book), some fit what they hold (a bag of socks), and the rest grow into whatever room is left. You say which is which; Go UI does the packing at the end of the frame.
 
 ![The skeleton: a toolbar, the list of lighthouses on the left, a hint in the middle, the status bar](../images/tutorial/register-empty.jpg)
 
