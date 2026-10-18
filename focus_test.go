@@ -3,6 +3,7 @@ package ui
 import (
 	"testing"
 
+	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
 )
 
@@ -153,5 +154,62 @@ func TestAFrameWithFocusAllocatesNothingMore(t *testing.T) {
 	without, with := allocations(WhenGiven), allocations(Always)
 	if with > without {
 		t.Fatalf("a frame with a control focused allocates %v times, %v without", with, without)
+	}
+}
+
+// ringAround finds the stroke the focus ring draws: a rectangle with no fill and a border.
+func (h *harness) ringAround(colour draw2d.Color) (draw2d.Command, bool) {
+	for _, command := range h.ui.Drawing().Commands {
+		if command.Kind == draw2d.RectangleKind && !command.Fill.IsVisible() && command.Border == colour && command.BorderWidth > 0 {
+			return command, true
+		}
+	}
+	return draw2d.Command{}, false
+}
+
+func TestAClickGivesFocusWithoutARing(t *testing.T) {
+	h := newHarness(t)
+	h.ui.KeyboardNavigation = Always
+	lit, keeper, pressed := false, "", 0
+	build := lighthouseControls(&lit, &keeper, &pressed)
+	h.frame(build)
+	h.clickInside(idOf("Ring the bell"), build)
+	if _, found := h.ringAround(h.ui.Theme.FocusRing); found {
+		t.Fatal("a click shows no focus ring")
+	}
+	h.key(input.KeyTab, build)
+	h.frame(build) // the frame Tab asks for
+	if _, found := h.ringAround(h.ui.Theme.FocusRing); !found {
+		t.Fatal("Tab shows the focus ring")
+	}
+}
+
+func TestTheRingLiesOnTheEdge(t *testing.T) {
+	h := newHarness(t)
+	h.ui.KeyboardNavigation = Always
+	h.ui.Theme.FocusWidth = 2
+	lit, keeper, pressed := false, "", 0
+	build := lighthouseControls(&lit, &keeper, &pressed)
+	h.frame(build)
+	h.key(input.KeyTab, build)
+	h.frame(build)
+	ring, found := h.ringAround(h.ui.Theme.FocusRing)
+	button := h.rect(idOf("Ring the bell"))
+	grown := draw2d.Rect{X: button.X - 2, Y: button.Y - 2, Width: button.Width + 4, Height: button.Height + 4}
+	if !found || ring.Area != grown || ring.BorderWidth != 2 {
+		t.Fatalf("the ring is %v wide around %v, want 2 around %v", ring.BorderWidth, ring.Area, grown)
+	}
+}
+
+func TestTheRingOfAPrimaryButtonIsInside(t *testing.T) {
+	h := newHarness(t)
+	h.ui.KeyboardNavigation = Always
+	build := func(ui *Context) { ui.PrimaryButton("Light the lamp") }
+	h.frame(build)
+	h.key(input.KeyTab, build)
+	h.frame(build)
+	ring, found := h.ringAround(h.ui.Theme.OnPrimary)
+	if !found || ring.Area != h.rect(idOf("Light the lamp")) {
+		t.Fatal("on a primary button the ring is drawn inside it, in the colour of its text")
 	}
 }

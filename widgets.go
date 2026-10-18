@@ -95,7 +95,7 @@ func (ui *Context) buttonWithID(id ID, text, icon string, variant buttonVariant,
 	if variant == primaryButton {
 		look.Edge, look.EdgeWidth = theme.PrimaryEdge, theme.EdgeWidth
 	}
-	ui.frameWithID(id, layout, look, func() {
+	index := ui.frameWithID(id, layout, look, func() {
 		if icon != "" {
 			ui.IconSized(icon, theme.IconSize, ink)
 		}
@@ -103,6 +103,7 @@ func (ui *Context) buttonWithID(id ID, text, icon string, variant buttonVariant,
 			ui.Text(text, TextStyle{Weight: theme.ButtonWeight, Color: ink})
 		}
 	})
+	ui.elements[index].filledWithPrimary = variant == primaryButton
 	return result
 }
 

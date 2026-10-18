@@ -1,6 +1,12 @@
 package ui
 
-import "github.com/akrck02/go-renderer/input"
+import (
+	"github.com/akrck02/go-renderer/draw2d"
+	"github.com/akrck02/go-renderer/input"
+)
+
+// defaultFocusWidth is go-ui's own focus ring, in layout pixels.
+const defaultFocusWidth = 3
 
 // KeyboardNavigation says when the interface reads Tab, Enter and Space to move between controls
 // and press them, and when those keys belong to the program (a game, a 3D view).
@@ -128,9 +134,27 @@ func (ui *Context) moveFocusByTab() {
 		}
 	}
 	next := focusables[(index+step+len(focusables))%len(focusables)]
+	ui.RequestFrame(0) // the focus moved after this frame was painted: draw it where it is now
 	if next.field {
 		ui.focus, ui.focusByKeyboard, ui.keyboardFocus = next.id, true, 0
 		return
 	}
 	ui.focus, ui.keyboardFocus = 0, next.id
+}
+
+// paintFocusRing rings the control Tab reached, over its content: on its edge with no gap, or, on a
+// primary button, inside it in the colour of its text. A control reached by the pointer gets none.
+func (ui *Context) paintFocusRing(element *element) {
+	if element.id == 0 || element.id != ui.keyboardFocus || !ui.hasKeyboard {
+		return
+	}
+	theme := ui.Theme
+	width := theme.focusWidth()
+	if element.filledWithPrimary {
+		ui.drawing.Rectangle(element.rect, element.look.Radius, draw2d.Transparent, theme.OnPrimary, width)
+		return
+	}
+	area := element.rect
+	ring := draw2d.Rect{X: area.X - width, Y: area.Y - width, Width: area.Width + 2*width, Height: area.Height + 2*width}
+	ui.drawing.Rectangle(ring, element.look.Radius+width, draw2d.Transparent, theme.FocusRing, width)
 }

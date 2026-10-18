@@ -83,6 +83,7 @@ func (ui *Context) paintBox(element *element) {
 	if element.scroll != nil {
 		ui.paintScrollBar(element)
 	}
+	ui.paintFocusRing(element)
 	ui.insideFrost = outerFrost
 	if look.Clip {
 		ui.drawing.PopClip()

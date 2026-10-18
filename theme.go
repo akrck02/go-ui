@@ -73,6 +73,10 @@ type Theme struct {
 	// deviation): frosted glass. Panels inside a translucent one are not blurred again; 0 blurs
 	// nothing, at no cost.
 	Backdrop float32
+	// FocusWidth is the width of the ring around the control Tab reached, lying on its edge with no
+	// gap; 0 keeps go-ui's 3 pixels. On a button filled with Primary the ring is drawn inside it,
+	// in OnPrimary, where FocusRing could not be told from the fill.
+	FocusWidth float32
 }
 
 // LightTheme is the default: a light, quiet look that reads well over any scene.
@@ -144,6 +148,9 @@ func DarkTheme() Theme {
 }
 
 // buttonRadius is the corner of buttons and selectable items: ButtonRadius, or the controls' own.
+// focusWidth is FocusWidth, or go-ui's own ring.
+func (theme Theme) focusWidth() float32 { return orDefault(theme.FocusWidth, defaultFocusWidth) }
+
 func (theme Theme) buttonRadius() float32 { return orDefault(theme.ButtonRadius, theme.ControlRadius) }
 
 // go-ui's own measures, kept when a theme leaves the matching field at zero.

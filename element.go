@@ -56,6 +56,7 @@ type element struct {
 	painter                                    func(area draw2d.Rect, drawing *draw2d.List) // set on painted boxes (Paint)
 	description                                int                                          // 1 + its index in the screen reader's descriptions; 0 = none
 	lineBox                                    float32                                      // a text's height in the layout: its letters, or the theme's line height
+	filledWithPrimary                          bool                                         // a primary button: its focus ring goes inside
 }
 
 // intrinsic is the size of what the element shows itself (not its children) along an axis.
