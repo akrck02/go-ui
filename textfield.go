@@ -457,14 +457,26 @@ func (ui *Context) keepCaretInSight(id ID, scroll, caretX, textWidth float32) fl
 	return clamp(scroll, 0, max(textWidth-room+1, 0))
 }
 
+// paintFieldFocus marks the field being typed in: its own edge lit in FocusRing when the theme
+// asks for it (FieldFocusEdge), else a ring around it.
+func (ui *Context) paintFieldFocus(rect draw2d.Rect, radius float32) {
+	theme := ui.Theme
+	width := theme.focusWidth()
+	if theme.FieldFocusEdge {
+		ui.drawing.Rectangle(rect, radius, draw2d.Transparent, theme.FocusRing, width)
+		return
+	}
+	ring := draw2d.Rect{X: rect.X - width, Y: rect.Y - width, Width: rect.Width + 2*width, Height: rect.Height + 2*width}
+	ui.drawing.Rectangle(ring, radius+width, draw2d.Transparent, theme.FocusRing, width)
+}
+
 // paintField paints a field's text, selection and caret inside its box.
 func (ui *Context) paintField(element *element) {
 	theme := ui.Theme
 	paint := element.field
 	rect := element.rect
 	if paint.focused && !paint.plain {
-		ring := draw2d.Rect{X: rect.X - 3, Y: rect.Y - 3, Width: rect.Width + 6, Height: rect.Height + 6}
-		ui.drawing.Rectangle(ring, element.look.Radius+3, draw2d.Transparent, theme.FocusRing, 3)
+		ui.paintFieldFocus(rect, element.look.Radius)
 	}
 	clip := draw2d.Rect{X: rect.X + fieldPadding - 1, Y: rect.Y, Width: rect.Width - 2*fieldPadding + 2, Height: rect.Height}
 	ui.drawing.PushClip(clip)

@@ -77,6 +77,9 @@ type Theme struct {
 	// gap; 0 keeps go-ui's 3 pixels. On a button filled with Primary the ring is drawn inside it,
 	// in OnPrimary, where FocusRing could not be told from the fill.
 	FocusWidth float32
+	// FieldFocusEdge lights a field's own edge in FocusRing while it is typed in, instead of a
+	// ring around it.
+	FieldFocusEdge bool
 }
 
 // LightTheme is the default: a light, quiet look that reads well over any scene.

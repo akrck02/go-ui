@@ -213,3 +213,16 @@ func TestTheRingOfAPrimaryButtonIsInside(t *testing.T) {
 		t.Fatal("on a primary button the ring is drawn inside it, in the colour of its text")
 	}
 }
+
+func TestAFieldCanLightItsOwnBorder(t *testing.T) {
+	h := newHarness(t)
+	h.ui.Theme.FieldFocusEdge, h.ui.Theme.FocusWidth = true, 2
+	keeper := ""
+	build := func(ui *Context) { ui.TextField("Keeper", &keeper) }
+	h.frame(build)
+	h.clickInside(idOf("Keeper"), build)
+	ring, found := h.ringAround(h.ui.Theme.FocusRing)
+	if !found || ring.Area != h.rect(idOf("Keeper")) || ring.BorderWidth != 2 {
+		t.Fatalf("the field's own edge lights up, with no ring around it: %+v", ring)
+	}
+}
