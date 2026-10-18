@@ -28,6 +28,10 @@ viewer.Run(world, options, "Lighthouse", update, 0)
 
 ![The example: a properties panel with tabs, an open select, a checkbox, a slider and a number field over a scene](docs/images/example-light.png)
 
+Tab, Enter and Space stay with the scene until the interface is given the keyboard; an
+application that is only an interface sets `KeyboardNavigation = ui.Always`
+([who has the keyboard](docs/5-components/10-the-keyboard.md)).
+
 The same pieces build a traditional desktop application with no 3D at all: package `window` opens
 a plain window, and `cmd/app` lays out a menu bar, a toolbar with a search box, a navigation list,
 summary cards, a table, an inspector and a status bar.

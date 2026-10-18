@@ -274,3 +274,56 @@ func TestLessMotionKeepsAHeldButtonStill(t *testing.T) {
 		t.Fatalf("with less motion a held button keeps its size: %v, want %v", drawn, button)
 	}
 }
+
+// TestThePauseMenuOfTheGuideWorks runs the game of docs/5-components/10-the-keyboard.md.
+func TestThePauseMenuOfTheGuideWorks(t *testing.T) {
+	h := newHarness(t)
+	paused, jumps := false, 0
+	step := func() {
+		if !paused && h.state.Pressed(input.KeyP) {
+			paused = true
+			h.ui.TakeKeyboard()
+		}
+		h.ui.Begin(h.state)
+		if paused {
+			h.ui.Panel("Paused", func() {
+				if h.ui.PrimaryButton("Resume") {
+					paused = false
+					h.ui.ReleaseKeyboard()
+				}
+				h.ui.Button("Settings")
+			})
+		}
+		h.ui.End()
+		if paused && !h.ui.HasKeyboard() {
+			paused = false
+		}
+		if !h.ui.HasKeyboard() && h.state.Pressed(input.KeySpace) {
+			jumps++
+		}
+		h.state.EndFrame()
+	}
+	press := func(key input.Key) {
+		h.state.SetKey(key, true)
+		step()
+		h.state.SetKey(key, false)
+	}
+	press(input.KeySpace)
+	press(input.KeyP)
+	press(input.KeySpace) // the menu has the keyboard: no jump
+	if !paused || jumps != 1 {
+		t.Fatalf("paused %v with %d jumps, want paused with 1", paused, jumps)
+	}
+	press(input.KeyEscape)
+	press(input.KeySpace)
+	if paused || jumps != 2 {
+		t.Fatalf("Escape resumes and Space jumps again: paused %v, %d jumps", paused, jumps)
+	}
+	press(input.KeyP)
+	press(input.KeyTab) // the panel's fold button comes first, in its title bar
+	press(input.KeyTab)
+	press(input.KeyEnter) // Tab reached Resume, Enter presses it
+	if paused {
+		t.Fatal("Tab and Enter press Resume")
+	}
+}

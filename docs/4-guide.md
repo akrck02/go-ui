@@ -389,6 +389,10 @@ frames a second.
   calls `state.ClaimMouse()`. go-renderer's viewer then gives its cameras and shortcuts the input
   without the mouse, so dragging inside a panel does not turn the view. A text field with the focus
   claims the keyboard the same way. `WantsMouse()` and `WantsKeyboard()` tell your own code.
+- **Tab, Enter and Space** move between controls and press them only while the interface has the
+  keyboard: a field is typed in, a dialog or menu is open, or the program called `TakeKeyboard`.
+  Otherwise a game or a 3D view keeps them. A program that is only an interface sets
+  `KeyboardNavigation = ui.Always`: [who has the keyboard](5-components/10-the-keyboard.md).
 - **Pointer shape**: a hand over buttons, four arrows over a title bar that can be dragged and
   while dragging a payload, an I-beam over a text field, a two-headed arrow over a resize handle.
 - **Modal and dragging**: while a sheet is open or a payload is dragged, the interface claims the

@@ -36,6 +36,9 @@ Every button, list and check box of the frame now follows it.
 | `LineHeight`, `HeadingLineHeight` | A line as tall as its size × this, and the same for text at `HeadingSize` and above | As tall as the letters |
 | `CheckSize`, `CheckRadius`, `CheckBorder`, `CheckMark`, `CheckLine`, `CheckedBorder` | A check box's side, corners, edge, tick, empty edge and ticked edge | go-ui's small box |
 | `Backdrop` | Blurs what is behind every translucent panel, as frosted glass, by this many pixels | Nothing blurred, at no cost |
+| `FocusWidth` | The width of the ring around the control Tab reached, lying on its edge; inside a primary button, in `OnPrimary` | 3 pixels |
+| `FieldFocusEdge` | A field being typed in lights its own edge in `FocusRing` instead of a ring around it | A ring around the field |
+| `PressScale` | How big a held control is drawn (0.97 gives a little); with `context.LessMotion` set it stays still | It keeps its size |
 
 `Backdrop` frosts a translucent panel that is not inside another one: the rows hovered or chosen
 inside a frosted panel are translucent too, but blurring again under them would cost a blur for
