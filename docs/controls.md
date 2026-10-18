@@ -98,6 +98,7 @@ These have pages of their own, [panels and layers](panels-and-layers.md) and
 |---|---|
 | `Panel(title, content)`, `PanelWith(title, PanelOptions{…}, content)` | A floating card with a title bar, moved, folded, placed, sized, locked or docked; see [panels](panels-and-layers.md#panels) |
 | `Sheet(title, SheetOptions{Width}, content)` | A modal card in the middle of the window; returns `true` when the person asks to close it. See [sheets](panels-and-layers.md#sheets) |
+| `FilePicker(FilePickerOptions{…})` | A sheet to choose a file or a folder on the disk; returns its path and `true` once it closes. See [choosing a file](panels-and-layers.md#choosing-a-file) |
 | `DragSource(name, payload, layout, content)`, `DropTarget(name, layout, accepts, content)` | Drag a value of yours from one box to another, or onto the scene; see [drag and drop](tables-and-dragging.md#drag-and-drop) |
 | `Resizable(name, side, &size, minimum, maximum, layout, content)` | A box whose edge can be dragged to change its width or height; see [resizable boxes](tables-and-dragging.md#resizable-boxes) |
 
