@@ -88,10 +88,10 @@ Set the mode once, before the first frame:
 context.KeyboardNavigation = ui.Always
 ```
 
-Now Tab goes through every button, check box, toggle, tab, select, chip and field in the order
-they are drawn, and comes round at the end. Shift+Tab goes back. Enter or Space presses the control
-Tab reached: it clicks a button, ticks a check box, picks a tab, opens a select. When the control
-with the focus goes away (a row deleted), the next Tab goes on from where it stood. A field reached by
+Now Tab goes through every button, check box, toggle, tab, select, chip and field in the order they
+are drawn, and comes round at the end. Shift+Tab goes back. Enter or Space presses the control Tab
+reached: it clicks a button, ticks a check box, picks a tab, opens a select. When the control with
+the focus goes away (a row deleted), the next Tab goes on from where it stood. A field reached by
 Tab selects its text, ready to be typed over.
 
 ## What Tab reaches
