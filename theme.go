@@ -69,6 +69,10 @@ type Theme struct {
 	CheckRadius       float32
 	CheckBorder       float32      // the width of an empty check box's edge
 	CheckedBorder     draw2d.Color // the edge of a ticked box; an invisible colour draws none
+	// Backdrop blurs what is behind every translucent panel by this many layout pixels (a standard
+	// deviation): frosted glass. Panels inside a translucent one are not blurred again; 0 blurs
+	// nothing, at no cost.
+	Backdrop float32
 }
 
 // LightTheme is the default: a light, quiet look that reads well over any scene.

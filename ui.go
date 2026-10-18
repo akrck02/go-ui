@@ -43,9 +43,11 @@ type Context struct {
 	drawing  draw2d.List
 	clip     draw2d.Rect // while painting: the clip of the boxes around, when clipped
 	clipped  bool
-	frame    int
-	now      time.Time // the time of this frame, from the input state's clock
-	building bool
+	// insideFrost is true while the children of a frosted box are painted (see isFrosted).
+	insideFrost bool
+	frame       int
+	now         time.Time // the time of this frame, from the input state's clock
+	building    bool
 
 	elements []element
 	open     []int // the boxes open now, innermost last

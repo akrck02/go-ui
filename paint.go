@@ -42,6 +42,10 @@ func (ui *Context) paintBox(element *element) {
 	if look.Shadow {
 		ui.drawing.Shadow(element.rect, look.Radius, ui.Theme.ShadowBlur, ui.Theme.ShadowDrop, ui.Theme.Shadow)
 	}
+	frosted := ui.isFrosted(look)
+	if frosted {
+		ui.drawing.Backdrop(element.rect, look.Radius, ui.Theme.Backdrop)
+	}
 	if look.EdgeWidth > 0 && look.Edge.IsVisible() {
 		under := element.rect
 		under.Y += look.EdgeWidth
@@ -62,6 +66,8 @@ func (ui *Context) paintBox(element *element) {
 			ui.clip = element.rect.Intersect(outerClip)
 		}
 	}
+	outerFrost := ui.insideFrost
+	ui.insideFrost = outerFrost || frosted
 	right := element.rect.Right() - element.layout.Padding.Right
 	for child := element.firstChild; child >= 0; child = ui.elements[child].nextSibling {
 		if ui.isOutOfSight(&ui.elements[child]) {
@@ -77,10 +83,22 @@ func (ui *Context) paintBox(element *element) {
 	if element.scroll != nil {
 		ui.paintScrollBar(element)
 	}
+	ui.insideFrost = outerFrost
 	if look.Clip {
 		ui.drawing.PopClip()
 		ui.clip, ui.clipped = outerClip, outerClipped
 	}
+}
+
+// isFrosted tells whether a box blurs what is behind it: with a Backdrop in the theme, a box with
+// a translucent fill that is not inside another frosted one. A frosted panel's own hovered or
+// chosen rows are translucent too, but blurring again under them would cost a blur for nothing.
+func (ui *Context) isFrosted(look Look) bool {
+	if ui.Theme.Backdrop <= 0 || ui.insideFrost {
+		return false
+	}
+	alpha := look.Fill[3]
+	return alpha > 0 && alpha < 1
 }
 
 // isOutOfSight tells whether an element lies wholly outside the clip of a box around it, with

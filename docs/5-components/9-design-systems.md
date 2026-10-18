@@ -35,6 +35,12 @@ Every button, list and check box of the frame now follows it.
 | `ItemPadding`, `ItemGap`, `ItemIconInk` | The room in an item of a list, the gap after its icon, the icon's ink | 8 and 8, soft icons |
 | `LineHeight`, `HeadingLineHeight` | A line as tall as its size × this, and the same for text at `HeadingSize` and above | As tall as the letters |
 | `CheckSize`, `CheckRadius`, `CheckBorder`, `CheckMark`, `CheckLine`, `CheckedBorder` | A check box's side, corners, edge, tick, empty edge and ticked edge | go-ui's small box |
+| `Backdrop` | Blurs what is behind every translucent panel, as frosted glass, by this many pixels | Nothing blurred, at no cost |
+
+`Backdrop` frosts a translucent panel that is not inside another one: the rows hovered or chosen
+inside a frosted panel are translucent too, but blurring again under them would cost a blur for
+nothing. go-renderer takes one snapshot of the frame per layer, however many panels it has, and
+blurs it small; its guide to the overlay says what that costs.
 
 Two rules keep old themes looking the same:
 
