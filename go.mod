@@ -2,10 +2,7 @@ module github.com/akrck02/go-ui
 
 go 1.25.6
 
-require (
-	github.com/akrck02/bubble v0.0.0
-	github.com/akrck02/go-renderer v0.0.0
-)
+require github.com/akrck02/go-renderer v0.0.0
 
 require (
 	github.com/go-gl/gl v0.0.0-20260331235117-4566fea9a276 // indirect
@@ -17,6 +14,3 @@ require (
 
 // Until go-renderer publishes its draw2d package and the wider input, build against the local copy.
 replace github.com/akrck02/go-renderer => ../go-renderer
-
-// Bubble 4, the design system, is on its feature/v4 branch: build against the local copy too.
-replace github.com/akrck02/bubble => ../bubble

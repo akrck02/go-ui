@@ -1,14 +1,13 @@
 # Reference
 
-go-ui has three packages:
+go-ui has two packages:
 
 | Package | Import | What it is |
 |---|---|---|
 | [`ui`](1-ui.md) | `ui "github.com/akrck02/go-ui"` | The context, layout, every control, themes, screen readers |
 | [`window`](2-window.md) | `"github.com/akrck02/go-ui/window"` | A window that runs an interface: on the desktop, in a web page, on Android; preferences, notifications, films |
-| [`bubble`](3-bubble.md) | `"github.com/akrck02/go-ui/bubble"` | go-ui drawn in Bubble 4, akrck02's design system: its theme, and glass's ground |
 
-[`ui.md`](1-ui.md), [`window.md`](2-window.md) and [`bubble.md`](3-bubble.md) list every type and function with the first sentence
+[`ui.md`](1-ui.md) and [`window.md`](2-window.md) list every type and function with the first sentence
 of its comment; they are generated from the doc comments (`python3 docs/6-reference/generate.py`).
 `go doc github.com/akrck02/go-ui.Context.Table` prints any of them whole. This page is the map:
 the context's methods by what they are for.

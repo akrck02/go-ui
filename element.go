@@ -12,7 +12,7 @@ type Look struct {
 	Shadow      bool // a soft shadow under it, for things that float over others
 	Clip        bool // children are cut to the box's area
 	// Edge is a solid band of this colour, EdgeWidth tall, just under the box, as if it stood on a
-	// block: Bubble's main button. It takes no room in the layout, like a shadow.
+	// block: a design system's main button. It takes no room in the layout, like a shadow.
 	Edge      draw2d.Color
 	EdgeWidth float32
 }

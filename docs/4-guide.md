@@ -399,7 +399,8 @@ frames a second.
 Every control reads its colours and sizes from `interfaceContext.Theme`: surfaces, inks, lines,
 the primary colour, the scrim behind sheets, text sizes, control height, gaps, padding, corner radii and the shadow.
 `LightTheme()` is the default; `DarkTheme()` has the same sizes with dark colours. Change a token
-and every control follows.
+and every control follows. A design system can go further, down to how a chosen item or the main
+button looks: [a design system's look](5-components/9-design-systems.md).
 
 ## Applications without a scene
 

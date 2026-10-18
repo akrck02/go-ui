@@ -18,7 +18,7 @@ variable of your program that lives between frames.
 | [Lists and tables](6-lists-and-tables.md) | `List`, `Table` |
 | [Layers](7-layers.md) | `Panel`, `PanelWith`, `Sheet`, `Modal`, `Overlay`, `Popover`, `MenuButton`, `MenuItem`, `Toast` |
 | [Dragging and resizing](8-dragging-and-resizing.md) | `DragSource`, `DropTarget`, `Dragging`, `DroppedOnScreen`, `Resizable` |
-| [In Bubble 4](9-bubble.md) | Every control in a design system's look: `bubble.Theme`, `bubble.Ground`, the theme's design tokens |
+| [A design system's look](9-design-systems.md) | The theme's design tokens: buttons, the chosen item, line heights, check boxes |
 
 ## Rules every control follows
 

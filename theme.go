@@ -43,9 +43,9 @@ type Theme struct {
 	ScrollStep    float32       // pixels a scroll area moves per notch of the wheel
 	TooltipDelay  time.Duration // how long the pointer rests on a control before its tooltip shows
 
-	// What a design system such as Bubble tunes; package bubble sets them from a Bubble theme (see
-	// docs). The light theme's values keep go-ui's own look, and a zero colour or size follows the
-	// token it names, so a theme that only changes Primary or ControlRadius still looks the same.
+	// What a design system tunes (docs/5-components/9-design-systems.md). The light theme's values
+	// keep go-ui's own look, and a zero colour or size follows the token it names, so a theme that
+	// only changes Primary or ControlRadius still looks the same.
 	ButtonRadius      float32       // corners of buttons and selectable items; 0 = ControlRadius
 	ButtonPadding     float32       // left and right inside a button with a label; 0 = 12
 	ButtonGap         float32       // between a button's icon and its label; 0 = 6
