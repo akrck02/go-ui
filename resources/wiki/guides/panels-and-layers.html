@@ -4,7 +4,7 @@
 the mouse first.</p>
 
 <p align="center">
-  <img alt="Layers from the back to the front: the screen, panels, overlays, modals and sheets, and popups on top" src="../images/layers.svg" width="880">
+  <img alt="Layers from the back to the front: the screen, panels, overlays, modals and sheets, and popups on top" src="./images/layers.svg" width="880">
 </p>
 
 <h2 id="panels">Panels</h2>
@@ -42,8 +42,8 @@ working inside it (<code>cmd/scene-app</code>).</p>
 
 <p align="center">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../images/scene-app-dark.png">
-  <img alt="An application layout around a 3D view: a menu bar, a toolbar, a list on the left, an inspector on the right and the lighthouse showing through in the middle" src="../images/scene-app-light.png" width="720">
+  <source media="(prefers-color-scheme: dark)" srcset="./images/scene-app-dark.png">
+  <img alt="An application layout around a 3D view: a menu bar, a toolbar, a list on the left, an inspector on the right and the lighthouse showing through in the middle" src="./images/scene-app-light.png" width="720">
 </picture>
 </p>
 
@@ -56,8 +56,8 @@ and a panel lists them to select, rename and remove; at rest it uses no processo
 
 <p align="center">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../images/plan-editor-dark.png">
-  <img alt="Huts placed on the map of an island, with the panel that lists them" src="../images/plan-editor-light.png" width="720">
+  <source media="(prefers-color-scheme: dark)" srcset="./images/plan-editor-dark.png">
+  <img alt="Huts placed on the map of an island, with the panel that lists them" src="./images/plan-editor-light.png" width="720">
 </picture>
 </p>
 
@@ -72,8 +72,8 @@ until it closes. <code>Popover</code> makes a popup of the program&rsquo;s own (
 
 <p align="center">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../images/menu-dark.png">
-  <img alt="The Add menu open under its button: three items with icons and a copy item with its Ctrl+D hint" src="../images/menu-light.png" width="320">
+  <source media="(prefers-color-scheme: dark)" srcset="./images/menu-dark.png">
+  <img alt="The Add menu open under its button: three items with icons and a copy item with its Ctrl+D hint" src="./images/menu-light.png" width="320">
 </picture>
 </p>
 <pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">MenuButton</span><span class="p">(</span><span class="s">&#34;plus&#34;</span><span class="p">,</span> <span class="s">&#34;Add&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
@@ -92,8 +92,8 @@ quietly on the right: the text of a shortcut, which the program handles itself.<
 
 <p align="center">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../images/sheet-dark.png">
-  <img alt="A sheet titled Remove part asking whether to remove the lens from the list, with Cancel and Remove buttons, over a dimmed scene" src="../images/sheet-light.png" width="400">
+  <source media="(prefers-color-scheme: dark)" srcset="./images/sheet-dark.png">
+  <img alt="A sheet titled Remove part asking whether to remove the lens from the list, with Cancel and Remove buttons, over a dimmed scene" src="./images/sheet-light.png" width="400">
 </picture>
 </p>
 <pre><code class="language-go"><span class="k">if</span> <span class="nx">confirming</span> <span class="o">&amp;&amp;</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Sheet</span><span class="p">(</span><span class="s">&#34;Remove part&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">SheetOptions</span><span class="p">{},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>

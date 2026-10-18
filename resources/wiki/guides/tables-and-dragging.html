@@ -6,8 +6,8 @@ before removing one. Both columns can be resized by their inner edge.</p>
 
 <p align="center">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../images/workbench-dark.png">
-  <img alt="The workbench: a grouped table on the left, tags as chips on the right, the island in the middle" src="../images/workbench-light.png" width="720">
+  <source media="(prefers-color-scheme: dark)" srcset="./images/workbench-dark.png">
+  <img alt="The workbench: a grouped table on the left, tags as chips on the right, the island in the middle" src="./images/workbench-light.png" width="720">
 </picture>
 </p>
 <pre><code class="language-bash">go run ./cmd/workbench                <span class="c1"># -demo menu, -demo sheet or -demo drag open them for a capture</span>
@@ -17,8 +17,8 @@ before removing one. Both columns can be resized by their inner edge.</p>
 
 <p align="center">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../images/table-dark.png">
-  <img alt="A table of parts with Part, Code and Count columns, grouped under Lantern and Tower captions, the first row selected" src="../images/table-light.png" width="300">
+  <source media="(prefers-color-scheme: dark)" srcset="./images/table-dark.png">
+  <img alt="A table of parts with Part, Code and Count columns, grouped under Lantern and Tower captions, the first row selected" src="./images/table-light.png" width="300">
 </picture>
 </p>
 <pre><code class="language-go"><span class="nx">columns</span> <span class="o">:=</span> <span class="p">[]</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Column</span><span class="p">{</span>
@@ -51,8 +51,8 @@ typeface, so there is no monospaced column yet.</p>
 
 <p align="center">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../images/drag-dark.png">
-  <img alt="A Checked tag dragged from the inspector's chips over the island, its name following the pointer" src="../images/drag-light.png" width="560">
+  <source media="(prefers-color-scheme: dark)" srcset="./images/drag-dark.png">
+  <img alt="A Checked tag dragged from the inspector's chips over the island, its name following the pointer" src="./images/drag-light.png" width="560">
 </picture>
 </p>
 <pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">DragSource</span><span class="p">(</span><span class="s">&#34;Painted&#34;</span><span class="p">,</span> <span class="nx">tagPainted</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Chip</span><span class="p">(</span><span class="s">&#34;tag&#34;</span><span class="p">,</span> <span class="s">&#34;Painted&#34;</span><span class="p">,</span> <span class="nx">look</span><span class="p">)</span> <span class="p">})</span>
