@@ -78,7 +78,7 @@ and corners.
 - [x] T3 — Enter and Space use the focused control · `controls.go`, `widgets.go`, `choices.go` · R2 · test: `TestTheKeyboardUsesTheFocusedControl`
 - [x] T4 — The ring, only for keyboard focus, on the edge or inside a filled control · `paint.go`, `theme.go` · R3 R4 R7 · tests: `TestAClickGivesFocusWithoutARing`, `TestTheRingLiesOnTheEdge`, `TestTheRingOfAPrimaryButtonIsInside`
 - [x] T5 — `FieldFocusEdge` · `textfield.go`, `theme.go` · R5 · test: `TestAFieldCanLightItsOwnBorder`
-- [ ] T6 — `PressScale`, and less motion · `paint.go`, `theme.go`, `context.go` · R6 · tests: `TestAHeldButtonShrinks`, `TestLessMotionKeepsAHeldButtonStill`
+- [x] T6 — `PressScale`, and less motion · `paint.go`, `theme.go`, `context.go` · R6 · tests: `TestAHeldButtonShrinks`, `TestLessMotionKeepsAHeldButtonStill`
 - [ ] T7 — Docs: a guide «Who has the keyboard» (`docs/5-components/`), with a game over a 3D view and a settings app side by side, what a click does, Escape and `TakeKeyboard`, and a table of keys per mode; the components' keyboard sections and the design-system tokens table; a line in the README's example · R1–R6 R11
 - [ ] T8 — Bubble's adapter sets the tokens; compare the showcase with the browser · `bubble/goui/theme.go` · R8 · test: `TestABubbleThemeLightsFieldsAndShrinksWhenPressed`
 - [ ] T9 — Measure: the 300-control benchmark and the register's audit benchmarks before and after, written into `docs/8-project/1-performance-audit.md` · R10

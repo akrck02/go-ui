@@ -82,14 +82,18 @@ type Context struct {
 	keyboardFocus      ID   // the control Tab reached, which Enter and Space press
 	keyboardFocusSeen  bool // it was built this frame; if not, it went away
 	outOfTabOrder      int  // inside withoutTab: controls built now are not Tab stops
-	sceneDrag          bool
-	insets             Insets // what the system draws over the window's edges (SetInsets)
-	cursor             input.CursorShape
-	cursorWasSet       bool // the interface set the pointer's shape, so it puts the arrow back when it leaves
-	panels             map[ID]*panelMemory
-	memory             map[ID]*remembered
-	popups             []ID // popups that took part in the last frame, back to front
-	nextPopups         []ID
+	heldControl        ID   // the control held down in this frame, which PressScale shrinks
+	// LessMotion keeps controls still when the person asks the system for less motion: a held
+	// control does not shrink. The program sets it from the platform's setting.
+	LessMotion   bool
+	sceneDrag    bool
+	insets       Insets // what the system draws over the window's edges (SetInsets)
+	cursor       input.CursorShape
+	cursorWasSet bool // the interface set the pointer's shape, so it puts the arrow back when it leaves
+	panels       map[ID]*panelMemory
+	memory       map[ID]*remembered
+	popups       []ID // popups that took part in the last frame, back to front
+	nextPopups   []ID
 	// overlays are the overlays shown in the last frame and in this one, back to front
 	overlays, nextOverlays []ID
 	scrollUsed             bool                 // a scroll area took this step's wheel movement

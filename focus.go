@@ -52,7 +52,7 @@ func (ui *Context) HasKeyboard() bool { return ui.hasKeyboard }
 // follows Tab when no field is taking the keys (a field follows its own).
 func (ui *Context) beginFocus() {
 	ui.hasKeyboard = ui.keyboardWanted()
-	ui.keyboardFocusSeen, ui.focusAtBegin = false, ui.focus
+	ui.keyboardFocusSeen, ui.focusAtBegin, ui.heldControl = false, ui.focus, 0
 	if !ui.hasKeyboard || ui.state.ButtonPressed(input.MouseLeft) {
 		ui.keyboardFocus = 0 // the pointer moves the focus by itself, and shows no ring
 	}
@@ -64,6 +64,9 @@ func (ui *Context) beginFocus() {
 // joinTabOrder adds a control to the Tab order of this frame. Controls only join while the
 // interface has the keyboard, so a game's frame does no work for them.
 func (ui *Context) joinTabOrder(id ID) {
+	if id == ui.active {
+		ui.heldControl = id
+	}
 	if id == ui.keyboardFocus {
 		ui.keyboardFocusSeen = true
 	}
@@ -157,4 +160,30 @@ func (ui *Context) paintFocusRing(element *element) {
 	area := element.rect
 	ring := draw2d.Rect{X: area.X - width, Y: area.Y - width, Width: area.Width + 2*width, Height: area.Height + 2*width}
 	ui.drawing.Rectangle(ring, element.look.Radius+width, draw2d.Transparent, theme.FocusRing, width)
+}
+
+// shrinks tells whether a box is a control held down under the pointer that the theme shrinks.
+func (ui *Context) shrinks(element *element) bool {
+	scale := ui.Theme.PressScale
+	held := element.id != 0 && element.id == ui.heldControl && element.id == ui.hot
+	return held && scale > 0 && scale != 1 && !ui.LessMotion
+}
+
+// scaleCommands draws what was painted since first smaller (or larger) around the centre of area:
+// only the drawing changes, so the layout and where the pointer reaches stay where they were.
+func (ui *Context) scaleCommands(first int, area draw2d.Rect, scale float32) {
+	centreX, centreY := area.X+area.Width/2, area.Y+area.Height/2
+	around := func(rect draw2d.Rect) draw2d.Rect {
+		return draw2d.Rect{X: centreX + (rect.X-centreX)*scale, Y: centreY + (rect.Y-centreY)*scale,
+			Width: rect.Width * scale, Height: rect.Height * scale}
+	}
+	commands := ui.drawing.Commands[first:]
+	for index := range commands {
+		command := &commands[index]
+		command.Area, command.Radius, command.BorderWidth = around(command.Area), command.Radius*scale, command.BorderWidth*scale
+		command.Size, command.Baseline = command.Size*scale, centreY+(command.Baseline-centreY)*scale
+		if command.HasClip && area.Intersect(command.Clip) == command.Clip {
+			command.Clip = around(command.Clip) // a clip of the control's own; one from a list around it stays
+		}
+	}
 }

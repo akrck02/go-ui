@@ -226,3 +226,51 @@ func TestAFieldCanLightItsOwnBorder(t *testing.T) {
 		t.Fatalf("the field's own edge lights up, with no ring around it: %+v", ring)
 	}
 }
+
+// holdOn presses a control and keeps the button down for a frame.
+func (h *harness) holdOn(id ID, build func(ui *Context)) {
+	area := h.rect(id)
+	h.moveTo(float64(area.X+area.Width/2), float64(area.Y+area.Height/2))
+	h.frame(build)
+	h.press()
+	h.frame(build)
+	h.frame(build)
+}
+
+// fillOf finds the rectangle a button fills, by its colour.
+func (h *harness) fillOf(colour draw2d.Color) draw2d.Rect {
+	for _, command := range h.ui.Drawing().Commands {
+		if command.Kind == draw2d.RectangleKind && command.Fill == colour {
+			return command.Area
+		}
+	}
+	return draw2d.Rect{}
+}
+
+func TestAHeldButtonShrinks(t *testing.T) {
+	h := newHarness(t)
+	h.ui.Theme.PressScale = 0.9
+	build := func(ui *Context) { ui.Button("Ring the bell") }
+	h.frame(build)
+	button := h.rect(idOf("Ring the bell"))
+	h.holdOn(idOf("Ring the bell"), build)
+	drawn := h.fillOf(h.ui.Theme.Line) // a secondary button held is filled with Line
+	if drawn.Width >= button.Width || drawn.Width < button.Width*0.89 {
+		t.Fatalf("a held button is drawn at 0.9 of its width: %v of %v", drawn.Width, button.Width)
+	}
+	if h.rect(idOf("Ring the bell")) != button {
+		t.Fatal("shrinking is only drawn: the layout does not move")
+	}
+}
+
+func TestLessMotionKeepsAHeldButtonStill(t *testing.T) {
+	h := newHarness(t)
+	h.ui.Theme.PressScale, h.ui.LessMotion = 0.9, true
+	build := func(ui *Context) { ui.Button("Ring the bell") }
+	h.frame(build)
+	button := h.rect(idOf("Ring the bell"))
+	h.holdOn(idOf("Ring the bell"), build)
+	if drawn := h.fillOf(h.ui.Theme.Line); drawn != button {
+		t.Fatalf("with less motion a held button keeps its size: %v, want %v", drawn, button)
+	}
+}

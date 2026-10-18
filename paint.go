@@ -38,6 +38,10 @@ func (ui *Context) paintElement(index int) {
 }
 
 func (ui *Context) paintBox(element *element) {
+	if ui.shrinks(element) {
+		first := len(ui.drawing.Commands)
+		defer ui.scaleCommands(first, element.rect, ui.Theme.PressScale)
+	}
 	look := element.look
 	if look.Shadow {
 		ui.drawing.Shadow(element.rect, look.Radius, ui.Theme.ShadowBlur, ui.Theme.ShadowDrop, ui.Theme.Shadow)

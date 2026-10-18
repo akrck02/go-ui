@@ -80,6 +80,9 @@ type Theme struct {
 	// FieldFocusEdge lights a field's own edge in FocusRing while it is typed in, instead of a
 	// ring around it.
 	FieldFocusEdge bool
+	// PressScale is how big a control is drawn while it is held, around its centre (0.97 gives a
+	// little); its content shrinks with it and the layout does not move. 0 keeps it still.
+	PressScale float32
 }
 
 // LightTheme is the default: a light, quiet look that reads well over any scene.
