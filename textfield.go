@@ -118,7 +118,7 @@ func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fiel
 	if typed, asked := ui.readerText(id); asked {
 		*text = memory.editor.fitted(typed) // while it is being typed in too: the editor follows below
 	}
-	ui.focusables = append(ui.focusables, id)
+	ui.joinTabOrderAsField(id)
 	result := ui.interact(id)
 	if result.pressed && ui.focus != id {
 		ui.focus = id
@@ -504,30 +504,4 @@ func (ui *Context) Focus(path ...string) {
 		}
 	}
 	ui.focus, ui.focusByKeyboard, ui.focusSeen = id, true, true
-}
-
-// moveFocusByTab gives the focus to the field after (or, with Shift, before) the one where Tab
-// was pressed, going round at the ends. The field selects its whole text when it takes the focus.
-func (ui *Context) moveFocusByTab() {
-	from := ui.tabFrom
-	ui.tabFrom = 0
-	focusables := ui.focusables
-	if len(ui.nextSheets) > 0 { // a sheet is open: Tab goes round its own fields only
-		focusables = focusables[ui.sheetFocusStart:ui.sheetFocusEnd]
-	}
-	if from == 0 || len(focusables) == 0 {
-		return
-	}
-	for index, id := range focusables {
-		if id != from {
-			continue
-		}
-		step := 1
-		if ui.tabBack {
-			step = -1
-		}
-		next := (index + step + len(focusables)) % len(focusables)
-		ui.focus, ui.focusByKeyboard = focusables[next], true
-		return
-	}
 }

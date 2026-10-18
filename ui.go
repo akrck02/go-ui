@@ -66,21 +66,30 @@ type Context struct {
 	active                      ID   // the control being pressed or dragged
 	focus                       ID   // the control the keyboard goes to
 	focusSeen                   bool // the focused control was built this frame; if not, it went away
-	// focusables are the fields that can take the focus, in the order they were built this frame,
-	// for Tab; tabFrom is the field where Tab was pressed (tabBack with Shift), and
+	// focusables are the stops of the Tab order, in the order they were built this frame; tabFrom
+	// is the stop where Tab was pressed (tabBack with Shift; tabPressed when no stop had it), and
 	// focusByKeyboard tells the field taking the focus that it came by Tab.
-	focusables      []ID
+	focusables      []focusable
 	tabFrom         ID
 	tabBack         bool
+	tabPressed      bool
 	focusByKeyboard bool
-	sceneDrag       bool
-	insets          Insets // what the system draws over the window's edges (SetInsets)
-	cursor          input.CursorShape
-	cursorWasSet    bool // the interface set the pointer's shape, so it puts the arrow back when it leaves
-	panels          map[ID]*panelMemory
-	memory          map[ID]*remembered
-	popups          []ID // popups that took part in the last frame, back to front
-	nextPopups      []ID
+	// KeyboardNavigation says when the interface reads Tab, Enter and Space (focus.go).
+	KeyboardNavigation KeyboardNavigation
+	keyboardGiven      bool // TakeKeyboard gave the interface the keyboard
+	hasKeyboard        bool // the interface reads Tab, Enter and Space in this frame
+	focusAtBegin       ID   // the field, list or menu that had the keys when the frame began
+	keyboardFocus      ID   // the control Tab reached, which Enter and Space press
+	keyboardFocusSeen  bool // it was built this frame; if not, it went away
+	outOfTabOrder      int  // inside withoutTab: controls built now are not Tab stops
+	sceneDrag          bool
+	insets             Insets // what the system draws over the window's edges (SetInsets)
+	cursor             input.CursorShape
+	cursorWasSet       bool // the interface set the pointer's shape, so it puts the arrow back when it leaves
+	panels             map[ID]*panelMemory
+	memory             map[ID]*remembered
+	popups             []ID // popups that took part in the last frame, back to front
+	nextPopups         []ID
 	// overlays are the overlays shown in the last frame and in this one, back to front
 	overlays, nextOverlays []ID
 	scrollUsed             bool                 // a scroll area took this step's wheel movement
@@ -164,6 +173,7 @@ func (ui *Context) Begin(state *input.State) {
 	ui.beginReading()
 	ui.typing = false
 	ui.beginKeyboard()
+	ui.beginFocus()
 	ui.now = state.Time()
 	ui.texts.turnOver()
 	ui.building = true
@@ -210,6 +220,7 @@ func (ui *Context) End() {
 	if !ui.focusSeen {
 		ui.focus = 0
 	}
+	ui.endFocus()
 	ui.moveFocusByTab()
 	ui.finishInteraction()
 	ui.popups, ui.nextPopups = ui.nextPopups, ui.popups

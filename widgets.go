@@ -65,6 +65,7 @@ func (ui *Context) button(name, text, icon string, variant buttonVariant) bool {
 // buttonWithID adds a button with a known id; a lit button looks pressed (the button of an open
 // menu).
 func (ui *Context) buttonWithID(id ID, text, icon string, variant buttonVariant, lit bool) interaction {
+	ui.joinTabOrder(id)
 	result := ui.interact(id)
 	if result.hovered {
 		ui.cursor = input.CursorHand
@@ -143,6 +144,7 @@ func (ui *Context) buttonColours(variant buttonVariant, result interaction) (fil
 // row it fits its content (a group of tools in a toolbar).
 func (ui *Context) Selectable(icon, label string, selected bool) bool {
 	id := ui.idFor(label)
+	ui.joinTabOrder(id)
 	result := ui.interact(id)
 	if result.hovered {
 		ui.cursor = input.CursorHand
@@ -181,7 +183,9 @@ type Looks struct {
 // step it is clicked: the building block for controls of your own (a table row, a card). Its look
 // follows the pointer. It looks at the mouse after its content, so buttons inside it still work.
 func (ui *Context) Clickable(name string, layout Layout, looks Looks, content func()) bool {
-	index, result := ui.pressable(ui.idFor(name), layout, looks.Normal, content)
+	id := ui.idFor(name)
+	ui.joinTabOrder(id)
+	index, result := ui.pressable(id, layout, looks.Normal, content)
 	switch {
 	case result.held && result.hovered:
 		ui.elements[index].look = looks.Pressed

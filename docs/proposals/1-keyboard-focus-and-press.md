@@ -1,6 +1,6 @@
 # 1. Keyboard focus on every control, and a press that gives
 
-> Status: planned · Author's approval: proposal ☑ plan ☑
+> Status: building · Author's approval: proposal ☑ plan ☑
 
 ## Why
 
@@ -73,9 +73,9 @@ and corners.
 
 ## Tasks
 
-- [ ] T1 — Who has the keyboard: `KeyboardNavigation`, `TakeKeyboard`, `ReleaseKeyboard`, Escape · `ui.go`, `interaction.go` · R9 · tests: `TestAGameKeepsTabAndSpaceWhileTheInterfaceDoesNotHaveTheKeyboard`, `TestAClickOnAButtonDoesNotTakeTheKeyboard`, `TestEscapeGivesTheKeyboardBack`
-- [ ] T2 — The focus order and Tab over every control · `interaction.go`, `textfield.go`, `memory.go` · R1 R10 · tests: `TestTabVisitsEveryControlInTheOrderItIsDrawn`, `TestAFrameWithFocusAllocatesNothing`
-- [ ] T3 — Enter and Space use the focused control · `controls.go`, `widgets.go`, `choices.go` · R2 · test: `TestTheKeyboardUsesTheFocusedControl`
+- [x] T1 — Who has the keyboard: `KeyboardNavigation`, `TakeKeyboard`, `ReleaseKeyboard`, Escape · `ui.go`, `interaction.go` · R9 · tests: `TestAGameKeepsTabAndSpaceWhileTheInterfaceDoesNotHaveTheKeyboard`, `TestAClickOnAButtonDoesNotTakeTheKeyboard`, `TestEscapeGivesTheKeyboardBack`
+- [x] T2 — The focus order and Tab over every control · `interaction.go`, `textfield.go`, `memory.go` · R1 R10 · tests: `TestTabVisitsEveryControlInTheOrderItIsDrawn`, `TestAFrameWithFocusAllocatesNothing`
+- [x] T3 — Enter and Space use the focused control · `controls.go`, `widgets.go`, `choices.go` · R2 · test: `TestTheKeyboardUsesTheFocusedControl`
 - [ ] T4 — The ring, only for keyboard focus, on the edge or inside a filled control · `paint.go`, `theme.go` · R3 R4 R7 · tests: `TestAClickGivesFocusWithoutARing`, `TestTheRingLiesOnTheEdge`, `TestTheRingOfAPrimaryButtonIsInside`
 - [ ] T5 — `FieldFocusEdge` · `textfield.go`, `theme.go` · R5 · test: `TestAFieldCanLightItsOwnBorder`
 - [ ] T6 — `PressScale`, and less motion · `paint.go`, `theme.go`, `context.go` · R6 · tests: `TestAHeldButtonShrinks`, `TestLessMotionKeepsAHeldButtonStill`

@@ -36,6 +36,7 @@ func (ui *Context) chip(icon, label string, look ChipLook, removable bool) (clic
 		padding.Right = 3
 	}
 	layout := Layout{Height: Fixed(chipHeight), Padding: padding, Gap: 4, AlignY: Center}
+	ui.joinTabOrder(id)
 	index, result := ui.pressable(id, layout, Look{}, func() {
 		if icon != "" {
 			ui.IconSized(icon, 12, look.Ink)

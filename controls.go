@@ -17,7 +17,9 @@ func (ui *Context) Checkbox(label string, value *bool) bool {
 	layout := Layout{Height: Fixed(theme.ControlHeight), Gap: 8, AlignY: Center}
 	var box int
 	side := theme.CheckSize
-	_, result := ui.pressable(ui.idFor(label), layout, Look{}, func() {
+	id := ui.idFor(label)
+	ui.joinTabOrder(id)
+	_, result := ui.pressable(id, layout, Look{}, func() {
 		box = ui.frameWithID(0, Layout{Width: Fixed(side), Height: Fixed(side), AlignX: Center, AlignY: Center}, Look{}, func() {
 			if *value {
 				ui.IconSized("check", orDefault(theme.CheckMark, defaultCheckMark), theme.OnPrimary)
@@ -43,7 +45,9 @@ func (ui *Context) Toggle(label string, value *bool) bool {
 	theme := ui.Theme
 	layout := Layout{Width: Grow(), Height: Fixed(theme.ControlHeight), Gap: 8, AlignY: Center}
 	var track, knob int
-	_, result := ui.pressable(ui.idFor(label), layout, Look{}, func() {
+	id := ui.idFor(label)
+	ui.joinTabOrder(id)
+	_, result := ui.pressable(id, layout, Look{}, func() {
 		ui.Text(displayText(label), TextStyle{})
 		ui.Spacer()
 		align := Start
@@ -177,7 +181,7 @@ func (ui *Context) NumberField(name string, value *float32, minimum, maximum, st
 		}
 		return *value != before
 	}
-	ui.focusables = append(ui.focusables, editID)
+	ui.joinTabOrderAsField(editID)
 	memory.typed = strconv.FormatFloat(float64(*value), 'f', -1, 32)
 	ui.stepNumber(id, name, memory, value, step, format)
 	*value = snap(*value, minimum, maximum, step)
@@ -190,9 +194,11 @@ func (ui *Context) stepNumber(id ID, name string, memory *numberMemory, value *f
 	layout := Layout{Width: Grow(), Height: Fixed(theme.ControlHeight), Padding: PadXY(2, 0), AlignY: Center}
 	ui.Frame(layout, Look{Fill: theme.Surface, Border: theme.ControlLine, BorderWidth: 1, Radius: theme.ControlRadius}, func() {
 		ui.Push(name)
-		if ui.FlatIconButton("minus", "") {
-			*value -= step
-		}
+		ui.withoutTab(func() { // the number is typed, so its buttons are no Tab stops
+			if ui.FlatIconButton("minus", "") {
+				*value -= step
+			}
+		})
 		valueLayout := Layout{Width: Grow(), Height: Grow(), AlignX: Center, AlignY: Center}
 		_, drag := ui.pressable(childID(id, "##value"), valueLayout, Look{}, func() {
 			ui.Text(fmt.Sprintf(format, *value), TextStyle{Weight: draw2d.Medium})
@@ -215,9 +221,11 @@ func (ui *Context) stepNumber(id ID, name string, memory *numberMemory, value *f
 		if drag.clicked && !memory.moved {
 			ui.focus, ui.focusByKeyboard, ui.focusSeen = childID(id, "##edit"), true, true
 		}
-		if ui.FlatIconButton("plus", "") {
-			*value += step
-		}
+		ui.withoutTab(func() {
+			if ui.FlatIconButton("plus", "") {
+				*value += step
+			}
+		})
 		ui.Pop()
 	})
 }
@@ -253,7 +261,9 @@ func (ui *Context) Tabs(name string, selected *int, labels ...string) bool {
 			isSelected := index == *selected
 			var text int
 			tabLayout := Layout{Width: Share(1), Height: Grow(), AlignX: Center, AlignY: Center}
-			tab, result := ui.pressable(ui.idFor(label), tabLayout, Look{}, func() {
+			id := ui.idFor(label)
+			ui.joinTabOrder(id)
+			tab, result := ui.pressable(id, tabLayout, Look{}, func() {
 				text = ui.addLeaf(ui.textElement(displayText(label), TextStyle{Weight: draw2d.Medium, Color: theme.InkSoft}))
 			})
 			ui.Describe(Description{Role: TabRole, Selected: isSelected})

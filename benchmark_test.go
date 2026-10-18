@@ -80,3 +80,34 @@ func BenchmarkNewControls(b *testing.B) {
 		h.frame(build)
 	}
 }
+
+// BenchmarkThreeHundredControlsWithTheKeyboard is BenchmarkThreeHundredControls with the interface
+// holding the keyboard and a button focused, so every control joins the Tab order.
+func BenchmarkThreeHundredControlsWithTheKeyboard(b *testing.B) {
+	h := newHarness(&testing.T{})
+	h.ui.KeyboardNavigation = Always
+	labels := make([]string, 50)
+	for index := range labels {
+		labels[index] = fmt.Sprintf("Item %d", index)
+	}
+	build := func(ui *Context) {
+		for _, panel := range []string{"Scene", "Light", "Tools"} {
+			ui.Panel(panel, func() {
+				for _, label := range labels {
+					ui.Row(func() {
+						ui.Label(label)
+						ui.Spacer()
+						ui.Button(label + "##" + panel)
+					})
+				}
+			})
+		}
+	}
+	h.frame(build)
+	h.ui.keyboardFocus = h.ui.focusables[0].id
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		h.frame(build)
+	}
+}

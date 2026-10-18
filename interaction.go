@@ -43,8 +43,9 @@ func (ui *Context) pointerOn(id ID) interaction {
 		result.held = ui.state.Button(input.MouseLeft)
 		result.clicked = ui.state.ButtonReleased(input.MouseLeft) && over && !ui.press.long
 	}
-	if ui.readerActs(id, ReaderPress) {
-		// a screen reader's double tap: pressed and let go at once, where the control is
+	if ui.keyboardPresses(id) || ui.readerActs(id, ReaderPress) {
+		// Enter or Space on the control Tab reached, or a screen reader's double tap: pressed and let
+		// go at once, where the control is
 		result.pressed, result.clicked = true, true
 	}
 	ui.noteLongPress(id, result)
@@ -75,6 +76,7 @@ func (ui *Context) finishInteraction() {
 	ui.wantsMouse = !ui.sceneDrag && (ui.hoveredRoot != screenID || ui.overSurface || ui.hot != 0 || ui.active != 0)
 	ui.wantsMouse = ui.wantsMouse || sheetOpen || ui.drag.holdsMouse()
 	ui.wantsKeyboard = ui.focus != 0 || sheetOpen || ui.drag.phase == dragMoving
+	ui.wantsKeyboard = ui.wantsKeyboard || ui.keyboardGiven || ui.keyboardFocus != 0 || ui.KeyboardNavigation == Always
 	if ui.hot != ui.lastHot {
 		ui.lastHot, ui.hotSince = ui.hot, ui.now
 	}
