@@ -16,17 +16,18 @@ func (ui *Context) Checkbox(label string, value *bool) bool {
 	theme := ui.Theme
 	layout := Layout{Height: Fixed(theme.ControlHeight), Gap: 8, AlignY: Center}
 	var box int
+	side := theme.CheckSize
 	_, result := ui.pressable(ui.idFor(label), layout, Look{}, func() {
-		box = ui.frameWithID(0, Layout{Width: Fixed(16), Height: Fixed(16), AlignX: Center, AlignY: Center}, Look{}, func() {
+		box = ui.frameWithID(0, Layout{Width: Fixed(side), Height: Fixed(side), AlignX: Center, AlignY: Center}, Look{}, func() {
 			if *value {
-				ui.IconSized("check", 12, theme.OnPrimary)
+				ui.IconSized("check", orDefault(theme.CheckMark, defaultCheckMark), theme.OnPrimary)
 			}
 		})
 		ui.Text(displayText(label), TextStyle{})
 	})
-	look := Look{Fill: theme.Surface, Border: theme.InkQuiet, BorderWidth: 1.5, Radius: 4}
+	look := Look{Fill: theme.Surface, Border: orColour(theme.CheckLine, theme.InkQuiet), BorderWidth: theme.CheckBorder, Radius: theme.CheckRadius}
 	if *value {
-		look = Look{Fill: theme.Primary, Radius: 4}
+		look = Look{Fill: theme.Primary, Border: theme.CheckedBorder, BorderWidth: theme.CheckBorder, Radius: theme.CheckRadius}
 	}
 	if result.hovered && !*value {
 		look.Border = theme.Primary

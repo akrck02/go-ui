@@ -381,6 +381,10 @@ type Look struct {
 	Radius      float32
 	Shadow      bool // a soft shadow under it, for things that float over others
 	Clip        bool // children are cut to the box's area
+	// Edge is a solid band of this colour, EdgeWidth tall, just under the box, as if it stood on a
+	// block: Bubble's main button. It takes no room in the layout, like a shadow.
+	Edge      draw2d.Color
+	EdgeWidth float32
 }
 ```
 
@@ -641,6 +645,33 @@ type Theme struct {
 	ShadowDrop    float32
 	ScrollStep    float32       // pixels a scroll area moves per notch of the wheel
 	TooltipDelay  time.Duration // how long the pointer rests on a control before its tooltip shows
+
+	// What a design system such as Bubble tunes; package bubble sets them from a Bubble theme (see
+	// docs). The light theme's values keep go-ui's own look, and a zero colour or size follows the
+	// token it names, so a theme that only changes Primary or ControlRadius still looks the same.
+	ButtonRadius      float32       // corners of buttons and selectable items; 0 = ControlRadius
+	ButtonPadding     float32       // left and right inside a button with a label; 0 = 12
+	ButtonGap         float32       // between a button's icon and its label; 0 = 6
+	ButtonWeight      draw2d.Weight // the weight of a button's label
+	FlatHeight        float32       // a flat button's height; 0 = a little under ControlHeight, for toolbars
+	FlatPadding       float32       // left and right inside a flat button; 0 = 8
+	FlatInk           draw2d.Color  // a flat button's label at rest; invisible = InkSoft
+	PrimaryEdge       draw2d.Color  // a darker edge under the main button, a block it stands on
+	EdgeWidth         float32       // how tall that edge is; 0 draws none
+	Chosen            draw2d.Color  // behind a selected item of a list; invisible = PrimaryTint
+	ChosenInk         draw2d.Color  // a selected item's label and icon; invisible = Primary
+	ChosenWeight      draw2d.Weight // a selected item's label
+	ItemPadding       float32       // left and right inside an item of a list; 0 = 8
+	ItemGap           float32       // between an item's icon and its label; 0 = 8
+	ItemIconInk       draw2d.Color  // an item's icon at rest; invisible = InkSoft
+	LineHeight        float32       // a line of text as tall as its size × this; 0 keeps it as tall as its letters
+	HeadingLineHeight float32       // the same for text at HeadingSize and above
+	CheckSize         float32       // the side of a check box
+	CheckMark         float32       // the size of its tick; 0 = 12
+	CheckLine         draw2d.Color  // an empty check box's edge; invisible = InkQuiet
+	CheckRadius       float32
+	CheckBorder       float32      // the width of an empty check box's edge
+	CheckedBorder     draw2d.Color // the edge of a ticked box; an invisible colour draws none
 }
 ```
 

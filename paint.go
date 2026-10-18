@@ -42,6 +42,11 @@ func (ui *Context) paintBox(element *element) {
 	if look.Shadow {
 		ui.drawing.Shadow(element.rect, look.Radius, ui.Theme.ShadowBlur, ui.Theme.ShadowDrop, ui.Theme.Shadow)
 	}
+	if look.EdgeWidth > 0 && look.Edge.IsVisible() {
+		under := element.rect
+		under.Y += look.EdgeWidth
+		ui.drawing.Rectangle(under, look.Radius, look.Edge, draw2d.Transparent, 0)
+	}
 	ui.drawing.Rectangle(element.rect, look.Radius, look.Fill, look.Border, look.BorderWidth)
 	if element.field != nil {
 		ui.paintField(element)
