@@ -74,7 +74,7 @@ Accents and «ñ» type as anywhere (characters come after the keyboard layout).
 become spaces. On a phone the on-screen keyboard comes up, suggests words and underlines the one
 it composes; a finger held on a word selects it, with handles and a bar to cut, copy and paste.
 
-While a field has the keyboard, go-ui **claims** it, so a 3D view's shortcuts do not take the
+While a field has the keyboard, Go UI **claims** it, so a 3D view's shortcuts do not take the
 letters. `FieldFocused(name)` tells whether a field has it; `Focus(path...)` gives it to a field
 found by its scopes, with its text selected.
 

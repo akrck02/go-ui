@@ -4,7 +4,7 @@
 
 # Go UI
 
-**Immediate-mode interfaces in Go, drawn over a [go-renderer](https://github.com/akrck02/go-renderer) view.**
+**Immediate-mode interfaces in Go, drawn over a [Go Renderer](https://github.com/akrck02/go-renderer) view.**
 Panels, buttons, tables and fields on top of a 3D scene, or a whole desktop application with no 3D
 at all. Every frame your program describes the interface again from its own variables, and each
 control tells you what happened to it.
@@ -29,7 +29,7 @@ Commits made with AI carry a `Co-Authored-By: Claude` line.
 **Status: pending thorough review.**
 
 > ⚠️ **Warning:** an educational experiment, **not suitable for production use**. APIs will
-> break. Until go-renderer publishes `draw2d` and the wider input, `go.mod` points at a local copy
+> break. Until Go Renderer publishes `draw2d` and the wider input, `go.mod` points at a local copy
 > (`../go-renderer`).
 
 ---
@@ -37,7 +37,7 @@ Commits made with AI carry a `Co-Authored-By: Claude` line.
 <p align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.png">
-  <img alt="A desktop application made with go-ui: a menu bar, a toolbar with a search box, a navigation list, summary cards, a table of lighthouses, an inspector and a status bar" src="docs/images/hero-light.png" width="720">
+  <img alt="A desktop application made with Go UI: a menu bar, a toolbar with a search box, a navigation list, summary cards, a table of lighthouses, an inspector and a status bar" src="docs/images/hero-light.png" width="720">
 </picture>
 </p>
 
@@ -117,12 +117,12 @@ go test ./...
 ## 🔍 How it works
 
 <p align="center">
-  <img alt="Your program describes the interface every frame → go-ui: Begin and the controls add boxes, End lays them out and makes a draw2d list → go-renderer paints it in one draw call over a 3D scene or a plain window; the mouse, keys and touches come back for the next frame" src="docs/images/how-it-works.svg" width="880">
+  <img alt="Your program describes the interface every frame → Go UI: Begin and the controls add boxes, End lays them out and makes a draw2d list → Go Renderer paints it in one draw call over a 3D scene or a plain window; the mouse, keys and touches come back for the next frame" src="docs/images/how-it-works.svg" width="880">
 </p>
 
 There are no button objects to create and keep: showing something is an `if`, a list is a `for`,
 and the interface holds none of your data, so it can never show a stale value. Layout happens at
-`End`, once the whole tree is known, and the result is one `draw2d.List` that go-renderer paints.
+`End`, once the whole tree is known, and the result is one `draw2d.List` that Go Renderer paints.
 [More on a frame →](docs/4-guides/1-getting-started.md#a-frame)
 
 ## 📚 Documentation
@@ -139,7 +139,7 @@ New here? Start with the [overview](docs/1-overview.md), then [get started](docs
 | [Text fields](docs/4-guides/6-text-fields.md) | Typing, selecting, the clipboard, undo, Tab, and phones' keyboards. |
 | [Mouse, keyboard and touch](docs/4-guides/7-input.md) | Which control gets the pointer, keeping the camera out of the way, fingers. |
 | [Themes](docs/4-guides/8-themes.md) | The tokens every control reads. |
-| [Screen readers](docs/4-guides/9-screen-readers.md) | How a screen reader reads a go-ui program. |
+| [Screen readers](docs/4-guides/9-screen-readers.md) | How a screen reader reads a Go UI program. |
 | [A window of its own](docs/4-guides/10-desktop.md) · [web](docs/7-platforms/1-web.md) · [Android](docs/7-platforms/2-android.md) | Interfaces without a scene, Metal or OpenGL, a browser, a phone. |
 | [Performance and battery](docs/8-project/1-performance-audit.md) | What an idle and a busy interface cost, measured. |
 

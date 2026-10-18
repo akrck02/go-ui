@@ -48,7 +48,7 @@ and every row line up; text that does not fit its cell ends in "…". Rows and c
 heights, so the table counts the ones out of sight without building them: the loop still runs
 over every row each step (a function call each, and the cells' strings are the program's), but
 only the dozen or so in sight become boxes. A few thousand rows are fine. Give the table a height
-that does not follow its content, or every row is built. Cells are text; go-renderer has one
+that does not follow its content, or every row is built. Cells are text; Go Renderer has one
 typeface, so there is no monospaced column yet.
 
 ## Drag and drop
@@ -89,7 +89,7 @@ Any box can be a **drag source** carrying a value of yours (`any`). A press on i
 pixels or more becomes a drag; less is a click, which `DragSource` returns, so a chip inside can
 still be clicked. Buttons inside keep their clicks too, but a drag that starts on them takes the
 mouse from them. While dragging, the source's name follows the pointer in a small label, the pointer
-shows four arrows (go-renderer has no closed-hand shape), and the interface holds the mouse and the
+shows four arrows (Go Renderer has no closed-hand shape), and the interface holds the mouse and the
 keyboard, so cameras stay still and Escape cancels the drag.
 
 A **drop target** is a box that takes payloads: `accepts` says which (nil takes any). While one it

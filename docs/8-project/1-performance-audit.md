@@ -1,6 +1,6 @@
 # ⚡ Performance and battery audit
 
-**Date:** October 2026. **Scope:** go-ui and the 2D path of go-renderer it draws through (draw list,
+**Date:** October 2026. **Scope:** Go UI and the 2D path of Go Renderer it draws through (draw list,
 painter, atlas, flat renderer, window loop), measured with the register application (`cmd/app`).
 **Machine:** a laptop with an Apple M4 and a 60 Hz built-in screen, macOS 26, Go 1.25.
 
@@ -49,7 +49,7 @@ buffers that macOS keeps (they grow with the window) and about 25 MB the program
 
 ## One frame
 
-| Frame | go-ui (build, layout, draw list) | Painter (draw list to quads) | Vertex filling | OpenGL calls |
+| Frame | Go UI (build, layout, draw list) | Painter (draw list to quads) | Vertex filling | OpenGL calls |
 |---|---|---|---|---|
 | Register, 11 rows | 44 µs, 114 allocations | 85 µs | 13 µs | about 0.1–0.2 ms |
 | Register, 1000 rows | 1.9 ms, 4077 allocations | 3.65 ms | 13 µs | the same |
@@ -95,9 +95,9 @@ for pixel.
 
 | Measured again | Before | After |
 |---|---|---|
-| Register frame, 11 rows (go-ui) | 44 µs, 114 allocations | 37 µs, 109 allocations |
-| Register frame, 1000 rows (go-ui) | 1.9 ms | **55 µs** |
-| Register frame, 3000 rows (go-ui) | 7.5 ms | **109 µs** |
+| Register frame, 11 rows (Go UI) | 44 µs, 114 allocations | 37 µs, 109 allocations |
+| Register frame, 1000 rows (Go UI) | 1.9 ms | **55 µs** |
+| Register frame, 3000 rows (Go UI) | 7.5 ms | **109 µs** |
 | Painter, register with 1000 rows | 3.65 ms | **69 µs** |
 | Continuous mode, frames shown | 60 to 120 a second | 60, one per update, and none when nothing changed |
 | Continuous mode, GPU | 16 % | **0 %** while nothing changes |
@@ -106,11 +106,11 @@ for pixel.
 What changed:
 
 - **Frames that would look the same are skipped** (1, 7). `draw2d.List.Fingerprint` sums up a draw
-  list; go-ui's window answers go-renderer's new `Application.Unchanged` with it, and the loop then
+  list; Go UI's window answers Go Renderer's new `Application.Unchanged` with it, and the loop then
   neither draws nor presents. In continuous mode a frame is drawn only after an update step, and
   the loop sleeps until the next one.
 - **What is out of sight costs nothing** (2, 3). The draw list drops texts whose line misses the
-  clip; go-ui does not paint elements wholly outside a clipping box; the example's table is a
+  clip; Go UI does not paint elements wholly outside a clipping box; the example's table is a
   `List`, and works out its rows once a frame.
 - **The text cache keeps two generations** (4), and a focused field measures only when something
   changed (13), keeps its text as a string, and **stops blinking after ten seconds** without a key
@@ -123,7 +123,7 @@ What changed:
 
 1. **Skip unchanged frames** (finding 1), with continuous mode drawing only after an update (7).
 2. **Stop paying for what is out of sight**: cull texts by the clip in the painter (3), skip
-   children outside the clip in go-ui (2), and move the example's table to `List`.
+   children outside the clip in Go UI (2), and move the example's table to `List`.
 3. **The text cache's generations** (4) and the **field's measuring** (13).
 4. **Graphics switching** for flat windows (11) and **the flat path's own frame** (10).
 5. **The painter's per-character work** (5), **packed instanced quads** (6) and **partial atlas
@@ -134,7 +134,7 @@ Steps 1 to 4 are done (above); step 5 and the smaller items are left.
 
 ## Metal
 
-Built after this audit, as insurance against OpenGL leaving macOS: go-ui's window now draws
+Built after this audit, as insurance against OpenGL leaving macOS: Go UI's window now draws
 through Metal on macOS (`-backend opengl` goes back). It costs less than OpenGL, which on macOS
 runs on a translation layer over Metal:
 
@@ -146,5 +146,5 @@ runs on a translation layer over Metal:
 | Changing every frame: memory | 163 MB | **107 MB** |
 | Still again, memory | 109 MB | **60 MB** |
 
-The details, and what still needs a look on screen, are in go-renderer's
+The details, and what still needs a look on screen, are in Go Renderer's
 [docs/metal.md](../../../go-renderer/docs/4-guides/7-metal.md).

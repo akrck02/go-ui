@@ -1,19 +1,19 @@
 <p align="center"><img alt="" src="images/logo.svg" width="120"></p>
 
-# Welcome to go-ui 👋
+# Welcome to Go UI 👋
 
-**go-ui makes the parts of a program you click and type in**: buttons, panels, lists, forms, menus. Over a 3D scene, or as a whole application in a window, a web page or a phone.
+**Go UI makes the parts of a program you click and type in**: buttons, panels, lists, forms, menus. Over a 3D scene, or as a whole application in a window, a web page or a phone.
 
-<p align="center"><img alt="A desktop application made with go-ui: a menu bar, a toolbar with a search box, a list, cards, a table and an inspector" src="images/app-light.png" width="720"></p>
+<p align="center"><img alt="A desktop application made with Go UI: a menu bar, a toolbar with a search box, a list, cards, a table and an inspector" src="images/app-light.png" width="720"></p>
 
-A program made with go-ui **describes its whole screen again many times a second** from its own data (*a title, then a button, then a list of these things*), and go-ui draws it and tells the program what was clicked. So the screen can never show something out of date.
+A program made with Go UI **describes its whole screen again many times a second** from its own data (*a title, then a button, then a list of these things*), and Go UI draws it and tells the program what was clicked. So the screen can never show something out of date.
 
 ## Is it for me?
 
-- ✅ You write Go and want **buttons and panels** over a go-renderer scene.
+- ✅ You write Go and want **buttons and panels** over a Go Renderer scene.
 - ✅ You want a **desktop application** in Go, that also runs in a web page and on Android.
 - ✅ You are **learning** how interfaces are made.
-- ❌ You want a ready-made app without programming: go-ui is for building them.
+- ❌ You want a ready-made app without programming: Go UI is for building them.
 
 ## Where to start
 
@@ -106,21 +106,21 @@ The guides, one subject each:
 
 ## The family
 
-go-ui is one of a family of small projects that work together:
+Go UI is one of a family of small projects that work together:
 
 | Project | What it does |
 |---|---|
-| [go-renderer](https://github.com/akrck02/go-renderer) | draws 3D scenes and flat interfaces |
-| **go-ui** (this one) | buttons, panels and whole applications |
-| [go-ui-android](https://github.com/akrck02/go-ui-android) | Android apps that look like Android's own |
-| [go-sound](https://github.com/akrck02/go-sound) | sound and music |
-| [go-scene-builder](https://github.com/akrck02/go-scene-builder) | 3D scenes from a flat map |
-| [go-simulator](https://github.com/akrck02/go-simulator) | simulations that change a scene |
-| [go-simulator-terrain](https://github.com/akrck02/go-simulator-terrain) | ground shaped by rivers |
-| [go-simulator-climate](https://github.com/akrck02/go-simulator-climate) | weather and biomes |
-| [go-simulator-flora](https://github.com/akrck02/go-simulator-flora) | forests that grow |
-| [go-simulator-urban](https://github.com/akrck02/go-simulator-urban) | towns that grow |
-| [go-simulator-motion](https://github.com/akrck02/go-simulator-motion) | a scene that moves |
-| [go-3ds](https://github.com/akrck02/go-3ds) | Go on the Nintendo 3DS |
+| [Go Renderer](https://github.com/akrck02/go-renderer) | draws 3D scenes and flat interfaces |
+| **Go UI** (this one) | buttons, panels and whole applications |
+| [Go UI for Android](https://github.com/akrck02/go-ui-android) | Android apps that look like Android's own |
+| [Go Sound](https://github.com/akrck02/go-sound) | sound and music |
+| [Go Scene Builder](https://github.com/akrck02/go-scene-builder) | 3D scenes from a flat map |
+| [Go Simulator](https://github.com/akrck02/go-simulator) | simulations that change a scene |
+| [Go Terrain Simulator](https://github.com/akrck02/go-simulator-terrain) | ground shaped by rivers |
+| [Go Climate Simulator](https://github.com/akrck02/go-simulator-climate) | weather and biomes |
+| [Go Flora Simulator](https://github.com/akrck02/go-simulator-flora) | forests that grow |
+| [Go Urban Simulator](https://github.com/akrck02/go-simulator-urban) | towns that grow |
+| [Go Motion Simulator](https://github.com/akrck02/go-simulator-motion) | a scene that moves |
+| [Go for 3DS](https://github.com/akrck02/go-3ds) | Go on the Nintendo 3DS |
 
 > ⚠️ All of them are **educational experiments**, written with an AI assistant and pending review by their author: good for learning and playing, not for production.

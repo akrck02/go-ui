@@ -128,7 +128,7 @@ Notice what is *not* there: no "on change" handler copies the name into the list
 
 The full list, with buttons, chips, images and tooltips, is in [the reference](../6-reference/0-reference.md#controls).
 
-> 📝 **The keyboard and the 3D view.** While a field has the keyboard, go-ui *claims* it, so a 3D
+> 📝 **The keyboard and the 3D view.** While a field has the keyboard, Go UI *claims* it, so a 3D
 > view's shortcuts do not take the letters you type ([lesson 6](6-over-a-3d-scene.md)).
 
 #### Checkpoint

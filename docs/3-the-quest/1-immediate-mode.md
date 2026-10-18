@@ -1,6 +1,6 @@
 # Lesson 1: immediate mode
 
-In this lesson you write the smallest useful go-ui program, a lamp that is switched on and off, and
+In this lesson you write the smallest useful Go UI program, a lamp that is switched on and off, and
 learn the one idea everything else rests on: **the interface is a function of your data, called
 again at every frame**.
 
@@ -63,10 +63,10 @@ func main() {
 
 ![The program in the light and the dark theme: a title, two lines and a button](../images/tutorial/01-switch-light.png) ![](../images/tutorial/01-switch-dark.png)
 
-Read `build` from top to bottom, as go-ui does at every frame:
+Read `build` from top to bottom, as Go UI does at every frame:
 
 1. A **box** that stacks its children vertically, as wide as the window, with 24 pixels of
-   padding and 12 between children. Boxes are the only way go-ui arranges things ([lesson 2](2-layout.md)).
+   padding and 12 between children. Boxes are the only way Go UI arranges things ([lesson 2](2-layout.md)).
 2. A heading, then one of two lines, chosen with an ordinary `if`.
 3. A caption with the count, formatted from your variable.
 4. A button. `PrimaryButton` draws it in the theme's primary colour and returns `true` **on the
@@ -79,9 +79,9 @@ again, which reads `lit` and `switches` again, and the screen follows.
 > control asks for (a caret's blink). In between, the window sleeps and the program uses no
 > processor. From another goroutine (a download finished) call `window.Wake()`.
 
-## Ids: how go-ui tells controls apart
+## Ids: how Go UI tells controls apart
 
-go-ui keeps a little state between frames: which control is pressed, which field has the keyboard,
+Go UI keeps a little state between frames: which control is pressed, which field has the keyboard,
 where a list is scrolled. It finds it again by each control's **id**, a hash of its label and the
 **scopes** around it.
 

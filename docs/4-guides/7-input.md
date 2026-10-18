@@ -1,6 +1,6 @@
 # 🖱️ Mouse, keyboard and touch
 
-go-ui shares the mouse and the keyboard with what is behind it: a 3D view's camera, the viewer's
+Go UI shares the mouse and the keyboard with what is behind it: a 3D view's camera, the viewer's
 shortcuts. This page says who gets them, and how fingers are followed on a touch screen.
 
 ## Who gets the mouse
@@ -17,7 +17,7 @@ frames a second.
 - **The scene keeps its drags**: a press on empty screen belongs to the camera until it is let go;
   panels it passes over do not take it.
 - **Claims**: at `End`, when the pointer is over a panel or a control is pressed, the interface
-  calls `state.ClaimMouse()`. go-renderer's viewer then gives its cameras and shortcuts the input
+  calls `state.ClaimMouse()`. Go Renderer's viewer then gives its cameras and shortcuts the input
   without the mouse, so dragging inside a panel does not turn the view. A text field with the focus
   claims the keyboard the same way. `WantsMouse()` and `WantsKeyboard()` tell your own code.
 - **Pointer shape**: a hand over buttons, four arrows over a title bar that can be dragged and
@@ -44,4 +44,4 @@ still on a control for half a second long-presses it (`LongPressed`).
 | `Context.Touches()` | The fingers on a touch screen, for a control of a program's own that follows them (an on-screen stick); the first finger is also the pointer that clicks |
 | `Context.Back` | Answers a phone's back gesture; modals and sheets answer it first |
 
-Scroll areas glide on when let go. How touches reach go-ui on a phone is in [Android](../7-platforms/2-android.md).
+Scroll areas glide on when let go. How touches reach Go UI on a phone is in [Android](../7-platforms/2-android.md).

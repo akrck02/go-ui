@@ -1,6 +1,6 @@
 # Lesson 6: over a 3D scene
 
-go-ui was made to draw interfaces over [go-renderer](https://github.com/akrck02/go-renderer)'s
+Go UI was made to draw interfaces over [Go Renderer](https://github.com/akrck02/go-renderer)'s
 scenes. In this lesson you put a panel over an island that moves the sun and the clouds, and learn
 how the interface and the camera share the mouse.
 
@@ -10,13 +10,13 @@ how the interface and the camera share the mouse.
 
 #### The idea
 
-The interface and the camera share one mouse, like **two people and one remote control**: whoever the pointer is over has it. When it is over a panel, go-ui claims it, and the camera gets only what was left.
+The interface and the camera share one mouse, like **two people and one remote control**: whoever the pointer is over has it. When it is over a panel, Go UI claims it, and the camera gets only what was left.
 
 ![A panel with three sliders over the sample island](../images/tutorial/scene-panel.jpg)
 
 There are two ways in:
 
-| | `viewer.Run` (go-renderer) | `window.Options.Scene` (go-ui) |
+| | `viewer.Run` (Go Renderer) | `window.Options.Scene` (Go UI) |
 |---|---|---|
 | The cameras | The viewer's: orbit, walking, map, its keys and flags | Yours: a `camera.Orbit` or anything that fills a `models.Camera` |
 | Runs on | The desktop | The desktop, a web page and Android |
@@ -24,7 +24,7 @@ There are two ways in:
 
 ## With the viewer
 
-The viewer calls your update function at every step; go-ui's frame goes inside it, between `Begin`
+The viewer calls your update function at every step; Go UI's frame goes inside it, between `Begin`
 and `End`. You make the context yourself with `ui.New()`, and hand its drawing to the scene's
 overlay once:
 
@@ -115,7 +115,7 @@ go run . -walk -dark   # every viewer flag works
 ### Who gets the mouse
 
 Dragging a slider must not turn the camera. At `End`, when the pointer is over a panel or a control
-is held, go-ui **claims** the mouse for that step (`state.ClaimMouse()`); while a field has the
+is held, Go UI **claims** the mouse for that step (`state.ClaimMouse()`); while a field has the
 keyboard, it claims the keyboard. The viewer then gives its cameras and shortcuts
 `state.Unclaimed()`, a copy without what was claimed. A press that starts on the open scene belongs
 to the camera until it is let go, even if it passes over a panel.
@@ -123,7 +123,7 @@ to the camera until it is let go, even if it passes over a panel.
 In your own code, `context.WantsMouse()` and `context.WantsKeyboard()` say the same, for shortcuts
 of your own.
 
-## With a window of go-ui's
+## With a window of Go UI's
 
 `window.Options.Scene` puts a scene behind the interface. It is called at every step **after** the
 interface, with the input the interface did not claim, and returns what to show:
@@ -170,7 +170,7 @@ func main() {
 }
 ```
 
-![The same island behind a panel, through go-ui's window](../images/tutorial/scene-window.jpg)
+![The same island behind a panel, through Go UI's window](../images/tutorial/scene-window.jpg)
 
 Boxes painted with a fill take the mouse like panels; a growing box left transparent lets the scene
 show through, with the camera working inside it. `cmd/scene-app` lays a whole application around a
@@ -178,9 +178,9 @@ show through, with the camera working inside it. `cmd/scene-app` lays a whole ap
 
 ## Editing what you see
 
-go-renderer's `viewer.Edit` gives your function a `viewer.View`, which turns the pointer into a
-point on the ground ([go-renderer's tutorial, lesson 5](https://github.com/akrck02/go-renderer/blob/main/docs/3-the-quest/5-editing-with-the-pointer.md)).
-With go-ui in it you get both: panels to choose what to place, the map to place it on.
+Go Renderer's `viewer.Edit` gives your function a `viewer.View`, which turns the pointer into a
+point on the ground ([Go Renderer's tutorial, lesson 5](https://github.com/akrck02/go-renderer/blob/main/docs/3-the-quest/5-editing-with-the-pointer.md)).
+With Go UI in it you get both: panels to choose what to place, the map to place it on.
 `cmd/plan-editor` places huts on an island that way, and `DragSource` with
 `context.DroppedOnScreen()` drops a value of yours from a panel onto the scene ([the guide](../4-guides/5-tables-and-dragging.md#drag-and-drop)).
 
@@ -194,8 +194,8 @@ Over the sample island, a *Sky* panel: dragging its sliders moves the sun and th
 
 - Over the viewer: `ui.New()`, `Overlay.Drawing = context.Drawing()`, and `Begin` … `End` in the
   update function.
-- Over go-ui's window: `Options.Scene` returns a scene and a camera, on every platform.
-- go-ui claims the mouse and the keyboard it uses, so cameras get only the rest.
+- Over Go UI's window: `Options.Scene` returns a scene and a camera, on every platform.
+- Go UI claims the mouse and the keyboard it uses, so cameras get only the rest.
 
 ## Bonus (optional)
 

@@ -76,7 +76,7 @@ cp ../go-ui/web/index.html web/
 python3 -m http.server -d web 8080      # then open http://localhost:8080/?program=register
 ```
 
-go-ui's `web/index.html` runs `name.wasm` from `?program=name`. The canvas follows the page's size;
+Go UI's `web/index.html` runs `name.wasm` from `?program=name`. The canvas follows the page's size;
 the clipboard, the keyboard and preferences are the browser's ([in a web browser](../7-platforms/1-web.md)).
 
 ## On a phone
@@ -84,7 +84,7 @@ the clipboard, the keyboard and preferences are the browser's ([in a web browser
 Built for Android, the same program is the application's activity, drawn through OpenGL ES. A
 finger is the pointer, so every control works by touch, and the on-screen keyboard comes up for
 text fields. To package it, use **go-ui-apk** from
-[go-ui-android](https://github.com/akrck02/go-ui-android), which needs the Android SDK, the NDK and
+[Go UI for Android](https://github.com/akrck02/go-ui-android), which needs the Android SDK, the NDK and
 a JDK, and no Java code, Gradle or Android Studio:
 
 ```bash
@@ -93,7 +93,7 @@ adb install register.apk
 ```
 
 A desktop layout is not a phone layout, though: the register's side list and form want a screen
-each on a phone, with a navigation bar. go-ui-android's `material` package draws pieces as
+each on a phone, with a navigation bar. Go UI for Android's `material` package draws pieces as
 Android's own applications do (top bars, navigation bars, lists, sheets), and its tutorial starts
 where this one ends. On a phone, also look at `context.Insets()` (the system's bars), `context.Size()`
 (to choose a layout by the screen) and `context.Back()` (the back gesture) ([on Android](../7-platforms/2-android.md)).
@@ -168,7 +168,7 @@ if text, found := window.Preference("dark"); found {
 - [The guide](../4-guides/1-getting-started.md): everything about layout, text fields, tables, drag and drop,
   screen readers, how a frame is drawn.
 - [The reference](../6-reference/0-reference.md): every control and option.
-- [go-ui-android](https://github.com/akrck02/go-ui-android): Material Design 3 on phones.
+- [Go UI for Android](https://github.com/akrck02/go-ui-android): Material Design 3 on phones.
 - [The performance audit](../8-project/1-performance-audit.md): what an interface costs, measured.
 
 ---

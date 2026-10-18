@@ -1,6 +1,6 @@
 # Lesson 5: controls of your own
 
-go-ui's controls are built from the same pieces you can use. In this lesson you make a **favourite
+Go UI's controls are built from the same pieces you can use. In this lesson you make a **favourite
 star** from a clickable box, tell **screen readers** what it is, **paint** a strip of your own, and
 give the register a **theme** colour of its own.
 
@@ -10,7 +10,7 @@ give the register a **theme** colour of its own.
 
 #### The idea
 
-go-ui's own buttons are made of the same **bricks** you can use: a box that reacts to the pointer, with a look for each state. And the theme is a **paint chart**: change one swatch and every wall painted with it changes.
+Go UI's own buttons are made of the same **bricks** you can use: a box that reacts to the pointer, with a look for each state. And the theme is a **paint chart**: change one swatch and every wall painted with it changes.
 
 ![The finished register in the dark theme, North Point a favourite, its light's character painted under the period](../images/tutorial/05-register-dark.jpg)
 
@@ -18,7 +18,7 @@ go-ui's own buttons are made of the same **bricks** you can use: a box that reac
 
 `Clickable(name, layout, looks, content)` is any box that reacts to the pointer: it is painted with
 one of three `Look`s (left alone, hovered, pressed) and returns `true` when clicked. Inside, put
-anything. go-ui's own buttons are made this way.
+anything. Go UI's own buttons are made this way.
 
 ```go
 // favouriteButton is a control of the program's own: a star, golden while the lighthouse is a
@@ -49,7 +49,7 @@ It goes in the heading row of the form, after a `Spacer` (lesson 3 already calls
 ## Screen readers
 
 A screen reader (TalkBack on Android) speaks what is on the screen for someone who cannot see it.
-go-ui works out what to say from the boxes: a button reads its text, a checkbox says whether it is
+Go UI works out what to say from the boxes: a button reads its text, a checkbox says whether it is
 ticked. A box of your own holds only an icon, which would be read as "star". `Describe`, right
 after the control, says what it really is:
 
@@ -67,7 +67,7 @@ how the screen is read.
 ## Painting your own shapes
 
 When no control draws what you need, `Paint(layout, paint)` adds a box that is laid out like any
-other and then handed to your function, with its final rectangle and go-renderer's `draw2d.List`
+other and then handed to your function, with its final rectangle and Go Renderer's `draw2d.List`
 to draw into: rounded rectangles, shadows, text, icons, pictures.
 
 The register shows a light's *character*, a mark for every flash in twenty seconds:
@@ -94,7 +94,7 @@ var lampColours = []draw2d.Color{draw2d.Hex("#f5f0d0"), draw2d.Hex("#d64545"), d
 field(context, "Character", func() { flashes(context, light.period, lampColours[light.colour]) })
 ```
 
-Coordinates are layout pixels from the window's top-left corner, like everything in go-ui.
+Coordinates are layout pixels from the window's top-left corner, like everything in Go UI.
 
 ## Themes
 

@@ -6,10 +6,10 @@ You need to know a little Go; you need no experience with interfaces.
 **What you will do**
 
 1. Install Go and a C compiler, which the window needs.
-2. Get go-ui and go-renderer, side by side, and run an example.
+2. Get Go UI and Go Renderer, side by side, and run an example.
 3. Write your first interface.
 
-> ⚠️ go-ui is an educational project and its API still changes. Pin the commits you build against.
+> ⚠️ Go UI is an educational project and its API still changes. Pin the commits you build against.
 
 ## 1. Install the tools
 
@@ -24,7 +24,7 @@ The library itself is pure Go: only programs that open a window need cgo. Tests 
 
 ## 2. Get the code
 
-go-ui draws through [go-renderer](https://github.com/akrck02/go-renderer) and, until both publish
+Go UI draws through [Go Renderer](https://github.com/akrck02/go-renderer) and, until both publish
 versions, builds against a copy of it checked out beside it:
 
 ```bash
@@ -95,7 +95,7 @@ go mod tidy
 go run .
 ```
 
-Click the button: the line appears and goes. That is the whole idea of go-ui, called **immediate
+Click the button: the line appears and goes. That is the whole idea of Go UI, called **immediate
 mode**:
 
 - The function you give `window.Run` **describes the interface**, and runs again whenever something
@@ -105,7 +105,7 @@ mode**:
 - **Your variables are the truth.** Showing something is an `if`, a list is a `for`, and the
   screen can never show a stale value.
 
-Between frames the window sleeps: an idle go-ui program uses no processor.
+Between frames the window sleeps: an idle Go UI program uses no processor.
 
 ## Where next
 
@@ -115,7 +115,7 @@ Between frames the window sleeps: an idle go-ui program uses no processor.
 | Understand frames, layout, controls and themes in depth | [The guide](4-guides/1-getting-started.md) |
 | Look up a control or an option | [The reference](6-reference/0-reference.md) |
 | Put the interface over a 3D scene | [Lesson 6](3-the-quest/6-over-a-3d-scene.md) |
-| Run it in a browser or on a phone | [In a web browser](7-platforms/1-web.md), [on Android](7-platforms/2-android.md), [go-ui-android](https://github.com/akrck02/go-ui-android) |
+| Run it in a browser or on a phone | [In a web browser](7-platforms/1-web.md), [on Android](7-platforms/2-android.md), [Go UI for Android](https://github.com/akrck02/go-ui-android) |
 
 ---
 
