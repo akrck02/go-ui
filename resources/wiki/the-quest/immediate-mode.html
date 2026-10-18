@@ -1,6 +1,6 @@
 <h1 id="lesson-1-immediate-mode">Lesson 1: immediate mode</h1>
 
-<p>In this lesson you write the smallest useful go-ui program, a lamp that is switched on and off, and
+<p>In this lesson you write the smallest useful Go UI program, a lamp that is switched on and off, and
 learn the one idea everything else rests on: <strong>the interface is a function of your data, called
 again at every frame</strong>.</p>
 
@@ -75,11 +75,11 @@ again at every frame</strong>.</p>
 
 <p><img src="./images/tutorial/01-switch-light.png" alt="The program in the light and the dark theme: a title, two lines and a button" /> <img src="./images/tutorial/01-switch-dark.png" alt="" /></p>
 
-<p>Read <code>build</code> from top to bottom, as go-ui does at every frame:</p>
+<p>Read <code>build</code> from top to bottom, as Go UI does at every frame:</p>
 
 <ol>
 <li>A <strong>box</strong> that stacks its children vertically, as wide as the window, with 24 pixels of
-padding and 12 between children. Boxes are the only way go-ui arranges things (<a href="./the-quest/layout">lesson 2</a>).</li>
+padding and 12 between children. Boxes are the only way Go UI arranges things (<a href="./the-quest/layout">lesson 2</a>).</li>
 <li>A heading, then one of two lines, chosen with an ordinary <code>if</code>.</li>
 <li>A caption with the count, formatted from your variable.</li>
 <li>A button. <code>PrimaryButton</code> draws it in the theme&rsquo;s primary colour and returns <code>true</code> <strong>on the
@@ -95,9 +95,9 @@ control asks for (a caret&rsquo;s blink). In between, the window sleeps and the 
 processor. From another goroutine (a download finished) call <code>window.Wake()</code>.</p>
 </blockquote>
 
-<h2 id="ids-how-go-ui-tells-controls-apart">Ids: how go-ui tells controls apart</h2>
+<h2 id="ids-how-go-ui-tells-controls-apart">Ids: how Go UI tells controls apart</h2>
 
-<p>go-ui keeps a little state between frames: which control is pressed, which field has the keyboard,
+<p>Go UI keeps a little state between frames: which control is pressed, which field has the keyboard,
 where a list is scrolled. It finds it again by each control&rsquo;s <strong>id</strong>, a hash of its label and the
 <strong>scopes</strong> around it.</p>
 

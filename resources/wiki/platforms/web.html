@@ -1,6 +1,6 @@
 <h1 id="in-a-web-browser">🌐 In a web browser</h1>
 
-<p><strong>Status:</strong> a first step (October 2026). go-ui applications run in a browser, built for
+<p><strong>Status:</strong> a first step (October 2026). Go UI applications run in a browser, built for
 WebAssembly and drawn through WebGL2, with the same code as on the desktop. The desktop is
 unchanged.</p>
 
@@ -48,8 +48,8 @@ in a browser the program puts the pieces together itself, in about thirty lines:
 <pre><code class="language-bash"><span class="nv">GOOS</span><span class="o">=</span>js <span class="nv">GOARCH</span><span class="o">=</span>wasm go build -o web/web.wasm ./cmd/web     <span class="c1"># then ?program=web</span>
 </code></pre>
 
-<p>The scene is drawn by go-renderer&rsquo;s simple OpenGL ES renderer: light, fog and water, but no
-shadows or sky yet (see go-renderer&rsquo;s <code>docs/web.md</code>).</p>
+<p>The scene is drawn by Go Renderer&rsquo;s simple OpenGL ES renderer: light, fog and water, but no
+shadows or sky yet (see Go Renderer&rsquo;s <code>docs/web.md</code>).</p>
 
 <h2 id="how-the-window-works-in-a-page">How the window works in a page</h2>
 
@@ -69,7 +69,7 @@ shadows or sky yet (see go-renderer&rsquo;s <code>docs/web.md</code>).</p>
 
 <tr>
 <td>Metal or OpenGL 4.1</td>
-<td>WebGL2, through go-renderer&rsquo;s <code>gles.FlatRenderer</code>: the same atlas and quads, one draw call</td>
+<td>WebGL2, through Go Renderer&rsquo;s <code>gles.FlatRenderer</code>: the same atlas and quads, one draw call</td>
 </tr>
 
 <tr>
@@ -119,7 +119,7 @@ the system clipboard too; paste takes what the browser&rsquo;s paste event bring
 example (buttons, a checkbox, a slider, typing and deleting in a text field, turning the camera
 around the panel), sharp text on a high-density screen, and no frames while idle.</p>
 
-<p>Not yet: other browsers, phones and tablets (touch arrives as a pointer, but go-ui has no touch
+<p>Not yet: other browsers, phones and tablets (touch arrives as a pointer, but Go UI has no touch
 theme yet), the on-screen keyboard, and very large tables (each frame copies the draw list into
 JavaScript once, which should be fine).</p>
 

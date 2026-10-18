@@ -1,12 +1,12 @@
 <h1 id="getting-started">🚀 Getting started</h1>
 
-<p>go-ui draws interfaces over a go-renderer view. This page explains how a frame works, shows the
+<p>Go UI draws interfaces over a Go Renderer view. This page explains how a frame works, shows the
 examples that come with it, and how what you describe ends up on the screen.</p>
 
 <h2 id="a-frame">A frame</h2>
 
 <p align="center">
-  <img alt="Your program describes the interface every frame → go-ui: Begin and the controls add boxes, End lays them out and makes a draw2d list → go-renderer paints it in one draw call; the mouse, keys and touches come back for the next frame" src="./images/how-it-works.svg" width="880">
+  <img alt="Your program describes the interface every frame → Go UI: Begin and the controls add boxes, End lays them out and makes a draw2d list → Go Renderer paints it in one draw call; the mouse, keys and touches come back for the next frame" src="./images/how-it-works.svg" width="880">
 </p>
 
 <p>In <strong>immediate mode</strong> there are no button objects to create, keep and update. Each update step,
@@ -27,7 +27,7 @@ each control&rsquo;s <strong>id</strong>: which control is being pressed, where 
 folded.</p>
 
 <p>Call <code>Begin</code> and <code>End</code> in every update step (the function given to <code>viewer.Run</code>), and set
-<code>world.Overlay.Drawing = interfaceContext.Drawing()</code> once, so go-renderer paints the result.</p>
+<code>world.Overlay.Drawing = interfaceContext.Drawing()</code> once, so Go Renderer paints the result.</p>
 
 <h3 id="ids-and-scopes">Ids and scopes</h3>
 
@@ -135,7 +135,7 @@ go run ./cmd/mobile -width <span class="m">400</span> -height <span class="m">86
 <p><code>cmd/web</code> is the scene example put together for a browser (<a href="./platforms/web">web</a>); <code>cmd/mobile</code> builds into
 an Android app (<a href="./platforms/android">Android</a>).</p>
 
-<p>The library itself needs no cgo; the examples do, as they open a go-renderer window. The tests need
+<p>The library itself needs no cgo; the examples do, as they open a Go Renderer window. The tests need
 no display: they measure text with a fake measurer.</p>
 <pre><code class="language-bash">go vet ./...
 go <span class="nb">test</span> ./...
@@ -145,9 +145,9 @@ go <span class="nb">test</span> -run xxx -bench .             <span class="c1">#
 <h2 id="how-it-is-drawn">How it is drawn</h2>
 
 <p>At <code>End</code> the laid-out boxes become commands of a <code>draw2d.List</code> (rounded rectangles, shadows,
-lines of text, icons), each panel on its own layer and its content clipped to it. go-renderer
+lines of text, icons), each panel on its own layer and its content clipped to it. Go Renderer
 paints that list after the scene, in the same pass and atlas as its labels, so the whole interface
-is one draw call. Text is measured with go-renderer&rsquo;s own fonts (<code>overlay.NewMeasurer</code>) at the
+is one draw call. Text is measured with Go Renderer&rsquo;s own fonts (<code>overlay.NewMeasurer</code>) at the
 screen&rsquo;s density, so what is laid out is exactly what is painted.</p>
 
 <p>A frame of three panels with three hundred controls builds, lays out and paints in about 0.1 ms

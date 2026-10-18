@@ -1,6 +1,6 @@
 <h1 id="lesson-5-controls-of-your-own">Lesson 5: controls of your own</h1>
 
-<p>go-ui&rsquo;s controls are built from the same pieces you can use. In this lesson you make a <strong>favourite
+<p>Go UI&rsquo;s controls are built from the same pieces you can use. In this lesson you make a <strong>favourite
 star</strong> from a clickable box, tell <strong>screen readers</strong> what it is, <strong>paint</strong> a strip of your own, and
 give the register a <strong>theme</strong> colour of its own.</p>
 
@@ -24,7 +24,7 @@ give the register a <strong>theme</strong> colour of its own.</p>
 
 <h4 id="the-idea">The idea</h4>
 
-<p>go-ui&rsquo;s own buttons are made of the same <strong>bricks</strong> you can use: a box that reacts to the pointer, with a look for each state. And the theme is a <strong>paint chart</strong>: change one swatch and every wall painted with it changes.</p>
+<p>Go UI&rsquo;s own buttons are made of the same <strong>bricks</strong> you can use: a box that reacts to the pointer, with a look for each state. And the theme is a <strong>paint chart</strong>: change one swatch and every wall painted with it changes.</p>
 
 <p><img src="./images/tutorial/05-register-dark.jpg" alt="The finished register in the dark theme, North Point a favourite, its light&rsquo;s character painted under the period" /></p>
 
@@ -32,7 +32,7 @@ give the register a <strong>theme</strong> colour of its own.</p>
 
 <p><code>Clickable(name, layout, looks, content)</code> is any box that reacts to the pointer: it is painted with
 one of three <code>Look</code>s (left alone, hovered, pressed) and returns <code>true</code> when clicked. Inside, put
-anything. go-ui&rsquo;s own buttons are made this way.</p>
+anything. Go UI&rsquo;s own buttons are made this way.</p>
 <pre><code class="language-go"><span class="c1">// favouriteButton is a control of the program&#39;s own: a star, golden while the lighthouse is a</span>
 <span class="c1">// favourite. A click flips it.</span>
 <span class="kd">func</span> <span class="nf">favouriteButton</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">favourite</span> <span class="o">*</span><span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
@@ -61,7 +61,7 @@ anything. go-ui&rsquo;s own buttons are made this way.</p>
 <h2 id="screen-readers">Screen readers</h2>
 
 <p>A screen reader (TalkBack on Android) speaks what is on the screen for someone who cannot see it.
-go-ui works out what to say from the boxes: a button reads its text, a checkbox says whether it is
+Go UI works out what to say from the boxes: a button reads its text, a checkbox says whether it is
 ticked. A box of your own holds only an icon, which would be read as &ldquo;star&rdquo;. <code>Describe</code>, right
 after the control, says what it really is:</p>
 
@@ -106,7 +106,7 @@ how the screen is read.</p>
 <h2 id="painting-your-own-shapes">Painting your own shapes</h2>
 
 <p>When no control draws what you need, <code>Paint(layout, paint)</code> adds a box that is laid out like any
-other and then handed to your function, with its final rectangle and go-renderer&rsquo;s <code>draw2d.List</code>
+other and then handed to your function, with its final rectangle and Go Renderer&rsquo;s <code>draw2d.List</code>
 to draw into: rounded rectangles, shadows, text, icons, pictures.</p>
 
 <p>The register shows a light&rsquo;s <em>character</em>, a mark for every flash in twenty seconds:</p>
@@ -129,7 +129,7 @@ to draw into: rounded rectangles, shadows, text, icons, pictures.</p>
 <pre><code class="language-go"><span class="nf">field</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="s">&#34;Character&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nf">flashes</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">light</span><span class="p">.</span><span class="nx">period</span><span class="p">,</span> <span class="nx">lampColours</span><span class="p">[</span><span class="nx">light</span><span class="p">.</span><span class="nx">colour</span><span class="p">])</span> <span class="p">})</span>
 </code></pre>
 
-<p>Coordinates are layout pixels from the window&rsquo;s top-left corner, like everything in go-ui.</p>
+<p>Coordinates are layout pixels from the window&rsquo;s top-left corner, like everything in Go UI.</p>
 
 <h2 id="themes">Themes</h2>
 

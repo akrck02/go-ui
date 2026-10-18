@@ -7,12 +7,12 @@ You need to know a little Go; you need no experience with interfaces.</p>
 
 <ol>
 <li>Install Go and a C compiler, which the window needs.</li>
-<li>Get go-ui and go-renderer, side by side, and run an example.</li>
+<li>Get Go UI and Go Renderer, side by side, and run an example.</li>
 <li>Write your first interface.</li>
 </ol>
 
 <blockquote>
-<p>⚠️ go-ui is an educational project and its API still changes. Pin the commits you build against.</p>
+<p>⚠️ Go UI is an educational project and its API still changes. Pin the commits you build against.</p>
 </blockquote>
 
 <h2 id="1-install-the-tools">1. Install the tools</h2>
@@ -51,7 +51,7 @@ You need to know a little Go; you need no experience with interfaces.</p>
 
 <h2 id="2-get-the-code">2. Get the code</h2>
 
-<p>go-ui draws through <a href="https://github.com/akrck02/go-renderer" target="_blank">go-renderer</a> and, until both publish
+<p>Go UI draws through <a href="https://github.com/akrck02/go-renderer" target="_blank">Go Renderer</a> and, until both publish
 versions, builds against a copy of it checked out beside it:</p>
 <pre><code class="language-bash">mkdir workspace <span class="o">&amp;&amp;</span> <span class="nb">cd</span> workspace
 git clone https://github.com/akrck02/go-renderer
@@ -144,7 +144,7 @@ go mod edit -require github.com/akrck02/go-renderer@v0.0.0 -replace github.com/a
 go run .
 </code></pre>
 
-<p>Click the button: the line appears and goes. That is the whole idea of go-ui, called <strong>immediate
+<p>Click the button: the line appears and goes. That is the whole idea of Go UI, called <strong>immediate
 mode</strong>:</p>
 
 <ul>
@@ -156,7 +156,7 @@ no button objects to create, keep or wire with callbacks.</li>
 screen can never show a stale value.</li>
 </ul>
 
-<p>Between frames the window sleeps: an idle go-ui program uses no processor.</p>
+<p>Between frames the window sleeps: an idle Go UI program uses no processor.</p>
 
 <h2 id="where-next">Where next</h2>
 
@@ -191,7 +191,7 @@ screen can never show a stale value.</li>
 
 <tr>
 <td>Run it in a browser or on a phone</td>
-<td><a href="./platforms/web">In a web browser</a>, <a href="./platforms/android">on Android</a>, <a href="https://github.com/akrck02/go-ui-android" target="_blank">go-ui-android</a></td>
+<td><a href="./platforms/web">In a web browser</a>, <a href="./platforms/android">on Android</a>, <a href="https://github.com/akrck02/go-ui-android" target="_blank">Go UI for Android</a></td>
 </tr>
 </tbody>
 </table>

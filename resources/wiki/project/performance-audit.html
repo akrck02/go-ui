@@ -1,6 +1,6 @@
 <h1 id="performance-and-battery-audit">⚡ Performance and battery audit</h1>
 
-<p><strong>Date:</strong> October 2026. <strong>Scope:</strong> go-ui and the 2D path of go-renderer it draws through (draw list,
+<p><strong>Date:</strong> October 2026. <strong>Scope:</strong> Go UI and the 2D path of Go Renderer it draws through (draw list,
 painter, atlas, flat renderer, window loop), measured with the register application (<code>cmd/app</code>).
 <strong>Machine:</strong> a laptop with an Apple M4 and a 60 Hz built-in screen, macOS 26, Go 1.25.</p>
 
@@ -114,7 +114,7 @@ buffers that macOS keeps (they grow with the window) and about 25 MB the program
 <thead>
 <tr>
 <th>Frame</th>
-<th>go-ui (build, layout, draw list)</th>
+<th>Go UI (build, layout, draw list)</th>
 <th>Painter (draw list to quads)</th>
 <th>Vertex filling</th>
 <th>OpenGL calls</th>
@@ -335,19 +335,19 @@ for pixel.</p>
 
 <tbody>
 <tr>
-<td>Register frame, 11 rows (go-ui)</td>
+<td>Register frame, 11 rows (Go UI)</td>
 <td>44 µs, 114 allocations</td>
 <td>37 µs, 109 allocations</td>
 </tr>
 
 <tr>
-<td>Register frame, 1000 rows (go-ui)</td>
+<td>Register frame, 1000 rows (Go UI)</td>
 <td>1.9 ms</td>
 <td><strong>55 µs</strong></td>
 </tr>
 
 <tr>
-<td>Register frame, 3000 rows (go-ui)</td>
+<td>Register frame, 3000 rows (Go UI)</td>
 <td>7.5 ms</td>
 <td><strong>109 µs</strong></td>
 </tr>
@@ -381,11 +381,11 @@ for pixel.</p>
 
 <ul>
 <li><strong>Frames that would look the same are skipped</strong> (1, 7). <code>draw2d.List.Fingerprint</code> sums up a draw
-list; go-ui&rsquo;s window answers go-renderer&rsquo;s new <code>Application.Unchanged</code> with it, and the loop then
+list; Go UI&rsquo;s window answers Go Renderer&rsquo;s new <code>Application.Unchanged</code> with it, and the loop then
 neither draws nor presents. In continuous mode a frame is drawn only after an update step, and
 the loop sleeps until the next one.</li>
 <li><strong>What is out of sight costs nothing</strong> (2, 3). The draw list drops texts whose line misses the
-clip; go-ui does not paint elements wholly outside a clipping box; the example&rsquo;s table is a
+clip; Go UI does not paint elements wholly outside a clipping box; the example&rsquo;s table is a
 <code>List</code>, and works out its rows once a frame.</li>
 <li><strong>The text cache keeps two generations</strong> (4), and a focused field measures only when something
 changed (13), keeps its text as a string, and <strong>stops blinking after ten seconds</strong> without a key
@@ -400,7 +400,7 @@ instead of crashing.</li>
 <ol>
 <li><strong>Skip unchanged frames</strong> (finding 1), with continuous mode drawing only after an update (7).</li>
 <li><strong>Stop paying for what is out of sight</strong>: cull texts by the clip in the painter (3), skip
-children outside the clip in go-ui (2), and move the example&rsquo;s table to <code>List</code>.</li>
+children outside the clip in Go UI (2), and move the example&rsquo;s table to <code>List</code>.</li>
 <li><strong>The text cache&rsquo;s generations</strong> (4) and the <strong>field&rsquo;s measuring</strong> (13).</li>
 <li><strong>Graphics switching</strong> for flat windows (11) and <strong>the flat path&rsquo;s own frame</strong> (10).</li>
 <li><strong>The painter&rsquo;s per-character work</strong> (5), <strong>packed instanced quads</strong> (6) and <strong>partial atlas
@@ -412,7 +412,7 @@ uploads</strong> (9).</li>
 
 <h2 id="metal">Metal</h2>
 
-<p>Built after this audit, as insurance against OpenGL leaving macOS: go-ui&rsquo;s window now draws
+<p>Built after this audit, as insurance against OpenGL leaving macOS: Go UI&rsquo;s window now draws
 through Metal on macOS (<code>-backend opengl</code> goes back). It costs less than OpenGL, which on macOS
 runs on a translation layer over Metal:</p>
 
@@ -457,5 +457,5 @@ runs on a translation layer over Metal:</p>
 </tr>
 </tbody>
 </table>
-<p>The details, and what still needs a look on screen, are in go-renderer&rsquo;s
+<p>The details, and what still needs a look on screen, are in Go Renderer&rsquo;s
 <a href="../../../go-renderer/docs/4-guides/7-metal.md">docs/metal.md</a>.</p>

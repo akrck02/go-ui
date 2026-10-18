@@ -1,6 +1,6 @@
 <h1 id="mouse-keyboard-and-touch">🖱️ Mouse, keyboard and touch</h1>
 
-<p>go-ui shares the mouse and the keyboard with what is behind it: a 3D view&rsquo;s camera, the viewer&rsquo;s
+<p>Go UI shares the mouse and the keyboard with what is behind it: a 3D view&rsquo;s camera, the viewer&rsquo;s
 shortcuts. This page says who gets them, and how fingers are followed on a touch screen.</p>
 
 <h2 id="who-gets-the-mouse">Who gets the mouse</h2>
@@ -18,7 +18,7 @@ pointer strays. A click is a press and a release over the same control.</li>
 <li><strong>The scene keeps its drags</strong>: a press on empty screen belongs to the camera until it is let go;
 panels it passes over do not take it.</li>
 <li><strong>Claims</strong>: at <code>End</code>, when the pointer is over a panel or a control is pressed, the interface
-calls <code>state.ClaimMouse()</code>. go-renderer&rsquo;s viewer then gives its cameras and shortcuts the input
+calls <code>state.ClaimMouse()</code>. Go Renderer&rsquo;s viewer then gives its cameras and shortcuts the input
 without the mouse, so dragging inside a panel does not turn the view. A text field with the focus
 claims the keyboard the same way. <code>WantsMouse()</code> and <code>WantsKeyboard()</code> tell your own code.</li>
 <li><strong>Pointer shape</strong>: a hand over buttons, four arrows over a title bar that can be dragged and
@@ -77,4 +77,4 @@ still on a control for half a second long-presses it (<code>LongPressed</code>).
 </tr>
 </tbody>
 </table>
-<p>Scroll areas glide on when let go. How touches reach go-ui on a phone is in <a href="./platforms/android">Android</a>.</p>
+<p>Scroll areas glide on when let go. How touches reach Go UI on a phone is in <a href="./platforms/android">Android</a>.</p>

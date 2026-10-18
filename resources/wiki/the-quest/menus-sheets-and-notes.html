@@ -43,7 +43,7 @@ toolbar, after the search box:</p>
 </code></pre>
 
 <p>The third argument of <code>MenuItem</code> is a hint drawn quietly on the right, such as <code>&quot;Ctrl+N&quot;</code>: the
-program handles the shortcut itself (<code>state.Pressed</code>), go-ui only shows it.</p>
+program handles the shortcut itself (<code>state.Pressed</code>), Go UI only shows it.</p>
 <pre><code class="language-go"><span class="kd">func</span> <span class="p">(</span><span class="nx">program</span> <span class="o">*</span><span class="nx">register</span><span class="p">)</span> <span class="nf">add</span><span class="p">()</span> <span class="p">{</span>
 	<span class="nx">program</span><span class="p">.</span><span class="nx">added</span><span class="o">++</span>
 	<span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">lighthouses</span><span class="p">,</span> <span class="nx">lighthouse</span><span class="p">{</span><span class="nx">name</span><span class="p">:</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;New lighthouse %d&#34;</span><span class="p">,</span> <span class="nx">program</span><span class="p">.</span><span class="nx">added</span><span class="p">),</span> <span class="nx">rangeNM</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="nx">period</span><span class="p">:</span> <span class="mi">5</span><span class="p">})</span>
@@ -100,7 +100,7 @@ last and drawn over it.</p>
 <h2 id="a-note-that-goes-away">A note that goes away</h2>
 
 <p><code>Toast(text, warning)</code> shows a short note at the bottom of the window for a few seconds. Unlike
-everything else it is <em>fired once</em>, not described at every frame: go-ui keeps it until it fades.</p>
+everything else it is <em>fired once</em>, not described at every frame: Go UI keeps it until it fades.</p>
 
 <h2 id="more-layers">More layers</h2>
 

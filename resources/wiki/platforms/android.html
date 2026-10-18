@@ -1,6 +1,6 @@
-<h1 id="go-ui-on-android">📱 go-ui on Android</h1>
+<h1 id="go-ui-on-android">📱 Go UI on Android</h1>
 
-<p><strong>Status:</strong> a first step (October 2026). A go-ui program opens and draws on an Android 16
+<p><strong>Status:</strong> a first step (October 2026). A Go UI program opens and draws on an Android 16
 emulator, with a 3D scene under its interface, and reacts to taps and drags; the same code runs on
 the desktop and in a browser. The example looks like Android&rsquo;s own apps (Material Design 3). This
 page started as a plan (what to build, install and try, in which order); <em>What was built</em> says how
@@ -35,7 +35,7 @@ Android                 its own NativeActivity loads the program, a shared libra
 
 <tr>
 <td>The activity, the drawing thread, touches, JNI for the bars and the theme, crash reports</td>
-<td>go-renderer&rsquo;s <code>android</code> package (<a href="../../../go-renderer/docs/4-guides/6-android.md">its docs</a>)</td>
+<td>Go Renderer&rsquo;s <code>android</code> package (<a href="../../../go-renderer/docs/4-guides/6-android.md">its docs</a>)</td>
 </tr>
 
 <tr>
@@ -56,7 +56,7 @@ Android                 its own NativeActivity loads the program, a shared libra
 </table>
 <p>There is no Java and no golang.org/x/mobile. The first step used x/mobile (gomobile); its way of
 calling OpenGL (every call to another thread, three at a time) was about two thirds of what a 3D view
-cost on a phone, and go-renderer&rsquo;s own activity halved it (see <em>A cap on frames</em>).</p>
+cost on a phone, and Go Renderer&rsquo;s own activity halved it (see <em>A cap on frames</em>).</p>
 
 <p><strong>Touch.</strong> The first finger down is the pointer: it moves the cursor and presses the left button,
 lifting it releases the button, so every control works unchanged. Other fingers are ignored until
@@ -73,7 +73,7 @@ frame at every touch event (over a hundred a second). The window draws at most
 <code>Options.MaxFramesPerSecond</code> frames a second, 60 on a phone by default; the system&rsquo;s own repaints
 do not count. Measured on a Pixel 6 Pro dragging the example&rsquo;s island for 10 seconds:
 well over a core at first (an independent measurement found 125–128 % at about 100 frames a
-second); 82 % with the cap and lighter frames, still through x/mobile; <strong>41 %</strong> with go-renderer&rsquo;s own
+second); 82 % with the cap and lighter frames, still through x/mobile; <strong>41 %</strong> with Go Renderer&rsquo;s own
 activity and direct OpenGL calls.</p>
 
 <p><strong>The system&rsquo;s bars.</strong> The window covers the whole screen, under see-through bars, as Android&rsquo;s
@@ -120,15 +120,15 @@ when something went through, <code>FeelingReject</code> when something went wron
 You), and the system&rsquo;s own applications take their colours from them. <code>window.SystemPalettes()</code>
 returns them, thirteen shades each, from white to black (<code>window.PaletteTones</code>), and false on an
 older phone, on the desktop and in a browser. They change with the wallpaper, so read them at every
-frame. go-ui-android&rsquo;s <code>material.System</code> builds a Material scheme from them.</p>
+frame. Go UI for Android&rsquo;s <code>material.System</code> builds a Material scheme from them.</p>
 
 <p><strong>A scene under the interface.</strong> <code>Options.Scene</code> returns, at every step, a scene and a camera to
 draw behind the interface, or nil for none. It gets the input the interface did not claim, so a
 drag on an empty part of the screen turns the camera while a drag on a slider moves the slider.
-The scene is drawn by go-renderer&rsquo;s <code>gles.SceneRenderer</code> on Android and in browsers, and its
+The scene is drawn by Go Renderer&rsquo;s <code>gles.SceneRenderer</code> on Android and in browsers, and its
 OpenGL scene renderer on the desktop.</p>
 
-<p><strong><code>cmd/mobile</code></strong> is built the way Android&rsquo;s own apps look, out of go-ui boxes, texts and
+<p><strong><code>cmd/mobile</code></strong> is built the way Android&rsquo;s own apps look, out of Go UI boxes, texts and
 clickables (<code>material.go</code>): a top app bar and a navigation bar painted under the system&rsquo;s bars,
 list items with a round icon and a Material switch, filter chips, pill-shaped buttons, cards and
 floating buttons, in Material Design 3&rsquo;s baseline colours, light and dark, and in Roboto, Android&rsquo;s
@@ -148,15 +148,15 @@ insets).</p>
 
 <h2 id="screen-readers">Screen readers</h2>
 
-<p>TalkBack reads a go-ui program as it reads Android&rsquo;s own applications: a finger moved over the
+<p>TalkBack reads a Go UI program as it reads Android&rsquo;s own applications: a finger moved over the
 screen reads what is under it, a swipe goes to the next thing, a double tap presses it, and the
 thing read is ringed. Every frame, while a screen reader is on, the interface makes its list of
 nodes (<a href="./guides/screen-readers">screen readers</a>); <code>window/android.go</code> numbers them as Android&rsquo;s
 virtual views, says what Android widget each reads as (a switch is an <code>android.widget.Switch</code>) and
-hands them to go-renderer, which sends them to one small Java class only when they change. What
+hands them to Go Renderer, which sends them to one small Java class only when they change. What
 TalkBack asks (press, long press, scroll, the thing it is on) comes back the same way.</p>
 
-<p>A package needs that class: <code>go-ui-apk</code> in go-ui-android compiles it in. A package made without it
+<p>A package needs that class: <code>go-ui-apk</code> in Go UI for Android compiles it in. A package made without it
 (<code>cmd/mobile/build-apk.sh</code>, which carries no Java) runs as before, without a screen reader.</p>
 
 <h2 id="building-and-trying-it">Building and trying it</h2>
@@ -214,7 +214,7 @@ graphics context), and the program read the system&rsquo;s theme before Android 
 
 <tr>
 <td>2</td>
-<td><strong>Material pieces in go-ui itself</strong>: a touch theme, the switch, list items, the navigation bar, now in the example</td>
+<td><strong>Material pieces in Go UI itself</strong>: a touch theme, the switch, list items, the navigation bar, now in the example</td>
 <td>Every program gets them, not only the example</td>
 </tr>
 
@@ -233,7 +233,7 @@ graphics context), and the program read the system&rsquo;s theme before Android 
 <tr>
 <td>5</td>
 <td><strong>Shadows, sky and waves</strong> on phones, as on the desktop</td>
-<td>The scene is go-renderer&rsquo;s simple one on phones and in browsers</td>
+<td>The scene is Go Renderer&rsquo;s simple one on phones and in browsers</td>
 </tr>
 </tbody>
 </table>
