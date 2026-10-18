@@ -41,6 +41,7 @@ go run ./cmd/plan-editor              # place huts on an island's map: editing a
 go run ./cmd/workbench                # a grouped table, chips, a menu, a sheet, drag and drop
 go run ./cmd/example                  # the example above; -dark for the dark theme
 go run ./cmd/example -capture shot.png
+go run ./cmd/bubble                   # in Bubble 4, akrck02's design system: docs/5-components/9-bubble.md
 GOOS=js GOARCH=wasm go build -o web/app.wasm ./cmd/app   # the register in a web page: docs/web.md
 cmd/mobile/build-apk.sh mobile.apk    # a phone-sized example on Android: docs/android.md
 go test ./...
@@ -48,7 +49,8 @@ go test ./...
 
 > ⚠️ **Warning:** an educational experiment, **not suitable for production use**. APIs will
 > break. Until go-renderer publishes `draw2d` and the wider input, `go.mod` points at a local copy
-> (`../go-renderer`).
+> (`../go-renderer`), and `go-ui/bubble` at a local copy of [Bubble](https://github.com/akrck02/bubble)
+> (`../bubble`).
 
 Read the [documentation](docs/4-guide.md): how a frame works, the layout rules and the controls. Also: [get started](docs/2-get-started.md), [the tutorial](docs/3-the-quest/0-the-quest.md), [the components one by one](docs/5-components/0-components.md) and [the reference](docs/6-reference/0-reference.md).
 
@@ -58,7 +60,8 @@ I write most of my code by hand, so I want to be clear about where AI was used h
 
 - **Written by an AI assistant (Claude, by Anthropic) under my direction, since October 2026:**
   all of it so far: the context, the layout, the controls, the theme, the window (and its choice of
-  Metal or OpenGL, and its web and Android versions), the examples and the docs.
+  Metal or OpenGL, and its web and Android versions), the examples and the docs, and the drawing
+  in Bubble 4 (`go-ui/bubble`, the theme's design tokens, `cmd/bubble`).
 
 Commits made with AI carry a `Co-Authored-By: Claude` line.
 
