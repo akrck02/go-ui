@@ -109,6 +109,10 @@ func TestTakeKeyboardGivesItAndEscapeGivesItBack(t *testing.T) {
 		t.Fatal("once given the keyboard, the interface takes Tab and claims the keys")
 	}
 	h.key(input.KeyEscape, build)
+	if !h.ui.HasKeyboard() {
+		t.Fatal("the frame Escape was used in still counts as the interface's")
+	}
+	h.frame(build)
 	if h.ui.HasKeyboard() || h.ui.keyboardFocus != 0 {
 		t.Fatal("Escape gives the keyboard back to the program")
 	}
@@ -140,8 +144,12 @@ func TestEscapeInADialogClosesItEvenWithAButtonFocused(t *testing.T) {
 	}
 }
 
+// allocationsBeforeFocus is what a still frame of lighthouseControls allocated before keyboard
+// focus existed (measured on the commit that proposed it): one, in the text field.
+const allocationsBeforeFocus = 1
+
 func TestAFrameWithFocusAllocatesNothingMore(t *testing.T) {
-	allocations := func(navigation KeyboardNavigation) float64 {
+	for _, navigation := range []KeyboardNavigation{WhenGiven, Always} {
 		h := newHarness(t)
 		h.ui.KeyboardNavigation = navigation
 		lit, keeper, pressed := false, "", 0
@@ -149,11 +157,9 @@ func TestAFrameWithFocusAllocatesNothingMore(t *testing.T) {
 		h.frame(build)
 		h.key(input.KeyTab, build)
 		h.frame(build)
-		return testing.AllocsPerRun(100, func() { h.frame(build) })
-	}
-	without, with := allocations(WhenGiven), allocations(Always)
-	if with > without {
-		t.Fatalf("a frame with a control focused allocates %v times, %v without", with, without)
+		if allocations := testing.AllocsPerRun(100, func() { h.frame(build) }); allocations > allocationsBeforeFocus {
+			t.Fatalf("a still frame of a few controls, one focused, allocates %v times, %v before", allocations, allocationsBeforeFocus)
+		}
 	}
 }
 
@@ -325,5 +331,88 @@ func TestThePauseMenuOfTheGuideWorks(t *testing.T) {
 	press(input.KeyEnter) // Tab reached Resume, Enter presses it
 	if paused {
 		t.Fatal("Tab and Enter press Resume")
+	}
+	press(input.KeyP)
+	press(input.KeyTab)
+	press(input.KeyTab)
+	press(input.KeySpace) // Space presses Resume, and must not jump too
+	if paused || jumps != 2 {
+		t.Fatalf("Space on Resume resumes without a jump: paused %v, %d jumps", paused, jumps)
+	}
+}
+
+func TestTabFromAFieldToAButtonKeepsTheKeyboard(t *testing.T) {
+	h := newHarness(t)
+	keeper, pressed := "", 0
+	build := func(ui *Context) {
+		ui.Column(func() {
+			ui.TextField("Keeper", &keeper)
+			if ui.Button("Save") {
+				pressed++
+			}
+		})
+	}
+	h.frame(build)
+	h.clickInside(idOf("Keeper"), build)
+	h.key(input.KeyTab, build)
+	h.frame(build)
+	h.key(input.KeyEnter, build)
+	if pressed != 1 || !h.ui.HasKeyboard() {
+		t.Fatalf("Tab from a field reaches the button, and Enter presses it: %d presses", pressed)
+	}
+}
+
+func TestTabGoesOnFromAControlThatWentAway(t *testing.T) {
+	h := newHarness(t)
+	h.ui.KeyboardNavigation = Always
+	removed := false
+	build := func(ui *Context) {
+		ui.Column(func() {
+			ui.Button("North")
+			if !removed && ui.Button("Middle") {
+				removed = true
+			}
+			ui.Button("South")
+		})
+	}
+	h.frame(build)
+	h.key(input.KeyTab, build)
+	h.key(input.KeyTab, build)
+	h.key(input.KeyEnter, build) // Middle removes itself
+	h.frame(build)
+	h.key(input.KeyTab, build)
+	if h.ui.keyboardFocus != idOf("South") {
+		t.Fatal("Tab goes on to the control after the one that went away")
+	}
+}
+
+func TestTabGoesOnFromTheControlLastClicked(t *testing.T) {
+	h := newHarness(t)
+	h.ui.KeyboardNavigation = Always
+	build := func(ui *Context) {
+		ui.Column(func() {
+			ui.Button("North")
+			ui.Button("Middle")
+			ui.Button("South")
+		})
+	}
+	h.frame(build)
+	h.clickInside(idOf("Middle"), build)
+	h.key(input.KeyTab, build)
+	if h.ui.keyboardFocus != idOf("South") {
+		t.Fatal("Tab after a click goes on from the control clicked")
+	}
+}
+
+func TestAHeldButtonShrinksItsLabelToo(t *testing.T) {
+	h := newHarness(t)
+	h.ui.Theme.PressScale = 0.5
+	build := func(ui *Context) { ui.Button("Ring the bell") }
+	h.frame(build)
+	before, _ := h.textCommand("Ring the bell")
+	h.holdOn(idOf("Ring the bell"), build)
+	after, _ := h.textCommand("Ring the bell")
+	if after.Size != before.Size*0.5 || after.Area.Width != before.Area.Width*0.5 {
+		t.Fatalf("the label shrinks with the button: size %v from %v", after.Size, before.Size)
 	}
 }

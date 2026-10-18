@@ -66,6 +66,9 @@ func (ui *Context) button(name, text, icon string, variant buttonVariant) bool {
 // menu).
 func (ui *Context) buttonWithID(id ID, text, icon string, variant buttonVariant, lit bool) interaction {
 	ui.joinTabOrder(id)
+	if id == ui.active {
+		ui.heldControl = id // only buttons shrink while held, as Bubble's .button:active does
+	}
 	result := ui.interact(id)
 	if result.hovered {
 		ui.cursor = input.CursorHand

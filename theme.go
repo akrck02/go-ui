@@ -80,7 +80,7 @@ type Theme struct {
 	// FieldFocusEdge lights a field's own edge in FocusRing while it is typed in, instead of a
 	// ring around it.
 	FieldFocusEdge bool
-	// PressScale is how big a control is drawn while it is held, around its centre (0.97 gives a
+	// PressScale is how big a button is drawn while it is held, around its centre (0.97 gives a
 	// little); its content shrinks with it and the layout does not move. 0 keeps it still.
 	PressScale float32
 }
@@ -153,10 +153,10 @@ func DarkTheme() Theme {
 	return theme
 }
 
-// buttonRadius is the corner of buttons and selectable items: ButtonRadius, or the controls' own.
 // focusWidth is FocusWidth, or go-ui's own ring.
 func (theme Theme) focusWidth() float32 { return orDefault(theme.FocusWidth, defaultFocusWidth) }
 
+// buttonRadius is the corner of buttons and selectable items: ButtonRadius, or the controls' own.
 func (theme Theme) buttonRadius() float32 { return orDefault(theme.ButtonRadius, theme.ControlRadius) }
 
 // go-ui's own measures, kept when a theme leaves the matching field at zero.

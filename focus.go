@@ -35,43 +35,54 @@ func (ui *Context) TakeKeyboard() { ui.keyboardGiven = true }
 
 // ReleaseKeyboard gives the keyboard back to the program and takes the focus off the controls.
 func (ui *Context) ReleaseKeyboard() {
-	ui.keyboardGiven, ui.keyboardFocus = false, 0
+	ui.keyboardGiven, ui.keyboardByTab, ui.keyboardFocus, ui.resumeStop = false, false, 0, 0
 	ui.hasKeyboard = ui.keyboardWanted()
 }
 
 // keyboardWanted tells whether something gives the interface the keyboard: its mode, the program,
-// an open dialog or sheet, or a field, list or menu taking the keys.
+// an open dialog or sheet, a field, list or menu taking the keys, or a Tab that moved the focus
+// while the interface had them (it keeps them until Escape or a click).
 func (ui *Context) keyboardWanted() bool {
-	return ui.KeyboardNavigation == Always || ui.keyboardGiven || len(ui.sheets) > 0 || ui.focus != 0
+	return ui.KeyboardNavigation == Always || ui.keyboardGiven || ui.keyboardByTab || len(ui.sheets) > 0 || ui.focus != 0
 }
 
-// HasKeyboard tells whether the interface reads Tab, Enter and Space in this frame.
-func (ui *Context) HasKeyboard() bool { return ui.hasKeyboard }
+// HasKeyboard tells whether the interface reads Tab, Enter and Space in this frame. It stays true
+// for the rest of a frame in which the interface used one of those keys, even if it gave the
+// keyboard back on it: Space on a Resume button must not also reach the game.
+func (ui *Context) HasKeyboard() bool { return ui.hasKeyboard || ui.keyboardUsed }
 
 // beginFocus works out, at the start of a frame, whether the interface has the keyboard, and
 // follows Tab when no field is taking the keys (a field follows its own).
 func (ui *Context) beginFocus() {
+	if ui.state.ButtonPressed(input.MouseLeft) {
+		// the pointer moves the focus by itself and shows no ring; Tab goes on from what it pressed
+		ui.keyboardFocus, ui.keyboardByTab, ui.resumeStop = 0, false, 0
+	}
 	ui.hasKeyboard = ui.keyboardWanted()
-	ui.keyboardFocusSeen, ui.focusAtBegin, ui.heldControl = false, ui.focus, 0
-	if !ui.hasKeyboard || ui.state.ButtonPressed(input.MouseLeft) {
-		ui.keyboardFocus = 0 // the pointer moves the focus by itself, and shows no ring
+	ui.keyboardFocusSeen, ui.focusAtBegin, ui.heldControl, ui.keyboardUsed = false, ui.focus, 0, false
+	if !ui.hasKeyboard {
+		ui.keyboardFocus = 0
 	}
 	if ui.hasKeyboard && ui.focus == 0 && ui.state.Pressed(input.KeyTab) {
-		ui.tabFrom, ui.tabBack, ui.tabPressed = ui.keyboardFocus, ui.state.Down(input.KeyShift), true
+		from := ui.keyboardFocus
+		if from == 0 {
+			from = ui.clickedStop
+		}
+		ui.tabFrom, ui.tabBack, ui.tabPressed = from, ui.state.Down(input.KeyShift), true
 	}
 }
 
 // joinTabOrder adds a control to the Tab order of this frame. Controls only join while the
 // interface has the keyboard, so a game's frame does no work for them.
 func (ui *Context) joinTabOrder(id ID) {
-	if id == ui.active {
-		ui.heldControl = id
-	}
 	if id == ui.keyboardFocus {
 		ui.keyboardFocusSeen = true
 	}
 	if !ui.hasKeyboard || ui.outOfTabOrder > 0 {
 		return
+	}
+	if id == ui.keyboardFocus {
+		ui.keyboardFocusPosition = len(ui.focusables)
 	}
 	ui.focusables = append(ui.focusables, focusable{id: id})
 }
@@ -94,18 +105,25 @@ func (ui *Context) keyboardPresses(id ID) bool {
 	if id == 0 || id != ui.keyboardFocus || ui.focus != 0 {
 		return false
 	}
-	return ui.state.Pressed(input.KeyEnter) || ui.state.Pressed(input.KeySpace)
+	pressed := ui.state.Pressed(input.KeyEnter) || ui.state.Pressed(input.KeySpace)
+	ui.keyboardUsed = ui.keyboardUsed || pressed
+	return pressed
 }
 
 // endFocus forgets a focused control that was not built, and gives the keyboard back on an Escape
 // that nothing else took: no field, list or menu had the keys and no dialog was open.
 func (ui *Context) endFocus() {
-	if !ui.keyboardFocusSeen {
-		ui.keyboardFocus = 0
+	if !ui.keyboardFocusSeen && ui.keyboardFocus != 0 {
+		// the control went away (a row deleted): Tab goes on from where it was
+		ui.keyboardFocus, ui.resumeStop = 0, ui.keyboardFocusPosition+1
+	}
+	if ui.state.ButtonPressed(input.MouseLeft) && ui.isTabStop(ui.active) {
+		ui.clickedStop = ui.active
 	}
 	escaped := ui.state.Pressed(input.KeyEscape) && ui.focusAtBegin == 0
 	if escaped && len(ui.sheets) == 0 && len(ui.nextSheets) == 0 {
 		ui.ReleaseKeyboard()
+		ui.keyboardUsed = true
 	}
 }
 
@@ -113,21 +131,27 @@ func (ui *Context) endFocus() {
 // pressed, going round at the ends; a first Tab goes to the first stop (or the last). A field
 // selects its whole text when it takes the focus.
 func (ui *Context) moveFocusByTab() {
-	from, pressed := ui.tabFrom, ui.tabPressed || ui.tabFrom != 0
+	from, pressed, resume := ui.tabFrom, ui.tabPressed || ui.tabFrom != 0, ui.resumeStop
 	ui.tabFrom, ui.tabPressed = 0, false
-	focusables := ui.focusables
+	focusables, offset := ui.focusables, 0
 	if len(ui.nextSheets) > 0 { // a sheet is open: Tab goes round its own controls only
-		focusables = focusables[ui.sheetFocusStart:ui.sheetFocusEnd]
+		focusables, offset = focusables[ui.sheetFocusStart:ui.sheetFocusEnd], ui.sheetFocusStart
 	}
 	if !pressed || len(focusables) == 0 {
 		return
 	}
+	ui.resumeStop = 0
 	step := 1
 	if ui.tabBack {
 		step = -1
 	}
 	index := -1
-	if ui.tabBack {
+	switch {
+	case resume > 0 && !ui.tabBack:
+		index = clampIndex(resume-1-offset, len(focusables)) - 1 // the stop now where the lost one was
+	case resume > 0:
+		index = clampIndex(resume-1-offset, len(focusables))
+	case ui.tabBack:
 		index = len(focusables)
 	}
 	for position, stop := range focusables {
@@ -138,6 +162,7 @@ func (ui *Context) moveFocusByTab() {
 	}
 	next := focusables[(index+step+len(focusables))%len(focusables)]
 	ui.RequestFrame(0) // the focus moved after this frame was painted: draw it where it is now
+	ui.keyboardByTab = true
 	if next.field {
 		ui.focus, ui.focusByKeyboard, ui.keyboardFocus = next.id, true, 0
 		return
@@ -181,9 +206,27 @@ func (ui *Context) scaleCommands(first int, area draw2d.Rect, scale float32) {
 	for index := range commands {
 		command := &commands[index]
 		command.Area, command.Radius, command.BorderWidth = around(command.Area), command.Radius*scale, command.BorderWidth*scale
-		command.Size, command.Baseline = command.Size*scale, centreY+(command.Baseline-centreY)*scale
+		switch command.Kind {
+		case draw2d.TextKind, draw2d.IconKind:
+			command.Size, command.Baseline = command.Size*scale, centreY+(command.Baseline-centreY)*scale
+		case draw2d.ShadowKind:
+			command.Blur *= scale
+		}
 		if command.HasClip && area.Intersect(command.Clip) == command.Clip {
 			command.Clip = around(command.Clip) // a clip of the control's own; one from a list around it stays
 		}
 	}
+}
+
+// clampIndex keeps a position inside a list of length stops.
+func clampIndex(position, length int) int { return min(max(position, 0), length-1) }
+
+// isTabStop tells whether a control is in this frame's Tab order.
+func (ui *Context) isTabStop(id ID) bool {
+	for _, stop := range ui.focusables {
+		if stop.id == id {
+			return id != 0
+		}
+	}
+	return false
 }

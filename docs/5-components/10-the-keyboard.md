@@ -24,14 +24,16 @@ whichever button was last clicked. So go-ui asks the program one question, throu
 | For | a game, a 3D viewer, an editor over a scene | a program that is only an interface: a register, a settings app |
 | Tab, Shift+Tab | move between controls only while the interface **has** the keyboard | always move between controls |
 | Enter, Space | press the control Tab reached, while the interface has the keyboard | press the control Tab reached |
-| A click on a button | presses it, and **leaves the keyboard where it was** | presses it; no focus ring |
+| A click on a button | presses it, and **leaves the keyboard where it was**; no ring | presses it; no ring; the next Tab goes on from it |
 | Escape | gives the keyboard back to the program (an open menu or dialog closes first) | closes an open menu or dialog, or takes the ring off |
-| What the program reads | every key the interface does not have | only what fields, menus and dialogs leave |
+| What the program reads | every key while the interface does not have the keyboard | none: the interface claims the keyboard all the time |
 
 The interface **has the keyboard** while:
 
 - a text field is typed in,
-- a dialog, a sheet or a menu is open,
+- a dialog or a sheet is open, or a menu or a select is open,
+- Tab moved the focus while it had the keyboard (from a field to a button, say): it keeps it
+  until Escape or a click,
 - or the program gave it with `context.TakeKeyboard()`.
 
 With `Always`, it has the keyboard all the time.
@@ -69,9 +71,10 @@ if !context.HasKeyboard() && state.Pressed(input.KeySpace) {
 }
 ```
 
-Pressing Escape in the menu gives the keyboard back too: `HasKeyboard()` turns false at the end of
-that frame, and the game resumes. A click on **Resume** with the mouse presses it but takes nothing, so the Space that
-follows is a jump again.
+Pressing Escape in the menu gives the keyboard back too, and the game resumes on the next frame.
+`HasKeyboard()` stays true until the end of any frame in which the interface used Enter, Space or
+Escape, so the Space that pressed **Resume** is not also a jump. A click on Resume with the mouse
+presses it but takes nothing, so the Space that follows is a jump again.
 
 While the interface has the keyboard, go-ui **claims** it in the input state, as a text field
 always has, so go-renderer's viewer leaves its camera keys alone. `context.WantsKeyboard()` tells
@@ -87,7 +90,8 @@ context.KeyboardNavigation = ui.Always
 
 Now Tab goes through every button, check box, toggle, tab, select, chip and field in the order
 they are drawn, and comes round at the end. Shift+Tab goes back. Enter or Space presses the control
-Tab reached: it clicks a button, ticks a check box, picks a tab, opens a select. A field reached by
+Tab reached: it clicks a button, ticks a check box, picks a tab, opens a select. When the control
+with the focus goes away (a row deleted), the next Tab goes on from where it stood. A field reached by
 Tab selects its text, ready to be typed over.
 
 ## What Tab reaches
@@ -114,10 +118,12 @@ keep their size. The tokens are in [a design system's look](9-design-systems.md)
 
 ## What it costs
 
-Nothing while the interface does not have the keyboard: no control joins the Tab order. While it
-does, a frame of three hundred controls takes under 2 % longer and allocates nothing more. Moving
-the focus asks for one frame, so the ring shows at once even in an application that only draws
-when something changes.
+While the interface does not have the keyboard, no control joins the Tab order, and a frame of
+three hundred controls takes about 1 % longer than before, from one comparison per control. While
+it has the keyboard, it takes up to 2.5 % longer. Neither allocates anything more. Moving the
+focus asks for one frame, so the ring shows at once even in an application that only draws when
+something changes. The measurements are in the
+[performance audit](../8-project/1-performance-audit.md#keyboard-focus).
 
 ---
 

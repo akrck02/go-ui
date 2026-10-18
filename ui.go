@@ -68,7 +68,8 @@ type Context struct {
 	focusSeen                   bool // the focused control was built this frame; if not, it went away
 	// focusables are the stops of the Tab order, in the order they were built this frame; tabFrom
 	// is the stop where Tab was pressed (tabBack with Shift; tabPressed when no stop had it), and
-	// focusByKeyboard tells the field taking the focus that it came by Tab.
+	// focusByKeyboard tells a field taking the focus that it came by Tab (keyboardFocus, below, is
+	// the control, not a field, that Tab reached).
 	focusables      []focusable
 	tabFrom         ID
 	tabBack         bool
@@ -81,8 +82,14 @@ type Context struct {
 	focusAtBegin       ID   // the field, list or menu that had the keys when the frame began
 	keyboardFocus      ID   // the control Tab reached, which Enter and Space press
 	keyboardFocusSeen  bool // it was built this frame; if not, it went away
-	outOfTabOrder      int  // inside withoutTab: controls built now are not Tab stops
-	heldControl        ID   // the control held down in this frame, which PressScale shrinks
+	// keyboardFocusPosition is where it stood in the Tab order; resumeStop is 1 + that position
+	// once it went away, so the next Tab goes on from there (0: nothing to resume)
+	keyboardFocusPosition, resumeStop int
+	keyboardByTab                     bool // a Tab moved the focus: the interface keeps the keys until Escape or a click
+	keyboardUsed                      bool // Enter, Space or Escape did something in the interface in this frame
+	clickedStop                       ID   // the last Tab stop pressed with the pointer: Tab goes on from it
+	outOfTabOrder                     int  // inside withoutTab: controls built now are not Tab stops
+	heldControl                       ID   // the control held down in this frame, which PressScale shrinks
 	// LessMotion keeps controls still when the person asks the system for less motion: a held
 	// control does not shrink. The program sets it from the platform's setting.
 	LessMotion   bool

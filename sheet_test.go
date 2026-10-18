@@ -121,10 +121,12 @@ func TestOpeningASheetTakesTheFocusFromAFieldBehind(t *testing.T) {
 		t.Fatalf("letters typed while a sheet is open do not reach a field behind: %q", scene.behindText)
 	}
 	h.clickInside(scoped("Confirm", "Reason"), scene.build)
-	for range 4 {
-		h.key(input.KeyTab, scene.build)
-		if h.ui.focus == scoped("Island", "Behind") {
-			t.Fatal("Tab goes round the sheet's own controls only")
-		}
+	h.key(input.KeyTab, scene.build)
+	if h.ui.keyboardFocus != scoped("Confirm", "Remove") {
+		t.Fatal("Tab goes from the sheet's field to its button")
+	}
+	h.key(input.KeyTab, scene.build)
+	if h.ui.focus != scoped("Confirm", "Reason") {
+		t.Fatal("Tab goes round the sheet's own controls only, back to its field")
 	}
 }
