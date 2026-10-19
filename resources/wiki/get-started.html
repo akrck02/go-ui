@@ -51,11 +51,9 @@ You need to know a little Go; you need no experience with interfaces.</p>
 
 <h2 id="2-get-the-code">2. Get the code</h2>
 
-<p>Go UI draws through <a href="https://github.com/akrck02/go-renderer" target="_blank">Go Renderer</a> and, until both publish
-versions, builds against a copy of it checked out beside it:</p>
-<pre><code class="language-bash">mkdir workspace <span class="o">&amp;&amp;</span> <span class="nb">cd</span> workspace
-git clone https://github.com/akrck02/go-renderer
-git clone https://github.com/akrck02/go-ui
+<p>Go UI draws through <a href="https://github.com/akrck02/go-renderer" target="_blank">Go Renderer</a>, which Go downloads
+like any other module, at the version <code>go.mod</code> names:</p>
+<pre><code class="language-bash">git clone https://github.com/akrck02/go-ui
 <span class="nb">cd</span> go-ui
 go run ./cmd/app
 </code></pre>
@@ -106,12 +104,17 @@ under <code>xvfb-run</code>.</p>
 
 <h2 id="3-your-first-interface">3. Your first interface</h2>
 
-<p>Make a module beside the other two and point it at them:</p>
-<pre><code class="language-bash"><span class="nb">cd</span> .. <span class="o">&amp;&amp;</span> mkdir lighthouse <span class="o">&amp;&amp;</span> <span class="nb">cd</span> lighthouse
+<p>Make a module of your own and ask for Go UI, which brings Go Renderer with it:</p>
+<pre><code class="language-bash">mkdir lighthouse <span class="o">&amp;&amp;</span> <span class="nb">cd</span> lighthouse
 go mod init example.com/lighthouse
-go mod edit -require github.com/akrck02/go-ui@v0.0.0 -replace github.com/akrck02/go-ui<span class="o">=</span>../go-ui
-go mod edit -require github.com/akrck02/go-renderer@v0.0.0 -replace github.com/akrck02/go-renderer<span class="o">=</span>../go-renderer
+go get github.com/akrck02/go-ui@latest
 </code></pre>
+
+<blockquote>
+<p>💡 <strong>Changing Go UI or Go Renderer at the same time?</strong> Clone them beside your module and join
+the three with a workspace (<code>go work init . ../go-ui ../go-renderer</code>): Go then builds against
+your copies instead of the versions.</p>
+</blockquote>
 
 <p><code>main.go</code>:</p>
 <pre><code class="language-go"><span class="kn">package</span> <span class="nx">main</span>
