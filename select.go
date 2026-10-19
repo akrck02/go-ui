@@ -27,6 +27,7 @@ func (ui *Context) Select(name string, selected *int, options []string) bool {
 		shown = options[*selected]
 	}
 	layout := Layout{Width: Grow(), Height: Fixed(theme.ControlHeight), Padding: PadXY(10, 0), Gap: 8, AlignY: Center}
+	ui.joinTabOrder(id)
 	field, result := ui.pressable(id, layout, Look{}, func() {
 		ui.Text(shown, TextStyle{})
 		ui.Spacer()

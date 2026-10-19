@@ -11,6 +11,19 @@ type Look struct {
 	Radius      float32
 	Shadow      bool // a soft shadow under it, for things that float over others
 	Clip        bool // children are cut to the box's area
+	// Backdrop, when set, draws more of the box's background, over Fill and Border and under its
+	// children: a frame of several colours, a pattern. A pointer to a style kept from frame to
+	// frame allocates nothing.
+	Backdrop Backdrop
+	// Edge is a solid band of this colour, EdgeWidth tall, just under the box, as if it stood on a
+	// block: a design system's main button. It takes no room in the layout, like a shadow.
+	Edge      draw2d.Color
+	EdgeWidth float32
+}
+
+// Backdrop draws a box's background in its area.
+type Backdrop interface {
+	Paint(area draw2d.Rect, drawing *draw2d.List)
 }
 
 type elementKind int
@@ -26,6 +39,9 @@ type TextStyle struct {
 	Size   float32 // in pixels; 0 = the theme's text size
 	Weight draw2d.Weight
 	Color  draw2d.Color // the zero colour = the theme's ink
+	// Shadow, when visible, draws the text a second time a pixel right and down, in this colour,
+	// under it: the hard shadow pixel-art games give their text.
+	Shadow draw2d.Color
 }
 
 // element is one box of this frame's tree: a container, a line of text or an icon. Elements live
@@ -51,6 +67,8 @@ type element struct {
 	field                                      *fieldPaint                                  // set on text fields
 	painter                                    func(area draw2d.Rect, drawing *draw2d.List) // set on painted boxes (Paint)
 	description                                int                                          // 1 + its index in the screen reader's descriptions; 0 = none
+	lineBox                                    float32                                      // a text's height in the layout: its letters, or the theme's line height
+	filledWithPrimary                          bool                                         // a primary button: its focus ring goes inside
 }
 
 // intrinsic is the size of what the element shows itself (not its children) along an axis.
@@ -60,7 +78,7 @@ func (element *element) intrinsic(axis Direction) float32 {
 		if axis == Horizontal {
 			return element.metrics.Width
 		}
-		return element.metrics.Height()
+		return max(element.metrics.Height(), element.lineBox)
 	case iconElement:
 		return element.style.Size
 	default:
@@ -206,7 +224,8 @@ func (ui *Context) textElement(text string, style TextStyle) element {
 	if !style.Color.IsVisible() {
 		style.Color = ui.Theme.Ink
 	}
-	return element{kind: textElement, text: text, style: style, metrics: ui.measure(text, style)}
+	metrics := ui.measure(text, style)
+	return element{kind: textElement, text: text, style: style, metrics: metrics, lineBox: ui.Theme.lineBox(style.Size, metrics.Height())}
 }
 
 // Label adds a line of body text.

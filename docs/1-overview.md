@@ -78,6 +78,7 @@ The guides, one subject each:
 
 - [In a web browser](7-platforms/1-web.md)
 - [On Android](7-platforms/2-android.md)
+- [On the Nintendo 3DS](7-platforms/3-3ds.md)
 
 **The project**
 

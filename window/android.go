@@ -114,7 +114,7 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 		flat.Draw(context.Drawing(), context.Theme.Background, width, height, scale)
 		return nil
 	}
-	return android.Run(app, android.Options{MaxFramesPerSecond: options.MaxFramesPerSecond, Hidden: options.Hidden}, draw)
+	return android.Run(app, android.Options{MaxFramesPerSecond: options.MaxFramesPerSecond, Hidden: options.Hidden, Shown: options.Shown}, draw)
 }
 
 // screenReader carries what TalkBack asks to the interface, and what the interface shows to

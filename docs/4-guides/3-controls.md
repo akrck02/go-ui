@@ -54,7 +54,7 @@ outside any panel, they go on the **screen**.
 | `Checkbox(label, &value)` | A box to tick, with its label; clicking either flips the value. Returns `true` when it changes |
 | `Toggle(label, &value)` | A settings row: the label on the left, a switch on the right |
 | `Slider(name, &value, minimum, maximum)`, `SliderStep(…, step)` | A track with a knob: click to jump, drag to slide, Shift to slide ten times slower; `SliderStep` keeps whole steps |
-| `NumberField(name, &value, minimum, maximum, step, format)` | A number with − and + on its sides; drag the number sideways for a step every 4 px, or click it to type a value (a point or a comma for decimals; Enter keeps it, Escape does not). Shown with a format such as `"%.1f s"` |
+| `NumberField(name, &value, minimum, maximum, step, format)` | A number with − and + on its sides; drag the number sideways for a step every 4 px, or click it to type a value (a point or a comma for decimals; Enter keeps it, Escape does not). The buttons and the drag keep whole steps; a typed value is kept as typed, and the program's own value is left alone until someone changes it. Shown with a format such as `"%.1f s"` |
 | `Tabs(name, &selected, labels…)` | A segmented row, the selected segment raised; the program shows what belongs to it with an `if` |
 | `Select(name, &selected, options)` | A field showing the chosen option; clicking opens the list over everything. Click an option, or use the arrows and Enter; Escape or a click elsewhere closes it |
 | `TextField(name, &text)`, `TextFieldWith(name, &text, TextFieldOptions{…})` | A line of text to type in, with a `Placeholder`, a `MaxLength` or a `Width`, `Secret` for a password (a dot for each character, nothing copied). Returns `true` on the steps the text changes; see [text fields](6-text-fields.md) |
@@ -98,6 +98,7 @@ These have pages of their own, [panels and layers](4-panels-and-layers.md) and
 |---|---|
 | `Panel(title, content)`, `PanelWith(title, PanelOptions{…}, content)` | A floating card with a title bar, moved, folded, placed, sized, locked or docked; see [panels](4-panels-and-layers.md#panels) |
 | `Sheet(title, SheetOptions{Width}, content)` | A modal card in the middle of the window; returns `true` when the person asks to close it. See [sheets](4-panels-and-layers.md#sheets) |
+| `FilePicker(FilePickerOptions{…})` | A sheet to choose a file or a folder on the disk; returns its path and `true` once it closes. See [choosing a file](4-panels-and-layers.md#choosing-a-file) |
 | `DragSource(name, payload, layout, content)`, `DropTarget(name, layout, accepts, content)` | Drag a value of yours from one box to another, or onto the scene; see [drag and drop](5-tables-and-dragging.md#drag-and-drop) |
 | `Resizable(name, side, &size, minimum, maximum, layout, content)` | A box whose edge can be dragged to change its width or height; see [resizable boxes](5-tables-and-dragging.md#resizable-boxes) |
 

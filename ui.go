@@ -43,9 +43,11 @@ type Context struct {
 	drawing  draw2d.List
 	clip     draw2d.Rect // while painting: the clip of the boxes around, when clipped
 	clipped  bool
-	frame    int
-	now      time.Time // the time of this frame, from the input state's clock
-	building bool
+	// insideFrost is true while the children of a frosted box are painted (see isFrosted).
+	insideFrost bool
+	frame       int
+	now         time.Time // the time of this frame, from the input state's clock
+	building    bool
 
 	elements []element
 	open     []int // the boxes open now, innermost last
@@ -64,21 +66,41 @@ type Context struct {
 	active                      ID   // the control being pressed or dragged
 	focus                       ID   // the control the keyboard goes to
 	focusSeen                   bool // the focused control was built this frame; if not, it went away
-	// focusables are the fields that can take the focus, in the order they were built this frame,
-	// for Tab; tabFrom is the field where Tab was pressed (tabBack with Shift), and
-	// focusByKeyboard tells the field taking the focus that it came by Tab.
-	focusables      []ID
+	// focusables are the stops of the Tab order, in the order they were built this frame; tabFrom
+	// is the stop where Tab was pressed (tabBack with Shift; tabPressed when no stop had it), and
+	// focusByKeyboard tells a field taking the focus that it came by Tab (keyboardFocus, below, is
+	// the control, not a field, that Tab reached).
+	focusables      []focusable
 	tabFrom         ID
 	tabBack         bool
+	tabPressed      bool
 	focusByKeyboard bool
-	sceneDrag       bool
-	insets          Insets // what the system draws over the window's edges (SetInsets)
-	cursor          input.CursorShape
-	cursorWasSet    bool // the interface set the pointer's shape, so it puts the arrow back when it leaves
-	panels          map[ID]*panelMemory
-	memory          map[ID]*remembered
-	popups          []ID // popups that took part in the last frame, back to front
-	nextPopups      []ID
+	// KeyboardNavigation says when the interface reads Tab, Enter and Space (focus.go).
+	KeyboardNavigation KeyboardNavigation
+	keyboardGiven      bool // TakeKeyboard gave the interface the keyboard
+	hasKeyboard        bool // the interface reads Tab, Enter and Space in this frame
+	focusAtBegin       ID   // the field, list or menu that had the keys when the frame began
+	keyboardFocus      ID   // the control Tab reached, which Enter and Space press
+	keyboardFocusSeen  bool // it was built this frame; if not, it went away
+	// keyboardFocusPosition is where it stood in the Tab order; resumeStop is 1 + that position
+	// once it went away, so the next Tab goes on from there (0: nothing to resume)
+	keyboardFocusPosition, resumeStop int
+	keyboardByTab                     bool // a Tab moved the focus: the interface keeps the keys until Escape or a click
+	keyboardUsed                      bool // Enter, Space or Escape did something in the interface in this frame
+	clickedStop                       ID   // the last Tab stop pressed with the pointer: Tab goes on from it
+	outOfTabOrder                     int  // inside withoutTab: controls built now are not Tab stops
+	heldControl                       ID   // the control held down in this frame, which PressScale shrinks
+	// LessMotion keeps controls still when the person asks the system for less motion: a held
+	// control does not shrink. The program sets it from the platform's setting.
+	LessMotion   bool
+	sceneDrag    bool
+	insets       Insets // what the system draws over the window's edges (SetInsets)
+	cursor       input.CursorShape
+	cursorWasSet bool // the interface set the pointer's shape, so it puts the arrow back when it leaves
+	panels       map[ID]*panelMemory
+	memory       map[ID]*remembered
+	popups       []ID // popups that took part in the last frame, back to front
+	nextPopups   []ID
 	// overlays are the overlays shown in the last frame and in this one, back to front
 	overlays, nextOverlays []ID
 	scrollUsed             bool                 // a scroll area took this step's wheel movement
@@ -162,6 +184,7 @@ func (ui *Context) Begin(state *input.State) {
 	ui.beginReading()
 	ui.typing = false
 	ui.beginKeyboard()
+	ui.beginFocus()
 	ui.now = state.Time()
 	ui.texts.turnOver()
 	ui.building = true
@@ -208,6 +231,7 @@ func (ui *Context) End() {
 	if !ui.focusSeen {
 		ui.focus = 0
 	}
+	ui.endFocus()
 	ui.moveFocusByTab()
 	ui.finishInteraction()
 	ui.popups, ui.nextPopups = ui.nextPopups, ui.popups

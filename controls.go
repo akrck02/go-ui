@@ -16,17 +16,20 @@ func (ui *Context) Checkbox(label string, value *bool) bool {
 	theme := ui.Theme
 	layout := Layout{Height: Fixed(theme.ControlHeight), Gap: 8, AlignY: Center}
 	var box int
-	_, result := ui.pressable(ui.idFor(label), layout, Look{}, func() {
-		box = ui.frameWithID(0, Layout{Width: Fixed(16), Height: Fixed(16), AlignX: Center, AlignY: Center}, Look{}, func() {
+	side := theme.CheckSize
+	id := ui.idFor(label)
+	ui.joinTabOrder(id)
+	_, result := ui.pressable(id, layout, Look{}, func() {
+		box = ui.frameWithID(0, Layout{Width: Fixed(side), Height: Fixed(side), AlignX: Center, AlignY: Center}, Look{}, func() {
 			if *value {
-				ui.IconSized("check", 12, theme.OnPrimary)
+				ui.IconSized("check", orDefault(theme.CheckMark, defaultCheckMark), theme.OnPrimary)
 			}
 		})
 		ui.Text(displayText(label), TextStyle{})
 	})
-	look := Look{Fill: theme.Surface, Border: theme.InkQuiet, BorderWidth: 1.5, Radius: 4}
+	look := Look{Fill: theme.Surface, Border: orColour(theme.CheckLine, theme.InkQuiet), BorderWidth: theme.CheckBorder, Radius: theme.CheckRadius}
 	if *value {
-		look = Look{Fill: theme.Primary, Radius: 4}
+		look = Look{Fill: theme.Primary, Border: theme.CheckedBorder, BorderWidth: theme.CheckBorder, Radius: theme.CheckRadius}
 	}
 	if result.hovered && !*value {
 		look.Border = theme.Primary
@@ -42,7 +45,9 @@ func (ui *Context) Toggle(label string, value *bool) bool {
 	theme := ui.Theme
 	layout := Layout{Width: Grow(), Height: Fixed(theme.ControlHeight), Gap: 8, AlignY: Center}
 	var track, knob int
-	_, result := ui.pressable(ui.idFor(label), layout, Look{}, func() {
+	id := ui.idFor(label)
+	ui.joinTabOrder(id)
+	_, result := ui.pressable(id, layout, Look{}, func() {
 		ui.Text(displayText(label), TextStyle{})
 		ui.Spacer()
 		align := Start
@@ -138,12 +143,23 @@ func (ui *Context) slideTo(id ID, result interaction, value, minimum, maximum fl
 	return minimum + fraction*(maximum-minimum)
 }
 
-// snap keeps a value within its range and on whole steps from the minimum.
+// snap keeps a value within its range and on whole steps from the minimum. It counts the steps in
+// float64, from the decimals the numbers were written as: in float32 a value far from its minimum
+// (a position a few metres from a minimum of thousands) lands a little off its step.
 func snap(value, minimum, maximum, step float32) float32 {
 	if step > 0 {
-		value = minimum + float32(math.Round(float64((value-minimum)/step)))*step
+		low, size := decimal(minimum), decimal(step)
+		steps := math.Round((decimal(value) - low) / size)
+		value = float32(low + steps*size)
 	}
 	return clamp(value, minimum, maximum)
+}
+
+// decimal is a float32 as the shortest decimal that reads back as it: 0.1 as 0.1, not as the
+// float32 nearest it, 0.100000001490116…, whose error grows with every step counted.
+func decimal(value float32) float64 {
+	exact, _ := strconv.ParseFloat(strconv.FormatFloat(float64(value), 'g', -1, 32), 64)
+	return exact
 }
 
 // numberMemory is what a number field keeps: the movement of a drag not yet worth a whole step,
@@ -162,6 +178,10 @@ const numberDragPixels = 4
 // with buttons to take a step off or add one. Drag the number sideways to change it a step every
 // few pixels, or click it (or reach it with Tab) to type a value: Enter or a click elsewhere keeps
 // it, Escape leaves the number as it was. It returns true on the steps the value changes.
+//
+// The buttons and the drag keep the number on whole steps from the minimum; a number typed is
+// kept as typed, within the range, and the program's own value is left as it is (only kept within
+// the range) until someone changes it.
 func (ui *Context) NumberField(name string, value *float32, minimum, maximum, step float32, format string) bool {
 	id := ui.idFor(name)
 	memory := remember(ui, id, func() *numberMemory { return &numberMemory{} })
@@ -171,15 +191,19 @@ func (ui *Context) NumberField(name string, value *float32, minimum, maximum, st
 		switch ui.editField(editID, &memory.typed, TextFieldOptions{}) {
 		case fieldSubmitted, fieldLeft:
 			if typed, ok := parseNumber(memory.typed); ok {
-				*value = snap(typed, minimum, maximum, step)
+				*value = clamp(typed, minimum, maximum)
 			}
 		}
 		return *value != before
 	}
-	ui.focusables = append(ui.focusables, editID)
+	ui.joinTabOrderAsField(editID)
 	memory.typed = strconv.FormatFloat(float64(*value), 'f', -1, 32)
 	ui.stepNumber(id, name, memory, value, step, format)
-	*value = snap(*value, minimum, maximum, step)
+	if *value != before {
+		*value = snap(*value, minimum, maximum, step)
+	} else {
+		*value = clamp(*value, minimum, maximum)
+	}
 	return *value != before
 }
 
@@ -189,9 +213,11 @@ func (ui *Context) stepNumber(id ID, name string, memory *numberMemory, value *f
 	layout := Layout{Width: Grow(), Height: Fixed(theme.ControlHeight), Padding: PadXY(2, 0), AlignY: Center}
 	ui.Frame(layout, Look{Fill: theme.Surface, Border: theme.ControlLine, BorderWidth: 1, Radius: theme.ControlRadius}, func() {
 		ui.Push(name)
-		if ui.FlatIconButton("minus", "") {
-			*value -= step
-		}
+		ui.withoutTab(func() { // the number is typed, so its buttons are no Tab stops
+			if ui.FlatIconButton("minus", "") {
+				*value -= step
+			}
+		})
 		valueLayout := Layout{Width: Grow(), Height: Grow(), AlignX: Center, AlignY: Center}
 		_, drag := ui.pressable(childID(id, "##value"), valueLayout, Look{}, func() {
 			ui.Text(fmt.Sprintf(format, *value), TextStyle{Weight: draw2d.Medium})
@@ -214,9 +240,11 @@ func (ui *Context) stepNumber(id ID, name string, memory *numberMemory, value *f
 		if drag.clicked && !memory.moved {
 			ui.focus, ui.focusByKeyboard, ui.focusSeen = childID(id, "##edit"), true, true
 		}
-		if ui.FlatIconButton("plus", "") {
-			*value += step
-		}
+		ui.withoutTab(func() {
+			if ui.FlatIconButton("plus", "") {
+				*value += step
+			}
+		})
 		ui.Pop()
 	})
 }
@@ -252,7 +280,9 @@ func (ui *Context) Tabs(name string, selected *int, labels ...string) bool {
 			isSelected := index == *selected
 			var text int
 			tabLayout := Layout{Width: Share(1), Height: Grow(), AlignX: Center, AlignY: Center}
-			tab, result := ui.pressable(ui.idFor(label), tabLayout, Look{}, func() {
+			id := ui.idFor(label)
+			ui.joinTabOrder(id)
+			tab, result := ui.pressable(id, tabLayout, Look{}, func() {
 				text = ui.addLeaf(ui.textElement(displayText(label), TextStyle{Weight: draw2d.Medium, Color: theme.InkSoft}))
 			})
 			ui.Describe(Description{Role: TabRole, Selected: isSelected})
