@@ -43,6 +43,9 @@ func (ui *Context) paintBox(element *element) {
 		ui.drawing.Shadow(element.rect, look.Radius, ui.Theme.ShadowBlur, ui.Theme.ShadowDrop, ui.Theme.Shadow)
 	}
 	ui.drawing.Rectangle(element.rect, look.Radius, look.Fill, look.Border, look.BorderWidth)
+	if look.Backdrop != nil {
+		look.Backdrop.Paint(element.rect, &ui.drawing)
+	}
 	if element.field != nil {
 		ui.paintField(element)
 	}
@@ -93,6 +96,9 @@ func (ui *Context) isOutOfSight(element *element) bool {
 func (ui *Context) paintText(element *element) {
 	metrics := element.metrics
 	baseline := element.rect.Y + (element.rect.Height-metrics.Height())/2 + metrics.Ascent
+	if element.style.Shadow.IsVisible() {
+		ui.drawing.Text(element.text, element.rect.X+1, baseline+1, element.style.Size, element.style.Weight, element.style.Shadow)
+	}
 	ui.drawing.Text(element.text, element.rect.X, baseline, element.style.Size, element.style.Weight, element.style.Color)
 }
 

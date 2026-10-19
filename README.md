@@ -22,7 +22,7 @@ I write most of my code by hand, so I want to be clear about where AI was used h
 
 - **Written by an AI assistant (Claude, by Anthropic) under my direction, since October 2026:**
   all of it so far: the context, the layout, the controls, the theme, the window (and its choice of
-  Metal or OpenGL, and its web and Android versions), the examples and the docs.
+  Metal or OpenGL, and its web, Android and Nintendo 3DS versions), the examples and the docs.
 
 Commits made with AI carry a `Co-Authored-By: Claude` line.
 
@@ -140,7 +140,7 @@ New here? Start with the [overview](docs/1-overview.md), then [get started](docs
 | [Mouse, keyboard and touch](docs/4-guides/7-input.md) | Which control gets the pointer, keeping the camera out of the way, fingers. |
 | [Themes](docs/4-guides/8-themes.md) | The tokens every control reads. |
 | [Screen readers](docs/4-guides/9-screen-readers.md) | How a screen reader reads a Go UI program. |
-| [A window of its own](docs/4-guides/10-desktop.md) · [web](docs/7-platforms/1-web.md) · [Android](docs/7-platforms/2-android.md) | Interfaces without a scene, Metal or OpenGL, a browser, a phone. |
+| [A window of its own](docs/4-guides/10-desktop.md) · [web](docs/7-platforms/1-web.md) · [Android](docs/7-platforms/2-android.md) · [3DS](docs/7-platforms/3-3ds.md) | Interfaces without a scene, Metal or OpenGL, a browser, a phone, a console. |
 | [Performance and battery](docs/8-project/1-performance-audit.md) | What an idle and a busy interface cost, measured. |
 
 ## Licence

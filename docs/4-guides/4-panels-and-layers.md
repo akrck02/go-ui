@@ -101,6 +101,41 @@ select or a menu inside it takes Escape first), the × in its title or a click o
 `SheetOptions.Width` sizes the card (420 px by default). Popups (a select inside the sheet) open
 over it. The dimming colour is the theme's `Scrim`.
 
+## Choosing a file
+
+A file picker is a sheet made for one question: which file, or which folder? Its left column has
+places to start from (the home folder, the disk's root, and the folders the program offers), the
+right one what the folder open holds, folders first, and the row above the folder's path, to go up
+or type a path straight in.
+
+<p align="center">
+  <img alt="A file picker titled Choose TinyGo: Up, the path /usr/local/go/bin and Go above; Home, the root and two folders on the left; the files go and gofmt on the right, go chosen; Hidden files, Cancel and Choose below" src="../images/file-picker.png" width="560">
+</p>
+
+```go
+if picking {
+	path, closed := context.FilePicker(ui.FilePickerOptions{
+		Title:    "Choose a model",
+		Start:    modelPath,         // opens beside the file chosen before
+		Suffixes: []string{".glb"},  // the folders always show, to go through them
+		Places:   []string{"/opt"},
+	})
+	if closed {
+		picking = false
+		if path != "" {
+			modelPath = path
+		}
+	}
+}
+```
+
+A click on a folder goes into it. A click on a file chooses it, and a second click, or
+**Choose**, ends the picker with it; **Cancel**, Escape or the backdrop end it with nothing. With
+`Folder: true` it chooses a folder instead: **Choose** takes the one open, and files are not shown.
+Hidden files (a dot first) show only when asked. It is drawn like every other control, so it looks
+the same on every system and asks nothing of the system's own dialogs. `ReadFolder` lets a test
+give it a folder of its own.
+
 ## Modals and overlays
 
 `Context.Modal` and `Context.Overlay` put a program's own content over everything, dimming what is
