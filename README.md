@@ -22,7 +22,8 @@ I write most of my code by hand, so I want to be clear about where AI was used h
 
 - **Written by an AI assistant (Claude, by Anthropic) under my direction, since October 2026:**
   all of it so far: the context, the layout, the controls, the theme, the window (and its choice of
-  Metal or OpenGL, and its web, Android and Nintendo 3DS versions), the examples and the docs.
+  Metal or OpenGL, and its web, Android and Nintendo 3DS versions), the examples and the docs, the
+  theme's design tokens and keyboard focus.
 
 Commits made with AI carry a `Co-Authored-By: Claude` line.
 
@@ -97,6 +98,10 @@ update := func(world *scene.Scene, state *input.State, step float64) {
 }
 viewer.Run(world, options, "Lighthouse", update, 0)
 ```
+
+Tab, Enter and Space stay with the scene until the interface is given the keyboard; an
+application that is only an interface sets `KeyboardNavigation = ui.Always`
+([who has the keyboard](docs/5-components/10-the-keyboard.md)).
 
 Try the examples (they need a display, and OpenGL 4.1 or Metal):
 

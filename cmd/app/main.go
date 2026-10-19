@@ -84,6 +84,7 @@ func (app *register) current() *lighthouse { return app.lighthouses[app.selected
 // draw describes the whole window, top to bottom.
 func (app *register) draw(context *ui.Context) {
 	app.steps++
+	context.KeyboardNavigation = ui.Always // the register is only an interface: Tab walks every control
 	app.shown = app.shownIndices(app.shown[:0])
 	if app.demoSearch != "" && app.steps == 2 {
 		app.search = app.demoSearch

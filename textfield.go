@@ -118,7 +118,7 @@ func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fiel
 	if typed, asked := ui.readerText(id); asked {
 		*text = memory.editor.fitted(typed) // while it is being typed in too: the editor follows below
 	}
-	ui.focusables = append(ui.focusables, id)
+	ui.joinTabOrderAsField(id)
 	result := ui.interact(id)
 	if result.pressed && ui.focus != id {
 		ui.focus = id
@@ -457,14 +457,26 @@ func (ui *Context) keepCaretInSight(id ID, scroll, caretX, textWidth float32) fl
 	return clamp(scroll, 0, max(textWidth-room+1, 0))
 }
 
+// paintFieldFocus marks the field being typed in: its own edge lit in FocusRing when the theme
+// asks for it (FieldFocusEdge), else a ring around it.
+func (ui *Context) paintFieldFocus(rect draw2d.Rect, radius float32) {
+	theme := ui.Theme
+	width := theme.focusWidth()
+	if theme.FieldFocusEdge {
+		ui.drawing.Rectangle(rect, radius, draw2d.Transparent, theme.FocusRing, width)
+		return
+	}
+	ring := draw2d.Rect{X: rect.X - width, Y: rect.Y - width, Width: rect.Width + 2*width, Height: rect.Height + 2*width}
+	ui.drawing.Rectangle(ring, radius+width, draw2d.Transparent, theme.FocusRing, width)
+}
+
 // paintField paints a field's text, selection and caret inside its box.
 func (ui *Context) paintField(element *element) {
 	theme := ui.Theme
 	paint := element.field
 	rect := element.rect
 	if paint.focused && !paint.plain {
-		ring := draw2d.Rect{X: rect.X - 3, Y: rect.Y - 3, Width: rect.Width + 6, Height: rect.Height + 6}
-		ui.drawing.Rectangle(ring, element.look.Radius+3, draw2d.Transparent, theme.FocusRing, 3)
+		ui.paintFieldFocus(rect, element.look.Radius)
 	}
 	clip := draw2d.Rect{X: rect.X + fieldPadding - 1, Y: rect.Y, Width: rect.Width - 2*fieldPadding + 2, Height: rect.Height}
 	ui.drawing.PushClip(clip)
@@ -504,30 +516,4 @@ func (ui *Context) Focus(path ...string) {
 		}
 	}
 	ui.focus, ui.focusByKeyboard, ui.focusSeen = id, true, true
-}
-
-// moveFocusByTab gives the focus to the field after (or, with Shift, before) the one where Tab
-// was pressed, going round at the ends. The field selects its whole text when it takes the focus.
-func (ui *Context) moveFocusByTab() {
-	from := ui.tabFrom
-	ui.tabFrom = 0
-	focusables := ui.focusables
-	if len(ui.nextSheets) > 0 { // a sheet is open: Tab goes round its own fields only
-		focusables = focusables[ui.sheetFocusStart:ui.sheetFocusEnd]
-	}
-	if from == 0 || len(focusables) == 0 {
-		return
-	}
-	for index, id := range focusables {
-		if id != from {
-			continue
-		}
-		step := 1
-		if ui.tabBack {
-			step = -1
-		}
-		next := (index + step + len(focusables)) % len(focusables)
-		ui.focus, ui.focusByKeyboard = focusables[next], true
-		return
-	}
 }

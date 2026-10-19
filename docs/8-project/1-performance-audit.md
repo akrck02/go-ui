@@ -148,3 +148,20 @@ runs on a translation layer over Metal:
 
 The details, and what still needs a look on screen, are in Go Renderer's
 [docs/metal.md](../../../go-renderer/docs/4-guides/7-metal.md).
+
+## Keyboard focus
+
+Measured when Tab learned to reach every control
+([proposal 1](../proposals/1-keyboard-focus-and-press.md)), on a Linux container with 8 cores and
+Go 1.26, not the M4 above: compare the rows with each other, not with the tables before.
+
+| `BenchmarkThreeHundredControls`, six runs | Time per frame | Allocations |
+|---|---|---|
+| Before | 161.2–162.2 µs | 162 (2763 B) |
+| After, the default `WhenGiven` (no keyboard) | 162.6–164.3 µs | 162 (2763 B) |
+| After, `Always` with a button focused (`…WithTheKeyboard`) | 163.4–165.2 µs | 162 (2763 B) |
+
+A frame does no new allocation, which `TestAFrameWithFocusAllocatesNothingMore` checks. The
+time grows by 1 to 2 %, from the one comparison every control makes (is it the focused one, is it
+held?) and, while the interface has the keyboard, from adding each control to the Tab order. The
+ring is one stroke, and the press rescales the commands of one control while it is held.

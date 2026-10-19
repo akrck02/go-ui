@@ -1,0 +1,108 @@
+# 1. Keyboard focus on every control, and a press that gives
+
+> Status: done · Author's approval: proposal ☑ plan ☑
+
+## Why
+
+Today the keyboard only reaches text fields: Tab goes from one field to the next, and buttons, check
+boxes and choices can only be used with a pointer. That breaks the first rule of an accessible
+interface, that the keyboard reaches everything. Bubble 4 has also settled how focus and pressing
+should look (focus lights the control's own edge; a control shrinks a little while pressed), and
+go-ui should let a design system ask for that through its theme, as it already does for colours
+and corners.
+
+## What
+
+| Id | Requirement | Check |
+|---|---|---|
+| R1 | While the interface has the keyboard, Tab and Shift+Tab move the focus through every control that can be used, fields included, in the order they are drawn | test `TestTabVisitsEveryControlInTheOrderItIsDrawn` |
+| R2 | Enter or Space presses the focused button, ticks the focused check box, picks the focused choice | test `TestTheKeyboardUsesTheFocusedControl` |
+| R3 | The focused control shows a ring only when the focus came from the keyboard, never after a click or a tap; a click sets where the next Tab goes on from | test `TestAClickGivesFocusWithoutARing` |
+| R4 | The ring lies on the control's edge; on a control filled with the primary colour it is drawn inside, in the colour of its text | tests `TestTheRingLiesOnTheEdge`, `TestTheRingOfAPrimaryButtonIsInside` |
+| R5 | A theme can ask a field to light its own border instead of drawing a ring around it | test `TestAFieldCanLightItsOwnBorder` |
+| R6 | A theme can ask controls to shrink a little while held; with less motion asked by the system, they don't | tests `TestAHeldButtonShrinks`, `TestLessMotionKeepsAHeldButtonStill` |
+| R7 | A theme made before these tokens draws exactly as before, apart from the ring that keyboard focus now shows | `cmd/app` captures before and after, compared pixel by pixel with no keyboard focus |
+| R8 | Bubble's `goui` adapter sets the new tokens, so a Bubble theme in go-ui behaves like Bubble's CSS | test in `bubble/goui`; the showcase compared with the browser |
+| R9 | go-ui only takes Tab, Enter, Space and the arrows while the interface has the keyboard: a field is being typed in, a dialog, sheet or menu is open, the program gave it the keyboard, or the program says the interface is all there is. Otherwise every key reaches the program: a 3D view or a game keeps them | tests `TestAGameKeepsTabAndSpaceWhileTheInterfaceDoesNotHaveTheKeyboard`, `TestAClickOnAButtonDoesNotTakeTheKeyboard`, `TestTakeKeyboardGivesItAndEscapeGivesItBack`, `TestThePauseMenuOfTheGuideWorks` |
+| R10 | A frame costs the same as today: no allocation added per frame, the 300-control benchmark within 3 % of today, and a still interface still draws nothing new | `testing.AllocsPerRun` on a frame with focus; `BenchmarkThreeHundredControls` before and after; the existing idle test |
+| R11 | The docs explain who has the keyboard so a newcomer picks the right mode: a guide with a game or 3D view (`WhenGiven`) and a form-only app (`Always`), what a click does and does not do, how Escape and `TakeKeyboard` work, and a table of which keys each mode reads | The guide's examples run as shown; the author reads it |
+
+## Out of scope
+
+- Arrow keys inside lists, menus and grids: Tab reaches the list, and moving inside it is a later
+  proposal.
+- Changes for screen readers: they already have their own focus (`SetScreenReaderFocus`).
+- Animating the press: it shrinks while held and comes back, with no tween, until go-ui has one.
+
+## Design
+
+- **Who has the keyboard**: the program decides, through one field on the context:
+  - `KeyboardNavigation: WhenGiven` (the default, chosen by the author: if a program forgets to
+    choose, the worst case is that Tab does not walk the buttons, not that a game stops answering): the interface has the keyboard only while a
+    field is typed in, a modal layer (dialog, sheet, menu) is open, or the program calls
+    `TakeKeyboard()`. Escape, or `ReleaseKeyboard()`, gives it back. A click on a button does not
+    take the keyboard, so Space in a game never presses the last button clicked.
+  - `KeyboardNavigation: Always`: for programs that are only an interface (a register, a settings
+    app). Tab always moves the focus.
+  - While the interface has the keyboard, go-ui claims it in the input state, as fields do today,
+    so go-renderer's viewer and a game's own controls know to stay quiet. Otherwise it claims
+    nothing and reads no key.
+- **Cost**: the focus order is a slice of IDs kept on the context and reset to length zero each
+  frame, so it allocates nothing once warm; nothing is added to it while the interface does not
+  have the keyboard. The ring is one stroke, only on the focused control. The press scales one
+  element while it is held. Moving the focus changes the drawing, so it redraws; a still interface
+  with no keys pressed draws nothing new, as today.
+- **Focus order**: every `pressable` control and every field joins a list in drawing order, each
+  frame. The `tabFrom` and `tabBack` that fields already use move over that list instead of the
+  fields alone. The focus stays an `ID`, so it survives from frame to frame as it does today.
+- **Keyboard or pointer**: `keyboardFocus` is the control Tab reached; any press of the pointer
+  clears it, so the ring (painted only on it) shows only for focus from the keyboard, which is what
+  CSS calls `:focus-visible`. A click remembers its control, and Tab goes on from it.
+- **Theme tokens**, all zero for go-ui's own look:
+  - `FocusWidth`: the ring's width. Zero keeps today's 3 pixels.
+  - `FieldFocusEdge`: when true, a field colours its border with `FocusRing` and draws no ring.
+  - `PressScale`: how big a held control is drawn (0.97 in Bubble). Zero means it doesn't change.
+  - The ring of a control filled with `Primary` is drawn inside it in `OnPrimary`, always: a ring
+    in `FocusRing` could not be told from the fill.
+- **Less motion**: go-renderer's input state does not carry the platform's setting yet, so a
+  `LessMotion` field on the context lets the program say so.
+- **Painting**: the ring is one more `Rectangle` stroke in `paint.go`, from the element's rectangle
+  and corner. The press scales the element's rectangle around its centre before painting it and
+  its children, so text and icons shrink with it.
+- Not taken: rings that follow the browser's look with a gap. Bubble chose an edge with no gap, and
+  a gap only looks right on the page's own background.
+
+## Tasks
+
+- [x] T1 — Who has the keyboard: `KeyboardNavigation`, `TakeKeyboard`, `ReleaseKeyboard`, Escape · `ui.go`, `interaction.go` · R9 · tests: `TestAGameKeepsTabAndSpaceWhileTheInterfaceDoesNotHaveTheKeyboard`, `TestAClickOnAButtonDoesNotTakeTheKeyboard`, `TestTakeKeyboardGivesItAndEscapeGivesItBack`, `TestThePauseMenuOfTheGuideWorks`
+- [x] T2 — The focus order and Tab over every control · `interaction.go`, `textfield.go`, `memory.go` · R1 R10 · tests: `TestTabVisitsEveryControlInTheOrderItIsDrawn`, `TestAFrameWithFocusAllocatesNothingMore`
+- [x] T3 — Enter and Space use the focused control · `controls.go`, `widgets.go`, `choices.go` · R2 · test: `TestTheKeyboardUsesTheFocusedControl`
+- [x] T4 — The ring, only for keyboard focus, on the edge or inside a filled control · `paint.go`, `theme.go` · R3 R4 R7 · tests: `TestAClickGivesFocusWithoutARing`, `TestTheRingLiesOnTheEdge`, `TestTheRingOfAPrimaryButtonIsInside`
+- [x] T5 — `FieldFocusEdge` · `textfield.go`, `theme.go` · R5 · test: `TestAFieldCanLightItsOwnBorder`
+- [x] T6 — `PressScale`, and less motion · `paint.go`, `theme.go`, `ui.go` · R6 · tests: `TestAHeldButtonShrinks`, `TestLessMotionKeepsAHeldButtonStill`
+- [x] T7 — Docs: a guide «Who has the keyboard» (`docs/5-components/`), with a game over a 3D view and a settings app side by side, what a click does, Escape and `TakeKeyboard`, and a table of keys per mode; the components' keyboard sections and the design-system tokens table; a line in the README's example · R1–R6 R11
+- [x] T8 — Bubble's adapter sets the tokens; compare the showcase with the browser · `bubble/goui/theme.go` · R8 · test: `TestABubbleThemeLightsFieldsAndShrinksWhenPressed`
+- [x] T9 — Measure: the 300-control benchmark and the register's audit benchmarks before and after, written into `docs/8-project/1-performance-audit.md` · R10
+
+## Result
+
+Built on `feature/keyboard-focus`, with the adapter in Bubble's `feature/v4`. `go vet` and
+`go test ./...` pass in both, with no display.
+
+The review found, and these were fixed:
+
+- Tab from a field to a button lost the focus in `WhenGiven`. A Tab that moves the focus now keeps
+  the keyboard until Escape or a click.
+- Space on a game's Resume button also reached the game. `HasKeyboard()` now stays true for the
+  rest of a frame in which the interface used a key.
+- The docs claimed less cost than measured.
+- Tab started from the top after a control went away, or after a click.
+- Every held control shrank; now only buttons do, as in Bubble's CSS.
+
+Not done, for a person to check on screen:
+
+- R7's pixel-by-pixel comparison of `cmd/app` captures. The register's tests pass, but it now sets
+  `Always`, so no capture was compared.
+- R8's showcase beside the browser.
+- T9's register audit benchmarks: only the 300-control benchmark was measured.
+- How the ring and the press look in a real window, with a keyboard and a touch screen.

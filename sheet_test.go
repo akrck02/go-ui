@@ -122,7 +122,11 @@ func TestOpeningASheetTakesTheFocusFromAFieldBehind(t *testing.T) {
 	}
 	h.clickInside(scoped("Confirm", "Reason"), scene.build)
 	h.key(input.KeyTab, scene.build)
+	if h.ui.keyboardFocus != scoped("Confirm", "Remove") {
+		t.Fatal("Tab goes from the sheet's field to its button")
+	}
+	h.key(input.KeyTab, scene.build)
 	if h.ui.focus != scoped("Confirm", "Reason") {
-		t.Fatal("Tab goes round the sheet's own fields only")
+		t.Fatal("Tab goes round the sheet's own controls only, back to its field")
 	}
 }

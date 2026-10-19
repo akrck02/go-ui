@@ -103,6 +103,13 @@ Context holds an interface between frames: what was where, what the mouse is on,
 type Context struct {
 	Theme Theme
 
+	// KeyboardNavigation says when the interface reads Tab, Enter and Space (focus.go).
+	KeyboardNavigation KeyboardNavigation
+
+	// LessMotion keeps controls still when the person asks the system for less motion: a held
+	// control does not shrink. The program sets it from the platform's setting.
+	LessMotion bool
+
 	// Has unexported fields.
 }
 ```
@@ -142,6 +149,7 @@ type Context struct {
 | `func (ui *Context) Fold(name string, open bool, duration time.Duration, layout Layout, content func())` | Fold lays content out in a box that opens to the content's height and closes to nothing with motion, clipping what does not show yet: the answer under a question, more under a list row. |
 | `func (ui *Context) Frame(layout Layout, look Look, content func())` | Frame adds a box with a layout and a look (fill, border, corners, shadow). |
 | `func (ui *Context) Grid(columns int, content func())` | Grid lays out what content adds in rows of a number of equal columns, across the whole width. |
+| `func (ui *Context) HasKeyboard() bool` | HasKeyboard tells whether the interface reads Tab, Enter and Space in this frame. |
 | `func (ui *Context) Heading(text string)` | Heading adds a line of bold, larger text: the title of a group. |
 | `func (ui *Context) Icon(name string)` | Icon adds an icon (a Lucide name, https://lucide.dev) at the theme's icon size. |
 | `func (ui *Context) IconButton(icon, label string) bool` | IconButton adds a button with an icon (a Lucide name) before its label; with an empty label it is a square button with the icon alone, named by the icon. |
@@ -167,6 +175,7 @@ type Context struct {
 | `func (ui *Context) PrimaryButton(label string) bool` | PrimaryButton adds a button for the main action of a panel. |
 | `func (ui *Context) PrimaryIconButton(icon, label string) bool` | PrimaryIconButton is PrimaryButton with an icon (a Lucide name) before its label: the main action of a panel, such as adding a new thing. |
 | `func (ui *Context) Push(name string)` | Push opens a scope: ids of the controls added until Pop are made from this name too. |
+| `func (ui *Context) ReleaseKeyboard()` | ReleaseKeyboard gives the keyboard back to the program and takes the focus off the controls. |
 | `func (ui *Context) RemovableChip(icon, label string, look ChipLook) (clicked, removed bool)` | RemovableChip is a Chip with a small × after its label. |
 | `func (ui *Context) RequestFrame(delay time.Duration)` | RequestFrame asks the window for another frame within a delay, even if no input arrives: for a program that animates something of its own (a clock, a replay). |
 | `func (ui *Context) Resizable(name string, side Side, size *float32, minimum, maximum float32, layout Layout, content func()) bool` | Resizable adds a box whose width (with its handle on the right or left side) or height (bottom or top) the person changes by dragging its edge, between minimum and maximum pixels (0 = no maximum). |
@@ -194,6 +203,7 @@ type Context struct {
 | `func (ui *Context) SwipeBox(name string, layout Layout, axis Direction, content func(swipe Swipe))` | SwipeBox lays content out in a box a finger drags along an axis (sideways, for pages, cards in a row, a row swiped away): content is given what the finger does in this frame, and places itself by it. |
 | `func (ui *Context) Table(name string, layout Layout, columns []Column, rows func(table *Table))` | Table adds a table with a header and rows that scroll under it: rows adds the rows, with table.Row, and table.Group for a caption between groups of rows. |
 | `func (ui *Context) Tabs(name string, selected *int, labels ...string) bool` | Tabs adds a row of segments, one per label, with the selected one raised; clicking a segment selects it. |
+| `func (ui *Context) TakeKeyboard()` | TakeKeyboard gives the interface the keyboard, as a game does when it opens its own menu: Tab then moves between the controls until Escape or ReleaseKeyboard gives the keys back. |
 | `func (ui *Context) Text(text string, style TextStyle)` | Text adds a line of text in a style. |
 | `func (ui *Context) TextField(name string, text *string) bool` | TextField adds a one-line field to type text in. |
 | `func (ui *Context) TextFieldWith(name string, text *string, options TextFieldOptions) bool` | TextFieldWith is TextField with a placeholder, a length limit or a width. |
@@ -302,6 +312,27 @@ type Insets struct {
 }
 ```
 
+### KeyboardNavigation
+
+KeyboardNavigation says when the interface reads Tab, Enter and Space to move between controls and press them, and when those keys belong to the program (a game, a 3D view).
+
+```go
+type KeyboardNavigation int
+```
+
+```go
+const (
+	// WhenGiven, the default: the interface has the keyboard only while a field is typed in, a
+	// dialog, sheet or menu is open, or the program gave it with TakeKeyboard. Escape gives it
+	// back. A click on a button does not take it, so Space in a game never presses the last button
+	// clicked.
+	WhenGiven KeyboardNavigation = iota
+	// Always: the program is only an interface (a register, a settings app), so Tab always moves
+	// between its controls.
+	Always
+)
+```
+
 ### KeyboardText
 
 KeyboardText is the field being typed in, as an on-screen keyboard sees and edits it: a phone's keyboard suggests words from the text around the caret, keeps the word it is still making (composing: a prediction, a Chinese or Japanese reading) until it commits it, and deletes around the caret. Positions count characters (runes); the selection runs from SelectionStart, where it began, to SelectionEnd, the caret.
@@ -381,6 +412,10 @@ type Look struct {
 	Radius      float32
 	Shadow      bool // a soft shadow under it, for things that float over others
 	Clip        bool // children are cut to the box's area
+	// Edge is a solid band of this colour, EdgeWidth tall, just under the box, as if it stood on a
+	// block: a design system's main button. It takes no room in the layout, like a shadow.
+	Edge      draw2d.Color
+	EdgeWidth float32
 }
 ```
 
@@ -641,6 +676,47 @@ type Theme struct {
 	ShadowDrop    float32
 	ScrollStep    float32       // pixels a scroll area moves per notch of the wheel
 	TooltipDelay  time.Duration // how long the pointer rests on a control before its tooltip shows
+
+	// What a design system tunes (docs/5-components/9-design-systems.md). The light theme's values
+	// keep go-ui's own look, and a zero colour or size follows the token it names, so a theme that
+	// only changes Primary or ControlRadius still looks the same.
+	ButtonRadius      float32       // corners of buttons and selectable items; 0 = ControlRadius
+	ButtonPadding     float32       // left and right inside a button with a label; 0 = 12
+	ButtonGap         float32       // between a button's icon and its label; 0 = 6
+	ButtonWeight      draw2d.Weight // the weight of a button's label
+	FlatHeight        float32       // a flat button's height; 0 = a little under ControlHeight, for toolbars
+	FlatPadding       float32       // left and right inside a flat button; 0 = 8
+	FlatInk           draw2d.Color  // a flat button's label at rest; invisible = InkSoft
+	PrimaryEdge       draw2d.Color  // a darker edge under the main button, a block it stands on
+	EdgeWidth         float32       // how tall that edge is; 0 draws none
+	Chosen            draw2d.Color  // behind a selected item of a list; invisible = PrimaryTint
+	ChosenInk         draw2d.Color  // a selected item's label and icon; invisible = Primary
+	ChosenWeight      draw2d.Weight // a selected item's label
+	ItemPadding       float32       // left and right inside an item of a list; 0 = 8
+	ItemGap           float32       // between an item's icon and its label; 0 = 8
+	ItemIconInk       draw2d.Color  // an item's icon at rest; invisible = InkSoft
+	LineHeight        float32       // a line of text as tall as its size × this; 0 keeps it as tall as its letters
+	HeadingLineHeight float32       // the same for text at HeadingSize and above
+	CheckSize         float32       // the side of a check box
+	CheckMark         float32       // the size of its tick; 0 = 12
+	CheckLine         draw2d.Color  // an empty check box's edge; invisible = InkQuiet
+	CheckRadius       float32
+	CheckBorder       float32      // the width of an empty check box's edge
+	CheckedBorder     draw2d.Color // the edge of a ticked box; an invisible colour draws none
+	// Backdrop blurs what is behind every translucent panel by this many layout pixels (a standard
+	// deviation): frosted glass. Panels inside a translucent one are not blurred again; 0 blurs
+	// nothing, at no cost.
+	Backdrop float32
+	// FocusWidth is the width of the ring around the control Tab reached, lying on its edge with no
+	// gap; 0 keeps go-ui's 3 pixels. On a button filled with Primary the ring is drawn inside it,
+	// in OnPrimary, where FocusRing could not be told from the fill.
+	FocusWidth float32
+	// FieldFocusEdge lights a field's own edge in FocusRing while it is typed in, instead of a
+	// ring around it.
+	FieldFocusEdge bool
+	// PressScale is how big a control is drawn while it is held, around its centre (0.97 gives a
+	// little); its content shrinks with it and the layout does not move. 0 keeps it still.
+	PressScale float32
 }
 ```
 

@@ -65,6 +65,10 @@ func (ui *Context) button(name, text, icon string, variant buttonVariant) bool {
 // buttonWithID adds a button with a known id; a lit button looks pressed (the button of an open
 // menu).
 func (ui *Context) buttonWithID(id ID, text, icon string, variant buttonVariant, lit bool) interaction {
+	ui.joinTabOrder(id)
+	if id == ui.active {
+		ui.heldControl = id // only buttons shrink while held, as Bubble's .button:active does
+	}
 	result := ui.interact(id)
 	if result.hovered {
 		ui.cursor = input.CursorHand
@@ -73,31 +77,36 @@ func (ui *Context) buttonWithID(id ID, text, icon string, variant buttonVariant,
 	if lit {
 		shown.held, shown.hovered = true, true
 	}
+	theme := ui.Theme
 	fill, border, ink := ui.buttonColours(variant, shown)
-	height := ui.Theme.ControlHeight
-	padding := PadXY(12, 0)
+	height := theme.ControlHeight
+	padding := PadXY(theme.buttonPadding(), 0)
 	width := Fit().Between(height, 0)
 	if text == "" {
 		padding = Padding{}
 		width = Fixed(height)
 	}
 	if variant == flatButton {
-		height = ui.Theme.ControlHeight - 4
-		padding = PadXY(8, 0)
+		height = theme.flatHeight()
+		padding = PadXY(theme.flatPadding(), 0)
 		if text == "" {
 			width, padding = Fixed(height), Padding{}
 		}
 	}
-	layout := Layout{Direction: Horizontal, Width: width, Height: Fixed(height), Padding: padding, Gap: 6, AlignX: Center, AlignY: Center}
-	look := Look{Fill: fill, Border: border, BorderWidth: 1, Radius: ui.Theme.ControlRadius}
-	ui.frameWithID(id, layout, look, func() {
+	layout := Layout{Direction: Horizontal, Width: width, Height: Fixed(height), Padding: padding, Gap: theme.buttonGap(), AlignX: Center, AlignY: Center}
+	look := Look{Fill: fill, Border: border, BorderWidth: 1, Radius: theme.buttonRadius()}
+	if variant == primaryButton {
+		look.Edge, look.EdgeWidth = theme.PrimaryEdge, theme.EdgeWidth
+	}
+	index := ui.frameWithID(id, layout, look, func() {
 		if icon != "" {
-			ui.IconSized(icon, ui.Theme.IconSize, ink)
+			ui.IconSized(icon, theme.IconSize, ink)
 		}
 		if text != "" {
-			ui.Text(text, TextStyle{Weight: draw2d.Medium, Color: ink})
+			ui.Text(text, TextStyle{Weight: theme.ButtonWeight, Color: ink})
 		}
 	})
+	ui.elements[index].filledWithPrimary = variant == primaryButton
 	return result
 }
 
@@ -122,7 +131,7 @@ func (ui *Context) buttonColours(variant buttonVariant, result interaction) (fil
 		if result.hovered {
 			return theme.Sunken, draw2d.Transparent, theme.Ink
 		}
-		return draw2d.Transparent, draw2d.Transparent, theme.InkSoft
+		return draw2d.Transparent, draw2d.Transparent, orColour(theme.FlatInk, theme.InkSoft)
 	default:
 		fill, border = theme.Surface, theme.ControlLine
 		if pressed {
@@ -139,25 +148,27 @@ func (ui *Context) buttonColours(variant buttonVariant, result interaction) (fil
 // row it fits its content (a group of tools in a toolbar).
 func (ui *Context) Selectable(icon, label string, selected bool) bool {
 	id := ui.idFor(label)
+	ui.joinTabOrder(id)
 	result := ui.interact(id)
 	if result.hovered {
 		ui.cursor = input.CursorHand
 	}
 	theme := ui.Theme
-	fill, ink, iconInk, weight := draw2d.Transparent, theme.Ink, theme.InkSoft, draw2d.Regular
+	fill, ink, iconInk, weight := draw2d.Transparent, theme.Ink, orColour(theme.ItemIconInk, theme.InkSoft), draw2d.Regular
 	switch {
 	case selected:
-		fill, ink, iconInk, weight = theme.PrimaryTint, theme.Primary, theme.Primary, draw2d.Medium
+		chosenFill, chosenInk := theme.chosen()
+		fill, ink, iconInk, weight = chosenFill, chosenInk, chosenInk, theme.ChosenWeight
 	case result.held && result.hovered:
 		fill = theme.Line
 	case result.hovered:
 		fill = theme.Sunken
 	}
-	layout := Layout{Direction: Horizontal, Width: Grow(), Height: Fixed(theme.ControlHeight), Padding: PadXY(8, 0), Gap: 8, AlignY: Center}
+	layout := Layout{Direction: Horizontal, Width: Grow(), Height: Fixed(theme.ControlHeight), Padding: PadXY(theme.itemPadding(), 0), Gap: theme.itemGap(), AlignY: Center}
 	if ui.parentDirection() == Horizontal {
 		layout.Width = Fit()
 	}
-	ui.frameWithID(id, layout, Look{Fill: fill, Radius: theme.ControlRadius}, func() {
+	ui.frameWithID(id, layout, Look{Fill: fill, Radius: theme.buttonRadius()}, func() {
 		if icon != "" {
 			ui.IconSized(icon, theme.IconSize, iconInk)
 		}
@@ -176,7 +187,9 @@ type Looks struct {
 // step it is clicked: the building block for controls of your own (a table row, a card). Its look
 // follows the pointer. It looks at the mouse after its content, so buttons inside it still work.
 func (ui *Context) Clickable(name string, layout Layout, looks Looks, content func()) bool {
-	index, result := ui.pressable(ui.idFor(name), layout, looks.Normal, content)
+	id := ui.idFor(name)
+	ui.joinTabOrder(id)
+	index, result := ui.pressable(id, layout, looks.Normal, content)
 	switch {
 	case result.held && result.hovered:
 		ui.elements[index].look = looks.Pressed
