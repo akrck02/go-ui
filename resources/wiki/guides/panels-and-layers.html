@@ -112,6 +112,39 @@ select or a menu inside it takes Escape first), the × in its title or a click o
 <code>SheetOptions.Width</code> sizes the card (420 px by default). Popups (a select inside the sheet) open
 over it. The dimming colour is the theme&rsquo;s <code>Scrim</code>.</p>
 
+<h2 id="choosing-a-file">Choosing a file</h2>
+
+<p>A file picker is a sheet made for one question: which file, or which folder? Its left column has
+places to start from (the home folder, the disk&rsquo;s root, and the folders the program offers), the
+right one what the folder open holds, folders first, and the row above the folder&rsquo;s path, to go up
+or type a path straight in.</p>
+
+<p align="center">
+  <img alt="A file picker titled Choose TinyGo: Up, the path /usr/local/go/bin and Go above; Home, the root and two folders on the left; the files go and gofmt on the right, go chosen; Hidden files, Cancel and Choose below" src="./images/file-picker.png" width="560">
+</p>
+<pre><code class="language-go"><span class="k">if</span> <span class="nx">picking</span> <span class="p">{</span>
+	<span class="nx">path</span><span class="p">,</span> <span class="nx">closed</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">FilePicker</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">FilePickerOptions</span><span class="p">{</span>
+		<span class="nx">Title</span><span class="p">:</span>    <span class="s">&#34;Choose a model&#34;</span><span class="p">,</span>
+		<span class="nx">Start</span><span class="p">:</span>    <span class="nx">modelPath</span><span class="p">,</span>         <span class="c1">// opens beside the file chosen before</span>
+		<span class="nx">Suffixes</span><span class="p">:</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;.glb&#34;</span><span class="p">},</span>  <span class="c1">// the folders always show, to go through them</span>
+		<span class="nx">Places</span><span class="p">:</span>   <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;/opt&#34;</span><span class="p">},</span>
+	<span class="p">})</span>
+	<span class="k">if</span> <span class="nx">closed</span> <span class="p">{</span>
+		<span class="nx">picking</span> <span class="p">=</span> <span class="kc">false</span>
+		<span class="k">if</span> <span class="nx">path</span> <span class="o">!=</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+			<span class="nx">modelPath</span> <span class="p">=</span> <span class="nx">path</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>A click on a folder goes into it. A click on a file chooses it, and a second click, or
+<strong>Choose</strong>, ends the picker with it; <strong>Cancel</strong>, Escape or the backdrop end it with nothing. With
+<code>Folder: true</code> it chooses a folder instead: <strong>Choose</strong> takes the one open, and files are not shown.
+Hidden files (a dot first) show only when asked. It is drawn like every other control, so it looks
+the same on every system and asks nothing of the system&rsquo;s own dialogs. <code>ReadFolder</code> lets a test
+give it a folder of its own.</p>
+
 <h2 id="modals-and-overlays">Modals and overlays</h2>
 
 <p><code>Context.Modal</code> and <code>Context.Overlay</code> put a program&rsquo;s own content over everything, dimming what is

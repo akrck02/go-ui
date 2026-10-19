@@ -1,0 +1,132 @@
+<h1 id="on-the-nintendo-3ds">🎮 On the Nintendo 3DS</h1>
+
+<p><strong>Status:</strong> a first step (October 2026). Built with a TinyGo that has a <code>nintendo3ds</code> target, a
+go-ui program runs on the console as homebrew, from the Homebrew Launcher: <code>window.Run</code> opens the
+console&rsquo;s two screens, drawn through go-renderer&rsquo;s <code>ctr</code> (citro3d). A large program (a 3D scene
+above, an interface of its own below) runs on a New 3DS XL at full speed; the
+same drawing, with a loop of its own, runs in go-3ds&rsquo;s explorer.</p>
+
+<p align="center">
+  <img alt="The emulator's two screens: an island village at nine in the evening above, and below a dark go-ui panel with tabs and the time of day" src="./images/3ds-explorer.png" width="320">
+</p>
+
+<h2 id="two-screens">Two screens</h2>
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Usual</th>
+<th>After SELECT</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Top screen (400 × 240, in 3D with the slider)</td>
+<td>The scene (<code>Options.Scene</code>)</td>
+<td>The interface, to be read</td>
+</tr>
+
+<tr>
+<td>Bottom screen (320 × 240, touch)</td>
+<td>The interface: the touch screen is the pointer</td>
+<td>The scene, which the finger turns and picks in</td>
+</tr>
+</tbody>
+</table>
+<p>A program written for a phone works unchanged: the interface is laid out for the screen it is on
+(320 or 400 pixels wide), and the scene gets the input the interface did not claim. With the
+screens swapped the interface only gets the keys, since the top screen cannot be touched. START
+ends the program.</p>
+
+<table>
+<thead>
+<tr>
+<th>Button</th>
+<th>Is</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Cross</td>
+<td>The arrow keys</td>
+</tr>
+
+<tr>
+<td>L, R</td>
+<td>Minus and plus (closer and farther, for most cameras)</td>
+</tr>
+
+<tr>
+<td>A, B</td>
+<td>Enter and Escape; B is also the system&rsquo;s back</td>
+</tr>
+
+<tr>
+<td>Touch screen</td>
+<td>The pointer: dragging is dragging with a mouse</td>
+</tr>
+
+<tr>
+<td>Circle pad</td>
+<td>The stick (<code>input.State.StickX</code>, <code>StickY</code>): go-renderer&rsquo;s cameras move with it</td>
+</tr>
+</tbody>
+</table>
+<p>The interface may claim the keys a button stands for (A is Enter). A program that wants a button
+whatever the interface does reads <code>window.ButtonsPressed()</code>: the buttons pressed this frame, X, Y,
+ZL and ZR among them.</p>
+
+<h2 id="what-the-console-has-not">What the console has not</h2>
+
+<p><code>Notify</code>, <code>Share</code>, <code>OpenLink</code>, <code>Feel</code> and the rest do nothing, and <code>SystemPrefersDark</code> is false.
+Preferences last only the run: TinyGo&rsquo;s <code>os</code> cannot reach the SD card yet. Films do not play.</p>
+
+<h2 id="how-it-runs">How it runs</h2>
+
+<p><code>window/nintendo3ds.go</code> reads the controls into the input state each frame (<code>ctr.Controls</code>),
+builds the interface, asks the program for its scene, and draws both in one frame:
+<code>SceneRenderer.PaintStereo</code> (or <code>PaintOn</code> the bottom screen) and <code>FlatRenderer.PaintOn</code>. It draws
+every frame, as fast as the screen shows them, and yields to the program&rsquo;s other goroutines after
+each: TinyGo&rsquo;s scheduler there is cooperative, and waiting for the screen happens in C.</p>
+
+<h2 id="writing-an-interface-for-the-console">Writing an interface for the console</h2>
+
+<p>What a phone shrugs off costs here: the processor is slower, and TinyGo&rsquo;s collector stops the
+program while it runs. These are what made the difference in a large program.</p>
+
+<ul>
+<li><strong>Measure by phase.</strong> <code>window.LastFrameTimes()</code> tells how long the last frame waited for the GPU,
+painted the scene, painted what is drawn over it, painted the interface, and handed over. Show
+them in the program (a resources screen) and read them on the console: the emulator draws in
+software and its times are not the console&rsquo;s.</li>
+<li><strong>An interface that stands still is free.</strong> go-renderer draws a list that did not change from
+the frame before without laying it out. Figures that change every second make their screen be
+laid out again each time; nothing changing every frame keeps it at almost nothing.</li>
+<li><strong>Make the theme once.</strong> A theme (a Material one especially) is a kilobyte; keep it in a
+variable instead of making it in the build function.</li>
+<li><strong>Closures capture onto the heap.</strong> Every <code>func() { … }</code> given to <code>Box</code>, <code>Frame</code> or <code>Clickable</code>
+that uses a variable puts that variable on the heap, every frame. Capture the few fields needed
+rather than a large struct (a whole report), keep the closure&rsquo;s work small, and keep what a
+frame looks up (a map of states, the texts already formatted) in the program&rsquo;s state, filled
+again with <code>clear</code> rather than made anew.</li>
+<li><strong>Labels and figures.</strong> <code>strings.ToUpper</code>, <code>strconv</code> and <code>time.Format</code> make a string each call:
+keep the texts written while what they show does not change.</li>
+<li><strong>Game looks.</strong> <code>Look.Backdrop</code> draws a box&rsquo;s background itself (pixel-art windows, keys with a
+lip that sinks when pressed) and <code>TextStyle.Shadow</code> gives text the hard shadow of a game&rsquo;s.
+Point every look at one kept value of the backdrop. Pixel fonts are crisp only at their own
+sizes (VT323 at 16, Silkscreen and Press Start 2P at 8 or 16), and positions should fall on
+whole pixels.</li>
+<li><strong>320 × 240 is small.</strong> Touch targets of at least 24 pixels, one line of text per row, figures
+large, and the buttons&rsquo; hints on screen: a game&rsquo;s habits read well here.</li>
+</ul>
+
+<h2 id="building">Building</h2>
+<pre><code class="language-bash">tinygo build -target<span class="o">=</span>nintendo3ds -o program.3dsx ./cmd/program
+</code></pre>
+
+<p>Copy the <code>.3dsx</code> to <code>/3ds/</code> on the SD card. A program that reads much data at start should keep it
+small: the console has about 86 MB for Go, and TinyGo&rsquo;s collector neither moves what it keeps nor
+knows which words on a stack are pointers, so garbage costs more there than on a phone.</p>

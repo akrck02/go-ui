@@ -1,0 +1,170 @@
+<h1 id="who-has-the-keyboard">Who has the keyboard</h1>
+
+<p>This page is for whoever builds a program with go-ui and wants the keyboard to work for both the
+interface and whatever is behind it. At the end you will know which of the two modes to choose, and
+what a click, Tab, Enter, Space and Escape do in each.</p>
+
+<h2 id="the-problem">The problem</h2>
+
+<p>Tab, Enter, Space and the arrows mean two things at once:</p>
+
+<ul>
+<li><strong>To an interface</strong>, they move between buttons and press them, so someone who can&rsquo;t use a
+mouse can still use every control.</li>
+<li><strong>To a game or a 3D view</strong>, they are its own controls: Space jumps, the arrows turn the
+camera, Tab shows the scores.</li>
+</ul>
+
+<p>Both can&rsquo;t have them. If the interface always took Space, a game would stop jumping and press
+whichever button was last clicked. So go-ui asks the program one question, through
+<code>context.KeyboardNavigation</code>: <strong>is there anything else that wants these keys?</strong></p>
+
+<h2 id="the-two-modes">The two modes</h2>
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th><code>ui.WhenGiven</code> (the default)</th>
+<th><code>ui.Always</code></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>For</td>
+<td>a game, a 3D viewer, an editor over a scene</td>
+<td>a program that is only an interface: a register, a settings app</td>
+</tr>
+
+<tr>
+<td>Tab, Shift+Tab</td>
+<td>move between controls only while the interface <strong>has</strong> the keyboard</td>
+<td>always move between controls</td>
+</tr>
+
+<tr>
+<td>Enter, Space</td>
+<td>press the control Tab reached, while the interface has the keyboard</td>
+<td>press the control Tab reached</td>
+</tr>
+
+<tr>
+<td>A click on a button</td>
+<td>presses it, and <strong>leaves the keyboard where it was</strong>; no ring</td>
+<td>presses it; no ring; the next Tab goes on from it</td>
+</tr>
+
+<tr>
+<td>Escape</td>
+<td>gives the keyboard back to the program (an open menu or dialog closes first)</td>
+<td>closes an open menu or dialog, or takes the ring off</td>
+</tr>
+
+<tr>
+<td>What the program reads</td>
+<td>every key while the interface does not have the keyboard</td>
+<td>none: the interface claims the keyboard all the time</td>
+</tr>
+</tbody>
+</table>
+<p>The interface <strong>has the keyboard</strong> while:</p>
+
+<ul>
+<li>a text field is typed in,</li>
+<li>a dialog or a sheet is open, or a menu or a select is open,</li>
+<li>Tab moved the focus while it had the keyboard (from a field to a button, say): it keeps it
+until Escape or a click,</li>
+<li>or the program gave it with <code>context.TakeKeyboard()</code>.</li>
+</ul>
+
+<p>With <code>Always</code>, it has the keyboard all the time.</p>
+
+<p><code>WhenGiven</code> is the default because forgetting to choose then costs little: Tab doesn&rsquo;t walk the
+buttons. The other way round, a game that forgot would stop answering its own keys.</p>
+
+<h2 id="a-game-over-a-3d-view">A game over a 3D view</h2>
+
+<p>Leave the mode alone. The game keeps its keys, and its pause menu takes the keyboard while it is
+open:</p>
+<pre><code class="language-go"><span class="k">if</span> <span class="p">!</span><span class="nx">paused</span> <span class="o">&amp;&amp;</span> <span class="nx">state</span><span class="p">.</span><span class="nf">Pressed</span><span class="p">(</span><span class="nx">input</span><span class="p">.</span><span class="nx">KeyP</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">paused</span> <span class="p">=</span> <span class="kc">true</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">TakeKeyboard</span><span class="p">()</span> <span class="c1">// Tab, Enter and Space now move through the menu</span>
+<span class="p">}</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">Begin</span><span class="p">(</span><span class="nx">state</span><span class="p">)</span>
+<span class="k">if</span> <span class="nx">paused</span> <span class="p">{</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">Panel</span><span class="p">(</span><span class="s">&#34;Paused&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">PrimaryButton</span><span class="p">(</span><span class="s">&#34;Resume&#34;</span><span class="p">)</span> <span class="p">{</span>
+			<span class="nx">paused</span> <span class="p">=</span> <span class="kc">false</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">ReleaseKeyboard</span><span class="p">()</span> <span class="c1">// the keys go back to the game</span>
+		<span class="p">}</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Button</span><span class="p">(</span><span class="s">&#34;Settings&#34;</span><span class="p">)</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+<span class="nx">context</span><span class="p">.</span><span class="nf">End</span><span class="p">()</span>
+<span class="k">if</span> <span class="nx">paused</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">context</span><span class="p">.</span><span class="nf">HasKeyboard</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">paused</span> <span class="p">=</span> <span class="kc">false</span> <span class="c1">// Escape gave the keys back: resume, as Resume does</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="p">!</span><span class="nx">context</span><span class="p">.</span><span class="nf">HasKeyboard</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="nx">state</span><span class="p">.</span><span class="nf">Pressed</span><span class="p">(</span><span class="nx">input</span><span class="p">.</span><span class="nx">KeySpace</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">ship</span><span class="p">.</span><span class="nf">Jump</span><span class="p">()</span> <span class="c1">// Space is the game&#39;s whenever the menu doesn&#39;t have it</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>Pressing Escape in the menu gives the keyboard back too, and the game resumes on the next frame.
+<code>HasKeyboard()</code> stays true until the end of any frame in which the interface used Enter, Space or
+Escape, so the Space that pressed <strong>Resume</strong> is not also a jump. A click on Resume with the mouse
+presses it but takes nothing, so the Space that follows is a jump again.</p>
+
+<p>While the interface has the keyboard, go-ui <strong>claims</strong> it in the input state, as a text field
+always has, so go-renderer&rsquo;s viewer leaves its camera keys alone. <code>context.WantsKeyboard()</code> tells
+your own code the same thing.</p>
+
+<h2 id="an-application-that-is-only-an-interface">An application that is only an interface</h2>
+
+<p>Set the mode once, before the first frame:</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nx">KeyboardNavigation</span> <span class="p">=</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Always</span>
+</code></pre>
+
+<p>Now Tab goes through every button, check box, toggle, tab, select, chip and field in the order they
+are drawn, and comes round at the end. Shift+Tab goes back. Enter or Space presses the control Tab
+reached: it clicks a button, ticks a check box, picks a tab, opens a select. When the control with
+the focus goes away (a row deleted), the next Tab goes on from where it stood. A field reached by
+Tab selects its text, ready to be typed over.</p>
+
+<h2 id="what-tab-reaches">What Tab reaches</h2>
+
+<ul>
+<li><strong>Reached:</strong> <code>Button</code> and its variants, <code>Selectable</code>, <code>Clickable</code>, <code>Checkbox</code>, <code>Toggle</code>, <code>Tabs</code>
+(each tab), <code>Select</code>, <code>Chip</code>, <code>TextField</code>, <code>NumberField</code> (its number; the − and + buttons are
+skipped, since the number can be typed).</li>
+<li><strong>A panel&rsquo;s fold button</strong>, in its title bar, comes before the panel&rsquo;s content.</li>
+<li><strong>Inside a dialog or a sheet:</strong> Tab goes round its own controls only.</li>
+<li><strong>Inside menus and lists:</strong> the arrows move, not Tab; that is unchanged.</li>
+</ul>
+
+<h2 id="how-the-focus-looks">How the focus looks</h2>
+
+<p>The ring only shows when the focus came from the keyboard. A click never shows it.</p>
+
+<p>The ring lies on the control&rsquo;s edge, with no gap, in <code>Theme.FocusRing</code>, <code>Theme.FocusWidth</code> wide
+(3 pixels by default). On a primary button it is drawn <strong>inside</strong>, in <code>Theme.OnPrimary</code>: a ring in
+the primary colour around a button of that colour could not be seen.</p>
+
+<p>A theme can also ask a field to light its own edge instead of drawing a ring around it
+(<code>Theme.FieldFocusEdge</code>), and a held control to shrink a little (<code>Theme.PressScale</code>, 0.97 in
+Bubble). If the person asked the system for less motion, set <code>context.LessMotion</code> and held controls
+keep their size. The tokens are in <a href="./components/design-systems">a design system&rsquo;s look</a>.</p>
+
+<h2 id="what-it-costs">What it costs</h2>
+
+<p>While the interface does not have the keyboard, no control joins the Tab order, and a frame of
+three hundred controls takes about 1 % longer than before, from one comparison per control. While
+it has the keyboard, it takes up to 2.5 % longer. Neither allocates anything more. Moving the
+focus asks for one frame, so the ring shows at once even in an application that only draws when
+something changes. The measurements are in the
+<a href="./project/performance-audit">performance audit</a>.</p>
+
+<hr>
+
+<p><a href="./components/components">← Components</a></p>

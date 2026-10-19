@@ -123,7 +123,7 @@ outside any panel, they go on the <strong>screen</strong>.</p>
 
 <tr>
 <td><code>NumberField(name, &amp;value, minimum, maximum, step, format)</code></td>
-<td>A number with − and + on its sides; drag the number sideways for a step every 4 px, or click it to type a value (a point or a comma for decimals; Enter keeps it, Escape does not). Shown with a format such as <code>&quot;%.1f s&quot;</code></td>
+<td>A number with − and + on its sides; drag the number sideways for a step every 4 px, or click it to type a value (a point or a comma for decimals; Enter keeps it, Escape does not). The buttons and the drag keep whole steps; a typed value is kept as typed, and the program&rsquo;s own value is left alone until someone changes it. Shown with a format such as <code>&quot;%.1f s&quot;</code></td>
 </tr>
 
 <tr>
@@ -279,6 +279,11 @@ outside any panel, they go on the <strong>screen</strong>.</p>
 <tr>
 <td><code>Sheet(title, SheetOptions{Width}, content)</code></td>
 <td>A modal card in the middle of the window; returns <code>true</code> when the person asks to close it. See <a href="./guides/panels-and-layers">sheets</a></td>
+</tr>
+
+<tr>
+<td><code>FilePicker(FilePickerOptions{…})</code></td>
+<td>A sheet to choose a file or a folder on the disk; returns its path and <code>true</code> once it closes. See <a href="./guides/panels-and-layers">choosing a file</a></td>
 </tr>
 
 <tr>

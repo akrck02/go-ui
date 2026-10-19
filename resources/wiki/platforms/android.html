@@ -105,7 +105,9 @@ offers a text through the system&rsquo;s sheet, <code>Context.Copy</code> and <c
 phone&rsquo;s clipboard, and <code>window.Preference</code> / <code>window.KeepPreference</code> keep small values between runs
 (a JSON file in the application&rsquo;s folder; on the desktop, the user&rsquo;s configuration folder; in a
 browser, local storage). <code>Options.Hidden</code> is called when the program leaves the screen, the moment
-to keep them, since Android may end the program after that. The person&rsquo;s text size reaches every
+to keep them, since Android may end the program after that; <code>Options.Shown</code> is called when it
+comes back (in a browser, when the page shows again), the moment to play again what <code>Hidden</code>
+stopped, such as a sound. The person&rsquo;s text size reaches every
 text through <code>Context.SetTextScale</code>, which the window sets in every frame.
 <code>window.OpenVideo(film)</code> plays a film&rsquo;s pictures (not yet its sound) in a <code>draw2d.Image</code> that
 <code>Context.Image</code> draws: <code>Play</code>, <code>Pause</code>, <code>Loop</code>, and <code>Update</code> in every frame it shows. On Android the

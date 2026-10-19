@@ -87,6 +87,13 @@ things declared after it.</p>
 <pre><code class="language-go"><span class="kd">type</span> <span class="nx">Context</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span class="nx">Theme</span> <span class="nx">Theme</span>
 
+	<span class="c1">// KeyboardNavigation says when the interface reads Tab, Enter and Space (focus.go).</span>
+	<span class="nx">KeyboardNavigation</span> <span class="nx">KeyboardNavigation</span>
+
+	<span class="c1">// LessMotion keeps controls still when the person asks the system for less motion: a held</span>
+	<span class="c1">// control does not shrink. The program sets it from the platform&#39;s setting.</span>
+	<span class="nx">LessMotion</span> <span class="kt">bool</span>
+
 	<span class="c1">// Has unexported fields.</span>
 <span class="p">}</span>
 </code></pre>
@@ -266,6 +273,11 @@ things declared after it.</p>
 </tr>
 
 <tr>
+<td><code>func (ui *Context) HasKeyboard() bool</code></td>
+<td>HasKeyboard tells whether the interface reads Tab, Enter and Space in this frame.</td>
+</tr>
+
+<tr>
 <td><code>func (ui *Context) Heading(text string)</code></td>
 <td>Heading adds a line of bold, larger text: the title of a group.</td>
 </tr>
@@ -388,6 +400,11 @@ things declared after it.</p>
 <tr>
 <td><code>func (ui *Context) Push(name string)</code></td>
 <td>Push opens a scope: ids of the controls added until Pop are made from this name too.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) ReleaseKeyboard()</code></td>
+<td>ReleaseKeyboard gives the keyboard back to the program and takes the focus off the controls.</td>
 </tr>
 
 <tr>
@@ -523,6 +540,11 @@ things declared after it.</p>
 <tr>
 <td><code>func (ui *Context) Tabs(name string, selected *int, labels ...string) bool</code></td>
 <td>Tabs adds a row of segments, one per label, with the selected one raised; clicking a segment selects it.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) TakeKeyboard()</code></td>
+<td>TakeKeyboard gives the interface the keyboard, as a game does when it opens its own menu: Tab then moves between the controls until Escape or ReleaseKeyboard gives the keys back.</td>
 </tr>
 
 <tr>
@@ -664,6 +686,23 @@ things declared after it.</p>
 <span class="p">}</span>
 </code></pre>
 
+<h3 id="keyboardnavigation">KeyboardNavigation</h3>
+
+<p>KeyboardNavigation says when the interface reads Tab, Enter and Space to move between controls and press them, and when those keys belong to the program (a game, a 3D view).</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">KeyboardNavigation</span> <span class="kt">int</span>
+</code></pre>
+<pre><code class="language-go"><span class="kd">const</span> <span class="p">(</span>
+	<span class="c1">// WhenGiven, the default: the interface has the keyboard only while a field is typed in, a</span>
+	<span class="c1">// dialog, sheet or menu is open, or the program gave it with TakeKeyboard. Escape gives it</span>
+	<span class="c1">// back. A click on a button does not take it, so Space in a game never presses the last button</span>
+	<span class="c1">// clicked.</span>
+	<span class="nx">WhenGiven</span> <span class="nx">KeyboardNavigation</span> <span class="p">=</span> <span class="kc">iota</span>
+	<span class="c1">// Always: the program is only an interface (a register, a settings app), so Tab always moves</span>
+	<span class="c1">// between its controls.</span>
+	<span class="nx">Always</span>
+<span class="p">)</span>
+</code></pre>
+
 <h3 id="keyboardtext">KeyboardText</h3>
 
 <p>KeyboardText is the field being typed in, as an on-screen keyboard sees and edits it: a phone&rsquo;s keyboard suggests words from the text around the caret, keeps the word it is still making (composing: a prediction, a Chinese or Japanese reading) until it commits it, and deletes around the caret. Positions count characters (runes); the selection runs from SelectionStart, where it began, to SelectionEnd, the caret.</p>
@@ -733,6 +772,10 @@ things declared after it.</p>
 	<span class="nx">Radius</span>      <span class="kt">float32</span>
 	<span class="nx">Shadow</span>      <span class="kt">bool</span> <span class="c1">// a soft shadow under it, for things that float over others</span>
 	<span class="nx">Clip</span>        <span class="kt">bool</span> <span class="c1">// children are cut to the box&#39;s area</span>
+	<span class="c1">// Edge is a solid band of this colour, EdgeWidth tall, just under the box, as if it stood on a</span>
+	<span class="c1">// block: a design system&#39;s main button. It takes no room in the layout, like a shadow.</span>
+	<span class="nx">Edge</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
+	<span class="nx">EdgeWidth</span> <span class="kt">float32</span>
 <span class="p">}</span>
 </code></pre>
 
@@ -1029,6 +1072,47 @@ things declared after it.</p>
 	<span class="nx">ShadowDrop</span>    <span class="kt">float32</span>
 	<span class="nx">ScrollStep</span>    <span class="kt">float32</span>       <span class="c1">// pixels a scroll area moves per notch of the wheel</span>
 	<span class="nx">TooltipDelay</span>  <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span> <span class="c1">// how long the pointer rests on a control before its tooltip shows</span>
+
+	<span class="c1">// What a design system tunes (docs/5-components/9-design-systems.md). The light theme&#39;s values</span>
+	<span class="c1">// keep go-ui&#39;s own look, and a zero colour or size follows the token it names, so a theme that</span>
+	<span class="c1">// only changes Primary or ControlRadius still looks the same.</span>
+	<span class="nx">ButtonRadius</span>      <span class="kt">float32</span>       <span class="c1">// corners of buttons and selectable items; 0 = ControlRadius</span>
+	<span class="nx">ButtonPadding</span>     <span class="kt">float32</span>       <span class="c1">// left and right inside a button with a label; 0 = 12</span>
+	<span class="nx">ButtonGap</span>         <span class="kt">float32</span>       <span class="c1">// between a button&#39;s icon and its label; 0 = 6</span>
+	<span class="nx">ButtonWeight</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Weight</span> <span class="c1">// the weight of a button&#39;s label</span>
+	<span class="nx">FlatHeight</span>        <span class="kt">float32</span>       <span class="c1">// a flat button&#39;s height; 0 = a little under ControlHeight, for toolbars</span>
+	<span class="nx">FlatPadding</span>       <span class="kt">float32</span>       <span class="c1">// left and right inside a flat button; 0 = 8</span>
+	<span class="nx">FlatInk</span>           <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>  <span class="c1">// a flat button&#39;s label at rest; invisible = InkSoft</span>
+	<span class="nx">PrimaryEdge</span>       <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>  <span class="c1">// a darker edge under the main button, a block it stands on</span>
+	<span class="nx">EdgeWidth</span>         <span class="kt">float32</span>       <span class="c1">// how tall that edge is; 0 draws none</span>
+	<span class="nx">Chosen</span>            <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>  <span class="c1">// behind a selected item of a list; invisible = PrimaryTint</span>
+	<span class="nx">ChosenInk</span>         <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>  <span class="c1">// a selected item&#39;s label and icon; invisible = Primary</span>
+	<span class="nx">ChosenWeight</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Weight</span> <span class="c1">// a selected item&#39;s label</span>
+	<span class="nx">ItemPadding</span>       <span class="kt">float32</span>       <span class="c1">// left and right inside an item of a list; 0 = 8</span>
+	<span class="nx">ItemGap</span>           <span class="kt">float32</span>       <span class="c1">// between an item&#39;s icon and its label; 0 = 8</span>
+	<span class="nx">ItemIconInk</span>       <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>  <span class="c1">// an item&#39;s icon at rest; invisible = InkSoft</span>
+	<span class="nx">LineHeight</span>        <span class="kt">float32</span>       <span class="c1">// a line of text as tall as its size × this; 0 keeps it as tall as its letters</span>
+	<span class="nx">HeadingLineHeight</span> <span class="kt">float32</span>       <span class="c1">// the same for text at HeadingSize and above</span>
+	<span class="nx">CheckSize</span>         <span class="kt">float32</span>       <span class="c1">// the side of a check box</span>
+	<span class="nx">CheckMark</span>         <span class="kt">float32</span>       <span class="c1">// the size of its tick; 0 = 12</span>
+	<span class="nx">CheckLine</span>         <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>  <span class="c1">// an empty check box&#39;s edge; invisible = InkQuiet</span>
+	<span class="nx">CheckRadius</span>       <span class="kt">float32</span>
+	<span class="nx">CheckBorder</span>       <span class="kt">float32</span>      <span class="c1">// the width of an empty check box&#39;s edge</span>
+	<span class="nx">CheckedBorder</span>     <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// the edge of a ticked box; an invisible colour draws none</span>
+	<span class="c1">// BackdropBlur blurs what is behind every translucent panel by this many layout pixels (a</span>
+	<span class="c1">// standard deviation): frosted glass. Panels inside a translucent one are not blurred again; 0</span>
+	<span class="c1">// blurs nothing, at no cost. (Look.Backdrop is another thing: a painter for a box&#39;s background.)</span>
+	<span class="nx">BackdropBlur</span> <span class="kt">float32</span>
+	<span class="c1">// FocusWidth is the width of the ring around the control Tab reached, lying on its edge with no</span>
+	<span class="c1">// gap; 0 keeps go-ui&#39;s 3 pixels. On a button filled with Primary the ring is drawn inside it,</span>
+	<span class="c1">// in OnPrimary, where FocusRing could not be told from the fill.</span>
+	<span class="nx">FocusWidth</span> <span class="kt">float32</span>
+	<span class="c1">// FieldFocusEdge lights a field&#39;s own edge in FocusRing while it is typed in, instead of a</span>
+	<span class="c1">// ring around it.</span>
+	<span class="nx">FieldFocusEdge</span> <span class="kt">bool</span>
+	<span class="c1">// PressScale is how big a control is drawn while it is held, around its centre (0.97 gives a</span>
+	<span class="c1">// little); its content shrinks with it and the layout does not move. 0 keeps it still.</span>
+	<span class="nx">PressScale</span> <span class="kt">float32</span>
 <span class="p">}</span>
 </code></pre>
 

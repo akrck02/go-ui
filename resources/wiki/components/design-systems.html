@@ -1,0 +1,127 @@
+<h1 id="a-design-system-s-look">A design system&rsquo;s look</h1>
+
+<p>A design system is more than a palette: it decides how a chosen item looks, whether the main button
+stands out, how tall a line of text is. go-ui&rsquo;s theme has a token for each of those, so a design
+system can dress <strong>every control</strong> without the program drawing any of them by hand.</p>
+
+<p>You don&rsquo;t need any of this to use go-ui: left at zero, these tokens keep go-ui&rsquo;s own look.</p>
+
+<h2 id="the-shortest-way">The shortest way</h2>
+
+<p>Start from a theme of go-ui&rsquo;s, then set what your design system asks for:</p>
+<pre><code class="language-go"><span class="nx">theme</span> <span class="o">:=</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">LightTheme</span><span class="p">()</span>
+<span class="nx">theme</span><span class="p">.</span><span class="nx">Primary</span><span class="p">,</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">OnPrimary</span> <span class="p">=</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nf">Hex</span><span class="p">(</span><span class="s">&#34;#2f6f8f&#34;</span><span class="p">),</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nf">Hex</span><span class="p">(</span><span class="s">&#34;#ffffff&#34;</span><span class="p">)</span>
+
+<span class="nx">theme</span><span class="p">.</span><span class="nx">ButtonRadius</span><span class="p">,</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">ButtonPadding</span><span class="p">,</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">ButtonWeight</span> <span class="p">=</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Bold</span>
+<span class="nx">theme</span><span class="p">.</span><span class="nx">PrimaryEdge</span><span class="p">,</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">EdgeWidth</span> <span class="p">=</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nf">Hex</span><span class="p">(</span><span class="s">&#34;#214e64&#34;</span><span class="p">),</span> <span class="mi">2</span> <span class="c1">// the main button stands on a block</span>
+<span class="nx">theme</span><span class="p">.</span><span class="nx">Chosen</span><span class="p">,</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">ChosenInk</span> <span class="p">=</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Sunken</span><span class="p">,</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">Ink</span>       <span class="c1">// what is chosen is brighter, not coloured</span>
+<span class="nx">theme</span><span class="p">.</span><span class="nx">LineHeight</span><span class="p">,</span> <span class="nx">theme</span><span class="p">.</span><span class="nx">HeadingLineHeight</span> <span class="p">=</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">1.2</span>
+
+<span class="nx">context</span><span class="p">.</span><span class="nx">Theme</span> <span class="p">=</span> <span class="nx">theme</span> <span class="c1">// before the first control of the frame</span>
+</code></pre>
+
+<p>Every button, list and check box of the frame now follows it.</p>
+
+<h2 id="the-tokens">The tokens</h2>
+
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>What it changes</th>
+<th>go-ui&rsquo;s own look (when zero)</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>ButtonRadius</code>, <code>ButtonPadding</code>, <code>ButtonGap</code>, <code>ButtonWeight</code></td>
+<td>A button&rsquo;s corners, the room on each side of its label, the gap after its icon, its label&rsquo;s weight</td>
+<td>The controls&rsquo; corners, 12 pixels a side, 6 of gap</td>
+</tr>
+
+<tr>
+<td><code>PrimaryEdge</code>, <code>EdgeWidth</code></td>
+<td>A solid band under the main button, as if it stood on a block; it takes no room, like a shadow</td>
+<td>No edge</td>
+</tr>
+
+<tr>
+<td><code>FlatHeight</code>, <code>FlatPadding</code>, <code>FlatInk</code></td>
+<td>A flat button&rsquo;s height, room and ink at rest</td>
+<td>A little shorter than the others, in soft ink, for toolbars</td>
+</tr>
+
+<tr>
+<td><code>Chosen</code>, <code>ChosenInk</code>, <code>ChosenWeight</code></td>
+<td>How a selected item of a list looks</td>
+<td>The primary colour&rsquo;s tint</td>
+</tr>
+
+<tr>
+<td><code>ItemPadding</code>, <code>ItemGap</code>, <code>ItemIconInk</code></td>
+<td>The room in an item of a list, the gap after its icon, the icon&rsquo;s ink</td>
+<td>8 and 8, soft icons</td>
+</tr>
+
+<tr>
+<td><code>LineHeight</code>, <code>HeadingLineHeight</code></td>
+<td>A line as tall as its size × this, and the same for text at <code>HeadingSize</code> and above</td>
+<td>As tall as the letters</td>
+</tr>
+
+<tr>
+<td><code>CheckSize</code>, <code>CheckRadius</code>, <code>CheckBorder</code>, <code>CheckMark</code>, <code>CheckLine</code>, <code>CheckedBorder</code></td>
+<td>A check box&rsquo;s side, corners, edge, tick, empty edge and ticked edge</td>
+<td>go-ui&rsquo;s small box</td>
+</tr>
+
+<tr>
+<td><code>BackdropBlur</code></td>
+<td>Blurs what is behind every translucent panel, as frosted glass, by this many pixels</td>
+<td>Nothing blurred, at no cost</td>
+</tr>
+
+<tr>
+<td><code>FocusWidth</code></td>
+<td>The width of the ring around the control Tab reached, lying on its edge; inside a primary button, in <code>OnPrimary</code></td>
+<td>3 pixels</td>
+</tr>
+
+<tr>
+<td><code>FieldFocusEdge</code></td>
+<td>A field being typed in lights its own edge in <code>FocusRing</code> instead of a ring around it</td>
+<td>A ring around the field</td>
+</tr>
+
+<tr>
+<td><code>PressScale</code></td>
+<td>How big a held control is drawn (0.97 gives a little); with <code>context.LessMotion</code> set it stays still</td>
+<td>It keeps its size</td>
+</tr>
+</tbody>
+</table>
+<p><code>BackdropBlur</code> frosts a translucent panel that is not inside another one: the rows hovered or chosen
+inside a frosted panel are translucent too, but blurring again under them would cost a blur for
+nothing. go-renderer takes one snapshot of the frame per layer, however many panels it has, and
+blurs it small; its guide to the overlay says what that costs.</p>
+
+<p>Two rules keep old themes looking the same:</p>
+
+<ul>
+<li><strong>A zero size, or an invisible colour, means go-ui&rsquo;s own look</strong>, so a theme made before these
+tokens existed draws as it always did.</li>
+<li><strong>The chosen item follows the primary colour</strong> while <code>Chosen</code> and <code>ChosenInk</code> are left alone, so
+a theme that only changes <code>Primary</code> and <code>PrimaryTint</code> still marks it with its own tint.</li>
+</ul>
+
+<h2 id="a-design-system-that-uses-them">A design system that uses them</h2>
+
+<p><a href="https://github.com/akrck02/bubble" target="_blank">Bubble 4</a>, akrck02&rsquo;s design system, makes its themes in Go with
+their contrast tested, and its <code>goui</code> module turns one into a go-ui theme. Its guide shows the
+same screen in a browser and in go-ui, side by side, in every style and finish. go-ui itself knows
+nothing of Bubble: any design system can do the same with these tokens.</p>
+
+<hr>
+
+<p><a href="./components/components">← Components</a></p>
