@@ -59,6 +59,11 @@ type Options struct {
 	// browser, the page is hidden; on the desktop, the window closes. Keep what must survive then
 	// (KeepPreference). It runs on the goroutine that builds the interface, except in a browser.
 	Hidden func()
+	// Shown is called when the program comes back on the screen after Hidden: on a phone, back from
+	// another application or the lock screen (and at its start); in a browser, when the page shows
+	// again. It is the moment to play again what Hidden stopped, such as a sound. On the desktop,
+	// where a hidden window has closed, it is not called.
+	Shown func()
 }
 
 // SceneView is a 3D scene seen from a camera, drawn behind the interface.

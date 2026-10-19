@@ -2,7 +2,7 @@
 
 Immediate-mode interfaces (panels, buttons, labels) drawn over a go-renderer view. It produces a
 `draw2d.List` that go-renderer paints, and reads go-renderer's `input.State`. Start with
-`docs/README.md`.
+`docs/1-overview.md`.
 
 ## Commands
 
