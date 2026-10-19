@@ -69,10 +69,10 @@ type Theme struct {
 	CheckRadius       float32
 	CheckBorder       float32      // the width of an empty check box's edge
 	CheckedBorder     draw2d.Color // the edge of a ticked box; an invisible colour draws none
-	// Backdrop blurs what is behind every translucent panel by this many layout pixels (a standard
-	// deviation): frosted glass. Panels inside a translucent one are not blurred again; 0 blurs
-	// nothing, at no cost.
-	Backdrop float32
+	// BackdropBlur blurs what is behind every translucent panel by this many layout pixels (a
+	// standard deviation): frosted glass. Panels inside a translucent one are not blurred again; 0
+	// blurs nothing, at no cost. (Look.Backdrop is another thing: a painter for a box's background.)
+	BackdropBlur float32
 	// FocusWidth is the width of the ring around the control Tab reached, lying on its edge with no
 	// gap; 0 keeps go-ui's 3 pixels. On a button filled with Primary the ring is drawn inside it,
 	// in OnPrimary, where FocusRing could not be told from the fill.

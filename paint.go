@@ -48,7 +48,7 @@ func (ui *Context) paintBox(element *element) {
 	}
 	frosted := ui.isFrosted(look)
 	if frosted {
-		ui.drawing.Backdrop(element.rect, look.Radius, ui.Theme.Backdrop)
+		ui.drawing.Backdrop(element.rect, look.Radius, ui.Theme.BackdropBlur)
 	}
 	if look.EdgeWidth > 0 && look.Edge.IsVisible() {
 		under := element.rect
@@ -98,11 +98,11 @@ func (ui *Context) paintBox(element *element) {
 	}
 }
 
-// isFrosted tells whether a box blurs what is behind it: with a Backdrop in the theme, a box with
+// isFrosted tells whether a box blurs what is behind it: with a BackdropBlur in the theme, a box with
 // a translucent fill that is not inside another frosted one. A frosted panel's own hovered or
 // chosen rows are translucent too, but blurring again under them would cost a blur for nothing.
 func (ui *Context) isFrosted(look Look) bool {
-	if ui.Theme.Backdrop <= 0 || ui.insideFrost {
+	if ui.Theme.BackdropBlur <= 0 || ui.insideFrost {
 		return false
 	}
 	alpha := look.Fill[3]
