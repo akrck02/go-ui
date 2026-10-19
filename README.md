@@ -30,8 +30,7 @@ Commits made with AI carry a `Co-Authored-By: Claude` line.
 **Status: pending thorough review.**
 
 > ⚠️ **Warning:** an educational experiment, **not suitable for production use**. APIs will
-> break. Until Go Renderer publishes `draw2d` and the wider input, `go.mod` points at a local copy
-> (`../go-renderer`).
+> break.
 
 ---
 

@@ -24,12 +24,10 @@ The library itself is pure Go: only programs that open a window need cgo. Tests 
 
 ## 2. Get the code
 
-Go UI draws through [Go Renderer](https://github.com/akrck02/go-renderer) and, until both publish
-versions, builds against a copy of it checked out beside it:
+Go UI draws through [Go Renderer](https://github.com/akrck02/go-renderer), which Go downloads
+like any other module, at the version `go.mod` names:
 
 ```bash
-mkdir workspace && cd workspace
-git clone https://github.com/akrck02/go-renderer
 git clone https://github.com/akrck02/go-ui
 cd go-ui
 go run ./cmd/app
@@ -51,14 +49,17 @@ inspector. Try `go run ./cmd/app -dark`, and the other examples:
 
 ## 3. Your first interface
 
-Make a module beside the other two and point it at them:
+Make a module of your own and ask for Go UI, which brings Go Renderer with it:
 
 ```bash
-cd .. && mkdir lighthouse && cd lighthouse
+mkdir lighthouse && cd lighthouse
 go mod init example.com/lighthouse
-go mod edit -require github.com/akrck02/go-ui@v0.0.0 -replace github.com/akrck02/go-ui=../go-ui
-go mod edit -require github.com/akrck02/go-renderer@v0.0.0 -replace github.com/akrck02/go-renderer=../go-renderer
+go get github.com/akrck02/go-ui@latest
 ```
+
+> 💡 **Changing Go UI or Go Renderer at the same time?** Clone them beside your module and join
+> the three with a workspace (`go work init . ../go-ui ../go-renderer`): Go then builds against
+> your copies instead of the versions.
 
 `main.go`:
 

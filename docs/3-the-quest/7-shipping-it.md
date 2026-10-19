@@ -72,7 +72,8 @@ WebGL2. Nothing in the program changes:
 mkdir -p web
 GOOS=js GOARCH=wasm go build -o web/register.wasm .
 cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" web/
-cp ../go-ui/web/index.html web/
+cp "$(go list -m -f '{{.Dir}}' github.com/akrck02/go-ui)/web/index.html" web/   # Go UI's page
+chmod u+w web/index.html                # files in the module cache are read-only
 python3 -m http.server -d web 8080      # then open http://localhost:8080/?program=register
 ```
 
