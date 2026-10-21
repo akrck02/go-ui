@@ -167,6 +167,10 @@ func NewWithMeasurer(measurer draw2d.Measurer) *Context {
 // (world.Overlay.Drawing = ui.Drawing()) and go-renderer draws it after every frame.
 func (ui *Context) Drawing() *draw2d.List { return &ui.drawing }
 
+// Measurer is what the interface measures text with: a driver that finds a line of text in the
+// drawing measures it the same way.
+func (ui *Context) Measurer() draw2d.Measurer { return ui.measurer }
+
 // WantsMouse tells whether the interface used the mouse in the last frame: the pointer was over
 // a panel or a control, or dragging one. The camera should leave the mouse alone then; End also
 // claims it in the input state, which go-renderer's viewer respects.

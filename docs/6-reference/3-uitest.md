@@ -12,6 +12,20 @@ code when what it looks for is not there.
 ### Constants and variables
 
 ```go
+const (
+	InvalidSize         Code = "uitest.invalid-size"
+	ElementNotFound          = uidrive.ElementNotFound
+	ElementAmbiguous         = uidrive.ElementAmbiguous
+	ElementNotVisible        = uidrive.ElementNotVisible
+	ElementNotPressable      = uidrive.ElementNotPressable
+	RecordingNotSaved   Code = "uitest.recording-not-saved"
+	RecordingNotRead    Code = "uitest.recording-not-read"
+)
+```
+
+The codes this package returns; the element codes are uidrive's, under the same names.
+
+```go
 const RecordVariable = "UITEST_RECORD"
 ```
 
@@ -20,10 +34,10 @@ RecordVariable is the environment variable that turns recording on: a folder whe
 ```go
 var (
 	ErrorInvalidSize         = &Error{Code: InvalidSize}
-	ErrorElementNotFound     = &Error{Code: ElementNotFound}
-	ErrorElementAmbiguous    = &Error{Code: ElementAmbiguous}
-	ErrorElementNotVisible   = &Error{Code: ElementNotVisible}
-	ErrorElementNotPressable = &Error{Code: ElementNotPressable}
+	ErrorElementNotFound     = uidrive.ErrorElementNotFound
+	ErrorElementAmbiguous    = uidrive.ErrorElementAmbiguous
+	ErrorElementNotVisible   = uidrive.ErrorElementNotVisible
+	ErrorElementNotPressable = uidrive.ErrorElementNotPressable
 	ErrorRecordingNotSaved   = &Error{Code: RecordingNotSaved}
 	ErrorRecordingNotRead    = &Error{Code: RecordingNotRead}
 )
@@ -33,25 +47,11 @@ The errors to compare with errors.Is; comparing them allocates nothing.
 
 ### Code
 
-Code is the stable name of an error of this package: programs compare it, people search for it.
+Code is the stable name of an error: programs compare it, people search for it. It is uidrive's, which finds elements for this package.
 
 ```go
-type Code string
+type Code = uidrive.Code
 ```
-
-```go
-const (
-	InvalidSize         Code = "uitest.invalid-size"
-	ElementNotFound     Code = "uitest.element-not-found"
-	ElementAmbiguous    Code = "uitest.element-ambiguous"
-	ElementNotVisible   Code = "uitest.element-not-visible"
-	ElementNotPressable Code = "uitest.element-not-pressable"
-	RecordingNotSaved   Code = "uitest.recording-not-saved"
-	RecordingNotRead    Code = "uitest.recording-not-read"
-)
-```
-
-The codes this package returns.
 
 | Function or method | |
 |---|---|
@@ -59,36 +59,19 @@ The codes this package returns.
 
 ### Element
 
-Element is what the last frame showed of a control, a text or a scroll area.
+Element is what the last frame showed of a control, a text or a scroll area (uidrive.Element).
 
 ```go
-type Element struct {
-	ID        ui.ID       // the one the interface gives it, 0 when it was not on screen
-	Label     string      // what a screen reader calls it: a button's text, a described label
-	Rect      draw2d.Rect // where it was laid out, in layout pixels
-	Visible   bool        // some of it shows: not scrolled away, not behind a dialog or sheet
-	Focused   bool        // it has the focus (ui.Context.FocusedID)
-	Pressable bool        // a click or a tap does something to it
-}
+type Element = uidrive.Element
 ```
 
 ### Error
 
-Error is an error of this package: its code, and a message for people.
+Error is an error with a code, and a message for people (uidrive.Error).
 
 ```go
-type Error struct {
-	Code    Code
-	Message string
-	Cause   error // what went wrong underneath, when something outside this package failed
-}
+type Error = uidrive.Error
 ```
-
-| Function or method | |
-|---|---|
-| `func (err *Error) Error() string` | Error gives the code and the message. |
-| `func (err *Error) Is(target error) bool` | Is tells whether target is an error of this package with the same code, so errors.Is compares codes, never messages. |
-| `func (err *Error) Unwrap() error` | Unwrap is the cause underneath, for errors.Is and errors.As. |
 
 ### FixedMeasurer
 

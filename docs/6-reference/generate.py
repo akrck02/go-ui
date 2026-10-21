@@ -21,6 +21,7 @@ PACKAGES = [
     (".", "1-ui.md", "", "", "core"),
     ("window", "2-window.md", "", "", "core"),
     ("uitest", "3-uitest.md", "", "", "core"),
+    ("uidrive", "4-uidrive.md", "", "", "core"),
 ]
 
 # Turns `go doc -all` of a package into a Markdown reference: functions, and each type with its

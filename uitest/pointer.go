@@ -5,6 +5,7 @@ import (
 
 	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
+	"github.com/akrck02/go-ui/uidrive"
 )
 
 // dragSteps is how many frames a drag takes to go from where it starts to where it ends, so
@@ -132,24 +133,12 @@ func (window *Window) Scroll(label string, amount float32) error {
 
 // visibleElement finds an element that shows, or says why it cannot be used.
 func (window *Window) visibleElement(label string) (Element, error) {
-	target, err := window.Element(label)
-	if err != nil {
-		return Element{}, err
-	}
-	if !target.Visible {
-		return Element{}, window.noted(elementNotVisible(label))
-	}
-	return target, nil
+	found, err := uidrive.FindVisible(window.context, label)
+	return found, window.noted(err)
 }
 
 // pressableElement finds an element that shows and can be pressed.
 func (window *Window) pressableElement(label string) (Element, error) {
-	target, err := window.visibleElement(label)
-	if err != nil {
-		return Element{}, err
-	}
-	if !target.Pressable {
-		return Element{}, window.noted(elementNotPressable(label))
-	}
-	return target, nil
+	found, err := uidrive.FindPressable(window.context, label)
+	return found, window.noted(err)
 }

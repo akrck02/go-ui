@@ -113,7 +113,7 @@ it would break when the layout moves; names survive a new layout.
 
 ## Tasks
 
-- [ ] T1 — move finding into `uidrive` (`Element`, `Find…`, errors); `ui.Context.Measurer`; `uitest`
+- [x] T1 — move finding into `uidrive` (`Element`, `Find…`, errors); `ui.Context.Measurer`; `uitest`
   finds through it · `uidrive/errors.go`, `uidrive/find.go`, `ui.go`, `uitest/find.go`,
   `uitest/errors.go` · serves R3 · test: `TestAButtonIsFoundByItsLabelInTheLiveInterface`, and
   `uitest`'s tests unchanged
