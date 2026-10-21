@@ -26,18 +26,18 @@ func sampleRecordings() []uitest.Recording {
 }
 
 func TestFailedTestsComeFirst(t *testing.T) {
-	results := newResults(sampleRecordings())
+	results := newResults(nil, sampleRecordings())
 	recording, found := results.current()
 	if !found || recording.Test != "TestTheBellRings" {
 		t.Fatalf("the first test shown is %q, want the failed one", recording.Test)
 	}
-	if passed, failed := results.counts(); passed != 1 || failed != 1 {
+	if passed, failed, _ := results.counts(); passed != 1 || failed != 1 {
 		t.Fatalf("counted %d passed and %d failed", passed, failed)
 	}
 }
 
 func TestSteppingStopsAtTheEnds(t *testing.T) {
-	results := newResults(sampleRecordings())
+	results := newResults(nil, sampleRecordings())
 	results.choose(1)
 	results.step(-1)
 	if results.frame != 0 {
@@ -52,7 +52,7 @@ func TestSteppingStopsAtTheEnds(t *testing.T) {
 // openViewer shows the viewer in a test window, on the passed test.
 func openViewer(t *testing.T) (*uitest.Window, *results) {
 	t.Helper()
-	results := newResults(sampleRecordings())
+	results := newResults(nil, sampleRecordings())
 	results.choose(1)
 	window, err := uitest.New(results.draw, uitest.Size(1200, 800))
 	if err != nil {
