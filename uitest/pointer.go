@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/akrck02/go-renderer/draw2d"
-	"github.com/akrck02/go-renderer/input"
+	"github.com/akrck02/go-ui/uidrive"
 )
 
 // dragSteps is how many frames a drag takes to go from where it starts to where it ends, so
@@ -22,8 +22,7 @@ func center(area draw2d.Rect) point {
 // MoveTo moves the pointer to a place in the window and runs a frame.
 func (window *Window) MoveTo(x, y float32) {
 	defer window.doing("Move", draw2d.Rect{}, false)()
-	window.state.MoveCursor(float64(x), float64(y))
-	window.pointerMoved = true
+	window.hand.MoveTo(window.state, x, y)
 	window.step()
 }
 
@@ -42,16 +41,14 @@ func (window *Window) MoveToElement(label string) error {
 // Press holds the main button down where the pointer is and runs a frame.
 func (window *Window) Press() {
 	defer window.doing("Press", draw2d.Rect{}, false)()
-	window.state.SetButton(input.MouseLeft, true)
-	window.pointerDown = true
+	window.hand.Press(window.state)
 	window.step()
 }
 
 // Release lets the main button go and runs a frame.
 func (window *Window) Release() {
 	defer window.doing("Release", draw2d.Rect{}, false)()
-	window.state.SetButton(input.MouseLeft, false)
-	window.pointerDown = false
+	window.hand.Release(window.state)
 	window.step()
 }
 
@@ -125,31 +122,19 @@ func (window *Window) Scroll(label string, amount float32) error {
 	defer window.doing(fmt.Sprintf("Scroll %q", label), target.Rect, true)()
 	middle := center(target.Rect)
 	window.MoveTo(middle.x, middle.y)
-	window.state.AddScroll(float64(amount))
+	window.hand.Scroll(window.state, amount)
 	window.step()
 	return nil
 }
 
 // visibleElement finds an element that shows, or says why it cannot be used.
 func (window *Window) visibleElement(label string) (Element, error) {
-	target, err := window.Element(label)
-	if err != nil {
-		return Element{}, err
-	}
-	if !target.Visible {
-		return Element{}, window.noted(elementNotVisible(label))
-	}
-	return target, nil
+	found, err := uidrive.FindVisible(window.context, label)
+	return found, window.noted(err)
 }
 
 // pressableElement finds an element that shows and can be pressed.
 func (window *Window) pressableElement(label string) (Element, error) {
-	target, err := window.visibleElement(label)
-	if err != nil {
-		return Element{}, err
-	}
-	if !target.Pressable {
-		return Element{}, window.noted(elementNotPressable(label))
-	}
-	return target, nil
+	found, err := uidrive.FindPressable(window.context, label)
+	return found, window.noted(err)
 }

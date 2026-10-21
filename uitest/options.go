@@ -5,6 +5,7 @@ import (
 
 	"github.com/akrck02/go-renderer/draw2d"
 	ui "github.com/akrck02/go-ui"
+	"github.com/akrck02/go-ui/uidrive"
 )
 
 // The window's size when no Size option is given, in layout pixels.
@@ -20,6 +21,7 @@ type settings struct {
 	theme         *ui.Theme
 	measurer      draw2d.Measurer
 	test          testing.TB // the test the window records for (recording.go)
+	driver        uidrive.Driver
 }
 
 // Option chooses something about a test window; give them to New.
@@ -43,4 +45,10 @@ func Theme(theme ui.Theme) Option {
 // Measurer sets how text is measured; without it the window uses FixedMeasurer.
 func Measurer(measurer draw2d.Measurer) Option {
 	return func(chosen *settings) { chosen.measurer = measurer }
+}
+
+// Driver gives the window a driver, which it runs at every frame as a real window does
+// (window.Options.Driver): before the interface, to add input, and after it, to draw over it.
+func Driver(driver uidrive.Driver) Option {
+	return func(chosen *settings) { chosen.driver = driver }
 }

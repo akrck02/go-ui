@@ -2,55 +2,33 @@ package uitest
 
 import (
 	"fmt"
-
-	"github.com/akrck02/go-renderer/draw2d"
 	"time"
 
-	"github.com/akrck02/go-renderer/input"
+	"github.com/akrck02/go-renderer/draw2d"
 )
 
 // longPressHold is how long LongPress keeps the finger down: more than Go UI's long press needs.
 const longPressHold = time.Second
 
-// noFinger means no finger is the pointer.
-const noFinger = -1
-
 // TouchDown puts a finger on the screen and runs a frame. The first finger down also moves and
 // presses the pointer, as a phone's backend does, so controls answer it as a click.
 func (window *Window) TouchDown(finger int64, x, y float32) {
 	defer window.doing("Touch", draw2d.Rect{}, false)()
-	if len(window.state.Touches()) == 0 {
-		window.pointerFinger = finger
-	}
-	window.state.SetTouch(finger, float64(x), float64(y))
-	if finger == window.pointerFinger {
-		window.state.MoveCursor(float64(x), float64(y))
-		window.pointerMoved = true
-		window.state.SetButton(input.MouseLeft, true)
-		window.pointerDown = true
-	}
+	window.hand.TouchDown(window.state, finger, x, y)
 	window.step()
 }
 
 // TouchMove moves a finger that is down and runs a frame.
 func (window *Window) TouchMove(finger int64, x, y float32) {
 	defer window.doing("Move a finger", draw2d.Rect{}, false)()
-	window.state.SetTouch(finger, float64(x), float64(y))
-	if finger == window.pointerFinger {
-		window.state.MoveCursor(float64(x), float64(y))
-	}
+	window.hand.TouchMove(window.state, finger, x, y)
 	window.step()
 }
 
 // TouchUp lifts a finger and runs a frame.
 func (window *Window) TouchUp(finger int64) {
 	defer window.doing("Lift a finger", draw2d.Rect{}, false)()
-	window.state.LiftTouch(finger)
-	if finger == window.pointerFinger {
-		window.state.SetButton(input.MouseLeft, false)
-		window.pointerDown = false
-		window.pointerFinger = noFinger
-	}
+	window.hand.TouchUp(window.state, finger)
 	window.step()
 }
 

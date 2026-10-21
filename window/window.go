@@ -26,6 +26,7 @@ import (
 	"github.com/akrck02/go-renderer/models"
 	"github.com/akrck02/go-renderer/scene"
 	ui "github.com/akrck02/go-ui"
+	"github.com/akrck02/go-ui/uidrive"
 )
 
 // Options configure the window.
@@ -68,6 +69,11 @@ type Options struct {
 	// again. It is the moment to play again what Hidden stopped, such as a sound. On the desktop,
 	// where a hidden window has closed, it is not called.
 	Shown func()
+	// Driver, when set, drives the window: at every frame it adds input before the interface runs
+	// and may draw over it after (uidrive.Player plays a script: a demo, a tutorial, a replay, a
+	// test on the device; uidrive.Recorder writes down what a person does). A person's own input
+	// still arrives, and stops a Player. Nil costs nothing.
+	Driver uidrive.Driver
 }
 
 // SceneView is a 3D scene seen from a camera, drawn behind the interface.
@@ -206,9 +212,11 @@ func interfaceApplication(context *ui.Context, options Options, build func(conte
 			return shown.same(context.Drawing(), context.Theme.Background, width, height, scale)
 		},
 		Update: func(app *models.Application, step float64) error {
+			driveBefore(options.Driver, app.Input, context)
 			context.Begin(app.Input)
 			build(context)
 			context.End()
+			showAfter(options.Driver, context)
 			view.view = nil
 			if options.Scene != nil {
 				unclaimed := app.Input.Unclaimed()

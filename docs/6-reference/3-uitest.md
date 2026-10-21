@@ -12,6 +12,20 @@ code when what it looks for is not there.
 ### Constants and variables
 
 ```go
+const (
+	InvalidSize         Code = "uitest.invalid-size"
+	ElementNotFound          = uidrive.ElementNotFound
+	ElementAmbiguous         = uidrive.ElementAmbiguous
+	ElementNotVisible        = uidrive.ElementNotVisible
+	ElementNotPressable      = uidrive.ElementNotPressable
+	RecordingNotSaved   Code = "uitest.recording-not-saved"
+	RecordingNotRead    Code = "uitest.recording-not-read"
+)
+```
+
+The codes this package returns; the element codes are uidrive's, under the same names.
+
+```go
 const RecordVariable = "UITEST_RECORD"
 ```
 
@@ -20,10 +34,10 @@ RecordVariable is the environment variable that turns recording on: a folder whe
 ```go
 var (
 	ErrorInvalidSize         = &Error{Code: InvalidSize}
-	ErrorElementNotFound     = &Error{Code: ElementNotFound}
-	ErrorElementAmbiguous    = &Error{Code: ElementAmbiguous}
-	ErrorElementNotVisible   = &Error{Code: ElementNotVisible}
-	ErrorElementNotPressable = &Error{Code: ElementNotPressable}
+	ErrorElementNotFound     = uidrive.ErrorElementNotFound
+	ErrorElementAmbiguous    = uidrive.ErrorElementAmbiguous
+	ErrorElementNotVisible   = uidrive.ErrorElementNotVisible
+	ErrorElementNotPressable = uidrive.ErrorElementNotPressable
 	ErrorRecordingNotSaved   = &Error{Code: RecordingNotSaved}
 	ErrorRecordingNotRead    = &Error{Code: RecordingNotRead}
 )
@@ -33,25 +47,11 @@ The errors to compare with errors.Is; comparing them allocates nothing.
 
 ### Code
 
-Code is the stable name of an error of this package: programs compare it, people search for it.
+Code is the stable name of an error: programs compare it, people search for it. It is uidrive's, which finds elements for this package.
 
 ```go
-type Code string
+type Code = uidrive.Code
 ```
-
-```go
-const (
-	InvalidSize         Code = "uitest.invalid-size"
-	ElementNotFound     Code = "uitest.element-not-found"
-	ElementAmbiguous    Code = "uitest.element-ambiguous"
-	ElementNotVisible   Code = "uitest.element-not-visible"
-	ElementNotPressable Code = "uitest.element-not-pressable"
-	RecordingNotSaved   Code = "uitest.recording-not-saved"
-	RecordingNotRead    Code = "uitest.recording-not-read"
-)
-```
-
-The codes this package returns.
 
 | Function or method | |
 |---|---|
@@ -59,36 +59,19 @@ The codes this package returns.
 
 ### Element
 
-Element is what the last frame showed of a control, a text or a scroll area.
+Element is what the last frame showed of a control, a text or a scroll area (uidrive.Element).
 
 ```go
-type Element struct {
-	ID        ui.ID       // the one the interface gives it, 0 when it was not on screen
-	Label     string      // what a screen reader calls it: a button's text, a described label
-	Rect      draw2d.Rect // where it was laid out, in layout pixels
-	Visible   bool        // some of it shows: not scrolled away, not behind a dialog or sheet
-	Focused   bool        // it has the focus (ui.Context.FocusedID)
-	Pressable bool        // a click or a tap does something to it
-}
+type Element = uidrive.Element
 ```
 
 ### Error
 
-Error is an error of this package: its code, and a message for people.
+Error is an error with a code, and a message for people (uidrive.Error).
 
 ```go
-type Error struct {
-	Code    Code
-	Message string
-	Cause   error // what went wrong underneath, when something outside this package failed
-}
+type Error = uidrive.Error
 ```
-
-| Function or method | |
-|---|---|
-| `func (err *Error) Error() string` | Error gives the code and the message. |
-| `func (err *Error) Is(target error) bool` | Is tells whether target is an error of this package with the same code, so errors.Is compares codes, never messages. |
-| `func (err *Error) Unwrap() error` | Unwrap is the cause underneath, for errors.Is and errors.As. |
 
 ### FixedMeasurer
 
@@ -113,6 +96,7 @@ type Option func(*settings)
 
 | Function or method | |
 |---|---|
+| `func Driver(driver uidrive.Driver) Option` | Driver gives the window a driver, which it runs at every frame as a real window does (window.Options.Driver): before the interface, to add input, and after it, to draw over it. |
 | `func Measurer(measurer draw2d.Measurer) Option` | Measurer sets how text is measured; without it the window uses FixedMeasurer. |
 | `func Scale(factor float32) Option` | Scale sets how many framebuffer pixels a layout pixel takes (2 on most phones). |
 | `func Size(width, height float32) Option` | Size sets the window's size in layout pixels: what the interface's Size reports. |
@@ -201,13 +185,14 @@ type Window struct {
 | `func (window *Window) Element(label string) (Element, error)` | Element finds what the last frame showed with this label: a button's text, a field's name, a line of text. |
 | `func (window *Window) ElementIn(path ...string) (Element, error)` | ElementIn finds a control by its scopes (the names given to ui.Context.Push) and its label, outermost first: ElementIn("north", "Save"). |
 | `func (window *Window) ElementWithin(outer, inner string) (Element, error)` | ElementWithin finds an element by its label inside another found by its label: the button "Save" in the panel called "North". |
-| `func (window *Window) Frame()` | Frame runs one frame as a backend does: Begin, the interface, End, then the end of the input step, which forgets this frame's presses and typed text. |
+| `func (window *Window) Frame()` | Frame runs one frame as a backend does: the driver if there is one, Begin, the interface, End, then the end of the input step, which forgets this frame's presses and typed text. |
 | `func (window *Window) Frames(count int)` | Frames runs a number of frames, with no time passing between them (see Wait). |
 | `func (window *Window) HoldKey(key input.Key)` | HoldKey puts a key down and runs a frame; it stays down until ReleaseKey. |
 | `func (window *Window) LongPress(label string) error` | LongPress holds a finger still on an element for a second, letting the time pass, then lifts it. |
 | `func (window *Window) MoveTo(x, y float32)` | MoveTo moves the pointer to a place in the window and runs a frame. |
 | `func (window *Window) MoveToElement(label string) error` | MoveToElement moves the pointer to the middle of an element (see Element) and runs a frame. |
 | `func (window *Window) Now() time.Time` | Now is the window's time. |
+| `func (window *Window) Play(script uidrive.Script) error` | Play plays a script in the window, as a driven window would (uidrive.Player), with a sixtieth of a second passing on the window's clock at each frame. |
 | `func (window *Window) Press()` | Press holds the main button down where the pointer is and runs a frame. |
 | `func (window *Window) PressKey(key input.Key)` | PressKey presses a key and lets it go: one frame with it down, one with it up. |
 | `func (window *Window) Release()` | Release lets the main button go and runs a frame. |
