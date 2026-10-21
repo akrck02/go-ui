@@ -253,13 +253,17 @@ text:</p>
 go run github.com/akrck02/go-ui/cmd/uitest -dark ./editor/... -run TestSaving
 </code></pre>
 
-<p>It runs <code>go test</code> with the arguments you give, with recording on, and opens a Go UI window. The
-tests are listed on the left, failed ones first. On the right you see the chosen test&rsquo;s error
-codes and messages, and a replay of its frames. <em>Play</em> shows them one after another, a tenth of
-a second each, and stops at the last; <em>Pause</em> holds the frame shown. Step through them with
-<em>Previous frame</em>, <em>Next frame</em> or the slider. The pointer is a ring, filled while pressed; fingers are orange dots; the
-element an action found has an outline in the theme&rsquo;s focus colour. Click an error&rsquo;s code to jump
-to the frame it came after.</p>
+<p>It runs <code>go test</code> with the arguments you give, with recording on, and opens a Go UI window. Every
+test it ran is listed on the left by package, failed ones first; the chips above it (<em>All</em>,
+<em>Failed</em>, <em>With a window</em>, each with how many) narrow the list. A test with no window shows what it wrote. A window test shows its error codes
+and messages, and a replay of its frames. <em>Play</em> shows them one after another, a tenth of a second
+each, and stops at the last; <em>Pause</em> holds the frame shown. Step through them with <em>Previous
+frame</em>, <em>Next frame</em> or the slider. The pointer is a ring, filled while pressed; fingers are
+orange dots; the element an action found has an outline in the theme&rsquo;s focus colour. Click an
+error&rsquo;s code to jump to the frame it came after.</p>
+
+<p>From another module, name the viewer&rsquo;s version: <code>go run github.com/akrck02/go-ui/cmd/uitest@main
+./...</code> (add <code>GOPROXY=direct</code> when the module proxy has not seen the latest <code>main</code> yet).</p>
 
 <p>Recording costs nothing in a plain <code>go test</code>: a window only keeps its frames while the
 <code>UITEST_RECORD</code> variable names a folder, which the viewer sets for you. The replay shows the test&rsquo;s
