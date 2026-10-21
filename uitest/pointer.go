@@ -24,7 +24,7 @@ func (window *Window) MoveTo(x, y float32) {
 	defer window.doing("Move", draw2d.Rect{}, false)()
 	window.state.MoveCursor(float64(x), float64(y))
 	window.pointerMoved = true
-	window.Frame()
+	window.step()
 }
 
 // MoveToElement moves the pointer to the middle of an element (see Element) and runs a frame.
@@ -44,7 +44,7 @@ func (window *Window) Press() {
 	defer window.doing("Press", draw2d.Rect{}, false)()
 	window.state.SetButton(input.MouseLeft, true)
 	window.pointerDown = true
-	window.Frame()
+	window.step()
 }
 
 // Release lets the main button go and runs a frame.
@@ -52,10 +52,10 @@ func (window *Window) Release() {
 	defer window.doing("Release", draw2d.Rect{}, false)()
 	window.state.SetButton(input.MouseLeft, false)
 	window.pointerDown = false
-	window.Frame()
+	window.step()
 }
 
-// ClickAt moves the pointer to a place, presses and releases there: three frames, as a control
+// ClickAt moves the pointer to a place, presses and releases there, each with its frames, as a control
 // answers when the button is let go.
 func (window *Window) ClickAt(x, y float32) {
 	defer window.doing("Click", draw2d.Rect{}, false)()
@@ -126,7 +126,7 @@ func (window *Window) Scroll(label string, amount float32) error {
 	middle := center(target.Rect)
 	window.MoveTo(middle.x, middle.y)
 	window.state.AddScroll(float64(amount))
-	window.Frame()
+	window.step()
 	return nil
 }
 

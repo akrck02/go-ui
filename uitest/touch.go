@@ -29,7 +29,7 @@ func (window *Window) TouchDown(finger int64, x, y float32) {
 		window.state.SetButton(input.MouseLeft, true)
 		window.pointerDown = true
 	}
-	window.Frame()
+	window.step()
 }
 
 // TouchMove moves a finger that is down and runs a frame.
@@ -39,7 +39,7 @@ func (window *Window) TouchMove(finger int64, x, y float32) {
 	if finger == window.pointerFinger {
 		window.state.MoveCursor(float64(x), float64(y))
 	}
-	window.Frame()
+	window.step()
 }
 
 // TouchUp lifts a finger and runs a frame.
@@ -51,7 +51,7 @@ func (window *Window) TouchUp(finger int64) {
 		window.pointerDown = false
 		window.pointerFinger = noFinger
 	}
-	window.Frame()
+	window.step()
 }
 
 // Tap touches the middle of an element that can be pressed and lifts the finger at once.

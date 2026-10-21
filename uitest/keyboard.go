@@ -18,14 +18,14 @@ func (window *Window) PressKey(key input.Key) {
 func (window *Window) HoldKey(key input.Key) {
 	defer window.doing("Hold a key", draw2d.Rect{}, false)()
 	window.state.SetKey(key, true)
-	window.Frame()
+	window.step()
 }
 
 // ReleaseKey lets a key go and runs a frame.
 func (window *Window) ReleaseKey(key input.Key) {
 	defer window.doing("Let a key go", draw2d.Rect{}, false)()
 	window.state.SetKey(key, false)
-	window.Frame()
+	window.step()
 }
 
 // Tab moves the focus to the next control, as the Tab key does.
@@ -49,7 +49,7 @@ func (window *Window) Type(text string) {
 	for _, character := range text {
 		window.state.AddCharacter(character)
 	}
-	window.Frame()
+	window.step()
 }
 
 // TypeOneByOne types a text one character a frame, as a person types.
@@ -57,6 +57,6 @@ func (window *Window) TypeOneByOne(text string) {
 	defer window.doing(fmt.Sprintf("Type %q", text), draw2d.Rect{}, false)()
 	for _, character := range text {
 		window.state.AddCharacter(character)
-		window.Frame()
+		window.step()
 	}
 }

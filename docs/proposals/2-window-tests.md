@@ -178,6 +178,10 @@ replay.
   the window, and draws the pointer only once it has been somewhere. Shadows are redrawn from
   their recorded size, only roughly.
 
+- After each input the window runs one more frame and any frame asked for at once, as Go
+  Renderer's on-demand loop does; found while trying `uitest` on go-engine's editor, whose
+  workspace bar is drawn after the page it changes.
+
 **For a person to review**: all of it is AI-written and pending review. The viewer's look on a
 real display (light and dark), how it feels to step through a long test, and whether `uitest` is
 the API go-engine's editor wants, by writing one of its tests with it.

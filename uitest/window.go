@@ -96,3 +96,26 @@ func (window *Window) State() *input.State { return window.state }
 
 // DrawList is what the last frame drew, as go-renderer would paint it.
 func (window *Window) DrawList() *draw2d.List { return window.context.Drawing() }
+
+// maximumSettlingFrames bounds the frames an action runs after its own, so an interface that asks
+// for a frame every time it draws cannot keep a test running for ever.
+const maximumSettlingFrames = 10
+
+// step runs the frame of an input, then one more, then the frames the interface asked to have at
+// once, as Go Renderer's window loop does when it draws on demand (windowloop.waitForWork): what a
+// click changed, drawn earlier in the frame than the button, shows in the frame after it.
+func (window *Window) step() {
+	window.Frame()
+	window.Frame()
+	for range maximumSettlingFrames {
+		wait, asked := window.state.TakeFrameRequest()
+		if !asked {
+			return
+		}
+		if wait > 0 {
+			window.state.RequestFrame(wait) // not due yet: leave it for Wait, or for the test to read
+			return
+		}
+		window.Frame()
+	}
+}

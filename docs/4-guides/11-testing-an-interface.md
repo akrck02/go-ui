@@ -81,8 +81,11 @@ Every action runs whole frames, so the interface sees it as it would on a screen
 | Touch | `TouchDown`, `TouchMove`, `TouchUp`, `Tap`, `LongPress` |
 | Time | `Wait(duration)` |
 
-A click is three frames: move, press, release. Go UI answers a button when it is let go, as
-desktops do, so the release frame is the one where `Button` returns true.
+A click is a move, a press and a release. Go UI answers a button when it is let go, as desktops
+do, so the release frame is the one where `Button` returns true. After each input the window runs
+one more frame, and any frame the interface asked for at once, as a real window does. So what a
+click changed is on screen when `Click` returns, even when it was drawn before the button: a tab
+bar at the bottom that changes the page above it.
 
 ### Time stands still
 

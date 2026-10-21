@@ -99,3 +99,19 @@ func TestScrollingShowsWhatWasBelow(t *testing.T) {
 		t.Fatal("scrolling down did not show the last entry")
 	}
 }
+
+func TestAClickShowsWhatItChangedAtOnce(t *testing.T) {
+	page := "Home"
+	window := newWindow(t, func(context *ui.Context) {
+		context.Label("Page: " + page) // drawn before the button that changes it, as a tab bar at the bottom
+		if context.Button("Open the log") {
+			page = "Log"
+		}
+	})
+	if err := window.Click("Open the log"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := window.Element("Page: Log"); err != nil {
+		t.Fatalf("after the click the window does not show its change: %v", err)
+	}
+}
