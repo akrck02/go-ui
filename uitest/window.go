@@ -15,6 +15,8 @@ type Window struct {
 	state   *input.State
 	build   func(context *ui.Context)
 	clock   clock
+	// measurer is the interface's, to measure texts found in the draw list (find.go)
+	measurer draw2d.Measurer
 }
 
 // New makes a test window for an interface function: 800x600 layout pixels at scale 1, ui's
@@ -27,7 +29,7 @@ func New(build func(context *ui.Context), options ...Option) (*Window, error) {
 	if chosen.width <= 0 || chosen.height <= 0 || chosen.scale <= 0 {
 		return nil, invalidSize(chosen.width, chosen.height)
 	}
-	window := &Window{context: ui.NewWithMeasurer(chosen.measurer), build: build}
+	window := &Window{context: ui.NewWithMeasurer(chosen.measurer), build: build, measurer: chosen.measurer}
 	window.state = newState(chosen.width, chosen.height)
 	if chosen.theme != nil {
 		window.context.Theme = *chosen.theme

@@ -29,10 +29,32 @@ func (window *Window) Element(label string) (Element, error) {
 	if len(matches) == 1 {
 		return window.elementOf(matches[0]), nil
 	}
+	if texts := window.textsDrawn(label); len(texts) > 0 {
+		if len(texts) > 1 {
+			return Element{}, elementAmbiguous(label, len(texts))
+		}
+		return texts[0], nil
+	}
 	if area, found := window.context.Area(label); found {
 		return Element{Label: label, Rect: area}, nil
 	}
 	return Element{}, elementNotFound(label, window.labels())
+}
+
+// textsDrawn is the lines of text the last frame drew that say exactly this: a screen reader reads
+// the texts of one box as one node, so a line on its own is found in the draw list. The list drops
+// lines clipped away; a line kept shows unless a layer above (a dialog's dimming, a popup) covers it.
+func (window *Window) textsDrawn(text string) []Element {
+	var found []Element
+	for _, command := range window.DrawList().Commands {
+		if command.Kind != draw2d.TextKind || command.Text != text {
+			continue
+		}
+		area := command.Area // a text's area has no width in the list: measure it
+		area.Width = window.measurer.MeasureText(text, command.Size, command.Weight, 0).Width
+		found = append(found, Element{Label: text, Rect: area, Visible: !window.coveredFromAbove(area, command.Layer)})
+	}
+	return found
 }
 
 // ElementIn finds a control by its scopes (the names given to ui.Context.Push) and its label,
@@ -94,6 +116,17 @@ func (window *Window) Texts() []string {
 		}
 	}
 	return texts
+}
+
+// coveredFromAbove tells whether a filled rectangle of a higher layer covers an area.
+func (window *Window) coveredFromAbove(area draw2d.Rect, layer int) bool {
+	for _, command := range window.DrawList().Commands {
+		covers := command.Kind == draw2d.RectangleKind && command.Layer > layer && command.Fill.IsVisible()
+		if covers && contains(command.Area, area) {
+			return true
+		}
+	}
+	return false
 }
 
 // contains tells whether a rectangle holds another.

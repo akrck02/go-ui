@@ -167,7 +167,7 @@ func TestTheScreenReaderTreeDoesNotChangeTheLayout(t *testing.T) {
 	with := ui.NewWithMeasurer(FixedMeasurer{})
 	with.SetScreenReader(true)
 	for _, context := range []*ui.Context{without, with} {
-		window := &Window{context: context, build: keeperLog}
+		window := &Window{context: context, build: keeperLog, measurer: FixedMeasurer{}}
 		window.state = newState(defaultWidth, defaultHeight)
 		window.Frame()
 	}

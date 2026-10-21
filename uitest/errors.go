@@ -67,3 +67,13 @@ func elementNotFound(label string, shown []string) error {
 func elementAmbiguous(label string, count int) error {
 	return &Error{Code: ElementAmbiguous, Message: fmt.Sprintf("%d elements are called %s; find one with ElementIn and its scope", count, describe(label))}
 }
+
+// elementNotVisible is the error of an element laid out where it cannot be reached.
+func elementNotVisible(label string) error {
+	return &Error{Code: ElementNotVisible, Message: describe(label) + " is scrolled away or behind a dialog"}
+}
+
+// elementNotPressable is the error of a click on something that does nothing when pressed.
+func elementNotPressable(label string) error {
+	return &Error{Code: ElementNotPressable, Message: describe(label) + " is not a control: a click on it does nothing"}
+}

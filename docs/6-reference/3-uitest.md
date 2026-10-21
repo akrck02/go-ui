@@ -119,14 +119,24 @@ type Window struct {
 | Function or method | |
 |---|---|
 | `func New(build func(context *ui.Context), options ...Option) (*Window, error)` | New makes a test window for an interface function: 800x600 layout pixels at scale 1, ui's default theme and FixedMeasurer, unless options say otherwise. |
+| `func (window *Window) Click(label string) error` | Click clicks the middle of an element that can be pressed. |
+| `func (window *Window) ClickAt(x, y float32)` | ClickAt moves the pointer to a place, presses and releases there: three frames, as a control answers when the button is let go. |
 | `func (window *Window) Context() *ui.Context` | Context is the interface's context, for what this package does not cover yet. |
+| `func (window *Window) DoubleClick(label string) error` | DoubleClick clicks an element twice with no time between, which the input state counts as a double click. |
+| `func (window *Window) Drag(fromX, fromY, toX, toY float32)` | Drag presses at one place, moves to another over several frames and lets go there. |
+| `func (window *Window) DragElement(label string, distanceX, distanceY float32) error` | DragElement drags an element's middle by a distance in layout pixels. |
 | `func (window *Window) DrawList() *draw2d.List` | DrawList is what the last frame drew, as go-renderer would paint it. |
 | `func (window *Window) Element(label string) (Element, error)` | Element finds what the last frame showed with this label: a button's text, a field's name, a line of text. |
 | `func (window *Window) ElementIn(path ...string) (Element, error)` | ElementIn finds a control by its scopes (the names given to ui.Context.Push) and its label, outermost first: ElementIn("north", "Save"). |
 | `func (window *Window) Frame()` | Frame runs one frame as a backend does: Begin, the interface, End, then the end of the input step, which forgets this frame's presses and typed text. |
 | `func (window *Window) Frames(count int)` | Frames runs a number of frames, with no time passing between them (see Wait). |
+| `func (window *Window) MoveTo(x, y float32)` | MoveTo moves the pointer to a place in the window and runs a frame. |
+| `func (window *Window) MoveToElement(label string) error` | MoveToElement moves the pointer to the middle of an element (see Element) and runs a frame. |
 | `func (window *Window) Now() time.Time` | Now is the window's time. |
+| `func (window *Window) Press()` | Press holds the main button down where the pointer is and runs a frame. |
+| `func (window *Window) Release()` | Release lets the main button go and runs a frame. |
 | `func (window *Window) Resize(width, height float32) error` | Resize changes the window's size in layout pixels, keeping its scale; the next frame sees it. |
+| `func (window *Window) Scroll(label string, amount float32) error` | Scroll puts the pointer over an element and turns the wheel: a negative amount goes down the page, as a wheel turned toward the person does. |
 | `func (window *Window) State() *input.State` | State is the window's input state, for what this package does not cover yet. |
 | `func (window *Window) Texts() []string` | Texts is every line of text the last frame drew, in drawing order: headings, labels, buttons' texts, a field's text. |
 | `func (window *Window) Wait(duration time.Duration)` | Wait lets time pass: it runs a frame about every sixtieth of a second until the duration has gone, so long presses, double-click intervals and animations see time move as on a screen. |
