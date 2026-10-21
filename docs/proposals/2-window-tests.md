@@ -1,6 +1,6 @@
 # 2. Window tests: drive an interface in `go test`, with no display
 
-> Status: building · Author's approval: proposal ☑ (2026-10-21) plan ☑ (2026-10-21)
+> Status: in review · Author's approval: proposal ☑ (2026-10-21) plan ☑ (2026-10-21)
 
 ## Why
 
@@ -144,3 +144,39 @@ which before moving anything.
 - [x] T7 — The example and the guide: `ExampleWindow` (a lighthouse keeper's log: click a button, type a line, find it), `docs/4-guides/11-testing-an-interface.md`, a reference page `docs/6-reference/3-uitest.md` made by `generate.py`, links from the overview · `uitest/example_test.go`, `docs/` · R10 · the example's `// Output:` is checked by `go test`; the author reads the guide
 - [x] T8 — Recording: the `Test(t)` option, frames and errors kept only while `UITEST_RECORD` is set, one JSON file per test · `uitest/recording.go`, `options.go` · R12 · tests: `TestAWindowWithoutRecordingKeepsNothing`, `TestARecordedTestWritesItsFramesAndErrors`
 - [x] T9 — The results viewer: `cmd/uitest` runs the tests and shows them, logic apart from look; a guide section on it · `cmd/uitest/main.go`, `results.go`, `replay.go`, `view.go`, `docs/4-guides/11-testing-an-interface.md` · R12 · tests (with `uitest`): `TestFailedTestsComeFirst`, `TestSteppingStopsAtTheEnds`, `TestTheStepButtonsMoveThroughTheFrames`, `TestChoosingATestShowsItsErrors`, `TestTheFoundElementIsHighlighted`, `TestAFrameWithNoTargetHasNoHighlight`; the window's look is checked by the author on a display
+
+## Result
+
+**Built** on `feature/window-tests`, one commit per task:
+
+- Package `uitest` (R1–R8, R11): `New` with `Size`, `Scale`, `Theme`, `Measurer`, `Test`;
+  `Frame`, `Frames`, `Wait`; the pointer, keys, typed text and touch; `Element`, `ElementIn`,
+  `Texts`, `DrawList`; errors with seven codes in `uitest/errors.go`. One public addition to `ui`:
+  `Context.FocusedID`. `AccessibleNode.Hidden` was not needed: the screen-reader tree already leaves
+  out what is behind a dialog, and a text covered by a higher layer is found not visible.
+- Go UI's own tests (R9): five tests moved to `uitest`; the rest keep the private harness because
+  they read private state.
+- `ExampleWindow` and the guide `docs/4-guides/11-testing-an-interface.md`, with its reference
+  page (R10).
+- Recording and the viewer `cmd/uitest` (R12).
+
+**Checks run**: `gofmt -l .` prints nothing; `go vet ./...` and `go test ./...` pass; every test
+named in What exists and passes; `go list -deps` of `ui` has no `uitest`. The viewer was run once
+under Xvfb with Mesa (`-capture`) on two made-up tests: it drew the list, the error card and the
+replay.
+
+**Not built, or different from the plan**:
+
+- The arrow keys in the viewer: `ui.Context` has no public way to read a key outside a scene.
+- A plain line of text (not a control) is found from the draw list, because the screen reader
+  joins the texts of one box into one node; such an element is never `Focused` or `Pressable`.
+  The not-found message lists the screen reader's labels, which may show joined texts.
+- `Test(t)` reports a recording it could not save with `t.Error`: the one place the package fails
+  a test itself, and only while recording is on.
+- The replay paints with real fonts what the test measured with `FixedMeasurer`, so labels can
+  look wider than their boxes; shadows are redrawn from their recorded size, only roughly.
+
+**For a person to review**: all of it is AI-written and pending review. The viewer's look on a
+real display (light and dark), how it feels to step through a long test, and whether `uitest` is
+the API go-engine's editor wants, by writing one of its tests with it.
+
