@@ -83,7 +83,8 @@ type SceneView struct {
 	Drawing *draw2d.List
 	// Below is a second scene for the 3DS's bottom screen, with the interface painted over it (a
 	// map, a turning model); nil leaves the bottom screen to the interface alone. On a computer it
-	// is drawn only where its Area says (a preview of the console).
+	// is drawn only where its Area says: beside the scene (a preview of the console), or in a
+	// corner of a scene that fills the window (a radar), under the program's drawing.
 	Below *BelowView
 	// Area is where the scene is drawn on a computer, in window pixels; nil is the whole window.
 	// Around it the window shows the theme's background (a preview of a console's screen).

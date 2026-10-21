@@ -112,7 +112,7 @@ func runOpenGL(context *ui.Context, app *models.Application, view *shownScene) e
 			}
 			sceneRenderer.OverlayScale = scale
 			seconds := time.Since(started).Seconds()
-			if view.view.Area == nil {
+			if !drawsInAreas(view.view) {
 				sceneRenderer.Draw(view.view.World, view.view.Camera, framebufferWidth, framebufferHeight, seconds)
 				return nil
 			}
@@ -142,11 +142,22 @@ func runOpenGL(context *ui.Context, app *models.Application, view *shownScene) e
 // nothingToPaint is an empty list, painted to clear the frame.
 var nothingToPaint draw2d.List
 
+// drawsInAreas tells whether a view needs areas of the window: the scene has one of its own, or
+// the one below has a place to be shown in (a corner of the window, over the scene).
+func drawsInAreas(view *SceneView) bool {
+	return view.Area != nil || (view.Below != nil && view.Below.Area != nil)
+}
+
 // drawInAreas draws a scene, and the one below it, in their areas of the window over the theme's
-// background, then the interface over all of them.
+// background, then the interface over all of them. A scene with no area of its own fills the
+// window, with the one below in its corner of it.
 func drawInAreas(renderer *opengl.SceneRenderer, flat *opengl.FlatRenderer, view *SceneView, background draw2d.Color, width, height int, scale float32, seconds float64) {
 	flat.Draw(&nothingToPaint, background, width, height, scale) // clears the frame to the background
-	renderer.DrawIn(view.World, view.Camera, framebufferArea(*view.Area, height, scale), seconds)
+	whole := opengl.Area{Width: width, Height: height}
+	if view.Area != nil {
+		whole = framebufferArea(*view.Area, height, scale)
+	}
+	renderer.DrawIn(view.World, view.Camera, whole, seconds)
 	if below := view.Below; below != nil && below.Area != nil {
 		renderer.DrawIn(below.World, below.Camera, framebufferArea(*below.Area, height, scale), seconds)
 	}
