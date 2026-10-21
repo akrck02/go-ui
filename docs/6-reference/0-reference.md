@@ -1,11 +1,12 @@
 # Reference
 
-go-ui has two packages:
+go-ui has three packages:
 
 | Package | Import | What it is |
 |---|---|---|
 | [`ui`](1-ui.md) | `ui "github.com/akrck02/go-ui"` | The context, layout, every control, themes, screen readers |
 | [`window`](2-window.md) | `"github.com/akrck02/go-ui/window"` | A window that runs an interface: on the desktop, in a web page, on Android; preferences, notifications, films |
+| [`uitest`](3-uitest.md) | `"github.com/akrck02/go-ui/uitest"` | A pretend window for `go test`: press, type, wait and find what an interface shows, with no display |
 
 [`ui.md`](1-ui.md) and [`window.md`](2-window.md) list every type and function with the first sentence
 of its comment; they are generated from the doc comments (`python3 docs/6-reference/generate.py`).
