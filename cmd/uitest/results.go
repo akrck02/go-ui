@@ -13,6 +13,7 @@ type results struct {
 	selected   int
 	frame      int
 	frameValue float32 // the frame as the slider holds it
+	playback   playback
 	// measurer measures text with the viewer's fonts, to fit the replay's lines (replay.measurer)
 	measurer draw2d.Measurer
 }
@@ -46,9 +47,10 @@ func (results *results) currentFrame() (uitest.RecordedFrame, bool) {
 	return recording.Frames[results.frame], true
 }
 
-// choose shows another test, from its first frame.
+// choose shows another test, from its first frame, paused.
 func (results *results) choose(index int) {
 	results.selected = index
+	results.playback.playing = false
 	results.goTo(0)
 }
 

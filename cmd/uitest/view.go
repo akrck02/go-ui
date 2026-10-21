@@ -124,9 +124,20 @@ func (results *results) replayCard(context *ui.Context) {
 	})
 }
 
-// stepControls are the buttons and the slider that move through the frames.
+// stepControls are the buttons and the slider that move through the frames, and play and pause
+// them.
 func (results *results) stepControls(context *ui.Context, frames int, action string) {
+	if wait := results.advance(); wait > 0 {
+		context.RequestFrame(wait)
+	}
 	context.Row(func() {
+		playIcon, playLabel := "play", "Play"
+		if results.playback.playing {
+			playIcon, playLabel = "pause", "Pause"
+		}
+		if context.FlatIconButton(playIcon, playLabel) {
+			results.togglePlaying()
+		}
 		if context.FlatIconButton("chevron-left", "Previous frame") {
 			results.step(-1)
 		}

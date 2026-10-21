@@ -152,8 +152,9 @@ go run github.com/akrck02/go-ui/cmd/uitest -dark ./editor/... -run TestSaving
 
 It runs `go test` with the arguments you give, with recording on, and opens a Go UI window. The
 tests are listed on the left, failed ones first. On the right you see the chosen test's error
-codes and messages, and a replay of its frames. Step through them with *Previous frame*, *Next
-frame* or the slider. The pointer is a ring, filled while pressed; fingers are orange dots; the
+codes and messages, and a replay of its frames. *Play* shows them one after another, a tenth of
+a second each, and stops at the last; *Pause* holds the frame shown. Step through them with
+*Previous frame*, *Next frame* or the slider. The pointer is a ring, filled while pressed; fingers are orange dots; the
 element an action found has an outline in the theme's focus colour. Click an error's code to jump
 to the frame it came after.
 
