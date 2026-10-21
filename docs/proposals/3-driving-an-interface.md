@@ -125,7 +125,7 @@ it would break when the layout moves; names survive a new layout.
 - [x] T4 — `Player` runs each step frame by frame; `uitest.Driver` and `Window.Play` · `uidrive/
   player.go`, `uitest/window.go`, `uitest/play.go` · serves R2, R3 · test: one per step against a
   made-up interface (`TestAClickStepPressesTheButtonByItsName`…)
-- [ ] T5 — the report, a line per step with its code · `uidrive/report.go` · serves R6 · test:
+- [x] T5 — the report, a line per step with its code · `uidrive/report.go` · serves R6 · test:
   `TestTheReportSaysEachStepAndTheCodeOfAFailure`
 - [ ] T6 — a person's input stops a script · `uidrive/player.go` · serves R9 · test:
   `TestAKeyPressedDuringAScriptStopsIt`

@@ -45,10 +45,11 @@ func (keeper *lighthouse) keeperInterface(state func() *input.State) func(*ui.Co
 }
 
 // keeperWindow opens a test window on the keeper's interface.
-func keeperWindow(test *testing.T, keeper *lighthouse) *uitest.Window {
+func keeperWindow(test *testing.T, keeper *lighthouse, options ...uitest.Option) *uitest.Window {
 	test.Helper()
 	var window *uitest.Window
-	window, err := uitest.New(keeper.keeperInterface(func() *input.State { return window.State() }), uitest.Test(test))
+	options = append(options, uitest.Test(test))
+	window, err := uitest.New(keeper.keeperInterface(func() *input.State { return window.State() }), options...)
 	if err != nil {
 		test.Fatal(err)
 	}

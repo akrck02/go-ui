@@ -28,6 +28,7 @@ type Player struct {
 	index   int    // the step playing now
 	moves   []move // what the step playing now still has to do, a frame each
 	planned bool   // the step playing now has found its element and made its moves
+	started bool   // a frame has run since the first Drive, so its nodes can be searched
 	found   Element
 	done    bool
 	err     error
@@ -49,24 +50,26 @@ func (player *Player) Done() bool { return player.done }
 // script plays and when every step passed.
 func (player *Player) Err() error { return player.err }
 
-// Drive plays a frame of the script. Elements are found through the screen reader's nodes, so the
-// first frame turns the screen reader on and waits for the frame that makes them.
+// Drive plays a frame of the script. Elements are found through the screen reader's nodes in what
+// the last frame showed, so the first frame turns the screen reader on and only lets the interface
+// run, to make them.
 func (player *Player) Drive(state *input.State, context *ui.Context) {
 	if player.done {
 		return
 	}
-	state.RequestFrame(0) // a window that draws on demand keeps drawing while a script plays
-	if !context.ScreenReaderOn() {
-		context.SetScreenReader(true)
+	state.RequestFrame(0)         // a window that draws on demand keeps drawing while a script plays
+	context.SetScreenReader(true) // on a phone the window may turn it off before each frame
+	if !player.started {
+		player.started = true
 		return
 	}
 	if player.index >= len(player.script) {
-		player.finish(nil)
+		reportScriptPassed(player.options.Report, len(player.script))
+		player.done = true
 		return
 	}
 	if err := player.playFrame(state, context); err != nil {
-		player.hand.LetGo(state)
-		player.finish(err)
+		player.fail(state, err)
 	}
 }
 
@@ -86,7 +89,7 @@ func (player *Player) playFrame(state *input.State, context *ui.Context) error {
 	}
 	player.moves = player.moves[1:]
 	if len(player.moves) == 0 {
-		player.passed(step)
+		reportPassed(player.options.Report, player.index+1, step)
 		player.index++
 		player.planned = false
 	}
@@ -96,10 +99,10 @@ func (player *Player) playFrame(state *input.State, context *ui.Context) error {
 // Show draws what the player does over the interface, when its options ask for it.
 func (player *Player) Show(drawing *draw2d.List) {}
 
-// finish ends the script, with the error that ended it or nil.
-func (player *Player) finish(err error) {
+// fail ends the script at the step playing now: it lets go of what it holds, so nothing stays
+// pressed, and reports why.
+func (player *Player) fail(state *input.State, err error) {
+	player.hand.LetGo(state)
 	player.done, player.err = true, err
+	reportFailed(player.options.Report, player.index+1, player.script[player.index], err)
 }
-
-// passed notes a step that played through.
-func (player *Player) passed(step Step) {}
