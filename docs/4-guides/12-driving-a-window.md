@@ -55,9 +55,18 @@ script, err := uidrive.Parse(text)
 if err != nil {
 	return err
 }
-player := uidrive.Play(script, uidrive.PlayOptions{Report: os.Stdout})
+player := uidrive.Play(script, uidrive.PlayOptions{Report: os.Stdout, Show: true})
 return window.Run(window.Options{Title: "Lighthouse", Driver: player}, build)
 ```
+
+With `Show: true` the player draws what it does over the interface: an outline around the element
+its step found, the pointer as an orange ring (filled while pressed) and each finger as a dot, so a
+demo or a tutorial is seen, not only run. Here the register example (`go run ./cmd/app -script
+tour.txt`) has typed "Rock" in its search box and points at *New lighthouse*:
+
+![The register driven by a script: the search box says Rock, and an orange outline and ring point at New lighthouse](../images/driving-a-window.png)
+
+`go run ./cmd/app -record session.txt` writes down what you do instead (see below).
 
 `window.Options.Driver` works on every target: the desktop, a web page, Android and the 3DS. The
 window keeps drawing while the script plays, even one that draws only on demand, and goes back to
@@ -74,7 +83,7 @@ ends with `uidrive.script-stopped`. An attract mode stops the moment someone pic
 
 ## Automatic modes
 
-- **A demo** (attract mode): a script that shows the program's best parts.
+- **A demo** (attract mode): a script that shows the program's best parts, with `Show: true`.
   Start it after a while without input; a touch gives the program back.
 - **A replay**: record what a person did (below), and play it back to see what they saw.
 - **A tutorial**: the same, a step at a time. A program can play a script of one `move-to` to

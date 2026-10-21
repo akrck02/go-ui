@@ -15,8 +15,15 @@ type Hand struct {
 	hasPointerFinger bool
 	down             bool // the main button or the pointer's finger is down
 	placed           bool // the pointer has been put somewhere
+	x, y             float32
 	keys             []input.Key
-	fingers          []int64
+	fingers          []fingerAt
+}
+
+// fingerAt is a finger on the screen and where it is, in layout pixels.
+type fingerAt struct {
+	finger int64
+	x, y   float32
 }
 
 // Down tells whether the main button, or the finger that is the pointer, is down.
@@ -28,7 +35,7 @@ func (hand *Hand) Placed() bool { return hand.placed }
 // MoveTo moves the pointer to a place in the window, in layout pixels.
 func (hand *Hand) MoveTo(state *input.State, x, y float32) {
 	state.MoveCursor(float64(x), float64(y))
-	hand.placed = true
+	hand.placed, hand.x, hand.y = true, x, y
 }
 
 // Press holds the main button down where the pointer is.
@@ -48,10 +55,7 @@ func (hand *Hand) TouchDown(state *input.State, finger int64, x, y float32) {
 	if len(state.Touches()) == 0 {
 		hand.pointerFinger, hand.hasPointerFinger = finger, true
 	}
-	state.SetTouch(finger, float64(x), float64(y))
-	if !slices.Contains(hand.fingers, finger) {
-		hand.fingers = append(hand.fingers, finger)
-	}
+	hand.TouchMove(state, finger, x, y)
 	if hand.isPointer(finger) {
 		hand.MoveTo(state, x, y)
 		hand.Press(state)
@@ -61,15 +65,18 @@ func (hand *Hand) TouchDown(state *input.State, finger int64, x, y float32) {
 // TouchMove moves a finger that is down.
 func (hand *Hand) TouchMove(state *input.State, finger int64, x, y float32) {
 	state.SetTouch(finger, float64(x), float64(y))
+	hand.fingers = slices.DeleteFunc(hand.fingers, func(held fingerAt) bool { return held.finger == finger })
+	hand.fingers = append(hand.fingers, fingerAt{finger: finger, x: x, y: y})
 	if hand.isPointer(finger) {
 		state.MoveCursor(float64(x), float64(y))
+		hand.x, hand.y = x, y
 	}
 }
 
 // TouchUp lifts a finger.
 func (hand *Hand) TouchUp(state *input.State, finger int64) {
 	state.LiftTouch(finger)
-	hand.fingers = slices.DeleteFunc(hand.fingers, func(held int64) bool { return held == finger })
+	hand.fingers = slices.DeleteFunc(hand.fingers, func(held fingerAt) bool { return held.finger == finger })
 	if hand.isPointer(finger) {
 		hand.Release(state)
 		hand.hasPointerFinger = false
@@ -106,7 +113,7 @@ func (hand *Hand) Type(state *input.State, text string) {
 // does when it stops halfway, so nothing stays pressed.
 func (hand *Hand) LetGo(state *input.State) {
 	for len(hand.fingers) > 0 {
-		hand.TouchUp(state, hand.fingers[0])
+		hand.TouchUp(state, hand.fingers[0].finger)
 	}
 	for len(hand.keys) > 0 {
 		hand.ReleaseKey(state, hand.keys[0])

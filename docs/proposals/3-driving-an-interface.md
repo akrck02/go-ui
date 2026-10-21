@@ -135,7 +135,7 @@ it would break when the layout moves; names survive a new layout.
   `BenchmarkAWindowStep…`; guide page `docs/4-guides/12-driving-a-window.md`
 - [x] T8 — `Recorder` writes down a person's session as a script · `uidrive/recorder.go` · serves R4
   · test: `TestARecordedSessionPlayedBackEndsInTheSameState`
-- [ ] T9 — the overlay: pointer, fingers and the element found · `uidrive/show.go`, `cmd/example` ·
+- [x] T9 — the overlay: pointer, fingers and the element found · `uidrive/show.go`, `cmd/example` ·
   serves R5 · test: `TestAShownPlayerDrawsThePointerAndTheElementItFound`; a capture
 - [ ] Later, in **go-ui-android** (not this change) — R7: a test that installs an application in
   the emulator, plays a script on it with its report going to Android's log, and reads the log

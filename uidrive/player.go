@@ -3,7 +3,6 @@ package uidrive
 import (
 	"io"
 
-	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
 	ui "github.com/akrck02/go-ui"
 )
@@ -87,7 +86,10 @@ func (player *Player) playFrame(state *input.State, context *ui.Context) error {
 		if err != nil {
 			return err
 		}
-		player.moves, player.found, player.planned = moves, found, true
+		player.moves, player.planned = moves, true
+		if found.Label != "" { // a wait keeps showing what the step before it found
+			player.found = found
+		}
 	}
 	finished, err := player.moves[0](state, context)
 	if err != nil || !finished {
@@ -105,9 +107,6 @@ func (player *Player) playFrame(state *input.State, context *ui.Context) error {
 	}
 	return nil
 }
-
-// Show draws what the player does over the interface, when its options ask for it.
-func (player *Player) Show(drawing *draw2d.List) {}
 
 // fail ends the script at the step playing now: it lets go of what it holds, so nothing stays
 // pressed, and reports why.
