@@ -17,14 +17,14 @@ func (window *Window) PressKey(key input.Key) {
 // HoldKey puts a key down and runs a frame; it stays down until ReleaseKey.
 func (window *Window) HoldKey(key input.Key) {
 	defer window.doing("Hold a key", draw2d.Rect{}, false)()
-	window.state.SetKey(key, true)
+	window.hand.HoldKey(window.state, key)
 	window.step()
 }
 
 // ReleaseKey lets a key go and runs a frame.
 func (window *Window) ReleaseKey(key input.Key) {
 	defer window.doing("Let a key go", draw2d.Rect{}, false)()
-	window.state.SetKey(key, false)
+	window.hand.ReleaseKey(window.state, key)
 	window.step()
 }
 
@@ -37,7 +37,7 @@ func (window *Window) Tab() {
 // ShiftTab moves the focus to the control before, as Shift+Tab does.
 func (window *Window) ShiftTab() {
 	defer window.doing("Shift+Tab", draw2d.Rect{}, false)()
-	window.state.SetKey(input.KeyShift, true)
+	window.hand.HoldKey(window.state, input.KeyShift)
 	window.PressKey(input.KeyTab)
 	window.ReleaseKey(input.KeyShift)
 }
@@ -46,9 +46,7 @@ func (window *Window) ShiftTab() {
 // takes it.
 func (window *Window) Type(text string) {
 	defer window.doing(fmt.Sprintf("Type %q", text), draw2d.Rect{}, false)()
-	for _, character := range text {
-		window.state.AddCharacter(character)
-	}
+	window.hand.Type(window.state, text)
 	window.step()
 }
 
@@ -56,7 +54,7 @@ func (window *Window) Type(text string) {
 func (window *Window) TypeOneByOne(text string) {
 	defer window.doing(fmt.Sprintf("Type %q", text), draw2d.Rect{}, false)()
 	for _, character := range text {
-		window.state.AddCharacter(character)
+		window.hand.Type(window.state, string(character))
 		window.step()
 	}
 }

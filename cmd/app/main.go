@@ -6,6 +6,8 @@
 //	go run ./cmd/app -dark
 //	go run ./cmd/app -capture app.png
 //	go run ./cmd/app -demo-search Rock     (types in the search box, for captures)
+//	go run ./cmd/app -script tour.txt      (plays a script, showing its pointer: a demo)
+//	go run ./cmd/app -record session.txt   (writes down what you do, as a script)
 package main
 
 import (
@@ -17,6 +19,7 @@ import (
 
 	"github.com/akrck02/go-renderer/draw2d"
 	ui "github.com/akrck02/go-ui"
+	"github.com/akrck02/go-ui/uidrive"
 	"github.com/akrck02/go-ui/window"
 )
 
@@ -51,13 +54,46 @@ func main() {
 	options := window.Options{Title: "Lighthouse register", MinWidth: 960, MinHeight: 560}
 	options.RegisterFlags(flag.CommandLine)
 	demoSearch := flag.String("demo-search", "", "type this in the search box on the second step (for captures)")
+	scriptPath := flag.String("script", "", "play this script in the window, showing what it does")
+	recordPath := flag.String("record", "", "write what you do in the window to this script file when it closes")
 	flag.Parse()
+	if err := drive(&options, *scriptPath, *recordPath); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 	app := newRegister()
 	app.demoSearch = *demoSearch
 	if err := window.Run(options, app.draw); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+// drive gives the window a driver: a player for a script file, shown and reported on standard
+// output, or a recorder that writes its script to a file when the window closes.
+func drive(options *window.Options, scriptPath, recordPath string) error {
+	if scriptPath != "" {
+		text, err := os.ReadFile(scriptPath)
+		if err != nil {
+			return err
+		}
+		script, err := uidrive.Parse(string(text))
+		if err != nil {
+			return err
+		}
+		options.Driver = uidrive.Play(script, uidrive.PlayOptions{Report: os.Stdout, Show: true})
+		return nil
+	}
+	if recordPath != "" {
+		recorder := uidrive.Record()
+		options.Driver = recorder
+		options.Hidden = func() {
+			if err := os.WriteFile(recordPath, []byte(recorder.Script().String()), 0o644); err != nil {
+				fmt.Fprintln(os.Stderr, err) // the window is closing: telling is all that is left to do
+			}
+		}
+	}
+	return nil
 }
 
 func newRegister() *register {

@@ -1,6 +1,7 @@
-// Command uitest runs Go tests with recording on and shows the window tests in a Go UI window:
-// which passed, which failed and with what error codes, and a replay of each test's frames with
-// the pointer, the fingers and the element each action found. It needs a display.
+// Command uitest runs Go tests with recording on and shows them in a Go UI window: every test by
+// package, which passed, which failed and what it wrote; for a window test, its error codes and a
+// replay of its frames with the pointer, the fingers and the element each action found. It needs a
+// display.
 //
 //	go run github.com/akrck02/go-ui/cmd/uitest ./...
 //	go run github.com/akrck02/go-ui/cmd/uitest -dark ./editor/... -run TestSaving
@@ -20,15 +21,15 @@ import (
 )
 
 func main() {
-	options := window.Options{Title: "Window tests", MinWidth: 900, MinHeight: 560}
+	options := window.Options{Title: "Tests", MinWidth: 900, MinHeight: 560}
 	options.RegisterFlags(flag.CommandLine)
 	flag.Parse()
-	recordings, err := runTests(flag.Args())
+	tests, recordings, err := runTests(flag.Args())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	shown := newResults(recordings)
+	shown := newResults(tests, recordings)
 	shown.measurer, err = overlay.NewMeasurer() // the fonts the window paints with
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -40,12 +41,13 @@ func main() {
 	}
 }
 
-// runTests runs go test with the arguments in a fresh recording folder and reads what it recorded.
-// Failing tests are what the viewer is for, so go test failing is not an error here.
-func runTests(arguments []string) ([]uitest.Recording, error) {
+// runTests runs go test -json with the arguments in a fresh recording folder, showing its output
+// as go test would, and reads which tests ran and what their windows recorded. Failing tests are
+// what the viewer is for, so go test failing is not an error here.
+func runTests(arguments []string) ([]testResult, []uitest.Recording, error) {
 	folder, err := os.MkdirTemp("", "uitest-")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	// the recordings are read into memory before the window opens; a temporary folder left behind
 	// is harmless, so an error removing it is not reported
@@ -53,12 +55,24 @@ func runTests(arguments []string) ([]uitest.Recording, error) {
 	if len(arguments) == 0 {
 		arguments = []string{"./..."}
 	}
-	command := exec.Command("go", append([]string{"test", "-count=1"}, arguments...)...)
+	command := exec.Command("go", append([]string{"test", "-json", "-count=1"}, arguments...)...)
 	command.Env = append(os.Environ(), uitest.RecordVariable+"="+folder)
-	command.Stdout, command.Stderr = os.Stdout, os.Stderr
-	runError := command.Run()
-	if _, testsFailed := runError.(*exec.ExitError); runError != nil && !testsFailed {
-		return nil, runError // go itself could not run
+	command.Stderr = os.Stderr
+	events, err := command.StdoutPipe()
+	if err != nil {
+		return nil, nil, err
 	}
-	return uitest.LoadRecordings(folder)
+	if err := command.Start(); err != nil {
+		return nil, nil, err // go itself could not run
+	}
+	tests, readError := readTestEvents(events, os.Stdout)
+	runError := command.Wait()
+	if _, testsFailed := runError.(*exec.ExitError); runError != nil && !testsFailed {
+		return nil, nil, runError
+	}
+	if readError != nil {
+		return nil, nil, readError
+	}
+	recordings, err := uitest.LoadRecordings(folder)
+	return tests, recordings, err
 }

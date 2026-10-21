@@ -113,6 +113,32 @@ outermost first, when you know them. A button with only an icon is found by the 
 follows it: `Click("Add a lighthouse")`. `Texts()` lists every line drawn, in order, and `DrawList()` gives the
 whole draw list, for tests about colours and shapes.
 
+## Playing a script
+
+A test can also play a *script*: the same few lines a real window plays for a demo or a tutorial
+(see [Driving a window](12-driving-a-window.md)). `uidrive.Parse` reads it and `Play` runs it, a
+sixtieth of a second a frame on the window's clock, and returns the error of the first step that
+failed:
+
+```go
+script, err := uidrive.Parse(`
+click "Note"            # a field is found by its placeholder
+type "Fog at dawn"
+click "Add"
+until "Fog at dawn" 1s
+`)
+if err != nil {
+	t.Fatal(err)
+}
+if err := window.Play(script); err != nil {
+	t.Fatal(err)
+}
+```
+
+Both use one piece of code to find elements and make input (package `uidrive`), so a script that
+passes here does the same steps on a device. `uitest.Driver` gives the window any other driver,
+which it runs at every frame as a real window does.
+
 ## Errors
 
 Nothing in `uitest` panics or fails your test for you: methods return errors, and you decide.
@@ -150,13 +176,17 @@ go run github.com/akrck02/go-ui/cmd/uitest ./...
 go run github.com/akrck02/go-ui/cmd/uitest -dark ./editor/... -run TestSaving
 ```
 
-It runs `go test` with the arguments you give, with recording on, and opens a Go UI window. The
-tests are listed on the left, failed ones first. On the right you see the chosen test's error
-codes and messages, and a replay of its frames. *Play* shows them one after another, a tenth of
-a second each, and stops at the last; *Pause* holds the frame shown. Step through them with
-*Previous frame*, *Next frame* or the slider. The pointer is a ring, filled while pressed; fingers are orange dots; the
-element an action found has an outline in the theme's focus colour. Click an error's code to jump
-to the frame it came after.
+It runs `go test` with the arguments you give, with recording on, and opens a Go UI window. Every
+test it ran is listed on the left by package, failed ones first; the chips above it (*All*,
+*Failed*, *With a window*, each with how many) narrow the list. A test with no window shows what it wrote. A window test shows its error codes
+and messages, and a replay of its frames. *Play* shows them one after another, a tenth of a second
+each, and stops at the last; *Pause* holds the frame shown. Step through them with *Previous
+frame*, *Next frame* or the slider. The pointer is a ring, filled while pressed; fingers are
+orange dots; the element an action found has an outline in the theme's focus colour. Click an
+error's code to jump to the frame it came after.
+
+From another module, name the viewer's version: `go run github.com/akrck02/go-ui/cmd/uitest@main
+./...` (add `GOPROXY=direct` when the module proxy has not seen the latest `main` yet).
 
 Recording costs nothing in a plain `go test`: a window only keeps its frames while the
 `UITEST_RECORD` variable names a folder, which the viewer sets for you. The replay shows the test's

@@ -157,6 +157,11 @@ type Options struct {
 	// again. It is the moment to play again what Hidden stopped, such as a sound. On the desktop,
 	// where a hidden window has closed, it is not called.
 	Shown func()
+	// Driver, when set, drives the window: at every frame it adds input before the interface runs
+	// and may draw over it after (uidrive.Player plays a script: a demo, a tutorial, a replay, a
+	// test on the device; uidrive.Recorder writes down what a person does). A person's own input
+	// still arrives, and stops a Player. Nil costs nothing.
+	Driver uidrive.Driver
 }
 ```
 

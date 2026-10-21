@@ -7,13 +7,9 @@ import (
 
 func TestEachErrorCarriesItsCode(t *testing.T) {
 	constructors := map[Code]func() error{
-		InvalidSize:         func() error { return invalidSize(0, 300) },
-		ElementNotFound:     func() error { return elementNotFound("Save", []string{"Open"}) },
-		ElementAmbiguous:    func() error { return elementAmbiguous("Save", 2) },
-		ElementNotVisible:   func() error { return elementNotVisible("Save") },
-		ElementNotPressable: func() error { return elementNotPressable("Save") },
-		RecordingNotSaved:   func() error { return recordingNotSaved("folder", errors.New("full")) },
-		RecordingNotRead:    func() error { return recordingNotRead("folder", errors.New("gone")) },
+		InvalidSize:       func() error { return invalidSize(0, 300) },
+		RecordingNotSaved: func() error { return recordingNotSaved("folder", errors.New("full")) },
+		RecordingNotRead:  func() error { return recordingNotRead("folder", errors.New("gone")) },
 	}
 	for code, constructor := range constructors {
 		err := constructor()

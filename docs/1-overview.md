@@ -66,6 +66,7 @@ The guides, one subject each:
 - [Screen readers](4-guides/9-screen-readers.md)
 - [A window of its own](4-guides/10-desktop.md): interfaces without a scene
 - [Testing an interface](4-guides/11-testing-an-interface.md): `go test` presses, types and looks, with no display
+- [Driving a window](4-guides/12-driving-a-window.md): scripts that play a demo, a tutorial or a replay in a real window, and tests on the device
 
 **Use**
 

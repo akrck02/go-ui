@@ -188,3 +188,4 @@ replay.
 real display (light and dark), how it feels to step through a long test, and whether `uitest` is
 the API go-engine's editor wants, by writing one of its tests with it.
 
+**Since (2026-10-21, asked by the author):** the viewer lists every test go test ran, read from `go test -json`, by package: a test with no window shows its output; a window test keeps its errors and replay; play and pause step the replay.
