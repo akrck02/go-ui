@@ -133,6 +133,27 @@ func TestAScenesCapturedPointerReachesTheWindow(t *testing.T) {
 	}
 }
 
+func TestAScenesFullscreenRequestReachesTheWindow(t *testing.T) {
+	context, err := ui.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	world, whole := scene.New(), true
+	options := Options{Scene: func(state *input.State, step float64) *SceneView {
+		state.SetFullscreen(whole)
+		return &SceneView{World: world}
+	}}
+	shown, view := shownFrame{seed: maphash.MakeSeed()}, &shownScene{}
+	app := interfaceApplication(context, options, func(context *ui.Context) {}, &shown, view)
+	if err := app.Update(app, 1.0/60); err != nil || !app.Input.Fullscreen() {
+		t.Fatalf("a scene that asks for the whole screen leaves the window's %v, %v", app.Input.Fullscreen(), err)
+	}
+	whole = false
+	if err := app.Update(app, 1.0/60); err != nil || app.Input.Fullscreen() {
+		t.Fatal("a scene that asks for a window again leaves it on the whole screen")
+	}
+}
+
 func TestQuittingStopsTheWindowAfterTheFrame(t *testing.T) {
 	context, err := ui.New()
 	if err != nil {
