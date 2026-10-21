@@ -15,3 +15,14 @@ func TestASceneAreaIsCountedFromTheFramebuffersBottom(t *testing.T) {
 		t.Fatalf("the area at 100, 50 of a window at twice its pixels is %+v", area)
 	}
 }
+
+func TestASceneBelowWithAPlaceIsDrawnOverAWholeWindowScene(t *testing.T) {
+	corner := draw2d.Rect{X: 900, Y: 500, Width: 300, Height: 200}
+	whole := &SceneView{Below: &BelowView{Area: &corner}}
+	if !drawsInAreas(whole) {
+		t.Fatal("a scene below with a corner of the window is not drawn")
+	}
+	if drawsInAreas(&SceneView{Below: &BelowView{}}) {
+		t.Fatal("a scene below with no place is drawn on a computer")
+	}
+}
