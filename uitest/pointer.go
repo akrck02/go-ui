@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/akrck02/go-renderer/draw2d"
-	"github.com/akrck02/go-renderer/input"
 	"github.com/akrck02/go-ui/uidrive"
 )
 
@@ -23,8 +22,7 @@ func center(area draw2d.Rect) point {
 // MoveTo moves the pointer to a place in the window and runs a frame.
 func (window *Window) MoveTo(x, y float32) {
 	defer window.doing("Move", draw2d.Rect{}, false)()
-	window.state.MoveCursor(float64(x), float64(y))
-	window.pointerMoved = true
+	window.hand.MoveTo(window.state, x, y)
 	window.step()
 }
 
@@ -43,16 +41,14 @@ func (window *Window) MoveToElement(label string) error {
 // Press holds the main button down where the pointer is and runs a frame.
 func (window *Window) Press() {
 	defer window.doing("Press", draw2d.Rect{}, false)()
-	window.state.SetButton(input.MouseLeft, true)
-	window.pointerDown = true
+	window.hand.Press(window.state)
 	window.step()
 }
 
 // Release lets the main button go and runs a frame.
 func (window *Window) Release() {
 	defer window.doing("Release", draw2d.Rect{}, false)()
-	window.state.SetButton(input.MouseLeft, false)
-	window.pointerDown = false
+	window.hand.Release(window.state)
 	window.step()
 }
 
@@ -126,7 +122,7 @@ func (window *Window) Scroll(label string, amount float32) error {
 	defer window.doing(fmt.Sprintf("Scroll %q", label), target.Rect, true)()
 	middle := center(target.Rect)
 	window.MoveTo(middle.x, middle.y)
-	window.state.AddScroll(float64(amount))
+	window.hand.Scroll(window.state, amount)
 	window.step()
 	return nil
 }

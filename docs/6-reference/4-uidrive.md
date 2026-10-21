@@ -110,6 +110,32 @@ type Error struct {
 | `func (err *Error) Is(target error) bool` | Is tells whether target is an Error with the same code, so errors.Is compares codes, never messages. |
 | `func (err *Error) Unwrap() error` | Unwrap is the cause underneath, for errors.Is and errors.As. |
 
+### Hand
+
+Hand makes the input a person gives with a mouse, fingers and a keyboard, on an input state, as a backend would: the first finger down also moves and presses the pointer, as a phone's backend does, so controls answer a tap as a click. It remembers what it holds, to let go of all of it. The zero Hand holds nothing.
+
+```go
+type Hand struct {
+	// Has unexported fields.
+}
+```
+
+| Function or method | |
+|---|---|
+| `func (hand *Hand) Down() bool` | Down tells whether the main button, or the finger that is the pointer, is down. |
+| `func (hand *Hand) HoldKey(state *input.State, key input.Key)` | HoldKey puts a key down; it stays down until ReleaseKey or LetGo. |
+| `func (hand *Hand) LetGo(state *input.State)` | LetGo lifts every finger and lets go of the button and every key the hand holds: what a script does when it stops halfway, so nothing stays pressed. |
+| `func (hand *Hand) MoveTo(state *input.State, x, y float32)` | MoveTo moves the pointer to a place in the window, in layout pixels. |
+| `func (hand *Hand) Placed() bool` | Placed tells whether the hand has put the pointer somewhere in the window yet. |
+| `func (hand *Hand) Press(state *input.State)` | Press holds the main button down where the pointer is. |
+| `func (hand *Hand) Release(state *input.State)` | Release lets the main button go. |
+| `func (hand *Hand) ReleaseKey(state *input.State, key input.Key)` | ReleaseKey lets a key go. |
+| `func (hand *Hand) Scroll(state *input.State, amount float32)` | Scroll turns the wheel where the pointer is: a negative amount goes down the page, as a wheel turned toward the person does. |
+| `func (hand *Hand) TouchDown(state *input.State, finger int64, x, y float32)` | TouchDown puts a finger on the screen. |
+| `func (hand *Hand) TouchMove(state *input.State, finger int64, x, y float32)` | TouchMove moves a finger that is down. |
+| `func (hand *Hand) TouchUp(state *input.State, finger int64)` | TouchUp lifts a finger. |
+| `func (hand *Hand) Type(state *input.State, text string)` | Type types a text at once, as a paste or a fast typist does: the control with the focus takes it. |
+
 ---
 
 [← Reference](0-reference.md) · generated from the doc comments by `generate.py`

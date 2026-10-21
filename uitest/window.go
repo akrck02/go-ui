@@ -7,6 +7,7 @@ import (
 	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
 	ui "github.com/akrck02/go-ui"
+	"github.com/akrck02/go-ui/uidrive"
 )
 
 // Window is a pretend window that runs an interface function frame by frame.
@@ -16,12 +17,9 @@ type Window struct {
 	build   func(context *ui.Context)
 	clock   clock
 	// measurer is the interface's, to measure texts found in the draw list (find.go)
-	measurer draw2d.Measurer
-	// pointerFinger is the finger that also moves the pointer (touch.go), or noFinger
-	pointerFinger int64
-	pointerDown   bool      // the main button or the pointer's finger is down
-	pointerMoved  bool      // the pointer has been put somewhere (for recordings)
-	recording     *recorder // nil unless recording is on (recording.go)
+	measurer  draw2d.Measurer
+	hand      uidrive.Hand // the pointer, the fingers and the keys the test gives
+	recording *recorder    // nil unless recording is on (recording.go)
 }
 
 // New makes a test window for an interface function: 800x600 layout pixels at scale 1, ui's
@@ -34,7 +32,7 @@ func New(build func(context *ui.Context), options ...Option) (*Window, error) {
 	if chosen.width <= 0 || chosen.height <= 0 || chosen.scale <= 0 {
 		return nil, invalidSize(chosen.width, chosen.height)
 	}
-	window := &Window{context: ui.NewWithMeasurer(chosen.measurer), build: build, measurer: chosen.measurer, pointerFinger: noFinger}
+	window := &Window{context: ui.NewWithMeasurer(chosen.measurer), build: build, measurer: chosen.measurer}
 	window.state = newState(chosen.width, chosen.height)
 	if chosen.theme != nil {
 		window.context.Theme = *chosen.theme

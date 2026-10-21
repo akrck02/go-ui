@@ -107,8 +107,8 @@ func (window *Window) recordFrame() {
 		}
 	}
 	frame := RecordedFrame{Action: recording.action, Target: recording.target, HasTarget: recording.hasTarget,
-		HasPointer: window.pointerMoved, PointerX: float32(window.state.CursorX), PointerY: float32(window.state.CursorY),
-		Pressed: window.pointerDown, Commands: commands}
+		HasPointer: window.hand.Placed(), PointerX: float32(window.state.CursorX), PointerY: float32(window.state.CursorY),
+		Pressed: window.hand.Down(), Commands: commands}
 	for _, touch := range window.state.Touches() {
 		frame.Touches = append(frame.Touches, RecordedTouch{X: float32(touch.X), Y: float32(touch.Y)})
 	}

@@ -117,7 +117,7 @@ it would break when the layout moves; names survive a new layout.
   finds through it · `uidrive/errors.go`, `uidrive/find.go`, `ui.go`, `uitest/find.go`,
   `uitest/errors.go` · serves R3 · test: `TestAButtonIsFoundByItsLabelInTheLiveInterface`, and
   `uitest`'s tests unchanged
-- [ ] T2 — `uidrive.Hand` makes the pointer, touch and key input; `uitest` acts through it ·
+- [x] T2 — `uidrive.Hand` makes the pointer, touch and key input; `uitest` acts through it ·
   `uidrive/hand.go`, `uitest/pointer.go`, `uitest/touch.go`, `uitest/keyboard.go` · serves R3 ·
   test: `TestTheFirstFingerDownAlsoPressesThePointer`
 - [ ] T3 — the script format: `Parse` and `Script.String` · `uidrive/script.go` · serves R2 · test:
