@@ -229,6 +229,11 @@ all the time.</p>
 	<span class="c1">// again. It is the moment to play again what Hidden stopped, such as a sound. On the desktop,</span>
 	<span class="c1">// where a hidden window has closed, it is not called.</span>
 	<span class="nx">Shown</span> <span class="kd">func</span><span class="p">()</span>
+	<span class="c1">// Driver, when set, drives the window: at every frame it adds input before the interface runs</span>
+	<span class="c1">// and may draw over it after (uidrive.Player plays a script: a demo, a tutorial, a replay, a</span>
+	<span class="c1">// test on the device; uidrive.Recorder writes down what a person does). A person&#39;s own input</span>
+	<span class="c1">// still arrives, and stops a Player. Nil costs nothing.</span>
+	<span class="nx">Driver</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nx">Driver</span>
 <span class="p">}</span>
 </code></pre>
 

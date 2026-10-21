@@ -1,0 +1,448 @@
+<h1 id="uidrive">uidrive</h1>
+<pre><code class="language-go"><span class="kn">import</span> <span class="s">&#34;github.com/akrck02/go-ui/uidrive&#34;</span>
+</code></pre>
+
+<p>Package uidrive drives a Go UI interface by the names people see: it finds what
+the last frame showed (&ldquo;Add an entry&rdquo;, &ldquo;Light the lamp&rdquo;), makes the input a
+person would give it, and plays a script of such steps frame by frame. A real
+window runs a driver through window.Options.Driver (a demo, a tutorial, a replay
+of a reported bug, a test on the device); uitest runs the same code in go test,
+with no display.</p>
+
+<h3 id="functions">Functions</h3>
+
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func KeyName(key input.Key) string</code></td>
+<td>KeyName is the name a script gives a key (&ldquo;Enter&rdquo;, &ldquo;A&rdquo;), or &ldquo;&rdquo; for a key it has no name for.</td>
+</tr>
+
+<tr>
+<td><code>func Texts(context *ui.Context) []string</code></td>
+<td>Texts is every line of text the last frame drew, in drawing order: headings, labels, buttons&rsquo; texts, a field&rsquo;s text.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="constants-and-variables">Constants and variables</h3>
+<pre><code class="language-go"><span class="kd">const</span> <span class="nx">ShownLayer</span> <span class="p">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span>
+</code></pre>
+
+<p>ShownLayer is the layer a shown player draws on: above the interface&rsquo;s dialogs, popups and the screen reader&rsquo;s ring, so a demo&rsquo;s pointer is never hidden.</p>
+<pre><code class="language-go"><span class="kd">var</span> <span class="p">(</span>
+	<span class="nx">ErrorElementNotFound</span>     <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">ElementNotFound</span><span class="p">}</span>
+	<span class="nx">ErrorElementAmbiguous</span>    <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">ElementAmbiguous</span><span class="p">}</span>
+	<span class="nx">ErrorElementNotVisible</span>   <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">ElementNotVisible</span><span class="p">}</span>
+	<span class="nx">ErrorElementNotPressable</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">ElementNotPressable</span><span class="p">}</span>
+	<span class="nx">ErrorScriptNotRead</span>       <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">ScriptNotRead</span><span class="p">}</span>
+	<span class="nx">ErrorScriptStopped</span>       <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">ScriptStopped</span><span class="p">}</span>
+<span class="p">)</span>
+</code></pre>
+
+<p>The errors to compare with errors.Is; comparing them allocates nothing.</p>
+
+<h3 id="action">Action</h3>
+
+<p>Action is what a step does, by the word a script writes for it.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Action</span> <span class="kt">string</span>
+</code></pre>
+<pre><code class="language-go"><span class="kd">const</span> <span class="p">(</span>
+	<span class="nx">MoveTo</span>      <span class="nx">Action</span> <span class="p">=</span> <span class="s">&#34;move-to&#34;</span>      <span class="c1">// move-to &#34;Help&#34;: the pointer goes over an element</span>
+	<span class="nx">Click</span>       <span class="nx">Action</span> <span class="p">=</span> <span class="s">&#34;click&#34;</span>        <span class="c1">// click &#34;Save&#34;</span>
+	<span class="nx">DoubleClick</span> <span class="nx">Action</span> <span class="p">=</span> <span class="s">&#34;double-click&#34;</span> <span class="c1">// double-click &#34;Entry&#34;</span>
+	<span class="nx">ClickAt</span>     <span class="nx">Action</span> <span class="p">=</span> <span class="s">&#34;click-at&#34;</span>     <span class="c1">// click-at 40 300: a place, for what has no name</span>
+	<span class="nx">Tap</span>         <span class="nx">Action</span> <span class="p">=</span> <span class="s">&#34;tap&#34;</span>          <span class="c1">// tap &#34;Light the lamp&#34;: a finger, as on a phone</span>
+	<span class="nx">Hold</span>        <span class="nx">Action</span> <span class="p">=</span> <span class="s">&#34;hold&#34;</span>         <span class="c1">// hold &#34;Lens&#34; 1s: a long press, one second when no time is given</span>
+	<span class="nx">Drag</span>        <span class="nx">Action</span> <span class="p">=</span> <span class="s">&#34;drag&#34;</span>         <span class="c1">// drag &#34;Boat&#34; 120 0, or drag &#34;Boat&#34; to &#34;Harbour&#34;</span>
+	<span class="nx">Scroll</span>      <span class="nx">Action</span> <span class="p">=</span> <span class="s">&#34;scroll&#34;</span>       <span class="c1">// scroll &#34;Log&#34; -3: a negative amount goes down the page</span>
+	<span class="nx">Type</span>        <span class="nx">Action</span> <span class="p">=</span> <span class="s">&#34;type&#34;</span>         <span class="c1">// type &#34;Fog at dawn&#34;: the focused control takes the text</span>
+	<span class="nx">Press</span>       <span class="nx">Action</span> <span class="p">=</span> <span class="s">&#34;press&#34;</span>        <span class="c1">// press Enter, press Shift+Tab</span>
+	<span class="nx">Wait</span>        <span class="nx">Action</span> <span class="p">=</span> <span class="s">&#34;wait&#34;</span>         <span class="c1">// wait 0.5s</span>
+	<span class="nx">Until</span>       <span class="nx">Action</span> <span class="p">=</span> <span class="s">&#34;until&#34;</span>        <span class="c1">// until &#34;Saved&#34; 10s: wait for an element, five seconds when no time is given</span>
+<span class="p">)</span>
+</code></pre>
+
+<p>The actions a script knows.</p>
+
+<h3 id="code">Code</h3>
+
+<p>Code is the stable name of an error: programs compare it, people search for it.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Code</span> <span class="kt">string</span>
+</code></pre>
+<pre><code class="language-go"><span class="kd">const</span> <span class="p">(</span>
+	<span class="nx">ElementNotFound</span>     <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.element-not-found&#34;</span>
+	<span class="nx">ElementAmbiguous</span>    <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.element-ambiguous&#34;</span>
+	<span class="nx">ElementNotVisible</span>   <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.element-not-visible&#34;</span>
+	<span class="nx">ElementNotPressable</span> <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.element-not-pressable&#34;</span>
+	<span class="nx">ScriptNotRead</span>       <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uidrive.script-not-read&#34;</span>
+	<span class="nx">ScriptStopped</span>       <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uidrive.script-stopped&#34;</span>
+<span class="p">)</span>
+</code></pre>
+
+<p>The codes this package returns.</p>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func CodeOf(err error) Code</code></td>
+<td>CodeOf is the code of an Error, or &ldquo;&rdquo; for any other error (and for nil).</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="driver">Driver</h3>
+
+<p>Driver is what a window runs at each frame when it is driven. Drive comes after the window gathered the frame&rsquo;s real input and before the interface runs: it may add input to the state, and read what the last frame showed through the context. Show comes after the interface ran, and may draw over what it drew.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Driver</span> <span class="kd">interface</span> <span class="p">{</span>
+	<span class="nf">Drive</span><span class="p">(</span><span class="nx">state</span> <span class="o">*</span><span class="nx">input</span><span class="p">.</span><span class="nx">State</span><span class="p">,</span> <span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span>
+	<span class="nf">Show</span><span class="p">(</span><span class="nx">drawing</span> <span class="o">*</span><span class="nx">draw2d</span><span class="p">.</span><span class="nx">List</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="element">Element</h3>
+
+<p>Element is what the last frame showed of a control, a text or a scroll area.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Element</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">ID</span>        <span class="nx">ui</span><span class="p">.</span><span class="nx">ID</span>       <span class="c1">// the one the interface gives it, 0 when it was not on screen</span>
+	<span class="nx">Label</span>     <span class="kt">string</span>      <span class="c1">// what a screen reader calls it: a button&#39;s text, a described label</span>
+	<span class="nx">Rect</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span> <span class="c1">// where it was laid out, in layout pixels</span>
+	<span class="nx">Visible</span>   <span class="kt">bool</span>        <span class="c1">// some of it shows: not scrolled away, not behind a dialog or sheet</span>
+	<span class="nx">Focused</span>   <span class="kt">bool</span>        <span class="c1">// it has the focus (ui.Context.FocusedID)</span>
+	<span class="nx">Pressable</span> <span class="kt">bool</span>        <span class="c1">// a click or a tap does something to it</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func Find(context *ui.Context, label string) (Element, error)</code></td>
+<td>Find finds what the last frame showed with this label: a button&rsquo;s text, a field&rsquo;s name, a line of text.</td>
+</tr>
+
+<tr>
+<td><code>func FindAt(context *ui.Context, x, y float32) (Element, bool)</code></td>
+<td>FindAt finds the smallest named element of the last frame under a place in the window, in layout pixels: what a person pressed there.</td>
+</tr>
+
+<tr>
+<td><code>func FindIn(context *ui.Context, path ...string) (Element, error)</code></td>
+<td>FindIn finds a control by its scopes (the names given to ui.Context.Push) and its label, outermost first: FindIn(context, &ldquo;north&rdquo;, &ldquo;Save&rdquo;).</td>
+</tr>
+
+<tr>
+<td><code>func FindPressable(context *ui.Context, label string) (Element, error)</code></td>
+<td>FindPressable finds an element that shows and can be pressed: ElementNotPressable when a click on it would do nothing.</td>
+</tr>
+
+<tr>
+<td><code>func FindVisible(context *ui.Context, label string) (Element, error)</code></td>
+<td>FindVisible finds an element that shows, or says why it cannot be used: ElementNotVisible when it is scrolled away or behind a dialog.</td>
+</tr>
+
+<tr>
+<td><code>func FindWithin(context *ui.Context, outer, inner string) (Element, error)</code></td>
+<td>FindWithin finds an element by its label inside another found by its label: the button &ldquo;Save&rdquo; in the panel called &ldquo;North&rdquo;.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="error">Error</h3>
+
+<p>Error is an error with a code, and a message for people.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Error</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Code</span>    <span class="nx">Code</span>
+	<span class="nx">Message</span> <span class="kt">string</span>
+	<span class="nx">Cause</span>   <span class="kt">error</span> <span class="c1">// what went wrong underneath, when something outside this package failed</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func (err *Error) Error() string</code></td>
+<td>Error gives the code and the message.</td>
+</tr>
+
+<tr>
+<td><code>func (err *Error) Is(target error) bool</code></td>
+<td>Is tells whether target is an Error with the same code, so errors.Is compares codes, never messages.</td>
+</tr>
+
+<tr>
+<td><code>func (err *Error) Unwrap() error</code></td>
+<td>Unwrap is the cause underneath, for errors.Is and errors.As.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="hand">Hand</h3>
+
+<p>Hand makes the input a person gives with a mouse, fingers and a keyboard, on an input state, as a backend would: the first finger down also moves and presses the pointer, as a phone&rsquo;s backend does, so controls answer a tap as a click. It remembers what it holds, to let go of all of it. The zero Hand holds nothing.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Hand</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="c1">// Has unexported fields.</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func (hand *Hand) Down() bool</code></td>
+<td>Down tells whether the main button, or the finger that is the pointer, is down.</td>
+</tr>
+
+<tr>
+<td><code>func (hand *Hand) HoldKey(state *input.State, key input.Key)</code></td>
+<td>HoldKey puts a key down; it stays down until ReleaseKey or LetGo.</td>
+</tr>
+
+<tr>
+<td><code>func (hand *Hand) LetGo(state *input.State)</code></td>
+<td>LetGo lifts every finger and lets go of the button and every key the hand holds: what a script does when it stops halfway, so nothing stays pressed.</td>
+</tr>
+
+<tr>
+<td><code>func (hand *Hand) MoveTo(state *input.State, x, y float32)</code></td>
+<td>MoveTo moves the pointer to a place in the window, in layout pixels.</td>
+</tr>
+
+<tr>
+<td><code>func (hand *Hand) Placed() bool</code></td>
+<td>Placed tells whether the hand has put the pointer somewhere in the window yet.</td>
+</tr>
+
+<tr>
+<td><code>func (hand *Hand) Press(state *input.State)</code></td>
+<td>Press holds the main button down where the pointer is.</td>
+</tr>
+
+<tr>
+<td><code>func (hand *Hand) Release(state *input.State)</code></td>
+<td>Release lets the main button go.</td>
+</tr>
+
+<tr>
+<td><code>func (hand *Hand) ReleaseKey(state *input.State, key input.Key)</code></td>
+<td>ReleaseKey lets a key go.</td>
+</tr>
+
+<tr>
+<td><code>func (hand *Hand) Scroll(state *input.State, amount float32)</code></td>
+<td>Scroll turns the wheel where the pointer is: a negative amount goes down the page, as a wheel turned toward the person does.</td>
+</tr>
+
+<tr>
+<td><code>func (hand *Hand) TouchDown(state *input.State, finger int64, x, y float32)</code></td>
+<td>TouchDown puts a finger on the screen.</td>
+</tr>
+
+<tr>
+<td><code>func (hand *Hand) TouchMove(state *input.State, finger int64, x, y float32)</code></td>
+<td>TouchMove moves a finger that is down.</td>
+</tr>
+
+<tr>
+<td><code>func (hand *Hand) TouchUp(state *input.State, finger int64)</code></td>
+<td>TouchUp lifts a finger.</td>
+</tr>
+
+<tr>
+<td><code>func (hand *Hand) Type(state *input.State, text string)</code></td>
+<td>Type types a text at once, as a paste or a fast typist does: the control with the focus takes it.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="playoptions">PlayOptions</h3>
+
+<p>PlayOptions choose how a Player plays.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">PlayOptions</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="c1">// Report, when set, gets a line for each step and one at the end (report.go): standard</span>
+	<span class="c1">// output, Android&#39;s log, the 3DS&#39;s console.</span>
+	<span class="nx">Report</span> <span class="nx">io</span><span class="p">.</span><span class="nx">Writer</span>
+	<span class="c1">// Show draws the pointer, the fingers and the element each step found over the interface, so</span>
+	<span class="c1">// a demo or a tutorial is seen, not only run (show.go).</span>
+	<span class="nx">Show</span> <span class="kt">bool</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="player">Player</h3>
+
+<p>Player plays a script in a window, one frame at a time: it is a Driver. Each step finds its element in what the last frame showed, then gives its input over the frames that follow, as a person would, and lets one more frame show what it changed. A step that fails ends the script.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Player</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="c1">// Has unexported fields.</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func Play(script Script, options PlayOptions) *Player</code></td>
+<td>Play makes a player for a script; give it to window.Options.Driver, or to uitest&rsquo;s Play.</td>
+</tr>
+
+<tr>
+<td><code>func (player *Player) Done() bool</code></td>
+<td>Done tells whether the script has ended: every step played, or one failed.</td>
+</tr>
+
+<tr>
+<td><code>func (player *Player) Drive(state *input.State, context *ui.Context)</code></td>
+<td>Drive plays a frame of the script.</td>
+</tr>
+
+<tr>
+<td><code>func (player *Player) Err() error</code></td>
+<td>Err is why the script ended early: the failed step&rsquo;s error, with its code.</td>
+</tr>
+
+<tr>
+<td><code>func (player *Player) Show(drawing *draw2d.List)</code></td>
+<td>Show draws, when the player&rsquo;s options ask for it, what it does over the interface: an outline around the element its steps found, the pointer as a ring (filled while pressed) and each finger as a dot.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="recorder">Recorder</h3>
+
+<p>Recorder writes down what a person does in a window, as a script that plays it back: give it to window.Options.Driver, and take Script when the session ends. It adds no input. Steps name the elements pressed, so a replay works when the layout has moved; a press on nothing named is written as a click-at its place, and a drag that starts on nothing named is left out.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Recorder</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="c1">// Has unexported fields.</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func Record() *Recorder</code></td>
+<td>Record makes a recorder.</td>
+</tr>
+
+<tr>
+<td><code>func (recorder *Recorder) Drive(state *input.State, context *ui.Context)</code></td>
+<td>Drive watches the input the person gave this frame, against what the last frame showed.</td>
+</tr>
+
+<tr>
+<td><code>func (recorder *Recorder) Script() Script</code></td>
+<td>Script is what the person has done so far, with the text they were typing.</td>
+</tr>
+
+<tr>
+<td><code>func (recorder *Recorder) Show(*draw2d.List)</code></td>
+<td>Show draws nothing: a recording is not seen.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="script">Script</h3>
+
+<p>Script is a list of steps, played one after another.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Script</span> <span class="p">[]</span><span class="nx">Step</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func Parse(text string) (Script, error)</code></td>
+<td>Parse reads a script: one step a line, blank lines and what follows a # left out.</td>
+</tr>
+
+<tr>
+<td><code>func (script Script) String() string</code></td>
+<td>String writes the script in the form Parse reads, one step a line.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="step">Step</h3>
+
+<p>Step is one line of a script.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Step</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Action</span>   <span class="nx">Action</span>
+	<span class="nx">Label</span>    <span class="kt">string</span>        <span class="c1">// the element the step acts on, by the name people see</span>
+	<span class="nx">Target</span>   <span class="kt">string</span>        <span class="c1">// where a drag ends, when it ends on another element</span>
+	<span class="nx">X</span><span class="p">,</span> <span class="nx">Y</span>     <span class="kt">float32</span>       <span class="c1">// a click-at&#39;s place, or a drag&#39;s distance, in layout pixels</span>
+	<span class="nx">Amount</span>   <span class="kt">float32</span>       <span class="c1">// a scroll&#39;s turn of the wheel</span>
+	<span class="nx">Text</span>     <span class="kt">string</span>        <span class="c1">// what a type step types</span>
+	<span class="nx">Keys</span>     <span class="p">[]</span><span class="nx">input</span><span class="p">.</span><span class="nx">Key</span>   <span class="c1">// what a press step presses: the modifiers held, then the key</span>
+	<span class="nx">Duration</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span> <span class="c1">// a wait&#39;s time, a hold&#39;s, or how long until waits at most</span>
+	<span class="nx">Line</span>     <span class="kt">int</span>           <span class="c1">// the line it was read from, for errors; 0 when made in Go</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func (step Step) String() string</code></td>
+<td>String writes a step as a script&rsquo;s line.</td>
+</tr>
+</tbody>
+</table>
+
+<hr>
+
+<p><a href="./reference/reference">← Reference</a> · generated from the doc comments by <code>generate.py</code></p>

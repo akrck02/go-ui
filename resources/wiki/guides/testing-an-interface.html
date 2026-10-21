@@ -190,6 +190,30 @@ outermost first, when you know them. A button with only an icon is found by the 
 follows it: <code>Click(&quot;Add a lighthouse&quot;)</code>. <code>Texts()</code> lists every line drawn, in order, and <code>DrawList()</code> gives the
 whole draw list, for tests about colours and shapes.</p>
 
+<h2 id="playing-a-script">Playing a script</h2>
+
+<p>A test can also play a <em>script</em>: the same few lines a real window plays for a demo or a tutorial
+(see <a href="./guides/driving-a-window">Driving a window</a>). <code>uidrive.Parse</code> reads it and <code>Play</code> runs it, a
+sixtieth of a second a frame on the window&rsquo;s clock, and returns the error of the first step that
+failed:</p>
+<pre><code class="language-go"><span class="nx">script</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="s">`
+click &#34;Note&#34;            # a field is found by its placeholder
+type &#34;Fog at dawn&#34;
+click &#34;Add&#34;
+until &#34;Fog at dawn&#34; 1s
+`</span><span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+	<span class="nx">t</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">window</span><span class="p">.</span><span class="nf">Play</span><span class="p">(</span><span class="nx">script</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+	<span class="nx">t</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>Both use one piece of code to find elements and make input (package <code>uidrive</code>), so a script that
+passes here does the same steps on a device. <code>uitest.Driver</code> gives the window any other driver,
+which it runs at every frame as a real window does.</p>
+
 <h2 id="errors">Errors</h2>
 
 <p>Nothing in <code>uitest</code> panics or fails your test for you: methods return errors, and you decide.

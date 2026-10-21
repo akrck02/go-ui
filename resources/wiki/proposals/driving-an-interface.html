@@ -1,0 +1,324 @@
+<h1 id="3-driving-an-interface-automatic-modes-and-tests-on-the-device">3. Driving an interface: automatic modes, and tests on the device</h1>
+
+<blockquote>
+<p>Status: done · Author&rsquo;s approval: proposal ☑ (2026-10-21, &ldquo;sigue, hazlo&rdquo;) plan ☑ (2026-10-21,
+the same words: the author asked to go ahead without stopping)</p>
+</blockquote>
+
+<h2 id="why">Why</h2>
+
+<p><code>uitest</code> drives an interface with no display: it finds what was drawn by its name (&ldquo;Add an
+action&rdquo;, &ldquo;Pad A&rdquo;) and gives it input, frame by frame, on a clock of its own. That idea is useful
+far beyond <code>go test</code>, but today it only works in a test window. A real Go UI window, on a
+computer, a phone or a 3DS, cannot be driven:</p>
+
+<ul>
+<li><strong>No automatic modes.</strong> A program cannot play a demo of itself (an attract mode), guide a
+person through a tutorial with a pointer that shows <em>press here</em> on the real control, or replay
+what someone did to reproduce a bug they reported.</li>
+<li><strong>No tests on the device.</strong> <code>uitest</code> proves the interface&rsquo;s logic on the computer, but not what
+only a device does: Go UI for Android&rsquo;s bridge to Java, the system keyboard with its
+suggestions, TalkBack, the screen&rsquo;s insets; Go Renderer drawing on the 3DS&rsquo;s GPU and its
+buttons. Today those are checked by hand, with captures from the emulators.</li>
+<li><strong>Two copies of one idea.</strong> If a program wrote its own driver, it would copy what <code>uitest</code>
+already does, and the two would drift apart.</li>
+</ul>
+
+<h2 id="what">What</h2>
+
+<table>
+<thead>
+<tr>
+<th>Id</th>
+<th>Requirement</th>
+<th>Check</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>R1</td>
+<td>A window can be <strong>driven</strong>: a program gives <code>window.Options</code> a driver, which adds input to each frame before the interface runs (a pointer, keys, fingers, typed text), on every target: desktop, web, Android and the 3DS</td>
+<td>test with a made-up driver in a window loop; a demo run on each target</td>
+</tr>
+
+<tr>
+<td>R2</td>
+<td>A <strong>script</strong> says what to do, by the names people see: move to, click, tap, hold, drag, type, press a key, wait, <em>wait until</em> an element shows; each step finds its element in the live interface as <code>uitest</code> does</td>
+<td>tests of each step against a made-up interface</td>
+</tr>
+
+<tr>
+<td>R3</td>
+<td><code>uitest</code> runs the same scripts and shares the code that finds elements and makes input: one implementation, two places to run it</td>
+<td><code>uitest</code>&rsquo;s tests pass unchanged; no finding code left in two packages</td>
+</tr>
+
+<tr>
+<td>R4</td>
+<td>A script can be <strong>recorded</strong> from what a person does in a window, and saved as a file a person can read and edit; played back, it does the same</td>
+<td>test: record a session, play it back, the interface ends in the same state</td>
+</tr>
+
+<tr>
+<td>R5</td>
+<td>A driven window can <strong>show</strong> what the driver does: the pointer, the fingers, the element a step found, so a demo or a tutorial is seen, not only run</td>
+<td>capture of a tutorial step</td>
+</tr>
+
+<tr>
+<td>R6</td>
+<td>A script run on a device <strong>reports</strong> each step&rsquo;s result with the error codes <code>uitest</code> uses, as lines a test runner reads (Android&rsquo;s log, the 3DS&rsquo;s console, standard output)</td>
+<td>test of the report&rsquo;s format; a script run in the Android emulator and in Azahar</td>
+</tr>
+
+<tr>
+<td>R7</td>
+<td>Go UI for Android gains a test that installs an app in the emulator, runs a script on it and reads the report, so its own layer (the Java bridge, the keyboard, TalkBack&rsquo;s tree, the insets) is proven automatically</td>
+<td>the test passes in the emulator</td>
+</tr>
+
+<tr>
+<td>R8</td>
+<td>A window with no driver costs nothing: no allocation and no work each frame; programs that do not use it are unchanged</td>
+<td>benchmark of the window loop with and without; the samples unchanged</td>
+</tr>
+
+<tr>
+<td>R9</td>
+<td>A person always wins: any real input while a script plays stops it, so an automatic mode never fights the hand on the device</td>
+<td>test: a key pressed during a script stops it</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="out-of-scope">Out of scope</h2>
+
+<ul>
+<li>Automating other programs or the operating system (UIAutomator, accessibility services): this
+drives Go UI&rsquo;s own windows only.</li>
+<li>Comparing pictures pixel by pixel: it needs Go Renderer to paint with no display, which is its
+own proposal.</li>
+<li>Driving a window from another computer over the network.</li>
+<li>A script language with branches and loops: a script is a list of steps; a program that needs
+logic writes Go.</li>
+</ul>
+
+<h2 id="decided-questions">Decided questions</h2>
+
+<ol>
+<li><strong>The script file&rsquo;s format: a line per step</strong>, plain text a person reads and writes, with <code>#</code>
+comments. Each line is parsed into a step; an error names its line.</li>
+<li><strong>The shared code lives in a new package, <code>uidrive</code></strong>: it finds elements by name in the live
+interface, makes input for a step, and runs a script frame by frame on a clock. <code>uitest</code> is
+rebuilt on it.</li>
+<li><strong>R7 lives in Go UI for Android</strong>, which owns the layer it proves. It is a later task there,
+not part of this change (see Tasks).</li>
+</ol>
+
+<h2 id="design">Design</h2>
+
+<p><strong>A driver is a hook in the window loop.</strong> <code>uidrive.Driver</code> is an interface of two methods:
+<code>Drive(state, context)</code> runs after the backend gathered the frame&rsquo;s real input and before the
+interface&rsquo;s <code>Begin</code>, and adds input to the state; <code>Show(drawing)</code> runs after <code>End</code>, and may draw
+over the interface. <code>window.Options.Driver</code> takes one. Desktop, web and Android share
+<code>interfaceApplication</code>&rsquo;s <code>Update</code>, and the 3DS has its own <code>consoleRun.step</code>: both call the same
+two lines, behind <code>if driver != nil</code>, so a window without one does what it did (R1, R8).</p>
+
+<p><strong><code>uidrive</code></strong> (new package, pure Go, so it builds for TinyGo and WebAssembly):</p>
+
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it holds</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>errors.go</code></td>
+<td><code>Code</code>, <code>Error</code>, <code>CodeOf</code>; the element codes moved from <code>uitest</code>, which keep their stable names (<code>uitest.element-not-found</code>…) since programs and people check them; new <code>uidrive.script-not-read</code> (with the line) and <code>uidrive.script-stopped</code></td>
+</tr>
+
+<tr>
+<td><code>find.go</code></td>
+<td><code>Element</code>, <code>Find</code>, <code>FindIn</code>, <code>FindWithin</code>, <code>FindAt</code>, <code>Texts</code>: what <code>uitest/find.go</code> did, over a <code>*ui.Context</code> (its screen reader&rsquo;s nodes and its drawing)</td>
+</tr>
+
+<tr>
+<td><code>hand.go</code></td>
+<td><code>Hand</code>: the pointer, the fingers and typing made as input on an <code>input.State</code> (move, press, release, touch, type, keys, let go of all)</td>
+</tr>
+
+<tr>
+<td><code>script.go</code>, <code>parse.go</code>, <code>keys.go</code></td>
+<td><code>Script</code>, <code>Step</code>, <code>Action</code>; <code>Parse</code> reads the line format and <code>Script.String</code> writes it; the keys&rsquo; names</td>
+</tr>
+
+<tr>
+<td><code>player.go</code>, <code>plan.go</code></td>
+<td><code>Player</code>: runs a script one frame at a time on the state&rsquo;s clock; a <code>Driver</code>. <code>plan</code> turns a step into its moves, a frame each</td>
+</tr>
+
+<tr>
+<td><code>report.go</code></td>
+<td>one line per step, <code>uidrive: step 3 failed uitest.element-not-found: click &quot;Remove&quot;</code>, to an <code>io.Writer</code> the program gives</td>
+</tr>
+
+<tr>
+<td><code>recorder.go</code></td>
+<td><code>Recorder</code>: a <code>Driver</code> that adds nothing and writes down what a person does, as a <code>Script</code></td>
+</tr>
+
+<tr>
+<td><code>show.go</code></td>
+<td>the overlay: the pointer, the fingers and the element found, drawn by <code>Player.Show</code> when asked</td>
+</tr>
+</tbody>
+</table>
+<p><code>uitest</code> keeps its whole API. <code>Element</code>, <code>Error</code> and <code>Code</code> become aliases of <code>uidrive</code>&rsquo;s; its
+finders call <code>uidrive.Find…</code>; its pointer, touches and keys go through a <code>uidrive.Hand</code>. It gains
+a <code>Driver</code> option (the window calls it each frame, as a real one) and <code>Window.Play(script)</code>, which
+runs a script with a sixtieth of a second per frame on the test clock (R3). <code>ui.Context</code> gains
+<code>Measurer()</code>, which finding a text needs. On Android the window keeps the screen reader&rsquo;s nodes on
+while driven, since a driver finds elements through them.</p>
+
+<p><strong>The script format</strong>, one step per line:</p>
+<pre><code class="language-text"># a lighthouse keeper writes the day&#39;s log
+click &#34;Add an entry&#34;
+type &#34;Fog at dawn&#34;
+press Enter
+wait 0.5s
+until &#34;Saved&#34;            # waits up to 5s, or: until &#34;Saved&#34; 10s
+tap &#34;Light the lamp&#34;
+hold &#34;Lens&#34; 1s           # a long press
+drag &#34;Boat&#34; 120 0        # by a distance in layout pixels; or: drag &#34;Boat&#34; to &#34;Harbour&#34;
+scroll &#34;Log&#34; -3
+double-click &#34;Entry&#34;
+move-to &#34;Help&#34;
+click-at 40 300          # a place, when what is there has no name
+press Shift+Tab
+</code></pre>
+
+<p><strong>The person wins (R9):</strong> a <code>Player</code> that finds input in the state before adding its own
+(<code>input.State.HasInput</code>) stops, lets go of what it holds, and ends with <code>uidrive.script-stopped</code>.</p>
+
+<p><strong>Alternatives not taken.</strong> JSON scripts: diffable, but noisy to write by hand. Keeping the
+finding code in <code>uitest</code> and importing it from windows: <code>uitest</code> imports <code>testing</code>, which has no
+place in a program on a console. A driver as a <code>func</code>: an interface lets one value both drive and
+show, and a nil check costs the same. A second, input-replaying recorder (raw events with times):
+it would break when the layout moves; names survive a new layout.</p>
+
+<h2 id="tasks">Tasks</h2>
+
+<ul>
+<li>[x] T1 — move finding into <code>uidrive</code> (<code>Element</code>, <code>Find…</code>, errors); <code>ui.Context.Measurer</code>; <code>uitest</code>
+finds through it · <code>uidrive/errors.go</code>, <code>uidrive/find.go</code>, <code>ui.go</code>, <code>uitest/find.go</code>,
+<code>uitest/errors.go</code> · serves R3 · test: <code>TestAButtonIsFoundByItsLabelInTheLiveInterface</code>, and
+<code>uitest</code>&rsquo;s tests unchanged</li>
+<li>[x] T2 — <code>uidrive.Hand</code> makes the pointer, touch and key input; <code>uitest</code> acts through it ·
+<code>uidrive/hand.go</code>, <code>uitest/pointer.go</code>, <code>uitest/touch.go</code>, <code>uitest/keyboard.go</code> · serves R3 ·
+test: <code>TestTheFirstFingerDownAlsoPressesThePointer</code></li>
+<li>[x] T3 — the script format: <code>Parse</code> and <code>Script.String</code> · <code>uidrive/script.go</code> · serves R2 · test:
+<code>TestAScriptWrittenAndReadAgainIsTheSame</code>, <code>TestAnUnknownStepIsAnErrorWithItsLine</code></li>
+<li>[x] T4 — <code>Player</code> runs each step frame by frame; <code>uitest.Driver</code> and <code>Window.Play</code> · <code>uidrive/
+player.go</code>, <code>uitest/window.go</code>, <code>uitest/play.go</code> · serves R2, R3 · test: one per step against a
+made-up interface (<code>TestAClickStepPressesTheButtonByItsName</code>…)</li>
+<li>[x] T5 — the report, a line per step with its code · <code>uidrive/report.go</code> · serves R6 · test:
+<code>TestTheReportSaysEachStepAndTheCodeOfAFailure</code></li>
+<li>[x] T6 — a person&rsquo;s input stops a script · <code>uidrive/player.go</code> · serves R9 · test:
+<code>TestAKeyPressedDuringAScriptStopsIt</code></li>
+<li>[x] T7 — <code>window.Options.Driver</code> on every target, at no cost without one · <code>window/window.go</code>,
+<code>window/nintendo3ds.go</code>, <code>window/android.go</code>, <code>window/drive.go</code> · serves R1, R8 · test:
+<code>TestADriverAddsInputBeforeTheInterfaceRuns</code>, <code>TestAWindowWithoutADriverAllocatesNothingForIt</code>,
+<code>BenchmarkAWindowStep…</code>; guide page <code>docs/4-guides/12-driving-a-window.md</code></li>
+<li>[x] T8 — <code>Recorder</code> writes down a person&rsquo;s session as a script · <code>uidrive/recorder.go</code> · serves R4
+· test: <code>TestARecordedSessionPlayedBackEndsInTheSameState</code></li>
+<li>[x] T9 — the overlay: pointer, fingers and the element found · <code>uidrive/show.go</code>, <code>cmd/app</code> (its
+<code>-script</code> and <code>-record</code> flags: <code>cmd/example</code> draws through go-renderer&rsquo;s viewer, not a window) ·
+serves R5 · test: <code>TestAShownPlayerDrawsThePointerAndTheElementItFound</code>; a capture</li>
+<li>[ ] Later, in <strong>go-ui-android</strong> (not this change) — R7: a test that installs an application in
+the emulator, plays a script on it with its report going to Android&rsquo;s log, and reads the log
+for <code>uidrive: script passed</code></li>
+</ul>
+
+<h2 id="result">Result</h2>
+
+<p><strong>Built</strong> (branch <code>feature/driving-an-interface</code>, written with an AI assistant and pending the
+author&rsquo;s review):</p>
+
+<ul>
+<li><code>uidrive</code>, a new package: finding by name (<code>Find</code>, <code>FindIn</code>, <code>FindWithin</code>, <code>FindAt</code>…), a <code>Hand</code>
+that makes pointer, touch and key input, the line script format (<code>Parse</code>, <code>Script.String</code>), a
+<code>Player</code> with its report and its overlay, and a <code>Recorder</code>.</li>
+<li><code>uitest</code> rebuilt on it, with its API and its tests&rsquo; behaviour unchanged (R3). The only test that
+changed is <code>TestEachErrorCarriesItsCode</code>: the element errors&rsquo; constructors moved to <code>uidrive</code>,
+whose own test checks them. <code>uitest</code> gains <code>Driver</code> and <code>Window.Play</code>.</li>
+<li><code>window.Options.Driver</code>, called in <code>interfaceApplication</code> (desktop, web, Android) and in the
+3DS&rsquo;s <code>consoleRun.step</code>; on Android the screen reader&rsquo;s nodes stay on while driven (R1).</li>
+<li><code>ui.Context.Measurer</code>, which finding a line of text needs.</li>
+<li><code>cmd/app -script</code> and <code>-record</code>; the guide <code>docs/4-guides/12-driving-a-window.md</code>, a section in
+the testing guide, and the reference regenerated.</li>
+</ul>
+
+<p><strong>Checks run:</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Id</th>
+<th>How it was checked</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>R1</td>
+<td><code>TestADriverAddsInputBeforeTheInterfaceRuns</code>; on the desktop, <code>cmd/app -script</code> played a script on Xvfb; the web build (<code>GOOS=js GOARCH=wasm go build ./window ./uidrive ./cmd/web</code>) and a driven program for the 3DS (<code>tinygo build -target=nintendo3ds</code>) compile</td>
+</tr>
+
+<tr>
+<td>R2</td>
+<td>a test per step in <code>uidrive/player_test.go</code>; <code>script_test.go</code> for the format and its errors</td>
+</tr>
+
+<tr>
+<td>R3</td>
+<td>every <code>uitest</code> test passes; finding lives only in <code>uidrive/find.go</code></td>
+</tr>
+
+<tr>
+<td>R4</td>
+<td><code>TestARecordedSessionPlayedBackEndsInTheSameState</code>; on the desktop, a session recorded with <code>cmd/app -record</code> (clicks and typing through xdotool) played back with every step passing</td>
+</tr>
+
+<tr>
+<td>R5</td>
+<td><code>TestAShownPlayerDrawsThePointerAndTheElementItFound</code>; the capture <code>docs/images/driving-a-window.png</code></td>
+</tr>
+
+<tr>
+<td>R6</td>
+<td><code>TestTheReportSaysEachStepAndTheCodeOfAFailure</code>; the report on standard output on the desktop</td>
+</tr>
+
+<tr>
+<td>R8</td>
+<td><code>TestAWindowWithoutADriverAllocatesNothingForIt</code>; <code>BenchmarkAWindowStepWithoutADriver</code> and <code>…WithADriver</code>: 0 allocations, about 475 ns a step either way</td>
+</tr>
+
+<tr>
+<td>R9</td>
+<td><code>TestAKeyPressedDuringAScriptStopsIt</code>; on the desktop a real pointer move stopped a playing script with <code>uidrive.script-stopped</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Not built:</strong> R7, the emulator test, which belongs to go-ui-android (see Tasks). A recording
+leaves out a drag that starts on something with no name.</p>
+
+<p><strong>Still for a person to check:</strong> a script played on an Android phone or emulator, and on a 3DS or
+Azahar: neither was run here (no Android NDK to build the Android window here, and the 3DS
+program was built but not started), so R1 and R6 are proven by the desktop and the tests only. The
+Android change (<code>SetScreenReader(… || driven)</code>) was not compiled. The overlay&rsquo;s colours and sizes
+were seen on a light theme only.</p>

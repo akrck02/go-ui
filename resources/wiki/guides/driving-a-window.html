@@ -1,0 +1,118 @@
+<h1 id="driving-a-window">🎬 Driving a window</h1>
+
+<p>This page is for someone whose program should sometimes use itself: play a demo when nobody
+touches it, show a newcomer <em>press here</em> on the real button, replay what a person did to see the
+bug they reported, or check on a phone or a console what only the device does. At the end you will
+know how to write a script, give it to a window, record one, and read its report.</p>
+
+<h2 id="the-idea">The idea</h2>
+
+<p><code>uitest</code> already drives an interface with no display: it finds what was drawn by the name people
+see (&ldquo;Light the lamp&rdquo;) and gives it input, frame by frame. Package <code>uidrive</code> is that same idea for
+a real window. A <em>driver</em> sits in the window loop: at each frame, after the window has gathered
+the real input and before your interface runs, it adds its own (a pointer, a finger, a key, typed
+text), and after your interface has drawn it may draw over it.</p>
+
+<p>Because both use the same code, a script that passes in <code>go test</code> does the same steps on a
+device.</p>
+
+<h2 id="a-script">A script</h2>
+
+<p>A script is plain text, one step a line. A person can read it, write it and change it in a pull
+request:</p>
+<pre><code class="language-text"># the lighthouse keeper&#39;s evening
+click &#34;Add an entry&#34;
+type &#34;Fog at dawn&#34;
+press Enter
+until &#34;Saved&#34;            # waits for it to show, five seconds at most
+wait 0.5s
+tap &#34;Light the lamp&#34;
+hold &#34;Lens&#34; 1s           # a long press
+drag &#34;Boat&#34; 120 0        # by a distance, in layout pixels
+drag &#34;Boat&#34; to &#34;Harbour&#34; # or onto another element
+scroll &#34;Log&#34; -3          # a negative amount goes down the page
+double-click &#34;Entry&#34;
+move-to &#34;Help&#34;           # the pointer goes over it: a tooltip shows
+click-at 40 300          # a place, for what has no name
+press Shift+Tab
+</code></pre>
+
+<p>Each step finds its element in what the last frame showed, as a screen reader would read it: a
+button by its text, a field by its placeholder, a line of text by what it says. A step that cannot
+find it ends the script with the same error codes <code>uitest</code> uses (<code>uitest.element-not-found</code>,
+<code>uitest.element-not-visible</code>…). A script has no branches or loops on purpose: a program that needs
+logic writes Go.</p>
+
+<p><code>uidrive.Parse</code> reads a script; a line it does not understand is an error with the code
+<code>uidrive.script-not-read</code> and its line number. <code>Script.String</code> writes one back.</p>
+
+<h2 id="giving-it-to-a-window">Giving it to a window</h2>
+<pre><code class="language-go"><span class="nx">script</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="nx">text</span><span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nx">err</span>
+<span class="p">}</span>
+<span class="nx">player</span> <span class="o">:=</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nf">Play</span><span class="p">(</span><span class="nx">script</span><span class="p">,</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nx">PlayOptions</span><span class="p">{</span><span class="nx">Report</span><span class="p">:</span> <span class="nx">os</span><span class="p">.</span><span class="nx">Stdout</span><span class="p">,</span> <span class="nx">Show</span><span class="p">:</span> <span class="kc">true</span><span class="p">})</span>
+<span class="k">return</span> <span class="nx">window</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">window</span><span class="p">.</span><span class="nx">Options</span><span class="p">{</span><span class="nx">Title</span><span class="p">:</span> <span class="s">&#34;Lighthouse&#34;</span><span class="p">,</span> <span class="nx">Driver</span><span class="p">:</span> <span class="nx">player</span><span class="p">},</span> <span class="nx">build</span><span class="p">)</span>
+</code></pre>
+
+<p>With <code>Show: true</code> the player draws what it does over the interface: an outline around the element
+its step found, the pointer as an orange ring (filled while pressed) and each finger as a dot, so a
+demo or a tutorial is seen, not only run. Here the register example (<code>go run ./cmd/app -script
+tour.txt</code>) has typed &ldquo;Rock&rdquo; in its search box and points at <em>New lighthouse</em>:</p>
+
+<p><img src="./images/driving-a-window.png" alt="The register driven by a script: the search box says Rock, and an orange outline and ring point at New lighthouse" /></p>
+
+<p><code>go run ./cmd/app -record session.txt</code> writes down what you do instead (see below).</p>
+
+<p><code>window.Options.Driver</code> works on every target: the desktop, a web page, Android and the 3DS. The
+window keeps drawing while the script plays, even one that draws only on demand, and goes back to
+sleeping when it ends. <code>player.Done()</code> and <code>player.Err()</code> tell how it went.</p>
+
+<p>A window with no driver pays nothing for it: no allocation and no work in its frames
+(<code>BenchmarkAWindowStepWithoutADriver</code> in <code>window</code>).</p>
+
+<h2 id="the-person-wins">The person wins</h2>
+
+<p>Any input that comes from a person while a script plays (a key, a click, the pointer moving, a
+touch) stops it at once: the player lets go of whatever it held, so no button stays pressed, and
+ends with <code>uidrive.script-stopped</code>. An attract mode stops the moment someone picks the device up.</p>
+
+<h2 id="automatic-modes">Automatic modes</h2>
+
+<ul>
+<li><strong>A demo</strong> (attract mode): a script that shows the program&rsquo;s best parts, with <code>Show: true</code>.
+Start it after a while without input; a touch gives the program back.</li>
+<li><strong>A replay</strong>: record what a person did (below), and play it back to see what they saw.</li>
+<li><strong>A tutorial</strong>: the same, a step at a time. A program can play a script of one <code>move-to</code> to
+point at the control to press, and let the person press it.</li>
+<li><strong>A test on the device</strong>: play a script with a <code>Report</code>, and read the report from the device&rsquo;s
+log (below).</li>
+</ul>
+
+<h2 id="recording-a-session">Recording a session</h2>
+
+<p><code>uidrive.Recorder</code> is a driver that adds nothing: it watches what a person does and writes it down
+as steps, by the names of what they pressed. Give it to the window, and save <code>recorder.Script()</code>
+when the window closes (<code>Options.Hidden</code>):</p>
+<pre><code class="language-go"><span class="nx">recorder</span> <span class="o">:=</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nf">Record</span><span class="p">()</span>
+<span class="nx">options</span> <span class="o">:=</span> <span class="nx">window</span><span class="p">.</span><span class="nx">Options</span><span class="p">{</span><span class="nx">Driver</span><span class="p">:</span> <span class="nx">recorder</span><span class="p">,</span> <span class="nx">Hidden</span><span class="p">:</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">_</span> <span class="p">=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">WriteFile</span><span class="p">(</span><span class="s">&#34;session.txt&#34;</span><span class="p">,</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">recorder</span><span class="p">.</span><span class="nf">Script</span><span class="p">().</span><span class="nf">String</span><span class="p">()),</span> <span class="mi">0</span><span class="nx">o644</span><span class="p">)</span> <span class="c1">// a lost recording is not worth stopping for</span>
+<span class="p">}}</span>
+</code></pre>
+
+<p>Played back, the script does the same. Because it names elements rather than places, it still
+works when the layout moves. A press on something with no name is written as a <code>click-at</code> its
+place; a drag that starts on something with no name is left out, since a script could not find
+where to start it again.</p>
+
+<h2 id="the-report">The report</h2>
+
+<p>With <code>PlayOptions.Report</code> set, the player writes a line for each step and one at the end, each
+starting with <code>uidrive:</code> so a test runner finds them among the device&rsquo;s other logs:</p>
+<pre><code class="language-text">uidrive: step 1 ok: click &#34;Add an entry&#34;
+uidrive: step 2 failed uitest.element-not-found: click &#34;Remove&#34;: no element &#34;Remove&#34; in the last frame; it showed […]
+uidrive: script failed at step 2: uitest.element-not-found
+</code></pre>
+
+<p>Give it standard output on a computer, the console on a 3DS, and a writer to Android&rsquo;s log on a
+phone. A script that passes ends with <code>uidrive: script passed: 5 steps</code>.</p>

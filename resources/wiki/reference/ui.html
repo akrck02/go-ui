@@ -346,6 +346,11 @@ things declared after it.</p>
 </tr>
 
 <tr>
+<td><code>func (ui *Context) Measurer() draw2d.Measurer</code></td>
+<td>Measurer is what the interface measures text with: a driver that finds a line of text in the drawing measures it the same way.</td>
+</tr>
+
+<tr>
 <td><code>func (ui *Context) MenuButton(icon, label string, content func())</code></td>
 <td>MenuButton adds a flat button with an optional icon (a Lucide name); clicking it opens a menu under it, over everything, whose items content adds with MenuItem (and Separator between groups).</td>
 </tr>

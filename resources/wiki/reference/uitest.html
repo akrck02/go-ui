@@ -8,16 +8,28 @@ Every action runs whole frames, as a backend does, and returns an error with a
 code when what it looks for is not there.</p>
 
 <h3 id="constants-and-variables">Constants and variables</h3>
+<pre><code class="language-go"><span class="kd">const</span> <span class="p">(</span>
+	<span class="nx">InvalidSize</span>         <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.invalid-size&#34;</span>
+	<span class="nx">ElementNotFound</span>          <span class="p">=</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nx">ElementNotFound</span>
+	<span class="nx">ElementAmbiguous</span>         <span class="p">=</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nx">ElementAmbiguous</span>
+	<span class="nx">ElementNotVisible</span>        <span class="p">=</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nx">ElementNotVisible</span>
+	<span class="nx">ElementNotPressable</span>      <span class="p">=</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nx">ElementNotPressable</span>
+	<span class="nx">RecordingNotSaved</span>   <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.recording-not-saved&#34;</span>
+	<span class="nx">RecordingNotRead</span>    <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.recording-not-read&#34;</span>
+<span class="p">)</span>
+</code></pre>
+
+<p>The codes this package returns; the element codes are uidrive&rsquo;s, under the same names.</p>
 <pre><code class="language-go"><span class="kd">const</span> <span class="nx">RecordVariable</span> <span class="p">=</span> <span class="s">&#34;UITEST_RECORD&#34;</span>
 </code></pre>
 
 <p>RecordVariable is the environment variable that turns recording on: a folder where each test made with the Test option writes what its window showed, for the results viewer (cmd/uitest).</p>
 <pre><code class="language-go"><span class="kd">var</span> <span class="p">(</span>
 	<span class="nx">ErrorInvalidSize</span>         <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">InvalidSize</span><span class="p">}</span>
-	<span class="nx">ErrorElementNotFound</span>     <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">ElementNotFound</span><span class="p">}</span>
-	<span class="nx">ErrorElementAmbiguous</span>    <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">ElementAmbiguous</span><span class="p">}</span>
-	<span class="nx">ErrorElementNotVisible</span>   <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">ElementNotVisible</span><span class="p">}</span>
-	<span class="nx">ErrorElementNotPressable</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">ElementNotPressable</span><span class="p">}</span>
+	<span class="nx">ErrorElementNotFound</span>     <span class="p">=</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nx">ErrorElementNotFound</span>
+	<span class="nx">ErrorElementAmbiguous</span>    <span class="p">=</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nx">ErrorElementAmbiguous</span>
+	<span class="nx">ErrorElementNotVisible</span>   <span class="p">=</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nx">ErrorElementNotVisible</span>
+	<span class="nx">ErrorElementNotPressable</span> <span class="p">=</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nx">ErrorElementNotPressable</span>
 	<span class="nx">ErrorRecordingNotSaved</span>   <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">RecordingNotSaved</span><span class="p">}</span>
 	<span class="nx">ErrorRecordingNotRead</span>    <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">RecordingNotRead</span><span class="p">}</span>
 <span class="p">)</span>
@@ -27,21 +39,9 @@ code when what it looks for is not there.</p>
 
 <h3 id="code">Code</h3>
 
-<p>Code is the stable name of an error of this package: programs compare it, people search for it.</p>
-<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Code</span> <span class="kt">string</span>
+<p>Code is the stable name of an error: programs compare it, people search for it. It is uidrive&rsquo;s, which finds elements for this package.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Code</span> <span class="p">=</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nx">Code</span>
 </code></pre>
-<pre><code class="language-go"><span class="kd">const</span> <span class="p">(</span>
-	<span class="nx">InvalidSize</span>         <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.invalid-size&#34;</span>
-	<span class="nx">ElementNotFound</span>     <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.element-not-found&#34;</span>
-	<span class="nx">ElementAmbiguous</span>    <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.element-ambiguous&#34;</span>
-	<span class="nx">ElementNotVisible</span>   <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.element-not-visible&#34;</span>
-	<span class="nx">ElementNotPressable</span> <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.element-not-pressable&#34;</span>
-	<span class="nx">RecordingNotSaved</span>   <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.recording-not-saved&#34;</span>
-	<span class="nx">RecordingNotRead</span>    <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.recording-not-read&#34;</span>
-<span class="p">)</span>
-</code></pre>
-
-<p>The codes this package returns.</p>
 
 <table>
 <thead>
@@ -61,52 +61,15 @@ code when what it looks for is not there.</p>
 
 <h3 id="element">Element</h3>
 
-<p>Element is what the last frame showed of a control, a text or a scroll area.</p>
-<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Element</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span class="nx">ID</span>        <span class="nx">ui</span><span class="p">.</span><span class="nx">ID</span>       <span class="c1">// the one the interface gives it, 0 when it was not on screen</span>
-	<span class="nx">Label</span>     <span class="kt">string</span>      <span class="c1">// what a screen reader calls it: a button&#39;s text, a described label</span>
-	<span class="nx">Rect</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span> <span class="c1">// where it was laid out, in layout pixels</span>
-	<span class="nx">Visible</span>   <span class="kt">bool</span>        <span class="c1">// some of it shows: not scrolled away, not behind a dialog or sheet</span>
-	<span class="nx">Focused</span>   <span class="kt">bool</span>        <span class="c1">// it has the focus (ui.Context.FocusedID)</span>
-	<span class="nx">Pressable</span> <span class="kt">bool</span>        <span class="c1">// a click or a tap does something to it</span>
-<span class="p">}</span>
+<p>Element is what the last frame showed of a control, a text or a scroll area (uidrive.Element).</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Element</span> <span class="p">=</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nx">Element</span>
 </code></pre>
 
 <h3 id="error">Error</h3>
 
-<p>Error is an error of this package: its code, and a message for people.</p>
-<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Error</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span class="nx">Code</span>    <span class="nx">Code</span>
-	<span class="nx">Message</span> <span class="kt">string</span>
-	<span class="nx">Cause</span>   <span class="kt">error</span> <span class="c1">// what went wrong underneath, when something outside this package failed</span>
-<span class="p">}</span>
+<p>Error is an error with a code, and a message for people (uidrive.Error).</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Error</span> <span class="p">=</span> <span class="nx">uidrive</span><span class="p">.</span><span class="nx">Error</span>
 </code></pre>
-
-<table>
-<thead>
-<tr>
-<th>Function or method</th>
-<th></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td><code>func (err *Error) Error() string</code></td>
-<td>Error gives the code and the message.</td>
-</tr>
-
-<tr>
-<td><code>func (err *Error) Is(target error) bool</code></td>
-<td>Is tells whether target is an error of this package with the same code, so errors.Is compares codes, never messages.</td>
-</tr>
-
-<tr>
-<td><code>func (err *Error) Unwrap() error</code></td>
-<td>Unwrap is the cause underneath, for errors.Is and errors.As.</td>
-</tr>
-</tbody>
-</table>
 
 <h3 id="fixedmeasurer">FixedMeasurer</h3>
 
@@ -150,6 +113,11 @@ code when what it looks for is not there.</p>
 </thead>
 
 <tbody>
+<tr>
+<td><code>func Driver(driver uidrive.Driver) Option</code></td>
+<td>Driver gives the window a driver, which it runs at every frame as a real window does (window.Options.Driver): before the interface, to add input, and after it, to draw over it.</td>
+</tr>
+
 <tr>
 <td><code>func Measurer(measurer draw2d.Measurer) Option</code></td>
 <td>Measurer sets how text is measured; without it the window uses FixedMeasurer.</td>
@@ -314,7 +282,7 @@ code when what it looks for is not there.</p>
 
 <tr>
 <td><code>func (window *Window) Frame()</code></td>
-<td>Frame runs one frame as a backend does: Begin, the interface, End, then the end of the input step, which forgets this frame&rsquo;s presses and typed text.</td>
+<td>Frame runs one frame as a backend does: the driver if there is one, Begin, the interface, End, then the end of the input step, which forgets this frame&rsquo;s presses and typed text.</td>
 </tr>
 
 <tr>
@@ -345,6 +313,11 @@ code when what it looks for is not there.</p>
 <tr>
 <td><code>func (window *Window) Now() time.Time</code></td>
 <td>Now is the window&rsquo;s time.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Play(script uidrive.Script) error</code></td>
+<td>Play plays a script in the window, as a driven window would (uidrive.Player), with a sixtieth of a second passing on the window&rsquo;s clock at each frame.</td>
 </tr>
 
 <tr>
