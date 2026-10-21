@@ -9,7 +9,7 @@ import (
 
 // Sizes of the viewer's layout, in layout pixels.
 const (
-	sidebarWidth = 320
+	sidebarWidth = 380
 	cardRadius   = 10
 	pagePadding  = 24
 )
@@ -24,59 +24,157 @@ func (results *results) draw(context *ui.Context) {
 	})
 }
 
-// sidebar lists the tests, failed first, with a chip for each error code.
+// sidebar lists the tests by package, failed first, with how many passed, failed and were
+// skipped, and which tests to show: all, the failed ones or those with a window.
 func (results *results) sidebar(context *ui.Context) {
 	theme := context.Theme
 	layout := ui.Layout{Direction: ui.Vertical, Width: ui.Fixed(sidebarWidth), Height: ui.Grow(), Padding: ui.Pad(12), Gap: 8}
 	context.Frame(layout, ui.Look{Fill: theme.Surface, Border: theme.Line, BorderWidth: 1}, func() {
-		context.Heading("Window tests")
-		passed, failed := results.counts()
-		context.Row(func() {
-			context.Chip("circle-check", fmt.Sprintf("%d passed", passed), ui.ChipLook{Fill: theme.PrimaryTint, Ink: theme.Positive})
-			context.Chip("circle-x", fmt.Sprintf("%d failed", failed), ui.ChipLook{Fill: theme.Sunken, Ink: theme.Danger})
-		})
+		context.Heading("Tests")
+		results.filterChips(context)
 		context.Separator()
 		context.ScrollArea("tests", ui.Layout{Direction: ui.Vertical, Width: ui.Grow(), Height: ui.Grow(), Gap: 2}, func() {
-			for index, recording := range results.recordings {
-				icon := "circle-check"
-				if recording.Failed {
-					icon = "circle-x"
-				}
-				if context.Selectable(icon, recording.Test, index == results.selected) {
-					results.choose(index)
-				}
+			results.testList(context)
+		})
+	})
+}
+
+// filterChips choose which tests the list shows, each saying how many it shows: all of them,
+// the failed ones (and the skipped, when there are any), and those with a window. The chosen one
+// stands out in the theme's main colour.
+func (results *results) filterChips(context *ui.Context) {
+	passed, failed, skipped := results.counts()
+	context.Box(ui.Layout{Width: ui.Grow(), Wrap: true, Gap: 6}, func() {
+		results.filterChip(context, allTests, "list", fmt.Sprintf("All %d", passed+failed+skipped))
+		results.filterChip(context, failedTests, "circle-x", fmt.Sprintf("Failed %d", failed))
+		if skipped > 0 {
+			results.filterChip(context, skippedTests, "circle-minus", fmt.Sprintf("Skipped %d", skipped))
+		}
+		results.filterChip(context, windowTests, "app-window", fmt.Sprintf("With a window %d", results.windowCount()))
+	})
+}
+
+// filterChip is one filter: a chip that shows its tests when clicked.
+func (results *results) filterChip(context *ui.Context, filter testFilter, icon, label string) {
+	theme := context.Theme
+	look := ui.ChipLook{Fill: theme.Sunken, Ink: theme.InkSoft}
+	if results.shown == filter {
+		look = ui.ChipLook{Fill: theme.PrimaryTint, Ink: theme.Primary}
+	}
+	if context.Chip(icon, label, look) {
+		results.shown = filter
+	}
+}
+
+// testList is the tests the filter shows, each package's under its name.
+func (results *results) testList(context *ui.Context) {
+	theme := context.Theme
+	lastPackage, listed := "", false
+	for index, test := range results.tests {
+		if !results.isShown(test) {
+			continue
+		}
+		listed = true
+		if test.Package != lastPackage {
+			context.Text(results.shortPackage(test.Package), ui.TextStyle{Size: theme.SmallTextSize, Color: theme.InkQuiet, Weight: draw2d.Medium})
+			lastPackage = test.Package
+		}
+		context.Push(test.Package)
+		if context.Selectable(stateIcon(test), test.Name, index == results.selected) {
+			results.choose(index)
+		}
+		context.Tooltip(test.Name) // a long name is cut at the list's edge
+		context.Pop()
+	}
+	if !listed {
+		context.Caption("No test here.")
+	}
+}
+
+// stateIcon is a test's icon: a window's when it made one and passed, else how it ended.
+func stateIcon(test testResult) string {
+	switch {
+	case test.State == failedTest:
+		return "circle-x"
+	case test.State == skippedTest:
+		return "circle-minus"
+	case test.recording >= 0:
+		return "app-window"
+	}
+	return "circle-check"
+}
+
+// chosenTest shows the chosen test: its name, state and package, and then its window's errors and
+// replay, or what it wrote when it made no window.
+func (results *results) chosenTest(context *ui.Context) {
+	layout := ui.Layout{Direction: ui.Vertical, Width: ui.Grow(), Height: ui.Grow(), Padding: ui.Pad(pagePadding), Gap: 16}
+	context.Box(layout, func() {
+		test, found := results.currentTest()
+		if !found {
+			context.Heading("No tests ran")
+			context.Caption("go test found no test in the packages given.")
+			return
+		}
+		title(context, test)
+		if _, hasWindow := results.current(); hasWindow {
+			results.errorCard(context)
+			results.replayCard(context)
+			return
+		}
+		outputCard(context, test)
+	})
+}
+
+// title is a test's name, a chip saying how it ended, and its package and time under them.
+func title(context *ui.Context, test testResult) {
+	theme := context.Theme
+	context.Row(func() {
+		context.Text(test.Name, ui.TextStyle{Size: theme.HeadingSize, Weight: draw2d.Bold})
+		switch test.State {
+		case failedTest:
+			context.Chip("circle-x", "Failed", ui.ChipLook{Fill: theme.Sunken, Ink: theme.Danger})
+		case skippedTest:
+			context.Chip("circle-minus", "Skipped", ui.ChipLook{Fill: theme.Sunken, Ink: theme.InkSoft})
+		default:
+			context.Chip("circle-check", "Passed", ui.ChipLook{Fill: theme.PrimaryTint, Ink: theme.Positive})
+		}
+	})
+	if test.Package != "" {
+		context.Caption(fmt.Sprintf("%s · %.2f s", test.Package, test.Seconds))
+	}
+}
+
+// outputCard shows what a test with no window wrote, line by line, as go test printed it.
+func outputCard(context *ui.Context, test testResult) {
+	theme := context.Theme
+	card(context, ui.Layout{Direction: ui.Vertical, Width: ui.Grow(), Height: ui.Grow(), Padding: ui.Pad(16), Gap: 8}, func() {
+		context.Row(func() {
+			context.IconSized("terminal", theme.IconSize, theme.InkSoft)
+			context.Text("Output", ui.TextStyle{Weight: draw2d.Medium})
+		})
+		if len(test.Output) == 0 {
+			context.Caption("It wrote nothing: a test of code, with no window, that " + endedAs(test.State) + ".")
+			return
+		}
+		context.ScrollArea("output", ui.Layout{Direction: ui.Vertical, Width: ui.Grow(), Height: ui.Grow(), Gap: 2}, func() {
+			for index, line := range test.Output {
+				context.Push(fmt.Sprint(index))
+				context.Text(line, ui.TextStyle{Weight: draw2d.Mono, Size: theme.SmallTextSize})
+				context.Pop()
 			}
 		})
 	})
 }
 
-// chosenTest shows the chosen test: its name and state, its errors and the replay of its frames.
-func (results *results) chosenTest(context *ui.Context) {
-	layout := ui.Layout{Direction: ui.Vertical, Width: ui.Grow(), Height: ui.Grow(), Padding: ui.Pad(pagePadding), Gap: 16}
-	context.Box(layout, func() {
-		recording, found := results.current()
-		if !found {
-			context.Heading("No window tests were recorded")
-			context.Caption("A test records when its window is made with uitest.Test(t).")
-			return
-		}
-		title(context, recording.Test, recording.Failed)
-		results.errorCard(context)
-		results.replayCard(context)
-	})
-}
-
-// title is a test's name and a chip saying whether it passed.
-func title(context *ui.Context, name string, failed bool) {
-	theme := context.Theme
-	context.Row(func() {
-		context.Text(name, ui.TextStyle{Size: theme.HeadingSize, Weight: draw2d.Bold})
-		if failed {
-			context.Chip("circle-x", "Failed", ui.ChipLook{Fill: theme.Sunken, Ink: theme.Danger})
-			return
-		}
-		context.Chip("circle-check", "Passed", ui.ChipLook{Fill: theme.PrimaryTint, Ink: theme.Positive})
-	})
+// endedAs says how a test ended, in words.
+func endedAs(state testState) string {
+	switch state {
+	case failedTest:
+		return "failed"
+	case skippedTest:
+		return "was skipped"
+	}
+	return "passed"
 }
 
 // card is a box in the theme's surface, with a border and round corners.
