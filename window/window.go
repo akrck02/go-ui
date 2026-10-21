@@ -75,7 +75,8 @@ type SceneView struct {
 	Camera models.Camera
 	// Drawing is the program's own drawing over the scene and under the interface: a game's life
 	// bar, a sight. On the 3DS it is painted on the top screen, in each eye when in 3D. Keep the
-	// list between frames (Reset it), so drawing it allocates nothing.
+	// list between frames (Reset it), so drawing it allocates nothing. Draw it on layer 0: a higher
+	// layer (SetLayer) covers the interface's menus and tooltips as well.
 	Drawing *draw2d.List
 	// Below is a second scene for the 3DS's bottom screen, with the interface painted over it (a
 	// map, a turning model); nil leaves the bottom screen to the interface alone. Elsewhere it is
