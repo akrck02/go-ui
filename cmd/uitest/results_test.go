@@ -2,6 +2,7 @@ package main
 
 import (
 	"testing"
+	"time"
 
 	"github.com/akrck02/go-renderer/draw2d"
 	ui "github.com/akrck02/go-ui"
@@ -107,5 +108,45 @@ func TestAFrameWithNoTargetHasNoHighlight(t *testing.T) {
 		if command.Kind == draw2d.RectangleKind && command.Border == theme.FocusRing && command.BorderWidth == highlightWidth {
 			t.Fatal("a frame with no action has a highlight")
 		}
+	}
+}
+
+func TestPlayMovesThroughTheFramesAndStopsAtTheLast(t *testing.T) {
+	window, results := openViewer(t)
+	now := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	results.playback.now = func() time.Time { return now }
+	if err := window.Click("Play"); err != nil {
+		t.Fatal(err)
+	}
+	if !results.playback.playing {
+		t.Fatal("Play does not play the replay")
+	}
+	now = now.Add(playbackFrame)
+	window.Frame()
+	if results.frame != 1 {
+		t.Fatalf("after a frame's time the replay shows frame %d, want 1", results.frame)
+	}
+	recording, _ := results.current()
+	now = now.Add(time.Duration(len(recording.Frames)) * playbackFrame)
+	window.Frame()
+	if results.frame != len(recording.Frames)-1 || results.playback.playing {
+		t.Fatalf("the replay is at frame %d, playing %v; want the last frame, stopped", results.frame, results.playback.playing)
+	}
+}
+
+func TestPauseKeepsTheFrameShown(t *testing.T) {
+	window, results := openViewer(t)
+	now := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	results.playback.now = func() time.Time { return now }
+	if err := window.Click("Play"); err != nil {
+		t.Fatal(err)
+	}
+	if err := window.Click("Pause"); err != nil {
+		t.Fatal(err)
+	}
+	now = now.Add(10 * playbackFrame)
+	window.Frame()
+	if results.frame != 0 || results.playback.playing {
+		t.Fatalf("a paused replay moved to frame %d", results.frame)
 	}
 }
