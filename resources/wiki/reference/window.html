@@ -214,7 +214,9 @@ all the time.</p>
 	<span class="c1">// Scene, when set, puts a 3D scene behind the interface. It is called at every step after the</span>
 	<span class="c1">// interface, with the input the interface did not claim (so the program can turn its camera</span>
 	<span class="c1">// without fighting a slider), and returns what to show this frame: nil for no scene. On the</span>
-	<span class="c1">// desktop a window with a scene draws through OpenGL.</span>
+	<span class="c1">// desktop a window with a scene draws through OpenGL. What it asks of that input&#39;s pointer</span>
+	<span class="c1">// (LockCursor) and screen (SetFullscreen, applied on a page at the next key or click) reaches</span>
+	<span class="c1">// the window.</span>
 	<span class="nx">Scene</span> <span class="kd">func</span><span class="p">(</span><span class="nx">state</span> <span class="o">*</span><span class="nx">input</span><span class="p">.</span><span class="nx">State</span><span class="p">,</span> <span class="nx">step</span> <span class="kt">float64</span><span class="p">)</span> <span class="o">*</span><span class="nx">SceneView</span>
 	<span class="c1">// MaxFramesPerSecond caps how often the window draws, to spare a battery; 0 = 60 on a phone,</span>
 	<span class="c1">// the display&#39;s own rate elsewhere (where vsync keeps it).</span>
