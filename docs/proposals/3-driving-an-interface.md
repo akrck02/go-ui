@@ -1,6 +1,6 @@
 # 3. Driving an interface: automatic modes, and tests on the device
 
-> Status: building · Author's approval: proposal ☑ (2026-10-21, "sigue, hazlo") plan ☑ (2026-10-21,
+> Status: done · Author's approval: proposal ☑ (2026-10-21, "sigue, hazlo") plan ☑ (2026-10-21,
 > the same words: the author asked to go ahead without stopping)
 
 ## Why
@@ -70,8 +70,8 @@ two lines, behind `if driver != nil`, so a window without one does what it did (
 | `errors.go` | `Code`, `Error`, `CodeOf`; the element codes moved from `uitest`, which keep their stable names (`uitest.element-not-found`…) since programs and people check them; new `uidrive.script-not-read` (with the line) and `uidrive.script-stopped` |
 | `find.go` | `Element`, `Find`, `FindIn`, `FindWithin`, `FindAt`, `Texts`: what `uitest/find.go` did, over a `*ui.Context` (its screen reader's nodes and its drawing) |
 | `hand.go` | `Hand`: the pointer, the fingers and typing made as input on an `input.State` (move, press, release, touch, type, keys, let go of all) |
-| `script.go` | `Script`, `Step`, `Action`; `Parse` reads the line format and `Script.String` writes it |
-| `player.go` | `Player`: runs a script one frame at a time on the state's clock; a `Driver` |
+| `script.go`, `parse.go`, `keys.go` | `Script`, `Step`, `Action`; `Parse` reads the line format and `Script.String` writes it; the keys' names |
+| `player.go`, `plan.go` | `Player`: runs a script one frame at a time on the state's clock; a `Driver`. `plan` turns a step into its moves, a frame each |
 | `report.go` | one line per step, `uidrive: step 3 failed uitest.element-not-found: click "Remove"`, to an `io.Writer` the program gives |
 | `recorder.go` | `Recorder`: a `Driver` that adds nothing and writes down what a person does, as a `Script` |
 | `show.go` | the overlay: the pointer, the fingers and the element found, drawn by `Player.Show` when asked |
@@ -135,7 +135,8 @@ it would break when the layout moves; names survive a new layout.
   `BenchmarkAWindowStep…`; guide page `docs/4-guides/12-driving-a-window.md`
 - [x] T8 — `Recorder` writes down a person's session as a script · `uidrive/recorder.go` · serves R4
   · test: `TestARecordedSessionPlayedBackEndsInTheSameState`
-- [x] T9 — the overlay: pointer, fingers and the element found · `uidrive/show.go`, `cmd/example` ·
+- [x] T9 — the overlay: pointer, fingers and the element found · `uidrive/show.go`, `cmd/app` (its
+  `-script` and `-record` flags: `cmd/example` draws through go-renderer's viewer, not a window) ·
   serves R5 · test: `TestAShownPlayerDrawsThePointerAndTheElementItFound`; a capture
 - [ ] Later, in **go-ui-android** (not this change) — R7: a test that installs an application in
   the emulator, plays a script on it with its report going to Android's log, and reads the log
@@ -143,4 +144,39 @@ it would break when the layout moves; names survive a new layout.
 
 ## Result
 
-Not built yet: waiting for the author's approval of this proposal.
+**Built** (branch `feature/driving-an-interface`, written with an AI assistant and pending the
+author's review):
+
+- `uidrive`, a new package: finding by name (`Find`, `FindIn`, `FindWithin`, `FindAt`…), a `Hand`
+  that makes pointer, touch and key input, the line script format (`Parse`, `Script.String`), a
+  `Player` with its report and its overlay, and a `Recorder`.
+- `uitest` rebuilt on it, with its API and its tests' behaviour unchanged (R3). The only test that
+  changed is `TestEachErrorCarriesItsCode`: the element errors' constructors moved to `uidrive`,
+  whose own test checks them. `uitest` gains `Driver` and `Window.Play`.
+- `window.Options.Driver`, called in `interfaceApplication` (desktop, web, Android) and in the
+  3DS's `consoleRun.step`; on Android the screen reader's nodes stay on while driven (R1).
+- `ui.Context.Measurer`, which finding a line of text needs.
+- `cmd/app -script` and `-record`; the guide `docs/4-guides/12-driving-a-window.md`, a section in
+  the testing guide, and the reference regenerated.
+
+**Checks run:**
+
+| Id | How it was checked |
+|---|---|
+| R1 | `TestADriverAddsInputBeforeTheInterfaceRuns`; on the desktop, `cmd/app -script` played a script on Xvfb; the web build (`GOOS=js GOARCH=wasm go build ./window ./uidrive ./cmd/web`) and a driven program for the 3DS (`tinygo build -target=nintendo3ds`) compile |
+| R2 | a test per step in `uidrive/player_test.go`; `script_test.go` for the format and its errors |
+| R3 | every `uitest` test passes; finding lives only in `uidrive/find.go` |
+| R4 | `TestARecordedSessionPlayedBackEndsInTheSameState`; on the desktop, a session recorded with `cmd/app -record` (clicks and typing through xdotool) played back with every step passing |
+| R5 | `TestAShownPlayerDrawsThePointerAndTheElementItFound`; the capture `docs/images/driving-a-window.png` |
+| R6 | `TestTheReportSaysEachStepAndTheCodeOfAFailure`; the report on standard output on the desktop |
+| R8 | `TestAWindowWithoutADriverAllocatesNothingForIt`; `BenchmarkAWindowStepWithoutADriver` and `…WithADriver`: 0 allocations, about 475 ns a step either way |
+| R9 | `TestAKeyPressedDuringAScriptStopsIt`; on the desktop a real pointer move stopped a playing script with `uidrive.script-stopped` |
+
+**Not built:** R7, the emulator test, which belongs to go-ui-android (see Tasks). A recording
+leaves out a drag that starts on something with no name.
+
+**Still for a person to check:** a script played on an Android phone or emulator, and on a 3DS or
+Azahar: neither was run here (no Android NDK to build the Android window here, and the 3DS
+program was built but not started), so R1 and R6 are proven by the desktop and the tests only. The
+Android change (`SetScreenReader(… || driven)`) was not compiled. The overlay's colours and sizes
+were seen on a light theme only.

@@ -58,6 +58,11 @@ func (player *Player) Drive(state *input.State, context *ui.Context) {
 	if player.done {
 		return
 	}
+	if len(player.script) == 0 {
+		reportScriptPassed(player.options.Report, 0)
+		player.done = true
+		return
+	}
 	if player.started && state.HasInput() {
 		player.fail(state, scriptStopped(player.index+1))
 		return
@@ -75,11 +80,6 @@ func (player *Player) Drive(state *input.State, context *ui.Context) {
 
 // playFrame plans the step playing now if it is new, and plays its next move.
 func (player *Player) playFrame(state *input.State, context *ui.Context) error {
-	if len(player.script) == 0 {
-		reportScriptPassed(player.options.Report, 0)
-		player.done = true
-		return nil
-	}
 	step := player.script[player.index]
 	if !player.planned {
 		moves, found, err := plan(&player.hand, step, context)

@@ -53,3 +53,9 @@ func TestTheReportEndsWithAPassWhenEveryStepPassed(test *testing.T) {
 		test.Fatalf("reported:\n%s", report)
 	}
 }
+
+func TestAnEmptyScriptPassesAtOnce(test *testing.T) {
+	if report := playReported(test, "# nothing to do yet\n"); report != "uidrive: script passed: 0 steps\n" {
+		test.Fatalf("reported:\n%s", report)
+	}
+}
