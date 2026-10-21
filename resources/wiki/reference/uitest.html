@@ -1,0 +1,439 @@
+<h1 id="uitest">uitest</h1>
+<pre><code class="language-go"><span class="kn">import</span> <span class="s">&#34;github.com/akrck02/go-ui/uitest&#34;</span>
+</code></pre>
+
+<p>Package uitest drives a Go UI interface in go test, with no display: it opens
+a pretend window, presses, types and waits in it, and tells what it shows.
+Every action runs whole frames, as a backend does, and returns an error with a
+code when what it looks for is not there.</p>
+
+<h3 id="constants-and-variables">Constants and variables</h3>
+<pre><code class="language-go"><span class="kd">const</span> <span class="nx">RecordVariable</span> <span class="p">=</span> <span class="s">&#34;UITEST_RECORD&#34;</span>
+</code></pre>
+
+<p>RecordVariable is the environment variable that turns recording on: a folder where each test made with the Test option writes what its window showed, for the results viewer (cmd/uitest).</p>
+<pre><code class="language-go"><span class="kd">var</span> <span class="p">(</span>
+	<span class="nx">ErrorInvalidSize</span>         <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">InvalidSize</span><span class="p">}</span>
+	<span class="nx">ErrorElementNotFound</span>     <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">ElementNotFound</span><span class="p">}</span>
+	<span class="nx">ErrorElementAmbiguous</span>    <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">ElementAmbiguous</span><span class="p">}</span>
+	<span class="nx">ErrorElementNotVisible</span>   <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">ElementNotVisible</span><span class="p">}</span>
+	<span class="nx">ErrorElementNotPressable</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">ElementNotPressable</span><span class="p">}</span>
+	<span class="nx">ErrorRecordingNotSaved</span>   <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">RecordingNotSaved</span><span class="p">}</span>
+	<span class="nx">ErrorRecordingNotRead</span>    <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Error</span><span class="p">{</span><span class="nx">Code</span><span class="p">:</span> <span class="nx">RecordingNotRead</span><span class="p">}</span>
+<span class="p">)</span>
+</code></pre>
+
+<p>The errors to compare with errors.Is; comparing them allocates nothing.</p>
+
+<h3 id="code">Code</h3>
+
+<p>Code is the stable name of an error of this package: programs compare it, people search for it.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Code</span> <span class="kt">string</span>
+</code></pre>
+<pre><code class="language-go"><span class="kd">const</span> <span class="p">(</span>
+	<span class="nx">InvalidSize</span>         <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.invalid-size&#34;</span>
+	<span class="nx">ElementNotFound</span>     <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.element-not-found&#34;</span>
+	<span class="nx">ElementAmbiguous</span>    <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.element-ambiguous&#34;</span>
+	<span class="nx">ElementNotVisible</span>   <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.element-not-visible&#34;</span>
+	<span class="nx">ElementNotPressable</span> <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.element-not-pressable&#34;</span>
+	<span class="nx">RecordingNotSaved</span>   <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.recording-not-saved&#34;</span>
+	<span class="nx">RecordingNotRead</span>    <span class="nx">Code</span> <span class="p">=</span> <span class="s">&#34;uitest.recording-not-read&#34;</span>
+<span class="p">)</span>
+</code></pre>
+
+<p>The codes this package returns.</p>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func CodeOf(err error) Code</code></td>
+<td>CodeOf is the code of an error of this package, or &ldquo;&rdquo; for any other error (and for nil).</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="element">Element</h3>
+
+<p>Element is what the last frame showed of a control, a text or a scroll area.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Element</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">ID</span>        <span class="nx">ui</span><span class="p">.</span><span class="nx">ID</span>       <span class="c1">// the one the interface gives it, 0 when it was not on screen</span>
+	<span class="nx">Label</span>     <span class="kt">string</span>      <span class="c1">// what a screen reader calls it: a button&#39;s text, a described label</span>
+	<span class="nx">Rect</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span> <span class="c1">// where it was laid out, in layout pixels</span>
+	<span class="nx">Visible</span>   <span class="kt">bool</span>        <span class="c1">// some of it shows: not scrolled away, not behind a dialog or sheet</span>
+	<span class="nx">Focused</span>   <span class="kt">bool</span>        <span class="c1">// it has the focus (ui.Context.FocusedID)</span>
+	<span class="nx">Pressable</span> <span class="kt">bool</span>        <span class="c1">// a click or a tap does something to it</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="error">Error</h3>
+
+<p>Error is an error of this package: its code, and a message for people.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Error</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Code</span>    <span class="nx">Code</span>
+	<span class="nx">Message</span> <span class="kt">string</span>
+	<span class="nx">Cause</span>   <span class="kt">error</span> <span class="c1">// what went wrong underneath, when something outside this package failed</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func (err *Error) Error() string</code></td>
+<td>Error gives the code and the message.</td>
+</tr>
+
+<tr>
+<td><code>func (err *Error) Is(target error) bool</code></td>
+<td>Is tells whether target is an error of this package with the same code, so errors.Is compares codes, never messages.</td>
+</tr>
+
+<tr>
+<td><code>func (err *Error) Unwrap() error</code></td>
+<td>Unwrap is the cause underneath, for errors.Is and errors.As.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="fixedmeasurer">FixedMeasurer</h3>
+
+<p>FixedMeasurer measures text with no fonts: every character is half the text size wide. Tests that use it give the same layout on every machine. It has every icon.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">FixedMeasurer</span> <span class="kd">struct</span><span class="p">{}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func (FixedMeasurer) HasIcon(string) bool</code></td>
+<td>HasIcon says every icon exists.</td>
+</tr>
+
+<tr>
+<td><code>func (FixedMeasurer) MeasureText(text string, size float32, _ draw2d.Weight, _ float32) draw2d.TextMetrics</code></td>
+<td>MeasureText gives each character half the size in width.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="option">Option</h3>
+
+<p>Option chooses something about a test window; give them to New.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Option</span> <span class="kd">func</span><span class="p">(</span><span class="o">*</span><span class="nx">settings</span><span class="p">)</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func Measurer(measurer draw2d.Measurer) Option</code></td>
+<td>Measurer sets how text is measured; without it the window uses FixedMeasurer.</td>
+</tr>
+
+<tr>
+<td><code>func Scale(factor float32) Option</code></td>
+<td>Scale sets how many framebuffer pixels a layout pixel takes (2 on most phones).</td>
+</tr>
+
+<tr>
+<td><code>func Size(width, height float32) Option</code></td>
+<td>Size sets the window&rsquo;s size in layout pixels: what the interface&rsquo;s Size reports.</td>
+</tr>
+
+<tr>
+<td><code>func Test(test testing.TB) Option</code></td>
+<td>Test names the window after a test.</td>
+</tr>
+
+<tr>
+<td><code>func Theme(theme ui.Theme) Option</code></td>
+<td>Theme sets the interface&rsquo;s theme; without it the window uses ui&rsquo;s default.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="recordederror">RecordedError</h3>
+
+<p>RecordedError is an error a window returned, and the frame it came after.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">RecordedError</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Code</span>    <span class="nx">Code</span>
+	<span class="nx">Message</span> <span class="kt">string</span>
+	<span class="nx">Frame</span>   <span class="kt">int</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="recordedframe">RecordedFrame</h3>
+
+<p>RecordedFrame is one frame: what was drawn, where the pointer and the fingers were, and the action that ran it with the element it found.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">RecordedFrame</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Action</span>     <span class="kt">string</span> <span class="c1">// `Click &#34;Save&#34;`, empty for a frame run on its own</span>
+	<span class="nx">Target</span>     <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span>
+	<span class="nx">HasTarget</span>  <span class="kt">bool</span>
+	<span class="nx">HasPointer</span> <span class="kt">bool</span> <span class="c1">// the pointer has been somewhere in the window</span>
+	<span class="nx">PointerX</span>   <span class="kt">float32</span>
+	<span class="nx">PointerY</span>   <span class="kt">float32</span>
+	<span class="nx">Pressed</span>    <span class="kt">bool</span> <span class="c1">// the main button or the first finger is down</span>
+	<span class="nx">Touches</span>    <span class="p">[]</span><span class="nx">RecordedTouch</span>
+	<span class="c1">// Commands are what was drawn; pictures are kept by their area only, and a text&#39;s Area.Width is</span>
+	<span class="c1">// its width as the window&#39;s measurer measured it</span>
+	<span class="nx">Commands</span> <span class="p">[]</span><span class="nx">draw2d</span><span class="p">.</span><span class="nx">Command</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="recordedtouch">RecordedTouch</h3>
+
+<p>RecordedTouch is a finger on the screen.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">RecordedTouch</span> <span class="kd">struct</span><span class="p">{</span> <span class="nx">X</span><span class="p">,</span> <span class="nx">Y</span> <span class="kt">float32</span> <span class="p">}</span>
+</code></pre>
+
+<h3 id="recording">Recording</h3>
+
+<p>Recording is what a test&rsquo;s window showed, frame by frame, and the errors it returned.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Recording</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Test</span>          <span class="kt">string</span> <span class="c1">// the test&#39;s name, as go test gives it</span>
+	<span class="nx">Failed</span>        <span class="kt">bool</span>
+	<span class="nx">Width</span><span class="p">,</span> <span class="nx">Height</span> <span class="kt">float32</span>      <span class="c1">// the window, in layout pixels</span>
+	<span class="nx">Background</span>    <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// the theme&#39;s, which a window paints behind the interface</span>
+	<span class="nx">Errors</span>        <span class="p">[]</span><span class="nx">RecordedError</span>
+	<span class="nx">Frames</span>        <span class="p">[]</span><span class="nx">RecordedFrame</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func LoadRecordings(folder string) ([]Recording, error)</code></td>
+<td>LoadRecordings reads every recording in a folder, sorted by test name.</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="window">Window</h3>
+
+<p>Window is a pretend window that runs an interface function frame by frame.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Window</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="c1">// Has unexported fields.</span>
+<span class="p">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Function or method</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>func New(build func(context *ui.Context), options ...Option) (*Window, error)</code></td>
+<td>New makes a test window for an interface function: 800x600 layout pixels at scale 1, ui&rsquo;s default theme and FixedMeasurer, unless options say otherwise.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Click(label string) error</code></td>
+<td>Click clicks the middle of an element that can be pressed.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) ClickAt(x, y float32)</code></td>
+<td>ClickAt moves the pointer to a place, presses and releases there, each with its frames, as a control answers when the button is let go.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Context() *ui.Context</code></td>
+<td>Context is the interface&rsquo;s context, for what this package does not cover yet.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) DoubleClick(label string) error</code></td>
+<td>DoubleClick clicks an element twice with no time between, which the input state counts as a double click.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Drag(fromX, fromY, toX, toY float32)</code></td>
+<td>Drag presses at one place, moves to another over several frames and lets go there.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) DragElement(label string, distanceX, distanceY float32) error</code></td>
+<td>DragElement drags an element&rsquo;s middle by a distance in layout pixels.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) DrawList() *draw2d.List</code></td>
+<td>DrawList is what the last frame drew, as go-renderer would paint it.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Element(label string) (Element, error)</code></td>
+<td>Element finds what the last frame showed with this label: a button&rsquo;s text, a field&rsquo;s name, a line of text.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) ElementIn(path ...string) (Element, error)</code></td>
+<td>ElementIn finds a control by its scopes (the names given to ui.Context.Push) and its label, outermost first: ElementIn(&ldquo;north&rdquo;, &ldquo;Save&rdquo;).</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) ElementWithin(outer, inner string) (Element, error)</code></td>
+<td>ElementWithin finds an element by its label inside another found by its label: the button &ldquo;Save&rdquo; in the panel called &ldquo;North&rdquo;.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Frame()</code></td>
+<td>Frame runs one frame as a backend does: Begin, the interface, End, then the end of the input step, which forgets this frame&rsquo;s presses and typed text.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Frames(count int)</code></td>
+<td>Frames runs a number of frames, with no time passing between them (see Wait).</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) HoldKey(key input.Key)</code></td>
+<td>HoldKey puts a key down and runs a frame; it stays down until ReleaseKey.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) LongPress(label string) error</code></td>
+<td>LongPress holds a finger still on an element for a second, letting the time pass, then lifts it.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) MoveTo(x, y float32)</code></td>
+<td>MoveTo moves the pointer to a place in the window and runs a frame.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) MoveToElement(label string) error</code></td>
+<td>MoveToElement moves the pointer to the middle of an element (see Element) and runs a frame.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Now() time.Time</code></td>
+<td>Now is the window&rsquo;s time.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Press()</code></td>
+<td>Press holds the main button down where the pointer is and runs a frame.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) PressKey(key input.Key)</code></td>
+<td>PressKey presses a key and lets it go: one frame with it down, one with it up.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Release()</code></td>
+<td>Release lets the main button go and runs a frame.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) ReleaseKey(key input.Key)</code></td>
+<td>ReleaseKey lets a key go and runs a frame.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Resize(width, height float32) error</code></td>
+<td>Resize changes the window&rsquo;s size in layout pixels, keeping its scale; the next frame sees it.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Scroll(label string, amount float32) error</code></td>
+<td>Scroll puts the pointer over an element and turns the wheel: a negative amount goes down the page, as a wheel turned toward the person does.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) ShiftTab()</code></td>
+<td>ShiftTab moves the focus to the control before, as Shift+Tab does.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) State() *input.State</code></td>
+<td>State is the window&rsquo;s input state, for what this package does not cover yet.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Tab()</code></td>
+<td>Tab moves the focus to the next control, as the Tab key does.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Tap(label string) error</code></td>
+<td>Tap touches the middle of an element that can be pressed and lifts the finger at once.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Texts() []string</code></td>
+<td>Texts is every line of text the last frame drew, in drawing order: headings, labels, buttons&rsquo; texts, a field&rsquo;s text.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) TouchDown(finger int64, x, y float32)</code></td>
+<td>TouchDown puts a finger on the screen and runs a frame.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) TouchMove(finger int64, x, y float32)</code></td>
+<td>TouchMove moves a finger that is down and runs a frame.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) TouchUp(finger int64)</code></td>
+<td>TouchUp lifts a finger and runs a frame.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Type(text string)</code></td>
+<td>Type types a text in one frame, as a paste or a fast typist does: the control with the focus takes it.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) TypeOneByOne(text string)</code></td>
+<td>TypeOneByOne types a text one character a frame, as a person types.</td>
+</tr>
+
+<tr>
+<td><code>func (window *Window) Wait(duration time.Duration)</code></td>
+<td>Wait lets time pass: it runs a frame about every sixtieth of a second until the duration has gone, so long presses, double-click intervals and animations see time move as on a screen.</td>
+</tr>
+</tbody>
+</table>
+
+<hr>
+
+<p><a href="./reference/reference">← Reference</a> · generated from the doc comments by <code>generate.py</code></p>

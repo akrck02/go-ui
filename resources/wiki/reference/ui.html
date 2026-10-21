@@ -59,6 +59,14 @@ things declared after it.</p>
 <span class="p">)</span>
 </code></pre>
 
+<h3 id="backdrop">Backdrop</h3>
+
+<p>Backdrop draws a box&rsquo;s background in its area.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Backdrop</span> <span class="kd">interface</span> <span class="p">{</span>
+	<span class="nf">Paint</span><span class="p">(</span><span class="nx">area</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span><span class="p">,</span> <span class="nx">drawing</span> <span class="o">*</span><span class="nx">draw2d</span><span class="p">.</span><span class="nx">List</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+
 <h3 id="chiplook">ChipLook</h3>
 
 <p>ChipLook is a chip&rsquo;s own colours: its fill and the ink of its text and icon. The zero value uses the theme&rsquo;s quiet colours (Sunken and InkSoft).</p>
@@ -238,6 +246,11 @@ things declared after it.</p>
 </tr>
 
 <tr>
+<td><code>func (ui *Context) FilePicker(options FilePickerOptions) (path string, closed bool)</code></td>
+<td>FilePicker shows a sheet to choose a file or a folder.</td>
+</tr>
+
+<tr>
 <td><code>func (ui *Context) FlatButton(label string) bool</code></td>
 <td>FlatButton adds a button with no fill or border until hovered: menu bars and toolbars.</td>
 </tr>
@@ -255,6 +268,11 @@ things declared after it.</p>
 <tr>
 <td><code>func (ui *Context) FocusField(name string)</code></td>
 <td>FocusField gives the keyboard to the text field of a name, in the same scope, from the next time it is built: a search that opens ready to type in.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) FocusedID() ID</code></td>
+<td>FocusedID is the control that has the focus after the last frame: the field being typed in, or the control Tab reached; 0 when none has it.</td>
 </tr>
 
 <tr>
@@ -606,6 +624,11 @@ things declared after it.</p>
 <td><code>func (ui *Context) WantsMouse() bool</code></td>
 <td>WantsMouse tells whether the interface used the mouse in the last frame: the pointer was over a panel or a control, or dragging one.</td>
 </tr>
+
+<tr>
+<td><code>func (ui *Context) Within(area draw2d.Rect, content func())</code></td>
+<td>Within lays out the panels, overlays and modals content opens in an area of the window instead of the whole window (a panel&rsquo;s X and Y count from the area&rsquo;s corner): an interface that a program shows inside a view of its own (a game played inside an editor).</td>
+</tr>
 </tbody>
 </table>
 
@@ -669,6 +692,38 @@ things declared after it.</p>
 <p>EditingWords are the labels of the bar over a selection on a touch screen.</p>
 <pre><code class="language-go"><span class="kd">type</span> <span class="nx">EditingWords</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span class="nx">Cut</span><span class="p">,</span> <span class="nx">Copy</span><span class="p">,</span> <span class="nx">Paste</span><span class="p">,</span> <span class="nx">SelectAll</span> <span class="kt">string</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="fileentry">FileEntry</h3>
+
+<p>FileEntry is a file or a folder in a folder.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">FileEntry</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Name</span>   <span class="kt">string</span>
+	<span class="nx">Folder</span> <span class="kt">bool</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="filepickeroptions">FilePickerOptions</h3>
+
+<p>FilePickerOptions say what a file picker chooses and where it starts.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">FilePickerOptions</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="c1">// Title is the sheet&#39;s title, which also tells pickers apart; empty is &#34;Choose a file&#34; or</span>
+	<span class="c1">// &#34;Choose a folder&#34;.</span>
+	<span class="nx">Title</span> <span class="kt">string</span>
+	<span class="c1">// Folder makes it choose a folder (the one open, or the one clicked) instead of a file.</span>
+	<span class="nx">Folder</span> <span class="kt">bool</span>
+	<span class="c1">// Start is the file or folder chosen before: the picker opens in it, or in the folder it is in.</span>
+	<span class="c1">// Empty, or nowhere, opens the home folder.</span>
+	<span class="nx">Start</span> <span class="kt">string</span>
+	<span class="c1">// Suffixes, when there are any, are the endings of the files shown (&#34;.glb&#34;, &#34;.png&#34;); the</span>
+	<span class="c1">// folders are always shown, to go through them.</span>
+	<span class="nx">Suffixes</span> <span class="p">[]</span><span class="kt">string</span>
+	<span class="c1">// Places are folders offered on the left besides the home folder and the root: where the</span>
+	<span class="c1">// programs the person looks for are usually installed.</span>
+	<span class="nx">Places</span> <span class="p">[]</span><span class="kt">string</span>
+	<span class="c1">// ReadFolder reads what a folder holds; empty reads the disk. Tests give a folder of their own.</span>
+	<span class="nx">ReadFolder</span> <span class="kd">func</span><span class="p">(</span><span class="nx">folder</span> <span class="kt">string</span><span class="p">)</span> <span class="p">([]</span><span class="nx">FileEntry</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
 <span class="p">}</span>
 </code></pre>
 
@@ -772,6 +827,10 @@ things declared after it.</p>
 	<span class="nx">Radius</span>      <span class="kt">float32</span>
 	<span class="nx">Shadow</span>      <span class="kt">bool</span> <span class="c1">// a soft shadow under it, for things that float over others</span>
 	<span class="nx">Clip</span>        <span class="kt">bool</span> <span class="c1">// children are cut to the box&#39;s area</span>
+	<span class="c1">// Backdrop, when set, draws more of the box&#39;s background, over Fill and Border and under its</span>
+	<span class="c1">// children: a frame of several colours, a pattern. A pointer to a style kept from frame to</span>
+	<span class="c1">// frame allocates nothing.</span>
+	<span class="nx">Backdrop</span> <span class="nx">Backdrop</span>
 	<span class="c1">// Edge is a solid band of this colour, EdgeWidth tall, just under the box, as if it stood on a</span>
 	<span class="c1">// block: a design system&#39;s main button. It takes no room in the layout, like a shadow.</span>
 	<span class="nx">Edge</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
@@ -1032,6 +1091,9 @@ things declared after it.</p>
 	<span class="nx">Size</span>   <span class="kt">float32</span> <span class="c1">// in pixels; 0 = the theme&#39;s text size</span>
 	<span class="nx">Weight</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Weight</span>
 	<span class="nx">Color</span>  <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// the zero colour = the theme&#39;s ink</span>
+	<span class="c1">// Shadow, when visible, draws the text a second time a pixel right and down, in this colour,</span>
+	<span class="c1">// under it: the hard shadow pixel-art games give their text.</span>
+	<span class="nx">Shadow</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
 <span class="p">}</span>
 </code></pre>
 
@@ -1110,7 +1172,7 @@ things declared after it.</p>
 	<span class="c1">// FieldFocusEdge lights a field&#39;s own edge in FocusRing while it is typed in, instead of a</span>
 	<span class="c1">// ring around it.</span>
 	<span class="nx">FieldFocusEdge</span> <span class="kt">bool</span>
-	<span class="c1">// PressScale is how big a control is drawn while it is held, around its centre (0.97 gives a</span>
+	<span class="c1">// PressScale is how big a button is drawn while it is held, around its centre (0.97 gives a</span>
 	<span class="c1">// little); its content shrinks with it and the layout does not move. 0 keeps it still.</span>
 	<span class="nx">PressScale</span> <span class="kt">float32</span>
 <span class="p">}</span>

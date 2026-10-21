@@ -1,6 +1,6 @@
 <h1 id="reference">Reference</h1>
 
-<p>go-ui has two packages:</p>
+<p>go-ui has three packages:</p>
 
 <table>
 <thead>
@@ -22,6 +22,12 @@
 <td><a href="./reference/window"><code>window</code></a></td>
 <td><code>&quot;github.com/akrck02/go-ui/window&quot;</code></td>
 <td>A window that runs an interface: on the desktop, in a web page, on Android; preferences, notifications, films</td>
+</tr>
+
+<tr>
+<td><a href="./reference/uitest"><code>uitest</code></a></td>
+<td><code>&quot;github.com/akrck02/go-ui/uitest&quot;</code></td>
+<td>A pretend window for <code>go test</code>: press, type, wait and find what an interface shows, with no display</td>
 </tr>
 </tbody>
 </table>
@@ -361,7 +367,7 @@ clipboard (<code>Copy(text)</code>, <code>ClipboardText()</code>), and for on-sc
 </tr>
 
 <tr>
-<td><code>KeyboardNavigation</code> (<code>WhenGiven</code>, <code>Always</code>), <code>TakeKeyboard()</code>, <code>ReleaseKeyboard()</code>, <code>HasKeyboard()</code></td>
+<td><code>KeyboardNavigation</code> (<code>WhenGiven</code>, <code>Always</code>), <code>TakeKeyboard()</code>, <code>ReleaseKeyboard()</code>, <code>HasKeyboard()</code>, <code>FocusedID()</code></td>
 <td>When Tab, Enter and Space move between controls and press them, and when they stay with a game or a 3D view (<a href="./components/the-keyboard">who has the keyboard</a>)</td>
 </tr>
 

@@ -1,0 +1,273 @@
+<h1 id="testing-an-interface">🧪 Testing an interface</h1>
+
+<p>This page is for someone building a program on Go UI who wants <code>go test</code> to check its interface:
+press its buttons, type in its fields and see what it shows, with no display. At the end you will
+know how to open a test window, act in it, find what it drew and read its errors.</p>
+
+<h2 id="the-shortest-test">The shortest test</h2>
+
+<p>Package <code>uitest</code> opens a pretend window. It runs your interface function frame by frame, exactly as
+a real window does, but nothing is painted and no screen is needed. It works in CI too.</p>
+<pre><code class="language-go"><span class="kn">package</span> <span class="nx">log_test</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+	<span class="s">&#34;testing&#34;</span>
+
+	<span class="nx">ui</span> <span class="s">&#34;github.com/akrck02/go-ui&#34;</span>
+	<span class="s">&#34;github.com/akrck02/go-ui/uitest&#34;</span>
+<span class="p">)</span>
+
+<span class="kd">func</span> <span class="nf">TestAddingANoteShowsItInTheLog</span><span class="p">(</span><span class="nx">t</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">note</span><span class="p">,</span> <span class="nx">entries</span> <span class="o">:=</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{}</span>
+	<span class="nx">window</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">uitest</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="kd">func</span><span class="p">(</span><span class="nx">context</span> <span class="o">*</span><span class="nx">ui</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">TextField</span><span class="p">(</span><span class="s">&#34;note&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">note</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Button</span><span class="p">(</span><span class="s">&#34;Add&#34;</span><span class="p">)</span> <span class="p">{</span>
+			<span class="nx">entries</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">entries</span><span class="p">,</span> <span class="nx">note</span><span class="p">)</span>
+			<span class="nx">note</span> <span class="p">=</span> <span class="s">&#34;&#34;</span>
+		<span class="p">}</span>
+		<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">entry</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">entries</span> <span class="p">{</span>
+			<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="nx">entry</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">})</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">t</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">window</span><span class="p">.</span><span class="nf">Frame</span><span class="p">()</span> <span class="c1">// the first frame gives every control its place</span>
+	<span class="nx">window</span><span class="p">.</span><span class="nf">Context</span><span class="p">().</span><span class="nf">Focus</span><span class="p">(</span><span class="s">&#34;note&#34;</span><span class="p">)</span>
+	<span class="nx">window</span><span class="p">.</span><span class="nf">Type</span><span class="p">(</span><span class="s">&#34;Fog at dawn&#34;</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">window</span><span class="p">.</span><span class="nf">Click</span><span class="p">(</span><span class="s">&#34;Add&#34;</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">t</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">window</span><span class="p">.</span><span class="nf">Element</span><span class="p">(</span><span class="s">&#34;Fog at dawn&#34;</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">t</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>The test passes: the note is in the log. The same code, with its output checked, is
+<code>ExampleWindow</code> in the package.</p>
+
+<p>Why run a frame first? Go UI is immediate-mode: a control learns where it is when the frame ends.
+Before the first frame nothing has a place, so nothing can be clicked.</p>
+
+<h2 id="the-window">The window</h2>
+
+<p><code>uitest.New(build, options...)</code> takes your interface function and some options:</p>
+
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>What it changes</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Size(width, height)</code></td>
+<td>800 × 600</td>
+<td>The window, in layout pixels</td>
+</tr>
+
+<tr>
+<td><code>Scale(factor)</code></td>
+<td>1</td>
+<td>Framebuffer pixels per layout pixel (2 on most phones)</td>
+</tr>
+
+<tr>
+<td><code>Theme(theme)</code></td>
+<td><code>ui.LightTheme()</code></td>
+<td>The theme</td>
+</tr>
+
+<tr>
+<td><code>Measurer(measurer)</code></td>
+<td><code>FixedMeasurer</code></td>
+<td>How text is measured</td>
+</tr>
+
+<tr>
+<td><code>Test(t)</code></td>
+<td>none</td>
+<td>Names the window after its test, so the results viewer can show it (below)</td>
+</tr>
+</tbody>
+</table>
+<p><code>FixedMeasurer</code> makes every character half the text size wide. Real fonts differ from machine to
+machine; fixed widths make a layout the same everywhere, so a test that passes on your laptop
+passes in CI.</p>
+
+<p><code>Frame()</code> runs one frame, <code>Frames(count)</code> several. <code>Resize</code> changes the size between frames.</p>
+
+<h2 id="acting-in-it">Acting in it</h2>
+
+<p>Every action runs whole frames, so the interface sees it as it would on a screen.</p>
+
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Methods</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>The pointer</td>
+<td><code>MoveTo</code>, <code>MoveToElement</code>, <code>Press</code>, <code>Release</code>, <code>Click</code>, <code>ClickAt</code>, <code>DoubleClick</code>, <code>Drag</code>, <code>DragElement</code>, <code>Scroll</code></td>
+</tr>
+
+<tr>
+<td>The keyboard</td>
+<td><code>PressKey</code>, <code>HoldKey</code>, <code>ReleaseKey</code>, <code>Tab</code>, <code>ShiftTab</code>, <code>Type</code> (all in one frame), <code>TypeOneByOne</code></td>
+</tr>
+
+<tr>
+<td>Touch</td>
+<td><code>TouchDown</code>, <code>TouchMove</code>, <code>TouchUp</code>, <code>Tap</code>, <code>LongPress</code></td>
+</tr>
+
+<tr>
+<td>Time</td>
+<td><code>Wait(duration)</code></td>
+</tr>
+</tbody>
+</table>
+<p>A click is a move, a press and a release. Go UI answers a button when it is let go, as desktops
+do, so the release frame is the one where <code>Button</code> returns true. After each input the window runs
+one more frame, and any frame the interface asked for at once, as a real window does. So what a
+click changed is on screen when <code>Click</code> returns, even when it was drawn before the button: a tab
+bar at the bottom that changes the page above it.</p>
+
+<h3 id="time-stands-still">Time stands still</h3>
+
+<p>The window has its own clock, and only <code>Wait</code> moves it. <code>Frames(100)</code> takes no time at all, so a
+long press never happens by accident. <code>Wait(time.Second)</code> runs a frame every sixtieth of a second
+until a second has passed, which is what long presses, double clicks and animations need. Every
+run gives the same result, however slow the machine.</p>
+
+<h2 id="finding-what-it-drew">Finding what it drew</h2>
+
+<p><code>Element(label)</code> finds a control, a text or a scroll area in the last frame, by the name a screen
+reader would read: a button&rsquo;s text, a described label, a line of text. You get back:</p>
+
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Rect</code></td>
+<td>Where it was laid out, in layout pixels</td>
+</tr>
+
+<tr>
+<td><code>Visible</code></td>
+<td>Some of it shows: not scrolled away, not behind a dialog</td>
+</tr>
+
+<tr>
+<td><code>Focused</code></td>
+<td>It has the focus (<code>ui.Context.FocusedID</code>)</td>
+</tr>
+
+<tr>
+<td><code>Pressable</code></td>
+<td>A click does something to it</td>
+</tr>
+</tbody>
+</table>
+<p>Two buttons called &ldquo;Save&rdquo; in different panels? <code>ElementWithin(&quot;North&quot;, &quot;Save&quot;)</code> finds the one
+inside the panel whose title is &ldquo;North&rdquo;: inside the smallest painted box (a panel, a card) that
+holds the outer element. <code>ElementIn(&quot;north&quot;, &quot;Save&quot;)</code> does it by the scopes given to <code>Push</code>,
+outermost first, when you know them. A button with only an icon is found by the <code>Tooltip</code> that
+follows it: <code>Click(&quot;Add a lighthouse&quot;)</code>. <code>Texts()</code> lists every line drawn, in order, and <code>DrawList()</code> gives the
+whole draw list, for tests about colours and shapes.</p>
+
+<h2 id="errors">Errors</h2>
+
+<p>Nothing in <code>uitest</code> panics or fails your test for you: methods return errors, and you decide.
+Every error has a code, which a program checks with <code>errors.Is</code> or <code>uitest.CodeOf</code>, never by its
+text:</p>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>When</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>uitest.element-not-found</code></td>
+<td>No element has that label; the message lists the labels on screen</td>
+</tr>
+
+<tr>
+<td><code>uitest.element-ambiguous</code></td>
+<td>Several have it: use <code>ElementIn</code></td>
+</tr>
+
+<tr>
+<td><code>uitest.element-not-visible</code></td>
+<td>It is scrolled away or behind a dialog, so it cannot be clicked</td>
+</tr>
+
+<tr>
+<td><code>uitest.element-not-pressable</code></td>
+<td>It is only text: a click would do nothing</td>
+</tr>
+
+<tr>
+<td><code>uitest.invalid-size</code></td>
+<td>A window with no width or no height</td>
+</tr>
+
+<tr>
+<td><code>uitest.recording-not-saved</code>, <code>uitest.recording-not-read</code></td>
+<td>A recording for the viewer could not be written or read</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-go"><span class="nx">err</span> <span class="o">:=</span> <span class="nx">window</span><span class="p">.</span><span class="nf">Click</span><span class="p">(</span><span class="s">&#34;Remove&#34;</span><span class="p">)</span>
+<span class="k">if</span> <span class="nx">errors</span><span class="p">.</span><span class="nf">Is</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">uitest</span><span class="p">.</span><span class="nx">ErrorElementNotFound</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// the log has no Remove button yet</span>
+<span class="p">}</span>
+</code></pre>
+
+<h2 id="seeing-the-results-in-a-window">Seeing the results in a window</h2>
+
+<p>When a test fails, it helps to see what its window showed. Make the window with <code>Test(t)</code>:</p>
+<pre><code class="language-go"><span class="nx">window</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">uitest</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">build</span><span class="p">,</span> <span class="nx">uitest</span><span class="p">.</span><span class="nf">Test</span><span class="p">(</span><span class="nx">t</span><span class="p">))</span>
+</code></pre>
+
+<p>Then run your tests through the viewer instead of <code>go test</code>:</p>
+<pre><code class="language-bash">go run github.com/akrck02/go-ui/cmd/uitest ./...
+go run github.com/akrck02/go-ui/cmd/uitest -dark ./editor/... -run TestSaving
+</code></pre>
+
+<p>It runs <code>go test</code> with the arguments you give, with recording on, and opens a Go UI window. The
+tests are listed on the left, failed ones first. On the right you see the chosen test&rsquo;s error
+codes and messages, and a replay of its frames. Step through them with <em>Previous frame</em>, <em>Next
+frame</em> or the slider. The pointer is a ring, filled while pressed; fingers are orange dots; the
+element an action found has an outline in the theme&rsquo;s focus colour. Click an error&rsquo;s code to jump
+to the frame it came after.</p>
+
+<p>Recording costs nothing in a plain <code>go test</code>: a window only keeps its frames while the
+<code>UITEST_RECORD</code> variable names a folder, which the viewer sets for you. The replay shows the test&rsquo;s
+window at its own size (smaller only when it does not fit), on its theme&rsquo;s background. The test
+measured text with its own measurer and the viewer paints with real fonts, so each recording keeps
+how wide every line was measured, and the viewer shrinks a line that would come out wider: the
+frame looks as the test laid it out. The viewer needs a display.</p>
+
+<h2 id="what-it-cannot-do-yet">What it cannot do yet</h2>
+
+<p>There is no picture of a frame without a display: Go Renderer cannot paint without one yet. Read
+<code>DrawList()</code> instead, or look at the frames in the viewer.</p>

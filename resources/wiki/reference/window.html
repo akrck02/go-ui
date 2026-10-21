@@ -36,6 +36,11 @@ all the time.</p>
 </tr>
 
 <tr>
+<td><code>func Feel(Feeling)</code></td>
+<td>Feel gives a buzz on a phone; a desktop has nothing to buzz.</td>
+</tr>
+
+<tr>
 <td><code>func FeelLongPress()</code></td>
 <td>FeelLongPress gives the buzz of a long press on a phone; a desktop has nothing to buzz.</td>
 </tr>
@@ -78,6 +83,11 @@ all the time.</p>
 <tr>
 <td><code>func Preference(name string) (string, bool)</code></td>
 <td>Preference is the value kept under a name, and whether there is one.</td>
+</tr>
+
+<tr>
+<td><code>func Quit()</code></td>
+<td>Quit ends the program&rsquo;s window once the frame being made ends, as closing it would: Run returns.</td>
 </tr>
 
 <tr>
@@ -150,10 +160,40 @@ all the time.</p>
 </tbody>
 </table>
 
+<h3 id="belowview">BelowView</h3>
+
+<p>BelowView is a scene seen from a camera on the 3DS&rsquo;s bottom screen.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">BelowView</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">World</span>  <span class="o">*</span><span class="nx">scene</span><span class="p">.</span><span class="nx">Scene</span>
+	<span class="nx">Camera</span> <span class="nx">models</span><span class="p">.</span><span class="nx">Camera</span>
+	<span class="nx">Area</span>   <span class="o">*</span><span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span> <span class="c1">// where a computer shows it, in window pixels; nil is nowhere</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="feeling">Feeling</h3>
+
+<p>Feeling is a kind of buzz a touch gives, as a phone&rsquo;s own applications give them (Feel).</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">Feeling</span> <span class="kt">int</span>
+</code></pre>
+<pre><code class="language-go"><span class="kd">const</span> <span class="p">(</span>
+	<span class="c1">// FeelingLongPress is the buzz of a touch that became a long press.</span>
+	<span class="nx">FeelingLongPress</span> <span class="nx">Feeling</span> <span class="p">=</span> <span class="kc">iota</span>
+	<span class="c1">// FeelingTick is a light tick: something chosen, a switch flipped, a step on a dial.</span>
+	<span class="nx">FeelingTick</span>
+	<span class="c1">// FeelingConfirm says something went through.</span>
+	<span class="nx">FeelingConfirm</span>
+	<span class="c1">// FeelingReject says something went wrong or needs a look.</span>
+	<span class="nx">FeelingReject</span>
+<span class="p">)</span>
+</code></pre>
+
 <h3 id="options">Options</h3>
 
 <p>Options configure the window.</p>
 <pre><code class="language-go"><span class="kd">type</span> <span class="nx">Options</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="c1">// KeepStart gives the 3DS&#39;s START button to the program (a pause) instead of ending it; the</span>
+	<span class="c1">// HOME menu still ends it. Elsewhere it does nothing.</span>
+	<span class="nx">KeepStart</span>     <span class="kt">bool</span>
 	<span class="nx">Title</span>         <span class="kt">string</span>
 	<span class="nx">Width</span><span class="p">,</span> <span class="nx">Height</span> <span class="kt">int</span> <span class="c1">// window size in window pixels; 0 = 1280 × 800</span>
 	<span class="c1">// MinWidth and MinHeight stop the window from being made smaller than the layout needs; 0 = no</span>
@@ -238,6 +278,18 @@ all the time.</p>
 <pre><code class="language-go"><span class="kd">type</span> <span class="nx">SceneView</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span class="nx">World</span>  <span class="o">*</span><span class="nx">scene</span><span class="p">.</span><span class="nx">Scene</span>
 	<span class="nx">Camera</span> <span class="nx">models</span><span class="p">.</span><span class="nx">Camera</span>
+	<span class="c1">// Drawing is the program&#39;s own drawing over the scene and under the interface: a game&#39;s life</span>
+	<span class="c1">// bar, a sight. On the 3DS it is painted on the top screen, in each eye when in 3D. Keep the</span>
+	<span class="c1">// list between frames (Reset it), so drawing it allocates nothing. Draw it on layer 0: a higher</span>
+	<span class="c1">// layer (SetLayer) covers the interface&#39;s menus and tooltips as well.</span>
+	<span class="nx">Drawing</span> <span class="o">*</span><span class="nx">draw2d</span><span class="p">.</span><span class="nx">List</span>
+	<span class="c1">// Below is a second scene for the 3DS&#39;s bottom screen, with the interface painted over it (a</span>
+	<span class="c1">// map, a turning model); nil leaves the bottom screen to the interface alone. On a computer it</span>
+	<span class="c1">// is drawn only where its Area says (a preview of the console).</span>
+	<span class="nx">Below</span> <span class="o">*</span><span class="nx">BelowView</span>
+	<span class="c1">// Area is where the scene is drawn on a computer, in window pixels; nil is the whole window.</span>
+	<span class="c1">// Around it the window shows the theme&#39;s background (a preview of a console&#39;s screen).</span>
+	<span class="nx">Area</span> <span class="o">*</span><span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span>
 <span class="p">}</span>
 </code></pre>
 

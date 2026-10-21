@@ -1,0 +1,334 @@
+<h1 id="2-window-tests-drive-an-interface-in-go-test-with-no-display">2. Window tests: drive an interface in <code>go test</code>, with no display</h1>
+
+<blockquote>
+<p>Status: in review · Author&rsquo;s approval: proposal ☑ (2026-10-21) plan ☑ (2026-10-21)</p>
+</blockquote>
+
+<h2 id="why">Why</h2>
+
+<p>Go UI&rsquo;s own tests already drive interfaces frame by frame: a private <code>harness</code> in <code>ui_test.go</code>
+makes an <code>input.State</code> of 800×600, moves a fake mouse, runs <code>Begin</code>, the interface and <code>End</code>, and
+reads where an element was laid out. Programs built on Go UI (an editor, a settings app, a game&rsquo;s
+menus) cannot use it: it is private, it uses a fake measurer of the test file, and it finds
+elements by hashing a label by hand. Each program ends up writing its own copy, or not testing
+its interface at all.</p>
+
+<p>Like Go&rsquo;s <code>net/http/httptest</code>, Go UI should ship a small public package for that: open a pretend
+window, press, type and wait in it, and ask what it shows. No display, no OpenGL, no cgo, so it
+runs in any <code>go test</code> and in CI.</p>
+
+<h2 id="what">What</h2>
+
+<p>The package is called <code>uitest</code> (chosen by the author: tests of a Go UI interface, as <code>httptest</code> tests a server). Its tests are
+written against an interface made only for them: a lighthouse keeper&rsquo;s log with a button, a
+check box, a text field and a dialog.</p>
+
+<table>
+<thead>
+<tr>
+<th>Id</th>
+<th>Requirement</th>
+<th>Check</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>R1</td>
+<td><code>uitest.New</code> makes a test window of a size in layout pixels, with a scale, a theme and a text measurer to choose (a measurer with fixed widths by default, so results are the same on every machine), and runs an interface function for one frame (<code>Frame</code>) or several (<code>Frames(count)</code>) exactly as a backend does: <code>Begin</code>, the function, <code>End</code>, the end of the input step</td>
+<td>test <code>TestAFrameRunsTheInterfaceOnceLikeABackend</code></td>
+</tr>
+
+<tr>
+<td>R2</td>
+<td>The pointer: move to a point or to an element, press, release, click, double click, drag from one point or element to another over several frames, and scroll</td>
+<td>tests <code>TestAClickOnAButtonPressesIt</code>, <code>TestADragMovesASlider</code>, <code>TestScrollingShowsWhatWasBelow</code></td>
+</tr>
+
+<tr>
+<td>R3</td>
+<td>The keyboard: press, hold and release a key, Tab and Shift+Tab, and type a text, one character per call or all in one frame</td>
+<td>tests <code>TestTypedTextReachesTheFocusedField</code>, <code>TestTabMovesTheFocusToTheNextControl</code></td>
+</tr>
+
+<tr>
+<td>R4</td>
+<td>Touch: put a finger down, move it and lift it, a tap and a long press</td>
+<td>tests <code>TestATapPressesAButton</code>, <code>TestALongPressOpensTheMenu</code></td>
+</tr>
+
+<tr>
+<td>R5</td>
+<td>Time: the window has its own clock, which only moves when a test says so (<code>Wait(duration)</code>), so double clicks, long presses and animations give the same result on every run</td>
+<td>test <code>TestALongPressNeedsItsTime</code></td>
+</tr>
+
+<tr>
+<td>R6</td>
+<td>Finding what was drawn: an element by its label or name (the one a screen reader gets, so labels that repeat are told apart by their scope), its rectangle, whether it is visible (on screen, not hidden by a scroll area or a layer above), whether it has the focus, and every text drawn in the frame in order</td>
+<td>tests <code>TestAnElementIsFoundByItsLabel</code>, <code>TestAnElementScrolledAwayIsNotVisible</code>, <code>TestTheTextsOfAFrameComeInDrawingOrder</code></td>
+</tr>
+
+<tr>
+<td>R7</td>
+<td>Failures come back as errors with a code (<code>uitest.element-not-found</code>, <code>uitest.element-not-visible</code>, <code>uitest.element-ambiguous</code>, …), declared once in the package&rsquo;s <code>errors.go</code>; nothing in the package panics or calls <code>t.Fatal</code> for the test. The message says what was asked and lists the labels that were on screen</td>
+<td>test <code>TestEachErrorCarriesItsCode</code>; a test that a missing label gives <code>element-not-found</code></td>
+</tr>
+
+<tr>
+<td>R8</td>
+<td>The draw list of the last frame can be read as it is (<code>DrawList</code>) for tests that check colours or shapes</td>
+<td>test <code>TestTheDrawListOfTheLastFrameCanBeRead</code></td>
+</tr>
+
+<tr>
+<td>R9</td>
+<td>Go UI&rsquo;s own tests move to <code>uitest</code> where it does the same as today&rsquo;s private harness, so the package is used every day and stays honest</td>
+<td><code>go test ./...</code> passes; the private harness is replaced wherever <code>uitest</code> does the same (the author&rsquo;s decision)</td>
+</tr>
+
+<tr>
+<td>R10</td>
+<td>An example test that runs (<code>ExampleWindow</code>, checked by <code>go test</code>) and a guide page in <code>docs/4-guides/</code> for someone testing their own program: open a window, click, type, find, and read an error</td>
+<td>the example&rsquo;s output is checked; the author reads the guide</td>
+</tr>
+
+<tr>
+<td>R11</td>
+<td>Using the package costs nothing to programs that don&rsquo;t: it lives in its own package, the <code>ui</code> package does not import it, and no field of <code>ui.Context</code> is added only for it</td>
+<td><code>go list -deps</code> of <code>ui</code> does not name <code>uitest</code></td>
+</tr>
+
+<tr>
+<td>R12</td>
+<td><em>Added by the author, 2026-10-21.</em> A mode that shows the results in a Go UI window, visual and pretty: <code>go run ./cmd/uitest ./...</code> runs the tests with recording on and opens a window listing every test that used <code>uitest</code>, passed or failed, with its error codes and messages; for each test a replay of its frames, drawn from the recorded draw lists, stepped frame by frame, with the pointer, the clicks and the element each action found highlighted. Built with Go UI&rsquo;s own controls and theme (cards, icons, chips, the theme&rsquo;s colours), nothing hand-made where Go UI has a control. Recording happens only while the mode is on, so plain <code>go test</code> pays nothing</td>
+<td>tests with <code>uitest</code> of the viewer&rsquo;s logic (loading recordings, the list, stepping frames, the highlight); a test that a window with recording off keeps nothing; the window itself needs a display, so its look is the author&rsquo;s check</td>
+</tr>
+
+<tr>
+<td>R13</td>
+<td><em>Added by the author, 2026-10-21.</em> A control with no words of its own (an icon button) is read, by screen readers and by <code>uitest</code>, by the tooltip that follows it; with none, by its icon&rsquo;s name as before</td>
+<td>test <code>TestAnIconButtonIsReadByTheTooltipAfterIt</code></td>
+</tr>
+
+<tr>
+<td>R14</td>
+<td><em>Added by the author, 2026-10-21.</em> <code>uitest.ElementWithin(outer, inner)</code> finds an element by its label inside another found by its label, with coded errors when either is missing or the inner one is repeated inside</td>
+<td>tests <code>TestAnElementIsFoundWithinAnother</code>, <code>TestAnElementMissingWithinAnotherIsNotFound</code></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="out-of-scope">Out of scope</h2>
+
+<ul>
+<li>A picture of a frame without a display: the viewer of R12 paints recorded draw lists in a real
+window, which needs a display.</li>
+<li>A PNG of a frame and golden images (the author&rsquo;s decision): Go Renderer has no software painter
+today (its <code>software/</code> package is a stub), so there is no way to paint a frame without a display.
+Once Go Renderer can paint a draw list into an <code>image.RGBA</code>, a <code>Picture</code> method and a golden-file
+helper are a separate proposal. <code>DrawList</code> (R8) is what tests read until then.</li>
+<li>Testing through a real backend window (<code>window/</code>): this package drives <code>ui.Context</code> and
+<code>input.State</code> directly; the backends keep their own tests.</li>
+<li>Recording a session by hand and playing it back.</li>
+<li>Game pads, and the screen-reader actions beyond what R6 reads (they already have
+<code>ReaderPress</code> and friends).</li>
+</ul>
+
+<h2 id="design">Design</h2>
+
+<h3 id="the-pieces">The pieces</h3>
+
+<p><code>uitest/</code> is a new package at the root, beside <code>window/</code>. It imports <code>ui</code>, <code>draw2d</code> and <code>input</code>
+only; <code>ui</code> never imports it. Its files, one part each:</p>
+
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it holds</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>window.go</code></td>
+<td><code>Window</code>: a <code>*ui.Context</code>, an <code>*input.State</code>, the interface function, the clock. <code>New(build, options...)</code>, <code>Frame</code>, <code>Frames(count)</code>, <code>Resize</code>, <code>Context</code>, <code>State</code> (an escape hatch for what the package does not cover yet)</td>
+</tr>
+
+<tr>
+<td><code>options.go</code></td>
+<td><code>Size(width, height)</code>, <code>Scale(factor)</code>, <code>Theme(theme)</code>, <code>Measurer(measurer)</code>: functional options, so <code>New(build)</code> works with nothing else</td>
+</tr>
+
+<tr>
+<td><code>measurer.go</code></td>
+<td><code>FixedMeasurer</code>: each character half the text size wide, as the private <code>fakeMeasurer</code> does today; the default</td>
+</tr>
+
+<tr>
+<td><code>clock.go</code></td>
+<td>the window&rsquo;s clock, set into <code>input.State.Now</code>; <code>Wait(duration)</code> moves it and runs the frames that fall in that time at a fixed step (<code>frameDuration</code>, one sixtieth of a second)</td>
+</tr>
+
+<tr>
+<td><code>pointer.go</code></td>
+<td><code>MoveTo</code>, <code>MoveToElement</code>, <code>Press</code>, <code>Release</code>, <code>Click</code>, <code>DoubleClick</code>, <code>Drag</code>, <code>Scroll</code></td>
+</tr>
+
+<tr>
+<td><code>keyboard.go</code></td>
+<td><code>PressKey</code>, <code>HoldKey</code>, <code>ReleaseKey</code>, <code>Tab</code>, <code>ShiftTab</code>, <code>Type</code></td>
+</tr>
+
+<tr>
+<td><code>touch.go</code></td>
+<td><code>TouchDown</code>, <code>TouchMove</code>, <code>TouchUp</code>, <code>Tap</code>, <code>LongPress</code></td>
+</tr>
+
+<tr>
+<td><code>find.go</code></td>
+<td><code>Element(label)</code> and <code>ElementIn(scope, label)</code> return an <code>Element</code> (label, <code>Rect</code>, <code>Visible</code>, <code>Focused</code>, <code>Pressable</code>); <code>Texts()</code>; <code>DrawList()</code></td>
+</tr>
+
+<tr>
+<td><code>errors.go</code></td>
+<td>the codes, at the top, and one constructor each</td>
+</tr>
+
+<tr>
+<td><code>example_test.go</code>, <code>*_test.go</code></td>
+<td>the tests named in What, beside the code</td>
+</tr>
+</tbody>
+</table>
+<p>Every action is one or more whole frames: an action changes the input state, runs <code>Frame</code>, and
+returns an error when its target is missing. <code>Click</code> is press, frame, release, frame, because a
+control in Go UI answers on release and needs the frame between.</p>
+
+<h3 id="finding-elements">Finding elements</h3>
+
+<p>The package reads the screen-reader tree (<code>ScreenReaderNodes</code>), which already gives each control
+its ID, label, rectangle (already clipped by scroll areas) and whether it can be pressed. The test
+window switches the screen reader on when it is made. Two small public additions to <code>ui</code> are
+needed, both generic and useful to any program:</p>
+
+<ul>
+<li><code>(*Context).FocusedID() ID</code>: which control has the focus. Today it is private.</li>
+<li><code>AccessibleNode.Hidden</code>, or an equivalent rule: a node under a modal layer is not visible. If
+the tree already leaves those nodes out, nothing is added; T2 checks which.</li>
+</ul>
+
+<p><code>Texts()</code> walks the draw list for <code>TextKind</code> commands, so it also finds text that is not a control
+(a heading, a status line).</p>
+
+<p>Errors are a small type: <code>Error{Code, Message}</code> with <code>Code</code> a string constant, compared with
+<code>errors.Is</code> against a sentinel per code (<code>uitest.ErrorElementNotFound</code>), so returning one only
+allocates when a test fails. Codes: <code>uitest.element-not-found</code>, <code>uitest.element-ambiguous</code>,
+<code>uitest.element-not-visible</code>, <code>uitest.element-not-pressable</code>, <code>uitest.invalid-size</code>.</p>
+
+<h3 id="go-ui-s-own-tests">Go UI&rsquo;s own tests</h3>
+
+<p>Tests inside <code>package ui</code> cannot import <code>uitest</code>: <code>uitest</code> imports <code>ui</code>, and that would be a cycle.
+So the tests that only use public behaviour (click a button, type in a field, Tab through
+controls) move to <code>package ui_test</code> files and use <code>uitest</code>; the tests that read private state
+(<code>ui.previous</code>, the focus order, memory) keep a much smaller private harness. T6 lists which is
+which before moving anything.</p>
+
+<h3 id="the-results-viewer-r12">The results viewer (R12)</h3>
+
+<ul>
+<li><strong>Recording</strong> (<code>uitest/recording.go</code>): a window made with the <code>Test(t)</code> option and the
+environment variable <code>UITEST_RECORD</code> set to a folder keeps, for each frame, a copy of the draw
+list&rsquo;s commands, the pointer, the fingers, the action that ran it (<code>Click &quot;Save&quot;</code>) and the
+rectangle of the element that action found. Errors returned by the package are kept too. At the
+end of the test (<code>t.Cleanup</code>) it writes one JSON file per test into that folder, with the test&rsquo;s
+name and whether it failed. With the variable unset, <code>Test(t)</code> only remembers the name: no copy,
+no file. Pictures in a draw list are kept by size only (a grey box in the replay).</li>
+<li><strong>The program</strong> (<code>cmd/uitest/</code>): <code>go run ./cmd/uitest ./...</code> makes a fresh folder, runs
+<code>go test</code> with <code>UITEST_RECORD</code> set and the arguments given, then opens a <code>window</code> with the
+results. Its logic (<code>results.go</code>: load the folder, sort failed tests first, step through frames)
+is apart from its look (<code>view.go</code>), so the logic is tested with <code>uitest</code> itself, headless.</li>
+<li><strong>The look</strong>: a side list of tests as <code>Selectable</code> rows with a check or cross icon and a <code>Chip</code>
+for each error code; the chosen test in a card with its name, its messages and the replay: the
+recorded draw list painted with <code>Paint</code>, scaled to fit, the pointer as a ring, a press as a
+filled ring, and the found element outlined in the theme&rsquo;s <code>FocusRing</code>. Buttons and a <code>Slider</code>
+step through the frames. (The arrow keys were dropped while building: <code>ui.Context</code> gives a
+program no public way to read a key outside a scene.)</li>
+<li><strong>Not taken</strong>: an HTML report (the author asked for a Go UI window); recording always (it would
+cost every <code>go test</code>).</li>
+</ul>
+
+<h3 id="not-taken">Not taken</h3>
+
+<ul>
+<li><strong>Finding elements through a new private-state accessor on <code>Context</code></strong> (a public map of laid-out
+rectangles): it would add a field read only by tests (against R11). The screen-reader tree is
+already public, already clipped, and already labelled.</li>
+<li><strong>Methods that take <code>*testing.T</code> and fail the test themselves</strong>: shorter tests, but the author
+asked for errors with codes and no panics, and a returned error also works outside <code>go test</code>.</li>
+<li><strong>Real time with <code>time.Sleep</code></strong>: slow and flaky in CI.</li>
+<li><strong>A PNG of a frame</strong>: no software painter yet (see Out of scope).</li>
+</ul>
+
+<h2 id="tasks">Tasks</h2>
+
+<ul>
+<li>[x] T1 — The window, its options, the fixed measurer and the clock: <code>New</code>, <code>Frame</code>, <code>Frames</code>, <code>Wait</code> · <code>uitest/window.go</code>, <code>options.go</code>, <code>measurer.go</code>, <code>clock.go</code>, <code>errors.go</code> · R1 R5 R11 · tests: <code>TestAFrameRunsTheInterfaceOnceLikeABackend</code>, <code>TestWaitMovesTheClockAndRunsTheFramesInIt</code>, <code>TestEachErrorCarriesItsCode</code> (for the codes so far), a <code>go list -deps</code> test that <code>ui</code> does not import <code>uitest</code></li>
+<li>[x] T2 — Finding what was drawn: <code>Element</code>, <code>ElementIn</code>, <code>Texts</code>, <code>DrawList</code>; <code>FocusedID</code> on <code>ui.Context</code>; check that switching the screen reader on does not change the layout · <code>uitest/find.go</code>, <code>ui/focus.go</code> (no <code>Hidden</code> was needed: the tree already leaves out what is behind a dialog) · R6 R7 R8 · tests: <code>TestAnElementIsFoundByItsLabel</code>, <code>TestAnElementScrolledAwayIsNotVisible</code>, <code>TestTheTextsOfAFrameComeInDrawingOrder</code>, <code>TestTheDrawListOfTheLastFrameCanBeRead</code>, <code>TestAMissingLabelGivesElementNotFound</code>, <code>TestTheScreenReaderTreeDoesNotChangeTheLayout</code></li>
+<li>[x] T3 — The pointer · <code>uitest/pointer.go</code> · R2 R7 · tests: <code>TestAClickOnAButtonPressesIt</code>, <code>TestADragMovesASlider</code>, <code>TestScrollingShowsWhatWasBelow</code></li>
+<li>[x] T4 — The keyboard and typed text · <code>uitest/keyboard.go</code> · R3 · tests: <code>TestTypedTextReachesTheFocusedField</code>, <code>TestTabMovesTheFocusToTheNextControl</code></li>
+<li>[x] T5 — Touch, with the clock for long presses · <code>uitest/touch.go</code> · R4 R5 · tests: <code>TestATapPressesAButton</code>, <code>TestALongPressOpensTheMenu</code>, <code>TestALongPressNeedsItsTime</code></li>
+<li>[x] T6 — Go UI&rsquo;s own tests move to <code>uitest</code> where it does the same; the private harness keeps only what reads private state · <code>*_test.go</code> at the root · R9 · <code>go vet ./...</code> and <code>go test ./...</code> pass with the same number of tests or more. Moved: the three long-press tests of a finger and the two click tests (<code>longpress_uitest_test.go</code>, <code>controls_uitest_test.go</code>); the rest read private state (<code>ui.previous</code>, <code>ui.active</code>, ids made with <code>frameWithID</code>) or the right mouse button, and keep the private harness</li>
+<li>[x] T7 — The example and the guide: <code>ExampleWindow</code> (a lighthouse keeper&rsquo;s log: click a button, type a line, find it), <code>docs/4-guides/11-testing-an-interface.md</code>, a reference page <code>docs/6-reference/3-uitest.md</code> made by <code>generate.py</code>, links from the overview · <code>uitest/example_test.go</code>, <code>docs/</code> · R10 · the example&rsquo;s <code>// Output:</code> is checked by <code>go test</code>; the author reads the guide</li>
+<li>[x] T8 — Recording: the <code>Test(t)</code> option, frames and errors kept only while <code>UITEST_RECORD</code> is set, one JSON file per test · <code>uitest/recording.go</code>, <code>options.go</code> · R12 · tests: <code>TestAWindowWithoutRecordingKeepsNothing</code>, <code>TestARecordedTestWritesItsFramesAndErrors</code></li>
+<li>[x] T9 — The results viewer: <code>cmd/uitest</code> runs the tests and shows them, logic apart from look; a guide section on it · <code>cmd/uitest/main.go</code>, <code>results.go</code>, <code>replay.go</code>, <code>view.go</code>, <code>docs/4-guides/11-testing-an-interface.md</code> · R12 · tests (with <code>uitest</code>): <code>TestFailedTestsComeFirst</code>, <code>TestSteppingStopsAtTheEnds</code>, <code>TestTheStepButtonsMoveThroughTheFrames</code>, <code>TestChoosingATestShowsItsErrors</code>, <code>TestTheFoundElementIsHighlighted</code>, <code>TestAFrameWithNoTargetHasNoHighlight</code>; the window&rsquo;s look is checked by the author on a display</li>
+</ul>
+
+<h2 id="result">Result</h2>
+
+<p><strong>Built</strong> on <code>feature/window-tests</code>, one commit per task:</p>
+
+<ul>
+<li>Package <code>uitest</code> (R1–R8, R11): <code>New</code> with <code>Size</code>, <code>Scale</code>, <code>Theme</code>, <code>Measurer</code>, <code>Test</code>;
+<code>Frame</code>, <code>Frames</code>, <code>Wait</code>; the pointer, keys, typed text and touch; <code>Element</code>, <code>ElementIn</code>,
+<code>Texts</code>, <code>DrawList</code>; errors with seven codes in <code>uitest/errors.go</code>. One public addition to <code>ui</code>:
+<code>Context.FocusedID</code>. <code>AccessibleNode.Hidden</code> was not needed: the screen-reader tree already leaves
+out what is behind a dialog, and a text covered by a higher layer is found not visible.</li>
+<li>Go UI&rsquo;s own tests (R9): five tests moved to <code>uitest</code>; the rest keep the private harness because
+they read private state.</li>
+<li><code>ExampleWindow</code> and the guide <code>docs/4-guides/11-testing-an-interface.md</code>, with its reference
+page (R10).</li>
+<li>Recording and the viewer <code>cmd/uitest</code> (R12).</li>
+</ul>
+
+<p><strong>Checks run</strong>: <code>gofmt -l .</code> prints nothing; <code>go vet ./...</code> and <code>go test ./...</code> pass; every test
+named in What exists and passes; <code>go list -deps</code> of <code>ui</code> has no <code>uitest</code>. The viewer was run once
+under Xvfb with Mesa (<code>-capture</code>) on two made-up tests: it drew the list, the error card and the
+replay.</p>
+
+<p><strong>Not built, or different from the plan</strong>:</p>
+
+<ul>
+<li><p>The arrow keys in the viewer: <code>ui.Context</code> has no public way to read a key outside a scene.</p></li>
+
+<li><p>A plain line of text (not a control) is found from the draw list, because the screen reader
+joins the texts of one box into one node; such an element is never <code>Focused</code> or <code>Pressable</code>.
+The not-found message lists the screen reader&rsquo;s labels, which may show joined texts.</p></li>
+
+<li><p><code>Test(t)</code> reports a recording it could not save with <code>t.Error</code>: the one place the package fails
+a test itself, and only while recording is on.</p></li>
+
+<li><p>The replay (fixed after the first capture): the recording keeps each text&rsquo;s measured width and
+the theme&rsquo;s background; the viewer shrinks a line its fonts would paint wider, never enlarges
+the window, and draws the pointer only once it has been somewhere. Shadows are redrawn from
+their recorded size, only roughly.</p></li>
+
+<li><p>After each input the window runs one more frame and any frame asked for at once, as Go
+Renderer&rsquo;s on-demand loop does; found while trying <code>uitest</code> on go-engine&rsquo;s editor, whose
+workspace bar is drawn after the page it changes.</p></li>
+</ul>
+
+<p><strong>For a person to review</strong>: all of it is AI-written and pending review. The viewer&rsquo;s look on a
+real display (light and dark), how it feels to step through a long test, and whether <code>uitest</code> is
+the API go-engine&rsquo;s editor wants, by writing one of its tests with it.</p>
