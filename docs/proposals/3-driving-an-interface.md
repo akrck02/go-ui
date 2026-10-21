@@ -129,7 +129,7 @@ it would break when the layout moves; names survive a new layout.
   `TestTheReportSaysEachStepAndTheCodeOfAFailure`
 - [x] T6 — a person's input stops a script · `uidrive/player.go` · serves R9 · test:
   `TestAKeyPressedDuringAScriptStopsIt`
-- [ ] T7 — `window.Options.Driver` on every target, at no cost without one · `window/window.go`,
+- [x] T7 — `window.Options.Driver` on every target, at no cost without one · `window/window.go`,
   `window/nintendo3ds.go`, `window/android.go`, `window/drive.go` · serves R1, R8 · test:
   `TestADriverAddsInputBeforeTheInterfaceRuns`, `TestAWindowWithoutADriverAllocatesNothingForIt`,
   `BenchmarkAWindowStep…`; guide page `docs/4-guides/12-driving-a-window.md`

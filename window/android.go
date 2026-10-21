@@ -70,7 +70,7 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 	view := &shownScene{}
 	app := interfaceApplication(context, options, build, &shown, view)
 	update := app.Update
-	reader := &screenReader{}
+	reader := &screenReader{driven: options.Driver != nil}
 	app.Update = func(app *models.Application, step float64) error {
 		bars := android.CurrentInsets()
 		context.SetInsets(ui.Insets{Top: bars.Top, Bottom: bars.Bottom, Left: bars.Left, Right: bars.Right})
@@ -120,13 +120,14 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 // screenReader carries what TalkBack asks to the interface, and what the interface shows to
 // TalkBack, at each step.
 type screenReader struct {
+	driven  bool // a driver finds elements through the interface's nodes, so they are kept on
 	numbers readerNumbers
 	nodes   []android.AccessibleNode // reused from step to step
 }
 
 // before tells the interface whether a screen reader is on, which node it is on, and what it asked.
 func (reader *screenReader) before(context *ui.Context, state *input.State) {
-	context.SetScreenReader(android.ScreenReaderOn())
+	context.SetScreenReader(android.ScreenReaderOn() || reader.driven)
 	actions := android.TakeReaderActions()
 	for _, action := range actions {
 		id := reader.numbers.id(action.Node)

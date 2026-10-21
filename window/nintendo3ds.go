@@ -139,6 +139,7 @@ func (run *consoleRun) step(step float64) *SceneView {
 		state.FramebufferWidth, state.FramebufferHeight = width, ctr.BottomHeight
 	}
 	shaped(run.state, interfaceWidth)
+	driveBefore(run.options.Driver, run.state, run.context)
 	forInterface := run.state
 	if run.swapped {
 		run.keysOnly = run.state.Unclaimed()
@@ -151,6 +152,7 @@ func (run *consoleRun) step(step float64) *SceneView {
 	run.context.Begin(forInterface)
 	run.build(run.context)
 	run.context.End()
+	showAfter(run.options.Driver, run.context)
 	if run.options.Scene == nil {
 		return nil
 	}
