@@ -1,0 +1,105 @@
+package uidrive
+
+import (
+	"io"
+
+	"github.com/akrck02/go-renderer/draw2d"
+	"github.com/akrck02/go-renderer/input"
+	ui "github.com/akrck02/go-ui"
+)
+
+// PlayOptions choose how a Player plays.
+type PlayOptions struct {
+	// Report, when set, gets a line for each step and one at the end (report.go): standard
+	// output, Android's log, the 3DS's console.
+	Report io.Writer
+	// Show draws the pointer, the fingers and the element each step found over the interface, so
+	// a demo or a tutorial is seen, not only run (show.go).
+	Show bool
+}
+
+// Player plays a script in a window, one frame at a time: it is a Driver. Each step finds its
+// element in what the last frame showed, then gives its input over the frames that follow, as a
+// person would, and lets one more frame show what it changed. A step that fails ends the script.
+type Player struct {
+	script  Script
+	options PlayOptions
+	hand    Hand
+	index   int    // the step playing now
+	moves   []move // what the step playing now still has to do, a frame each
+	planned bool   // the step playing now has found its element and made its moves
+	found   Element
+	done    bool
+	err     error
+}
+
+// move is one frame of a step: it gives its input and tells whether it is finished; a move that
+// waits gives none and answers false until its time has come.
+type move func(state *input.State, context *ui.Context) (finished bool, err error)
+
+// Play makes a player for a script; give it to window.Options.Driver, or to uitest's Play.
+func Play(script Script, options PlayOptions) *Player {
+	return &Player{script: script, options: options}
+}
+
+// Done tells whether the script has ended: every step played, or one failed.
+func (player *Player) Done() bool { return player.done }
+
+// Err is why the script ended early: the failed step's error, with its code. It is nil while the
+// script plays and when every step passed.
+func (player *Player) Err() error { return player.err }
+
+// Drive plays a frame of the script. Elements are found through the screen reader's nodes, so the
+// first frame turns the screen reader on and waits for the frame that makes them.
+func (player *Player) Drive(state *input.State, context *ui.Context) {
+	if player.done {
+		return
+	}
+	state.RequestFrame(0) // a window that draws on demand keeps drawing while a script plays
+	if !context.ScreenReaderOn() {
+		context.SetScreenReader(true)
+		return
+	}
+	if player.index >= len(player.script) {
+		player.finish(nil)
+		return
+	}
+	if err := player.playFrame(state, context); err != nil {
+		player.hand.LetGo(state)
+		player.finish(err)
+	}
+}
+
+// playFrame plans the step playing now if it is new, and plays its next move.
+func (player *Player) playFrame(state *input.State, context *ui.Context) error {
+	step := player.script[player.index]
+	if !player.planned {
+		moves, found, err := plan(&player.hand, step, context)
+		if err != nil {
+			return err
+		}
+		player.moves, player.found, player.planned = moves, found, true
+	}
+	finished, err := player.moves[0](state, context)
+	if err != nil || !finished {
+		return err
+	}
+	player.moves = player.moves[1:]
+	if len(player.moves) == 0 {
+		player.passed(step)
+		player.index++
+		player.planned = false
+	}
+	return nil
+}
+
+// Show draws what the player does over the interface, when its options ask for it.
+func (player *Player) Show(drawing *draw2d.List) {}
+
+// finish ends the script, with the error that ended it or nil.
+func (player *Player) finish(err error) {
+	player.done, player.err = true, err
+}
+
+// passed notes a step that played through.
+func (player *Player) passed(step Step) {}

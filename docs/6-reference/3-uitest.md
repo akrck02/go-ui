@@ -96,6 +96,7 @@ type Option func(*settings)
 
 | Function or method | |
 |---|---|
+| `func Driver(driver uidrive.Driver) Option` | Driver gives the window a driver, which it runs at every frame as a real window does (window.Options.Driver): before the interface, to add input, and after it, to draw over it. |
 | `func Measurer(measurer draw2d.Measurer) Option` | Measurer sets how text is measured; without it the window uses FixedMeasurer. |
 | `func Scale(factor float32) Option` | Scale sets how many framebuffer pixels a layout pixel takes (2 on most phones). |
 | `func Size(width, height float32) Option` | Size sets the window's size in layout pixels: what the interface's Size reports. |
@@ -184,13 +185,14 @@ type Window struct {
 | `func (window *Window) Element(label string) (Element, error)` | Element finds what the last frame showed with this label: a button's text, a field's name, a line of text. |
 | `func (window *Window) ElementIn(path ...string) (Element, error)` | ElementIn finds a control by its scopes (the names given to ui.Context.Push) and its label, outermost first: ElementIn("north", "Save"). |
 | `func (window *Window) ElementWithin(outer, inner string) (Element, error)` | ElementWithin finds an element by its label inside another found by its label: the button "Save" in the panel called "North". |
-| `func (window *Window) Frame()` | Frame runs one frame as a backend does: Begin, the interface, End, then the end of the input step, which forgets this frame's presses and typed text. |
+| `func (window *Window) Frame()` | Frame runs one frame as a backend does: the driver if there is one, Begin, the interface, End, then the end of the input step, which forgets this frame's presses and typed text. |
 | `func (window *Window) Frames(count int)` | Frames runs a number of frames, with no time passing between them (see Wait). |
 | `func (window *Window) HoldKey(key input.Key)` | HoldKey puts a key down and runs a frame; it stays down until ReleaseKey. |
 | `func (window *Window) LongPress(label string) error` | LongPress holds a finger still on an element for a second, letting the time pass, then lifts it. |
 | `func (window *Window) MoveTo(x, y float32)` | MoveTo moves the pointer to a place in the window and runs a frame. |
 | `func (window *Window) MoveToElement(label string) error` | MoveToElement moves the pointer to the middle of an element (see Element) and runs a frame. |
 | `func (window *Window) Now() time.Time` | Now is the window's time. |
+| `func (window *Window) Play(script uidrive.Script) error` | Play plays a script in the window, as a driven window would (uidrive.Player), with a sixtieth of a second passing on the window's clock at each frame. |
 | `func (window *Window) Press()` | Press holds the main button down where the pointer is and runs a frame. |
 | `func (window *Window) PressKey(key input.Key)` | PressKey presses a key and lets it go: one frame with it down, one with it up. |
 | `func (window *Window) Release()` | Release lets the main button go and runs a frame. |

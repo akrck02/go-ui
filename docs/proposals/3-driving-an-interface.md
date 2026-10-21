@@ -122,7 +122,7 @@ it would break when the layout moves; names survive a new layout.
   test: `TestTheFirstFingerDownAlsoPressesThePointer`
 - [x] T3 — the script format: `Parse` and `Script.String` · `uidrive/script.go` · serves R2 · test:
   `TestAScriptWrittenAndReadAgainIsTheSame`, `TestAnUnknownStepIsAnErrorWithItsLine`
-- [ ] T4 — `Player` runs each step frame by frame; `uitest.Driver` and `Window.Play` · `uidrive/
+- [x] T4 — `Player` runs each step frame by frame; `uitest.Driver` and `Window.Play` · `uidrive/
   player.go`, `uitest/window.go`, `uitest/play.go` · serves R2, R3 · test: one per step against a
   made-up interface (`TestAClickStepPressesTheButtonByItsName`…)
 - [ ] T5 — the report, a line per step with its code · `uidrive/report.go` · serves R6 · test:

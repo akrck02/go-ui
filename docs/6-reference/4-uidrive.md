@@ -164,6 +164,39 @@ type Hand struct {
 | `func (hand *Hand) TouchUp(state *input.State, finger int64)` | TouchUp lifts a finger. |
 | `func (hand *Hand) Type(state *input.State, text string)` | Type types a text at once, as a paste or a fast typist does: the control with the focus takes it. |
 
+### PlayOptions
+
+PlayOptions choose how a Player plays.
+
+```go
+type PlayOptions struct {
+	// Report, when set, gets a line for each step and one at the end (report.go): standard
+	// output, Android's log, the 3DS's console.
+	Report io.Writer
+	// Show draws the pointer, the fingers and the element each step found over the interface, so
+	// a demo or a tutorial is seen, not only run (show.go).
+	Show bool
+}
+```
+
+### Player
+
+Player plays a script in a window, one frame at a time: it is a Driver. Each step finds its element in what the last frame showed, then gives its input over the frames that follow, as a person would, and lets one more frame show what it changed. A step that fails ends the script.
+
+```go
+type Player struct {
+	// Has unexported fields.
+}
+```
+
+| Function or method | |
+|---|---|
+| `func Play(script Script, options PlayOptions) *Player` | Play makes a player for a script; give it to window.Options.Driver, or to uitest's Play. |
+| `func (player *Player) Done() bool` | Done tells whether the script has ended: every step played, or one failed. |
+| `func (player *Player) Drive(state *input.State, context *ui.Context)` | Drive plays a frame of the script. |
+| `func (player *Player) Err() error` | Err is why the script ended early: the failed step's error, with its code. |
+| `func (player *Player) Show(drawing *draw2d.List)` | Show draws what the player does over the interface, when its options ask for it. |
+
 ### Script
 
 Script is a list of steps, played one after another.

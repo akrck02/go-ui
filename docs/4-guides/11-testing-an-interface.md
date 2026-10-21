@@ -113,6 +113,32 @@ outermost first, when you know them. A button with only an icon is found by the 
 follows it: `Click("Add a lighthouse")`. `Texts()` lists every line drawn, in order, and `DrawList()` gives the
 whole draw list, for tests about colours and shapes.
 
+## Playing a script
+
+A test can also play a *script*: the same few lines a real window plays for a demo or a tutorial
+(see [Driving a window](12-driving-a-window.md)). `uidrive.Parse` reads it and `Play` runs it, a
+sixtieth of a second a frame on the window's clock, and returns the error of the first step that
+failed:
+
+```go
+script, err := uidrive.Parse(`
+click "Note"            # a field is found by its placeholder
+type "Fog at dawn"
+click "Add"
+until "Fog at dawn" 1s
+`)
+if err != nil {
+	t.Fatal(err)
+}
+if err := window.Play(script); err != nil {
+	t.Fatal(err)
+}
+```
+
+Both use one piece of code to find elements and make input (package `uidrive`), so a script that
+passes here does the same steps on a device. `uitest.Driver` gives the window any other driver,
+which it runs at every frame as a real window does.
+
 ## Errors
 
 Nothing in `uitest` panics or fails your test for you: methods return errors, and you decide.

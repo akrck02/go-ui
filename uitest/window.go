@@ -18,8 +18,9 @@ type Window struct {
 	clock   clock
 	// measurer is the interface's, to measure texts found in the draw list (find.go)
 	measurer  draw2d.Measurer
-	hand      uidrive.Hand // the pointer, the fingers and the keys the test gives
-	recording *recorder    // nil unless recording is on (recording.go)
+	hand      uidrive.Hand   // the pointer, the fingers and the keys the test gives
+	recording *recorder      // nil unless recording is on (recording.go)
+	driver    uidrive.Driver // nil unless the Driver option or Play gives one
 }
 
 // New makes a test window for an interface function: 800x600 layout pixels at scale 1, ui's
@@ -32,7 +33,7 @@ func New(build func(context *ui.Context), options ...Option) (*Window, error) {
 	if chosen.width <= 0 || chosen.height <= 0 || chosen.scale <= 0 {
 		return nil, invalidSize(chosen.width, chosen.height)
 	}
-	window := &Window{context: ui.NewWithMeasurer(chosen.measurer), build: build, measurer: chosen.measurer}
+	window := &Window{context: ui.NewWithMeasurer(chosen.measurer), build: build, measurer: chosen.measurer, driver: chosen.driver}
 	window.state = newState(chosen.width, chosen.height)
 	if chosen.theme != nil {
 		window.context.Theme = *chosen.theme
@@ -69,12 +70,18 @@ func (window *Window) Resize(width, height float32) error {
 	return nil
 }
 
-// Frame runs one frame as a backend does: Begin, the interface, End, then the end of the input
-// step, which forgets this frame's presses and typed text.
+// Frame runs one frame as a backend does: the driver if there is one, Begin, the interface, End,
+// then the end of the input step, which forgets this frame's presses and typed text.
 func (window *Window) Frame() {
+	if window.driver != nil {
+		window.driver.Drive(window.state, window.context)
+	}
 	window.context.Begin(window.state)
 	window.build(window.context)
 	window.context.End()
+	if window.driver != nil {
+		window.driver.Show(window.context.Drawing())
+	}
 	window.recordFrame()
 	window.state.EndFrame()
 }
