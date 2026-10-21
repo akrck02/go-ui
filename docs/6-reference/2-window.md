@@ -26,6 +26,7 @@ all the time.
 | Function | |
 |---|---|
 | `func AskForNotifications()` | AskForNotifications asks the person to allow notifications; on the desktop there is nothing to ask. |
+| `func Feel(Feeling)` | Feel gives a buzz on a phone; a desktop has nothing to buzz. |
 | `func FeelLongPress()` | FeelLongPress gives the buzz of a long press on a phone; a desktop has nothing to buzz. |
 | `func ForgetPreference(name string) error` | ForgetPreference lets go of the value kept under a name. |
 | `func Graphics() string` | Graphics describes a phone's OpenGL ES and GPU; on the desktop it is "". |
@@ -75,6 +76,27 @@ const (
 |---|---|
 | `func (backend *Backend) Set(text string) error` | Set reads a backend from a flag: automatic, metal or opengl. |
 | `func (backend *Backend) String() string` |  |
+
+### Feeling
+
+Feeling is a kind of buzz a touch gives, as a phone's own applications give them (Feel).
+
+```go
+type Feeling int
+```
+
+```go
+const (
+	// FeelingLongPress is the buzz of a touch that became a long press.
+	FeelingLongPress Feeling = iota
+	// FeelingTick is a light tick: something chosen, a switch flipped, a step on a dial.
+	FeelingTick
+	// FeelingConfirm says something went through.
+	FeelingConfirm
+	// FeelingReject says something went wrong or needs a look.
+	FeelingReject
+)
+```
 
 ### Options
 
@@ -146,6 +168,10 @@ SceneView is a 3D scene seen from a camera, drawn behind the interface.
 type SceneView struct {
 	World  *scene.Scene
 	Camera models.Camera
+	// Drawing is the program's own drawing over the scene and under the interface: a game's life
+	// bar, a sight. On the 3DS it is painted on the top screen, in each eye when in 3D. Keep the
+	// list between frames (Reset it), so drawing it allocates nothing.
+	Drawing *draw2d.List
 }
 ```
 

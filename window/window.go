@@ -70,10 +70,29 @@ type Options struct {
 type SceneView struct {
 	World  *scene.Scene
 	Camera models.Camera
+	// Drawing is the program's own drawing over the scene and under the interface: a game's life
+	// bar, a sight. On the 3DS it is painted on the top screen, in each eye when in 3D. Keep the
+	// list between frames (Reset it), so drawing it allocates nothing.
+	Drawing *draw2d.List
 }
 
-// shownScene is the scene the last step asked for, shared by the step and the drawing.
-type shownScene struct{ view *SceneView }
+// shownScene is the scene the last step asked for, shared by the step and the drawing, and the
+// list that holds the program's drawing and the interface together, kept between frames.
+type shownScene struct {
+	view     *SceneView
+	combined draw2d.List
+}
+
+// overScene is what is painted over the scene: the program's drawing, if any, then the interface.
+func (shown *shownScene) overScene(own, interfaceDrawing *draw2d.List) *draw2d.List {
+	if own.IsEmpty() {
+		return interfaceDrawing
+	}
+	shown.combined.Reset()
+	shown.combined.Commands = append(shown.combined.Commands, own.Commands...)
+	shown.combined.Commands = append(shown.combined.Commands, interfaceDrawing.Commands...)
+	return &shown.combined
+}
 
 // Backend is the graphics interface a window draws through.
 type Backend string
@@ -170,7 +189,8 @@ func interfaceApplication(context *ui.Context, options Options, build func(conte
 				}
 			}
 			if view.view != nil {
-				view.view.World.Overlay.Drawing = context.Drawing() // the interface is painted over the scene
+				// the program's drawing and the interface are painted over the scene
+				view.view.World.Overlay.Drawing = view.overScene(view.view.Drawing, context.Drawing())
 			}
 			return nil
 		},

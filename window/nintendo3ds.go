@@ -212,12 +212,14 @@ func (run *consoleRun) draw(view *SceneView) {
 	lap(&times.Submit, &mark)
 }
 
-// paintOverScene paints the scene's own drawing (World.Overlay.Drawing: a sight, a name), which
-// a program sets on the console to show something over the scene, on the top screen, in each eye
-// when in 3D.
+// paintOverScene paints the program's drawing over the scene (SceneView.Drawing, or the older
+// World.Overlay.Drawing: a sight, a name) on the top screen, in each eye when in 3D.
 func (run *consoleRun) paintOverScene(view *SceneView, stereo bool) {
 	over := view.World.Overlay.Drawing
-	if over == nil || len(over.Commands) == 0 {
+	if !view.Drawing.IsEmpty() {
+		over = view.Drawing
+	}
+	if over.IsEmpty() {
 		return
 	}
 	if !stereo {

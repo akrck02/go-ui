@@ -4,6 +4,7 @@ import (
 	"hash/maphash"
 	"testing"
 
+	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
 	"github.com/akrck02/go-renderer/scene"
 	ui "github.com/akrck02/go-ui"
@@ -83,5 +84,30 @@ func TestASceneIsAskedForWithTheUnclaimedInputAndDrawnUnderTheInterface(t *testi
 	}
 	if app.Unchanged(app) {
 		t.Fatal("a frame with a scene is always drawn when asked for")
+	}
+}
+
+func TestTheProgramsDrawingIsPaintedOverTheSceneAndUnderTheInterface(t *testing.T) {
+	context, err := ui.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	world := scene.New()
+	var own draw2d.List
+	options := Options{Scene: func(state *input.State, step float64) *SceneView {
+		own.Reset()
+		own.Rectangle(draw2d.Rect{Width: 100, Height: 10}, 0, draw2d.Hex("#ff0000"), draw2d.Transparent, 0)
+		return &SceneView{World: world, Drawing: &own}
+	}}
+	shown, view := shownFrame{seed: maphash.MakeSeed()}, &shownScene{}
+	app := interfaceApplication(context, options, func(context *ui.Context) { context.Label("Over the bar") }, &shown, view)
+	app.Input.WindowWidth, app.Input.WindowHeight = 400, 300
+	if err := app.Update(app, 1.0/60); err != nil {
+		t.Fatal(err)
+	}
+	painted := world.Overlay.Drawing.Commands
+	interfaceCommands := len(context.Drawing().Commands)
+	if len(painted) != 1+interfaceCommands || painted[0].Area.Width != 100 {
+		t.Fatalf("over the scene go %d commands, the program's first; want 1 and the interface's %d", len(painted), interfaceCommands)
 	}
 }
