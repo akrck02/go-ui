@@ -69,8 +69,10 @@ func (ui *Context) popupLook() Look {
 }
 
 // Tooltip explains the control added just before it: when the pointer rests on that control for
-// a moment (Theme.TooltipDelay), a small dark note with the text shows under the pointer.
+// a moment (Theme.TooltipDelay), a small dark note with the text shows under the pointer. A control
+// with no words of its own (an icon button) is also called by its tooltip for a screen reader.
 func (ui *Context) Tooltip(text string) {
+	ui.noteTooltip(text)
 	if text == "" || ui.interacted == 0 || ui.hot != ui.interacted || ui.lastHot != ui.hot {
 		return
 	}

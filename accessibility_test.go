@@ -344,3 +344,17 @@ func TestAScreenReaderReplacesAFieldsText(t *testing.T) {
 		t.Fatalf("and stays so as typing goes on: %q", name)
 	}
 }
+
+func TestAnIconButtonIsReadByTheTooltipAfterIt(t *testing.T) {
+	h := readerHarness(t)
+	h.frame(func(ui *Context) {
+		ui.FlatIconButton("plus", "")
+		ui.Tooltip("Add a lighthouse")
+		ui.Button("Export")
+		ui.Tooltip("Export the register as a file")
+	})
+	if !h.node("Add a lighthouse").Pressable {
+		t.Fatal("the icon button is not read as a button")
+	}
+	h.node("Export") // a button with words keeps them; its tooltip only explains it
+}
