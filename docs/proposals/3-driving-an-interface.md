@@ -127,7 +127,7 @@ it would break when the layout moves; names survive a new layout.
   made-up interface (`TestAClickStepPressesTheButtonByItsName`…)
 - [x] T5 — the report, a line per step with its code · `uidrive/report.go` · serves R6 · test:
   `TestTheReportSaysEachStepAndTheCodeOfAFailure`
-- [ ] T6 — a person's input stops a script · `uidrive/player.go` · serves R9 · test:
+- [x] T6 — a person's input stops a script · `uidrive/player.go` · serves R9 · test:
   `TestAKeyPressedDuringAScriptStopsIt`
 - [ ] T7 — `window.Options.Driver` on every target, at no cost without one · `window/window.go`,
   `window/nintendo3ds.go`, `window/android.go`, `window/drive.go` · serves R1, R8 · test:

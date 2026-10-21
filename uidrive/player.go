@@ -52,20 +52,21 @@ func (player *Player) Err() error { return player.err }
 
 // Drive plays a frame of the script. Elements are found through the screen reader's nodes in what
 // the last frame showed, so the first frame turns the screen reader on and only lets the interface
-// run, to make them.
+// run, to make them. Any input already in the state when Drive is called came from a person (a
+// key, a click, the pointer moved): it stops the script with ScriptStopped, so an automatic mode
+// never fights the hand on the device.
 func (player *Player) Drive(state *input.State, context *ui.Context) {
 	if player.done {
+		return
+	}
+	if player.started && state.HasInput() {
+		player.fail(state, scriptStopped(player.index+1))
 		return
 	}
 	state.RequestFrame(0)         // a window that draws on demand keeps drawing while a script plays
 	context.SetScreenReader(true) // on a phone the window may turn it off before each frame
 	if !player.started {
 		player.started = true
-		return
-	}
-	if player.index >= len(player.script) {
-		reportScriptPassed(player.options.Report, len(player.script))
-		player.done = true
 		return
 	}
 	if err := player.playFrame(state, context); err != nil {
@@ -75,6 +76,11 @@ func (player *Player) Drive(state *input.State, context *ui.Context) {
 
 // playFrame plans the step playing now if it is new, and plays its next move.
 func (player *Player) playFrame(state *input.State, context *ui.Context) error {
+	if len(player.script) == 0 {
+		reportScriptPassed(player.options.Report, 0)
+		player.done = true
+		return nil
+	}
 	step := player.script[player.index]
 	if !player.planned {
 		moves, found, err := plan(&player.hand, step, context)
@@ -92,6 +98,10 @@ func (player *Player) playFrame(state *input.State, context *ui.Context) error {
 		reportPassed(player.options.Report, player.index+1, step)
 		player.index++
 		player.planned = false
+	}
+	if player.index == len(player.script) {
+		reportScriptPassed(player.options.Report, len(player.script))
+		player.done = true
 	}
 	return nil
 }
