@@ -175,3 +175,36 @@ func TestTheScreenReaderTreeDoesNotChangeTheLayout(t *testing.T) {
 		t.Fatal("switching the screen reader on changed what was drawn")
 	}
 }
+
+// twoPanels shows two panels with a button of the same name in each.
+func twoPanels(context *ui.Context) {
+	context.PanelWith("North", ui.PanelOptions{X: 20, Y: 20}, func() { context.Button("Save") })
+	context.PanelWith("South", ui.PanelOptions{X: 20, Y: 300}, func() { context.Button("Save") })
+}
+
+func TestAnElementIsFoundWithinAnother(t *testing.T) {
+	window := newWindow(t, twoPanels)
+	window.Frame()
+	north, err := window.ElementWithin("North", "Save")
+	if err != nil {
+		t.Fatal(err)
+	}
+	south, err := window.ElementWithin("South", "Save")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if north.Rect.Y >= 300 || south.Rect.Y < 300 || !north.Pressable {
+		t.Fatalf("found %+v in North and %+v in South", north, south)
+	}
+}
+
+func TestAnElementMissingWithinAnotherIsNotFound(t *testing.T) {
+	window := newWindow(t, twoPanels)
+	window.Frame()
+	if _, err := window.ElementWithin("North", "Delete"); !errors.Is(err, ErrorElementNotFound) {
+		t.Fatalf("a missing inner element gave %v", err)
+	}
+	if _, err := window.ElementWithin("East", "Save"); !errors.Is(err, ErrorElementNotFound) {
+		t.Fatalf("a missing outer element gave %v", err)
+	}
+}

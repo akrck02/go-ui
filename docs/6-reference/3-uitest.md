@@ -192,7 +192,7 @@ type Window struct {
 |---|---|
 | `func New(build func(context *ui.Context), options ...Option) (*Window, error)` | New makes a test window for an interface function: 800x600 layout pixels at scale 1, ui's default theme and FixedMeasurer, unless options say otherwise. |
 | `func (window *Window) Click(label string) error` | Click clicks the middle of an element that can be pressed. |
-| `func (window *Window) ClickAt(x, y float32)` | ClickAt moves the pointer to a place, presses and releases there: three frames, as a control answers when the button is let go. |
+| `func (window *Window) ClickAt(x, y float32)` | ClickAt moves the pointer to a place, presses and releases there, each with its frames, as a control answers when the button is let go. |
 | `func (window *Window) Context() *ui.Context` | Context is the interface's context, for what this package does not cover yet. |
 | `func (window *Window) DoubleClick(label string) error` | DoubleClick clicks an element twice with no time between, which the input state counts as a double click. |
 | `func (window *Window) Drag(fromX, fromY, toX, toY float32)` | Drag presses at one place, moves to another over several frames and lets go there. |
@@ -200,6 +200,7 @@ type Window struct {
 | `func (window *Window) DrawList() *draw2d.List` | DrawList is what the last frame drew, as go-renderer would paint it. |
 | `func (window *Window) Element(label string) (Element, error)` | Element finds what the last frame showed with this label: a button's text, a field's name, a line of text. |
 | `func (window *Window) ElementIn(path ...string) (Element, error)` | ElementIn finds a control by its scopes (the names given to ui.Context.Push) and its label, outermost first: ElementIn("north", "Save"). |
+| `func (window *Window) ElementWithin(outer, inner string) (Element, error)` | ElementWithin finds an element by its label inside another found by its label: the button "Save" in the panel called "North". |
 | `func (window *Window) Frame()` | Frame runs one frame as a backend does: Begin, the interface, End, then the end of the input step, which forgets this frame's presses and typed text. |
 | `func (window *Window) Frames(count int)` | Frames runs a number of frames, with no time passing between them (see Wait). |
 | `func (window *Window) HoldKey(key input.Key)` | HoldKey puts a key down and runs a frame; it stays down until ReleaseKey. |

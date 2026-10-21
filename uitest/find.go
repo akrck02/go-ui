@@ -137,3 +137,51 @@ func contains(outer, inner draw2d.Rect) bool {
 
 // describe is a short form of a label for messages.
 func describe(label string) string { return fmt.Sprintf("%q", label) }
+
+// ElementWithin finds an element by its label inside another found by its label: the button
+// "Save" in the panel called "North". Inside means within the smallest painted box (a panel, a
+// card, a row) that holds the outer element, so a title finds what its panel holds.
+func (window *Window) ElementWithin(outer, inner string) (Element, error) {
+	container, err := window.Element(outer)
+	if err != nil {
+		return Element{}, err
+	}
+	area := window.boxAround(container.Rect)
+	var found []Element
+	for _, node := range window.nodesLabelled(inner) {
+		if contains(area, node.Area) {
+			found = append(found, window.elementOf(node))
+		}
+	}
+	if len(found) == 0 { // a line of text on its own, as Element looks for it
+		for _, text := range window.textsDrawn(inner) {
+			if contains(area, text.Rect) {
+				found = append(found, text)
+			}
+		}
+	}
+	name := outer + " > " + inner
+	if len(found) == 0 {
+		return Element{}, window.noted(elementNotFound(name, window.labels()))
+	}
+	if len(found) > 1 {
+		return Element{}, window.noted(elementAmbiguous(name, len(found)))
+	}
+	return found[0], nil
+}
+
+// boxAround is the smallest rectangle the last frame painted that holds an area, or the area
+// itself when nothing painted holds it.
+func (window *Window) boxAround(area draw2d.Rect) draw2d.Rect {
+	smallest, found := area, false
+	for _, command := range window.DrawList().Commands {
+		painted := command.Fill.IsVisible() || command.Border.IsVisible()
+		if command.Kind != draw2d.RectangleKind || !painted || !contains(command.Area, area) {
+			continue
+		}
+		if !found || command.Area.Width*command.Area.Height < smallest.Width*smallest.Height {
+			smallest, found = command.Area, true
+		}
+	}
+	return smallest
+}

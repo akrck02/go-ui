@@ -106,8 +106,11 @@ reader would read: a button's text, a described label, a line of text. You get b
 | `Focused` | It has the focus (`ui.Context.FocusedID`) |
 | `Pressable` | A click does something to it |
 
-Two buttons called "Save" in different scopes? `ElementIn("north", "Save")` takes the scopes given
-to `Push`, outermost first. `Texts()` lists every line drawn, in order, and `DrawList()` gives the
+Two buttons called "Save" in different panels? `ElementWithin("North", "Save")` finds the one
+inside the panel whose title is "North": inside the smallest painted box (a panel, a card) that
+holds the outer element. `ElementIn("north", "Save")` does it by the scopes given to `Push`,
+outermost first, when you know them. A button with only an icon is found by the `Tooltip` that
+follows it: `Click("Add a lighthouse")`. `Texts()` lists every line drawn, in order, and `DrawList()` gives the
 whole draw list, for tests about colours and shapes.
 
 ## Errors
