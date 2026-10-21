@@ -20,6 +20,7 @@ type Window struct {
 	// pointerFinger is the finger that also moves the pointer (touch.go), or noFinger
 	pointerFinger int64
 	pointerDown   bool      // the main button or the pointer's finger is down
+	pointerMoved  bool      // the pointer has been put somewhere (for recordings)
 	recording     *recorder // nil unless recording is on (recording.go)
 }
 

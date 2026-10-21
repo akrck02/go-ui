@@ -26,26 +26,38 @@ type replay struct {
 	recording uitest.Recording
 	frame     uitest.RecordedFrame
 	theme     ui.Theme
+	// measurer measures text as the viewer paints it, so a line is shrunk to the width the test
+	// measured; nil paints text at its recorded size.
+	measurer draw2d.Measurer
 }
 
 // paint fits the recorded window into the area, centred, and paints the frame in it.
 func (replay replay) paint(area draw2d.Rect, drawing *draw2d.List) {
-	if replay.recording.Width <= 0 || replay.recording.Height <= 0 {
+	place, fits := fitWindow(replay.recording, area)
+	if !fits {
 		return
 	}
-	scale := min(area.Width/replay.recording.Width, area.Height/replay.recording.Height)
-	origin := draw2d.Rect{
-		X: area.X + (area.Width-replay.recording.Width*scale)/2, Y: area.Y + (area.Height-replay.recording.Height*scale)/2,
-		Width: replay.recording.Width * scale, Height: replay.recording.Height * scale,
-	}
-	place := placement{origin: origin, scale: scale}
-	drawing.Rectangle(origin, replayRadius, replay.theme.Background, replay.theme.Line, 1)
-	drawing.PushClip(origin)
+	place.measurer = replay.measurer
+	drawing.Rectangle(place.origin, replayRadius, replay.recording.Background, replay.theme.Line, 1)
+	drawing.PushClip(place.origin)
 	for _, command := range inLayers(replay.frame.Commands) {
 		place.paintCommand(command, drawing)
 	}
 	drawing.PopClip()
 	replay.paintMarks(place, drawing)
+}
+
+// fitWindow places a recorded window in an area, centred, keeping its shape: at its own size when
+// it fits, smaller when it does not. It is never enlarged, so its text and controls show as big as
+// the test's window had them.
+func fitWindow(recording uitest.Recording, area draw2d.Rect) (placement, bool) {
+	if recording.Width <= 0 || recording.Height <= 0 || area.IsEmpty() {
+		return placement{}, false
+	}
+	scale := min(area.Width/recording.Width, area.Height/recording.Height, 1)
+	width, height := recording.Width*scale, recording.Height*scale
+	origin := draw2d.Rect{X: area.X + (area.Width-width)/2, Y: area.Y + (area.Height-height)/2, Width: width, Height: height}
+	return placement{origin: origin, scale: scale}, true
 }
 
 // paintMarks paints what the test did: the found element, the fingers and the pointer.
@@ -57,7 +69,9 @@ func (replay replay) paintMarks(place placement, drawing *draw2d.List) {
 	for _, touch := range replay.frame.Touches {
 		paintSpot(drawing, place.point(touch.X, touch.Y), theme.Warning, true)
 	}
-	paintSpot(drawing, place.point(replay.frame.PointerX, replay.frame.PointerY), theme.Primary, replay.frame.Pressed)
+	if replay.frame.HasPointer {
+		paintSpot(drawing, place.point(replay.frame.PointerX, replay.frame.PointerY), theme.Primary, replay.frame.Pressed)
+	}
 }
 
 // paintSpot paints a ring where the pointer or a finger is; a pressed one is filled.
@@ -79,8 +93,9 @@ func inLayers(commands []draw2d.Command) []draw2d.Command {
 
 // placement maps the recorded window's layout pixels into the viewer's.
 type placement struct {
-	origin draw2d.Rect
-	scale  float32
+	origin   draw2d.Rect
+	scale    float32
+	measurer draw2d.Measurer // see replay.measurer
 }
 
 // rect places a recorded rectangle.
@@ -109,10 +124,26 @@ func (place placement) paintCommand(command draw2d.Command, drawing *draw2d.List
 		drawing.Shadow(area.Inset(blur), command.Radius*scale, blur, 0, command.Fill)
 	case draw2d.TextKind:
 		baseline := place.origin.Y + command.Baseline*scale
-		drawing.Text(command.Text, area.X, baseline, command.Size*scale, command.Weight, command.Fill)
+		drawing.Text(command.Text, area.X, baseline, place.textSize(command), command.Weight, command.Fill)
 	case draw2d.IconKind:
 		drawing.Icon(command.Text, area.X, area.Y, command.Size*scale, command.Fill)
 	case draw2d.ImageKind:
 		drawing.Rectangle(area, pictureRadius, pictureGrey, draw2d.Transparent, 0) // pictures are not recorded
 	}
+}
+
+// textSize is the size a recorded line is painted at: its own, scaled, or smaller when the viewer's
+// font is wider than what the test measured it with, so the line fits the box it was laid out in.
+// Shrinking the size keeps every letter; the layout of the frame stays as the test saw it.
+func (place placement) textSize(command draw2d.Command) float32 {
+	size := command.Size * place.scale
+	if place.measurer == nil || command.Area.Width <= 0 {
+		return size
+	}
+	painted := place.measurer.MeasureText(command.Text, size, command.Weight, 0).Width
+	measured := command.Area.Width * place.scale
+	if painted <= measured {
+		return size
+	}
+	return size * measured / painted
 }

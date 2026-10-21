@@ -3,6 +3,7 @@ package main
 import (
 	"sort"
 
+	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-ui/uitest"
 )
 
@@ -12,6 +13,8 @@ type results struct {
 	selected   int
 	frame      int
 	frameValue float32 // the frame as the slider holds it
+	// measurer measures text with the viewer's fonts, to fit the replay's lines (replay.measurer)
+	measurer draw2d.Measurer
 }
 
 // newResults orders the recordings for the viewer: failed tests first, each group by name.

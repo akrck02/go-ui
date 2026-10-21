@@ -137,14 +137,17 @@ RecordedFrame is one frame: what was drawn, where the pointer and the fingers we
 
 ```go
 type RecordedFrame struct {
-	Action    string // `Click "Save"`, empty for a frame run on its own
-	Target    draw2d.Rect
-	HasTarget bool
-	PointerX  float32
-	PointerY  float32
-	Pressed   bool // the main button or the first finger is down
-	Touches   []RecordedTouch
-	Commands  []draw2d.Command // pictures are kept by their area only
+	Action     string // `Click "Save"`, empty for a frame run on its own
+	Target     draw2d.Rect
+	HasTarget  bool
+	HasPointer bool // the pointer has been somewhere in the window
+	PointerX   float32
+	PointerY   float32
+	Pressed    bool // the main button or the first finger is down
+	Touches    []RecordedTouch
+	// Commands are what was drawn; pictures are kept by their area only, and a text's Area.Width is
+	// its width as the window's measurer measured it
+	Commands []draw2d.Command
 }
 ```
 
@@ -164,7 +167,8 @@ Recording is what a test's window showed, frame by frame, and the errors it retu
 type Recording struct {
 	Test          string // the test's name, as go test gives it
 	Failed        bool
-	Width, Height float32 // the window, in layout pixels
+	Width, Height float32      // the window, in layout pixels
+	Background    draw2d.Color // the theme's, which a window paints behind the interface
 	Errors        []RecordedError
 	Frames        []RecordedFrame
 }

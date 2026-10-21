@@ -23,6 +23,7 @@ func center(area draw2d.Rect) point {
 func (window *Window) MoveTo(x, y float32) {
 	defer window.doing("Move", draw2d.Rect{}, false)()
 	window.state.MoveCursor(float64(x), float64(y))
+	window.pointerMoved = true
 	window.Frame()
 }
 

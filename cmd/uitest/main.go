@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/akrck02/go-renderer/opengl/overlay"
 	"github.com/akrck02/go-ui/uitest"
 	"github.com/akrck02/go-ui/window"
 )
@@ -27,7 +28,13 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	if err := window.Run(options, newResults(recordings).draw); err != nil {
+	shown := newResults(recordings)
+	shown.measurer, err = overlay.NewMeasurer() // the fonts the window paints with
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	if err := window.Run(options, shown.draw); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

@@ -25,6 +25,7 @@ func (window *Window) TouchDown(finger int64, x, y float32) {
 	window.state.SetTouch(finger, float64(x), float64(y))
 	if finger == window.pointerFinger {
 		window.state.MoveCursor(float64(x), float64(y))
+		window.pointerMoved = true
 		window.state.SetButton(input.MouseLeft, true)
 		window.pointerDown = true
 	}

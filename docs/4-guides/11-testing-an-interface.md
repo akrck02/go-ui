@@ -152,9 +152,11 @@ element an action found has an outline in the theme's focus colour. Click an err
 to the frame it came after.
 
 Recording costs nothing in a plain `go test`: a window only keeps its frames while the
-`UITEST_RECORD` variable names a folder, which the viewer sets for you. The replay paints the
-recorded draw lists with real fonts, while the tests measured text with `FixedMeasurer`, so a
-label can look a little wider than its button. The viewer needs a display.
+`UITEST_RECORD` variable names a folder, which the viewer sets for you. The replay shows the test's
+window at its own size (smaller only when it does not fit), on its theme's background. The test
+measured text with its own measurer and the viewer paints with real fonts, so each recording keeps
+how wide every line was measured, and the viewer shrinks a line that would come out wider: the
+frame looks as the test laid it out. The viewer needs a display.
 
 ## What it cannot do yet
 

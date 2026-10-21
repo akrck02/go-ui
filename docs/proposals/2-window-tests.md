@@ -173,8 +173,10 @@ replay.
   The not-found message lists the screen reader's labels, which may show joined texts.
 - `Test(t)` reports a recording it could not save with `t.Error`: the one place the package fails
   a test itself, and only while recording is on.
-- The replay paints with real fonts what the test measured with `FixedMeasurer`, so labels can
-  look wider than their boxes; shadows are redrawn from their recorded size, only roughly.
+- The replay (fixed after the first capture): the recording keeps each text's measured width and
+  the theme's background; the viewer shrinks a line its fonts would paint wider, never enlarges
+  the window, and draws the pointer only once it has been somewhere. Shadows are redrawn from
+  their recorded size, only roughly.
 
 **For a person to review**: all of it is AI-written and pending review. The viewer's look on a
 real display (light and dark), how it feels to step through a long test, and whether `uitest` is

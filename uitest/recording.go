@@ -19,7 +19,8 @@ const RecordVariable = "UITEST_RECORD"
 type Recording struct {
 	Test          string // the test's name, as go test gives it
 	Failed        bool
-	Width, Height float32 // the window, in layout pixels
+	Width, Height float32      // the window, in layout pixels
+	Background    draw2d.Color // the theme's, which a window paints behind the interface
 	Errors        []RecordedError
 	Frames        []RecordedFrame
 }
@@ -34,14 +35,17 @@ type RecordedError struct {
 // RecordedFrame is one frame: what was drawn, where the pointer and the fingers were, and the
 // action that ran it with the element it found.
 type RecordedFrame struct {
-	Action    string // `Click "Save"`, empty for a frame run on its own
-	Target    draw2d.Rect
-	HasTarget bool
-	PointerX  float32
-	PointerY  float32
-	Pressed   bool // the main button or the first finger is down
-	Touches   []RecordedTouch
-	Commands  []draw2d.Command // pictures are kept by their area only
+	Action     string // `Click "Save"`, empty for a frame run on its own
+	Target     draw2d.Rect
+	HasTarget  bool
+	HasPointer bool // the pointer has been somewhere in the window
+	PointerX   float32
+	PointerY   float32
+	Pressed    bool // the main button or the first finger is down
+	Touches    []RecordedTouch
+	// Commands are what was drawn; pictures are kept by their area only, and a text's Area.Width is
+	// its width as the window's measurer measured it
+	Commands []draw2d.Command
 }
 
 // RecordedTouch is a finger on the screen.
@@ -68,7 +72,7 @@ func (window *Window) startRecording(test testing.TB, width, height float32) {
 	if test == nil || folder == "" {
 		return
 	}
-	window.recording = &recorder{folder: folder, recording: Recording{Test: test.Name(), Width: width, Height: height}}
+	window.recording = &recorder{folder: folder, recording: Recording{Test: test.Name(), Width: width, Height: height, Background: window.context.Theme.Background}}
 	test.Cleanup(func() {
 		window.recording.recording.Failed = test.Failed()
 		if err := window.recording.save(); err != nil {
@@ -97,9 +101,13 @@ func (window *Window) recordFrame() {
 	commands := append([]draw2d.Command(nil), window.DrawList().Commands...)
 	for index := range commands {
 		commands[index].Picture = nil
+		if commands[index].Kind == draw2d.TextKind { // a text's width is not in the list: keep it, for the replay
+			command := &commands[index]
+			command.Area.Width = window.measurer.MeasureText(command.Text, command.Size, command.Weight, 0).Width
+		}
 	}
 	frame := RecordedFrame{Action: recording.action, Target: recording.target, HasTarget: recording.hasTarget,
-		PointerX: float32(window.state.CursorX), PointerY: float32(window.state.CursorY),
+		HasPointer: window.pointerMoved, PointerX: float32(window.state.CursorX), PointerY: float32(window.state.CursorY),
 		Pressed: window.pointerDown, Commands: commands}
 	for _, touch := range window.state.Touches() {
 		frame.Touches = append(frame.Touches, RecordedTouch{X: float32(touch.X), Y: float32(touch.Y)})

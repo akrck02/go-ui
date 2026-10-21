@@ -118,7 +118,7 @@ func (results *results) replayCard(context *ui.Context) {
 			context.Caption("This test ran no frame.")
 			return
 		}
-		shown := replay{recording: recording, frame: frame, theme: theme}
+		shown := replay{recording: recording, frame: frame, theme: theme, measurer: results.measurer}
 		context.Paint(ui.Layout{Width: ui.Grow(), Height: ui.Grow()}, shown.paint)
 		results.stepControls(context, len(recording.Frames), frame.Action)
 	})
