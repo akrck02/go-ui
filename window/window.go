@@ -79,15 +79,19 @@ type SceneView struct {
 	// layer (SetLayer) covers the interface's menus and tooltips as well.
 	Drawing *draw2d.List
 	// Below is a second scene for the 3DS's bottom screen, with the interface painted over it (a
-	// map, a turning model); nil leaves the bottom screen to the interface alone. Elsewhere it is
-	// not drawn.
+	// map, a turning model); nil leaves the bottom screen to the interface alone. On a computer it
+	// is drawn only where its Area says (a preview of the console).
 	Below *BelowView
+	// Area is where the scene is drawn on a computer, in window pixels; nil is the whole window.
+	// Around it the window shows the theme's background (a preview of a console's screen).
+	Area *draw2d.Rect
 }
 
 // BelowView is a scene seen from a camera on the 3DS's bottom screen.
 type BelowView struct {
 	World  *scene.Scene
 	Camera models.Camera
+	Area   *draw2d.Rect // where a computer shows it, in window pixels; nil is nowhere
 }
 
 // shownScene is the scene the last step asked for, shared by the step and the drawing, and the
