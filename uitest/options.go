@@ -1,6 +1,8 @@
 package uitest
 
 import (
+	"testing"
+
 	"github.com/akrck02/go-renderer/draw2d"
 	ui "github.com/akrck02/go-ui"
 )
@@ -17,6 +19,7 @@ type settings struct {
 	scale         float32
 	theme         *ui.Theme
 	measurer      draw2d.Measurer
+	test          testing.TB // the test the window records for (recording.go)
 }
 
 // Option chooses something about a test window; give them to New.

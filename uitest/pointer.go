@@ -1,6 +1,8 @@
 package uitest
 
 import (
+	"fmt"
+
 	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
 )
@@ -19,6 +21,7 @@ func center(area draw2d.Rect) point {
 
 // MoveTo moves the pointer to a place in the window and runs a frame.
 func (window *Window) MoveTo(x, y float32) {
+	defer window.doing("Move", draw2d.Rect{}, false)()
 	window.state.MoveCursor(float64(x), float64(y))
 	window.Frame()
 }
@@ -30,25 +33,31 @@ func (window *Window) MoveToElement(label string) error {
 		return err
 	}
 	middle := center(target.Rect)
+	defer window.doing(fmt.Sprintf("Move to %q", label), target.Rect, true)()
 	window.MoveTo(middle.x, middle.y)
 	return nil
 }
 
 // Press holds the main button down where the pointer is and runs a frame.
 func (window *Window) Press() {
+	defer window.doing("Press", draw2d.Rect{}, false)()
 	window.state.SetButton(input.MouseLeft, true)
+	window.pointerDown = true
 	window.Frame()
 }
 
 // Release lets the main button go and runs a frame.
 func (window *Window) Release() {
+	defer window.doing("Release", draw2d.Rect{}, false)()
 	window.state.SetButton(input.MouseLeft, false)
+	window.pointerDown = false
 	window.Frame()
 }
 
 // ClickAt moves the pointer to a place, presses and releases there: three frames, as a control
 // answers when the button is let go.
 func (window *Window) ClickAt(x, y float32) {
+	defer window.doing("Click", draw2d.Rect{}, false)()
 	window.MoveTo(x, y)
 	window.Press()
 	window.Release()
@@ -61,6 +70,7 @@ func (window *Window) Click(label string) error {
 		return err
 	}
 	middle := center(target.Rect)
+	defer window.doing(fmt.Sprintf("Click %q", label), target.Rect, true)()
 	window.ClickAt(middle.x, middle.y)
 	return nil
 }
@@ -73,6 +83,7 @@ func (window *Window) DoubleClick(label string) error {
 		return err
 	}
 	middle := center(target.Rect)
+	defer window.doing(fmt.Sprintf("Double click %q", label), target.Rect, true)()
 	window.ClickAt(middle.x, middle.y)
 	window.Press()
 	window.Release()
@@ -81,6 +92,7 @@ func (window *Window) DoubleClick(label string) error {
 
 // Drag presses at one place, moves to another over several frames and lets go there.
 func (window *Window) Drag(fromX, fromY, toX, toY float32) {
+	defer window.doing("Drag", draw2d.Rect{}, false)()
 	window.MoveTo(fromX, fromY)
 	window.Press()
 	for step := 1; step <= dragSteps; step++ {
@@ -97,6 +109,7 @@ func (window *Window) DragElement(label string, distanceX, distanceY float32) er
 		return err
 	}
 	middle := center(target.Rect)
+	defer window.doing(fmt.Sprintf("Drag %q", label), target.Rect, true)()
 	window.Drag(middle.x, middle.y, middle.x+distanceX, middle.y+distanceY)
 	return nil
 }
@@ -104,9 +117,13 @@ func (window *Window) DragElement(label string, distanceX, distanceY float32) er
 // Scroll puts the pointer over an element and turns the wheel: a negative amount goes down the
 // page, as a wheel turned toward the person does.
 func (window *Window) Scroll(label string, amount float32) error {
-	if err := window.MoveToElement(label); err != nil {
+	target, err := window.visibleElement(label)
+	if err != nil {
 		return err
 	}
+	defer window.doing(fmt.Sprintf("Scroll %q", label), target.Rect, true)()
+	middle := center(target.Rect)
+	window.MoveTo(middle.x, middle.y)
 	window.state.AddScroll(float64(amount))
 	window.Frame()
 	return nil
@@ -119,7 +136,7 @@ func (window *Window) visibleElement(label string) (Element, error) {
 		return Element{}, err
 	}
 	if !target.Visible {
-		return Element{}, elementNotVisible(label)
+		return Element{}, window.noted(elementNotVisible(label))
 	}
 	return target, nil
 }
@@ -131,7 +148,7 @@ func (window *Window) pressableElement(label string) (Element, error) {
 		return Element{}, err
 	}
 	if !target.Pressable {
-		return Element{}, elementNotPressable(label)
+		return Element{}, window.noted(elementNotPressable(label))
 	}
 	return target, nil
 }

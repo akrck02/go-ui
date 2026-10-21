@@ -12,12 +12,20 @@ code when what it looks for is not there.
 ### Constants and variables
 
 ```go
+const RecordVariable = "UITEST_RECORD"
+```
+
+RecordVariable is the environment variable that turns recording on: a folder where each test made with the Test option writes what its window showed, for the results viewer (cmd/uitest).
+
+```go
 var (
 	ErrorInvalidSize         = &Error{Code: InvalidSize}
 	ErrorElementNotFound     = &Error{Code: ElementNotFound}
 	ErrorElementAmbiguous    = &Error{Code: ElementAmbiguous}
 	ErrorElementNotVisible   = &Error{Code: ElementNotVisible}
 	ErrorElementNotPressable = &Error{Code: ElementNotPressable}
+	ErrorRecordingNotSaved   = &Error{Code: RecordingNotSaved}
+	ErrorRecordingNotRead    = &Error{Code: RecordingNotRead}
 )
 ```
 
@@ -38,6 +46,8 @@ const (
 	ElementAmbiguous    Code = "uitest.element-ambiguous"
 	ElementNotVisible   Code = "uitest.element-not-visible"
 	ElementNotPressable Code = "uitest.element-not-pressable"
+	RecordingNotSaved   Code = "uitest.recording-not-saved"
+	RecordingNotRead    Code = "uitest.recording-not-read"
 )
 ```
 
@@ -70,6 +80,7 @@ Error is an error of this package: its code, and a message for people.
 type Error struct {
 	Code    Code
 	Message string
+	Cause   error // what went wrong underneath, when something outside this package failed
 }
 ```
 
@@ -77,6 +88,7 @@ type Error struct {
 |---|---|
 | `func (err *Error) Error() string` | Error gives the code and the message. |
 | `func (err *Error) Is(target error) bool` | Is tells whether target is an error of this package with the same code, so errors.Is compares codes, never messages. |
+| `func (err *Error) Unwrap() error` | Unwrap is the cause underneath, for errors.Is and errors.As. |
 
 ### FixedMeasurer
 
@@ -104,7 +116,63 @@ type Option func(*settings)
 | `func Measurer(measurer draw2d.Measurer) Option` | Measurer sets how text is measured; without it the window uses FixedMeasurer. |
 | `func Scale(factor float32) Option` | Scale sets how many framebuffer pixels a layout pixel takes (2 on most phones). |
 | `func Size(width, height float32) Option` | Size sets the window's size in layout pixels: what the interface's Size reports. |
+| `func Test(test testing.TB) Option` | Test names the window after a test. |
 | `func Theme(theme ui.Theme) Option` | Theme sets the interface's theme; without it the window uses ui's default. |
+
+### RecordedError
+
+RecordedError is an error a window returned, and the frame it came after.
+
+```go
+type RecordedError struct {
+	Code    Code
+	Message string
+	Frame   int
+}
+```
+
+### RecordedFrame
+
+RecordedFrame is one frame: what was drawn, where the pointer and the fingers were, and the action that ran it with the element it found.
+
+```go
+type RecordedFrame struct {
+	Action    string // `Click "Save"`, empty for a frame run on its own
+	Target    draw2d.Rect
+	HasTarget bool
+	PointerX  float32
+	PointerY  float32
+	Pressed   bool // the main button or the first finger is down
+	Touches   []RecordedTouch
+	Commands  []draw2d.Command // pictures are kept by their area only
+}
+```
+
+### RecordedTouch
+
+RecordedTouch is a finger on the screen.
+
+```go
+type RecordedTouch struct{ X, Y float32 }
+```
+
+### Recording
+
+Recording is what a test's window showed, frame by frame, and the errors it returned.
+
+```go
+type Recording struct {
+	Test          string // the test's name, as go test gives it
+	Failed        bool
+	Width, Height float32 // the window, in layout pixels
+	Errors        []RecordedError
+	Frames        []RecordedFrame
+}
+```
+
+| Function or method | |
+|---|---|
+| `func LoadRecordings(folder string) ([]Recording, error)` | LoadRecordings reads every recording in a folder, sorted by test name. |
 
 ### Window
 

@@ -19,6 +19,8 @@ type Window struct {
 	measurer draw2d.Measurer
 	// pointerFinger is the finger that also moves the pointer (touch.go), or noFinger
 	pointerFinger int64
+	pointerDown   bool      // the main button or the pointer's finger is down
+	recording     *recorder // nil unless recording is on (recording.go)
 }
 
 // New makes a test window for an interface function: 800x600 layout pixels at scale 1, ui's
@@ -40,6 +42,7 @@ func New(build func(context *ui.Context), options ...Option) (*Window, error) {
 	window.clock.now = clockStart
 	window.state.Now = window.clock.read
 	window.resize(chosen.width, chosen.height, chosen.scale)
+	window.startRecording(chosen.test, chosen.width, chosen.height)
 	return window, nil
 }
 
@@ -73,6 +76,7 @@ func (window *Window) Frame() {
 	window.context.Begin(window.state)
 	window.build(window.context)
 	window.context.End()
+	window.recordFrame()
 	window.state.EndFrame()
 }
 

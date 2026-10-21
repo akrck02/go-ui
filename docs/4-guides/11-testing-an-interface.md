@@ -62,6 +62,7 @@ Before the first frame nothing has a place, so nothing can be clicked.
 | `Scale(factor)` | 1 | Framebuffer pixels per layout pixel (2 on most phones) |
 | `Theme(theme)` | `ui.LightTheme()` | The theme |
 | `Measurer(measurer)` | `FixedMeasurer` | How text is measured |
+| `Test(t)` | none | Names the window after its test, so the results viewer can show it (below) |
 
 `FixedMeasurer` makes every character half the text size wide. Real fonts differ from machine to
 machine; fixed widths make a layout the same everywhere, so a test that passes on your laptop
@@ -119,6 +120,7 @@ text:
 | `uitest.element-not-visible` | It is scrolled away or behind a dialog, so it cannot be clicked |
 | `uitest.element-not-pressable` | It is only text: a click would do nothing |
 | `uitest.invalid-size` | A window with no width or no height |
+| `uitest.recording-not-saved`, `uitest.recording-not-read` | A recording for the viewer could not be written or read |
 
 ```go
 err := window.Click("Remove")

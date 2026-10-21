@@ -1,6 +1,11 @@
 package uitest
 
-import "time"
+import (
+	"fmt"
+	"time"
+
+	"github.com/akrck02/go-renderer/draw2d"
+)
 
 // frameDuration is how much time one frame of a Wait takes: sixty frames a second.
 const frameDuration = time.Second / 60
@@ -26,6 +31,7 @@ func (window *Window) Wait(duration time.Duration) {
 	if duration <= 0 {
 		return
 	}
+	defer window.doing(fmt.Sprintf("Wait %v", duration), draw2d.Rect{}, false)()
 	start := window.clock.now
 	frames := max(1, int((duration+frameDuration/2)/frameDuration))
 	for frame := 1; frame <= frames; frame++ {

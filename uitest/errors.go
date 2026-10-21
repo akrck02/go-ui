@@ -12,12 +12,15 @@ const (
 	ElementAmbiguous    Code = "uitest.element-ambiguous"
 	ElementNotVisible   Code = "uitest.element-not-visible"
 	ElementNotPressable Code = "uitest.element-not-pressable"
+	RecordingNotSaved   Code = "uitest.recording-not-saved"
+	RecordingNotRead    Code = "uitest.recording-not-read"
 )
 
 // Error is an error of this package: its code, and a message for people.
 type Error struct {
 	Code    Code
 	Message string
+	Cause   error // what went wrong underneath, when something outside this package failed
 }
 
 // The errors to compare with errors.Is; comparing them allocates nothing.
@@ -27,6 +30,8 @@ var (
 	ErrorElementAmbiguous    = &Error{Code: ElementAmbiguous}
 	ErrorElementNotVisible   = &Error{Code: ElementNotVisible}
 	ErrorElementNotPressable = &Error{Code: ElementNotPressable}
+	ErrorRecordingNotSaved   = &Error{Code: RecordingNotSaved}
+	ErrorRecordingNotRead    = &Error{Code: RecordingNotRead}
 )
 
 // Error gives the code and the message.
@@ -36,6 +41,9 @@ func (err *Error) Error() string {
 	}
 	return string(err.Code) + ": " + err.Message
 }
+
+// Unwrap is the cause underneath, for errors.Is and errors.As.
+func (err *Error) Unwrap() error { return err.Cause }
 
 // Is tells whether target is an error of this package with the same code, so errors.Is compares
 // codes, never messages.
@@ -76,4 +84,14 @@ func elementNotVisible(label string) error {
 // elementNotPressable is the error of a click on something that does nothing when pressed.
 func elementNotPressable(label string) error {
 	return &Error{Code: ElementNotPressable, Message: describe(label) + " is not a control: a click on it does nothing"}
+}
+
+// recordingNotSaved is the error of a recording that could not be written.
+func recordingNotSaved(folder string, cause error) error {
+	return &Error{Code: RecordingNotSaved, Message: "the recording could not be written in " + folder + ": " + cause.Error(), Cause: cause}
+}
+
+// recordingNotRead is the error of a recording that could not be read.
+func recordingNotRead(path string, cause error) error {
+	return &Error{Code: RecordingNotRead, Message: path + " could not be read as a recording: " + cause.Error(), Cause: cause}
 }

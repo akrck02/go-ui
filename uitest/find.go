@@ -24,21 +24,21 @@ type Element struct {
 func (window *Window) Element(label string) (Element, error) {
 	matches := window.nodesLabelled(label)
 	if len(matches) > 1 {
-		return Element{}, elementAmbiguous(label, len(matches))
+		return Element{}, window.noted(elementAmbiguous(label, len(matches)))
 	}
 	if len(matches) == 1 {
 		return window.elementOf(matches[0]), nil
 	}
 	if texts := window.textsDrawn(label); len(texts) > 0 {
 		if len(texts) > 1 {
-			return Element{}, elementAmbiguous(label, len(texts))
+			return Element{}, window.noted(elementAmbiguous(label, len(texts)))
 		}
 		return texts[0], nil
 	}
 	if area, found := window.context.Area(label); found {
 		return Element{Label: label, Rect: area}, nil
 	}
-	return Element{}, elementNotFound(label, window.labels())
+	return Element{}, window.noted(elementNotFound(label, window.labels()))
 }
 
 // textsDrawn is the lines of text the last frame drew that say exactly this: a screen reader reads
@@ -62,11 +62,11 @@ func (window *Window) textsDrawn(text string) []Element {
 func (window *Window) ElementIn(path ...string) (Element, error) {
 	name := strings.Join(path, " / ")
 	if len(path) == 0 {
-		return Element{}, elementNotFound(name, window.labels())
+		return Element{}, window.noted(elementNotFound(name, window.labels()))
 	}
 	area, found := window.context.Area(path...)
 	if !found {
-		return Element{}, elementNotFound(name, window.labels())
+		return Element{}, window.noted(elementNotFound(name, window.labels()))
 	}
 	for _, node := range window.nodesLabelled(path[len(path)-1]) {
 		if contains(area, node.Area) {

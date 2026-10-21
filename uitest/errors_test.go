@@ -12,6 +12,8 @@ func TestEachErrorCarriesItsCode(t *testing.T) {
 		ElementAmbiguous:    func() error { return elementAmbiguous("Save", 2) },
 		ElementNotVisible:   func() error { return elementNotVisible("Save") },
 		ElementNotPressable: func() error { return elementNotPressable("Save") },
+		RecordingNotSaved:   func() error { return recordingNotSaved("folder", errors.New("full")) },
+		RecordingNotRead:    func() error { return recordingNotRead("folder", errors.New("gone")) },
 	}
 	for code, constructor := range constructors {
 		err := constructor()
