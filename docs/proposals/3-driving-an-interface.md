@@ -120,7 +120,7 @@ it would break when the layout moves; names survive a new layout.
 - [x] T2 — `uidrive.Hand` makes the pointer, touch and key input; `uitest` acts through it ·
   `uidrive/hand.go`, `uitest/pointer.go`, `uitest/touch.go`, `uitest/keyboard.go` · serves R3 ·
   test: `TestTheFirstFingerDownAlsoPressesThePointer`
-- [ ] T3 — the script format: `Parse` and `Script.String` · `uidrive/script.go` · serves R2 · test:
+- [x] T3 — the script format: `Parse` and `Script.String` · `uidrive/script.go` · serves R2 · test:
   `TestAScriptWrittenAndReadAgainIsTheSame`, `TestAnUnknownStepIsAnErrorWithItsLine`
 - [ ] T4 — `Player` runs each step frame by frame; `uitest.Driver` and `Window.Play` · `uidrive/
   player.go`, `uitest/window.go`, `uitest/play.go` · serves R2, R3 · test: one per step against a

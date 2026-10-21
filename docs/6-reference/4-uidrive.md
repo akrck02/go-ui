@@ -15,6 +15,7 @@ with no display.
 
 | Function | |
 |---|---|
+| `func KeyName(key input.Key) string` | KeyName is the name a script gives a key ("Enter", "A"), or "" for a key it has no name for. |
 | `func Texts(context *ui.Context) []string` | Texts is every line of text the last frame drew, in drawing order: headings, labels, buttons' texts, a field's text. |
 
 ### Constants and variables
@@ -31,6 +32,33 @@ var (
 ```
 
 The errors to compare with errors.Is; comparing them allocates nothing.
+
+### Action
+
+Action is what a step does, by the word a script writes for it.
+
+```go
+type Action string
+```
+
+```go
+const (
+	MoveTo      Action = "move-to"      // move-to "Help": the pointer goes over an element
+	Click       Action = "click"        // click "Save"
+	DoubleClick Action = "double-click" // double-click "Entry"
+	ClickAt     Action = "click-at"     // click-at 40 300: a place, for what has no name
+	Tap         Action = "tap"          // tap "Light the lamp": a finger, as on a phone
+	Hold        Action = "hold"         // hold "Lens" 1s: a long press, one second when no time is given
+	Drag        Action = "drag"         // drag "Boat" 120 0, or drag "Boat" to "Harbour"
+	Scroll      Action = "scroll"       // scroll "Log" -3: a negative amount goes down the page
+	Type        Action = "type"         // type "Fog at dawn": the focused control takes the text
+	Press       Action = "press"        // press Enter, press Shift+Tab
+	Wait        Action = "wait"         // wait 0.5s
+	Until       Action = "until"        // until "Saved" 10s: wait for an element, five seconds when no time is given
+)
+```
+
+The actions a script knows.
 
 ### Code
 
@@ -135,6 +163,41 @@ type Hand struct {
 | `func (hand *Hand) TouchMove(state *input.State, finger int64, x, y float32)` | TouchMove moves a finger that is down. |
 | `func (hand *Hand) TouchUp(state *input.State, finger int64)` | TouchUp lifts a finger. |
 | `func (hand *Hand) Type(state *input.State, text string)` | Type types a text at once, as a paste or a fast typist does: the control with the focus takes it. |
+
+### Script
+
+Script is a list of steps, played one after another.
+
+```go
+type Script []Step
+```
+
+| Function or method | |
+|---|---|
+| `func Parse(text string) (Script, error)` | Parse reads a script: one step a line, blank lines and what follows a # left out. |
+| `func (script Script) String() string` | String writes the script in the form Parse reads, one step a line. |
+
+### Step
+
+Step is one line of a script.
+
+```go
+type Step struct {
+	Action   Action
+	Label    string        // the element the step acts on, by the name people see
+	Target   string        // where a drag ends, when it ends on another element
+	X, Y     float32       // a click-at's place, or a drag's distance, in layout pixels
+	Amount   float32       // a scroll's turn of the wheel
+	Text     string        // what a type step types
+	Keys     []input.Key   // what a press step presses: the modifiers held, then the key
+	Duration time.Duration // a wait's time, a hold's, or how long until waits at most
+	Line     int           // the line it was read from, for errors; 0 when made in Go
+}
+```
+
+| Function or method | |
+|---|---|
+| `func (step Step) String() string` | String writes a step as a script's line. |
 
 ---
 
