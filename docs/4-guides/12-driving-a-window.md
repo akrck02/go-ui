@@ -3,7 +3,7 @@
 This page is for someone whose program should sometimes use itself: play a demo when nobody
 touches it, show a newcomer *press here* on the real button, replay what a person did to see the
 bug they reported, or check on a phone or a console what only the device does. At the end you will
-know how to write a script, give it to a window and read its report.
+know how to write a script, give it to a window, record one, and read its report.
 
 ## The idea
 
@@ -76,10 +76,29 @@ ends with `uidrive.script-stopped`. An attract mode stops the moment someone pic
 
 - **A demo** (attract mode): a script that shows the program's best parts.
   Start it after a while without input; a touch gives the program back.
+- **A replay**: record what a person did (below), and play it back to see what they saw.
 - **A tutorial**: the same, a step at a time. A program can play a script of one `move-to` to
   point at the control to press, and let the person press it.
 - **A test on the device**: play a script with a `Report`, and read the report from the device's
   log (below).
+
+## Recording a session
+
+`uidrive.Recorder` is a driver that adds nothing: it watches what a person does and writes it down
+as steps, by the names of what they pressed. Give it to the window, and save `recorder.Script()`
+when the window closes (`Options.Hidden`):
+
+```go
+recorder := uidrive.Record()
+options := window.Options{Driver: recorder, Hidden: func() {
+	_ = os.WriteFile("session.txt", []byte(recorder.Script().String()), 0o644) // a lost recording is not worth stopping for
+}}
+```
+
+Played back, the script does the same. Because it names elements rather than places, it still
+works when the layout moves. A press on something with no name is written as a `click-at` its
+place; a drag that starts on something with no name is left out, since a script could not find
+where to start it again.
 
 ## The report
 

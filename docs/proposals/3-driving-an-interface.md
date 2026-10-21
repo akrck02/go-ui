@@ -133,7 +133,7 @@ it would break when the layout moves; names survive a new layout.
   `window/nintendo3ds.go`, `window/android.go`, `window/drive.go` · serves R1, R8 · test:
   `TestADriverAddsInputBeforeTheInterfaceRuns`, `TestAWindowWithoutADriverAllocatesNothingForIt`,
   `BenchmarkAWindowStep…`; guide page `docs/4-guides/12-driving-a-window.md`
-- [ ] T8 — `Recorder` writes down a person's session as a script · `uidrive/recorder.go` · serves R4
+- [x] T8 — `Recorder` writes down a person's session as a script · `uidrive/recorder.go` · serves R4
   · test: `TestARecordedSessionPlayedBackEndsInTheSameState`
 - [ ] T9 — the overlay: pointer, fingers and the element found · `uidrive/show.go`, `cmd/example` ·
   serves R5 · test: `TestAShownPlayerDrawsThePointerAndTheElementItFound`; a capture

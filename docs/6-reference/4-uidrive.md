@@ -197,6 +197,23 @@ type Player struct {
 | `func (player *Player) Err() error` | Err is why the script ended early: the failed step's error, with its code. |
 | `func (player *Player) Show(drawing *draw2d.List)` | Show draws what the player does over the interface, when its options ask for it. |
 
+### Recorder
+
+Recorder writes down what a person does in a window, as a script that plays it back: give it to window.Options.Driver, and take Script when the session ends. It adds no input. Steps name the elements pressed, so a replay works when the layout has moved; a press on nothing named is written as a click-at its place, and a drag that starts on nothing named is left out.
+
+```go
+type Recorder struct {
+	// Has unexported fields.
+}
+```
+
+| Function or method | |
+|---|---|
+| `func Record() *Recorder` | Record makes a recorder. |
+| `func (recorder *Recorder) Drive(state *input.State, context *ui.Context)` | Drive watches the input the person gave this frame, against what the last frame showed. |
+| `func (recorder *Recorder) Script() Script` | Script is what the person has done so far, with the text they were typing. |
+| `func (recorder *Recorder) Show(*draw2d.List)` | Show draws nothing: a recording is not seen. |
+
 ### Script
 
 Script is a list of steps, played one after another.

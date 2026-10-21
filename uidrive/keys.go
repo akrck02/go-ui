@@ -31,5 +31,11 @@ func KeyName(key input.Key) string {
 	return ""
 }
 
+// The first and the last key a keyboard has, to go through all of them in order.
+const (
+	firstKey = input.KeyA
+	lastKey  = input.KeySuper
+)
+
 // modifierKeys are the keys a person holds while pressing another: Shift+Tab, Control+S.
 var modifierKeys = []input.Key{input.KeyShift, input.KeyControl, input.KeyAlt, input.KeySuper}
