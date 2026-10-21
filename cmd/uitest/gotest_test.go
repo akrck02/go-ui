@@ -50,15 +50,19 @@ func TestATestWithAWindowGetsItsRecording(t *testing.T) {
 	if recording, found := results.current(); !found || recording.Test != "TestTheBellRings" {
 		t.Fatal("the failed test, shown first, does not show its window")
 	}
-	results.shown = windowTests
-	shown := 0
-	for _, test := range results.tests {
-		if results.isShown(test) {
-			shown++
-		}
+	window, err := uitest.New(results.draw, uitest.Size(1200, 800))
+	if err != nil {
+		t.Fatal(err)
 	}
-	if shown != 1 {
-		t.Fatalf("the filter for window tests shows %d tests, want 1", shown)
+	window.Frames(2)
+	if err := window.Click("With a window 1"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := window.Element("TestTheLampLights"); err == nil {
+		t.Fatal("the window tests' chip still lists a test with no window")
+	}
+	if _, err := window.ElementWithin("Tests", "TestTheBellRings"); err != nil {
+		t.Fatalf("the window tests' chip does not list the test with a window: %v", err)
 	}
 }
 

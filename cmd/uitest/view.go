@@ -31,15 +31,7 @@ func (results *results) sidebar(context *ui.Context) {
 	layout := ui.Layout{Direction: ui.Vertical, Width: ui.Fixed(sidebarWidth), Height: ui.Grow(), Padding: ui.Pad(12), Gap: 8}
 	context.Frame(layout, ui.Look{Fill: theme.Surface, Border: theme.Line, BorderWidth: 1}, func() {
 		context.Heading("Tests")
-		passed, failed, skipped := results.counts()
-		context.Box(ui.Layout{Width: ui.Grow(), Wrap: true, Gap: 6}, func() {
-			context.Chip("circle-check", fmt.Sprintf("%d passed", passed), ui.ChipLook{Fill: theme.PrimaryTint, Ink: theme.Positive})
-			context.Chip("circle-x", fmt.Sprintf("%d failed", failed), ui.ChipLook{Fill: theme.Sunken, Ink: theme.Danger})
-			if skipped > 0 {
-				context.Chip("circle-minus", fmt.Sprintf("%d skipped", skipped), ui.ChipLook{Fill: theme.Sunken, Ink: theme.InkSoft})
-			}
-		})
-		results.filterTabs(context)
+		results.filterChips(context)
 		context.Separator()
 		context.ScrollArea("tests", ui.Layout{Direction: ui.Vertical, Width: ui.Grow(), Height: ui.Grow(), Gap: 2}, func() {
 			results.testList(context)
@@ -47,11 +39,30 @@ func (results *results) sidebar(context *ui.Context) {
 	})
 }
 
-// filterTabs choose which tests the list shows.
-func (results *results) filterTabs(context *ui.Context) {
-	shown := int(results.shown)
-	if context.Tabs("Show", &shown, "All", "Failed", "With a window") {
-		results.shown = testFilter(shown)
+// filterChips choose which tests the list shows, each saying how many it shows: all of them,
+// the failed ones (and the skipped, when there are any), and those with a window. The chosen one
+// stands out in the theme's main colour.
+func (results *results) filterChips(context *ui.Context) {
+	passed, failed, skipped := results.counts()
+	context.Box(ui.Layout{Width: ui.Grow(), Wrap: true, Gap: 6}, func() {
+		results.filterChip(context, allTests, "list", fmt.Sprintf("All %d", passed+failed+skipped))
+		results.filterChip(context, failedTests, "circle-x", fmt.Sprintf("Failed %d", failed))
+		if skipped > 0 {
+			results.filterChip(context, skippedTests, "circle-minus", fmt.Sprintf("Skipped %d", skipped))
+		}
+		results.filterChip(context, windowTests, "app-window", fmt.Sprintf("With a window %d", results.windowCount()))
+	})
+}
+
+// filterChip is one filter: a chip that shows its tests when clicked.
+func (results *results) filterChip(context *ui.Context, filter testFilter, icon, label string) {
+	theme := context.Theme
+	look := ui.ChipLook{Fill: theme.Sunken, Ink: theme.InkSoft}
+	if results.shown == filter {
+		look = ui.ChipLook{Fill: theme.PrimaryTint, Ink: theme.Primary}
+	}
+	if context.Chip(icon, label, look) {
+		results.shown = filter
 	}
 }
 

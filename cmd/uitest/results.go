@@ -29,6 +29,7 @@ type testFilter int
 const (
 	allTests testFilter = iota
 	failedTests
+	skippedTests
 	windowTests
 )
 
@@ -123,6 +124,8 @@ func (results *results) isShown(test testResult) bool {
 	switch results.shown {
 	case failedTests:
 		return test.State == failedTest
+	case skippedTests:
+		return test.State == skippedTest
 	case windowTests:
 		return test.recording >= 0
 	}
@@ -153,6 +156,17 @@ func (results *results) goTo(frame int) {
 	recording, _ := results.current() // no test: no frames, and the frame stays 0
 	results.frame = max(0, min(frame, len(recording.Frames)-1))
 	results.frameValue = float32(results.frame)
+}
+
+// windowCount is how many tests made a window.
+func (results *results) windowCount() int {
+	count := 0
+	for _, test := range results.tests {
+		if test.recording >= 0 {
+			count++
+		}
+	}
+	return count
 }
 
 // counts is how many tests passed, failed and were skipped.
