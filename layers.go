@@ -1,6 +1,9 @@
 package ui
 
-import "github.com/akrck02/go-renderer/input"
+import (
+	"github.com/akrck02/go-renderer/draw2d"
+	"github.com/akrck02/go-renderer/input"
+)
 
 // Layers for controls of a program's own look over everything: Sheet and Toast draw their own card,
 // these draw what the program gives them, where it says.
@@ -35,7 +38,7 @@ func (ui *Context) Modal(name string, options LayerOptions, content func()) (dis
 	scrim := ui.Theme.Scrim
 	scrim[3] *= 1 - clamp(options.Hidden, 0, 1)
 	index := ui.openElement(element{id: id, kind: boxElement, layout: backdrop, look: Look{Fill: scrim}})
-	ui.roots = append(ui.roots, root{id: id, element: index, sheet: true, options: options})
+	ui.roots = append(ui.roots, root{id: id, element: index, sheet: true, options: options, bounds: ui.within, bounded: ui.isWithin})
 	ui.nextSheets = append(ui.nextSheets, id)
 	ui.Push(name)
 	contentID := childID(id, "##content")
@@ -60,7 +63,7 @@ func (ui *Context) Overlay(name string, options LayerOptions, content func()) {
 	ui.open = nil
 	layout := Layout{Direction: Vertical, Width: options.Width, Height: options.Height}
 	index := ui.openElement(element{id: id, kind: boxElement, layout: layout})
-	ui.roots = append(ui.roots, root{id: id, element: index, placed: true, options: options})
+	ui.roots = append(ui.roots, root{id: id, element: index, placed: true, options: options, bounds: ui.within, bounded: ui.isWithin})
 	ui.nextOverlays = append(ui.nextOverlays, id)
 	ui.Push(name)
 	if content != nil {
@@ -71,15 +74,27 @@ func (ui *Context) Overlay(name string, options LayerOptions, content func()) {
 	ui.open = outside
 }
 
+// Within lays out the overlays and modals content opens in an area of the window instead of the
+// whole window: an interface that a program shows inside a view of its own (a game played inside
+// an editor). Popups and tooltips still go anywhere in the window.
+func (ui *Context) Within(area draw2d.Rect, content func()) {
+	outside, wasWithin := ui.within, ui.isWithin
+	ui.within, ui.isWithin = area, true
+	content()
+	ui.within, ui.isWithin = outside, wasWithin
+}
+
 // overlayLayer is above the panels and under the sheets and the popups.
 const overlayLayer = 40000
 
-// placeInWindow puts an overlay where its options say, inside the window's padding.
+// placeInWindow puts an overlay where its options say, inside the padding of the window, or of the
+// area it was opened Within.
 func (ui *Context) placeInWindow(placed *root) {
 	element := &ui.elements[placed.element]
-	padding := placed.options.Padding
-	left, top := padding.Left, padding.Top
-	right, bottom := ui.width-padding.Right-element.rect.Width, ui.height-padding.Bottom-element.rect.Height
+	padding, bounds := placed.options.Padding, ui.boundsOf(placed)
+	left, top := bounds.X+padding.Left, bounds.Y+padding.Top
+	right := bounds.X + bounds.Width - padding.Right - element.rect.Width
+	bottom := bounds.Y + bounds.Height - padding.Bottom - element.rect.Height
 	element.rect.X = alignedBetween(placed.options.AlignX, left, right)
 	element.rect.Y = alignedBetween(placed.options.AlignY, top, bottom)
 }

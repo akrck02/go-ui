@@ -32,6 +32,10 @@ import (
 // in front, and the small state controls keep (a panel's position). Use one per window, from the
 // goroutine that runs the update steps.
 type Context struct {
+	// within is the area overlays and modals are laid out in while isWithin (Within)
+	within   draw2d.Rect
+	isWithin bool
+
 	Theme Theme
 
 	measurer draw2d.Measurer

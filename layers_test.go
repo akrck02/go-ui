@@ -177,3 +177,26 @@ func TestAModalCoversAnOverlay(t *testing.T) {
 		t.Fatalf("a touch over the overlay is the modal's backdrop's: %d presses, %d closes", tool, closed)
 	}
 }
+
+func TestLayersOpenedWithinAnAreaAreLaidOutInIt(t *testing.T) {
+	h := newHarness(t)
+	area := draw2d.Rect{X: 200, Y: 100, Width: 400, Height: 240}
+	build := func(ui *Context) {
+		ui.Within(area, func() {
+			ui.Overlay("corner", LayerOptions{AlignX: End, AlignY: End, Padding: Pad(10)}, func() { ui.Label("account") })
+			ui.Modal("dialog", LayerOptions{AlignX: Center, AlignY: Center}, func() { ui.Label("sure?") })
+		})
+		ui.Overlay("outside", LayerOptions{Padding: Pad(10)}, func() { ui.Label("window") })
+	}
+	h.frame(build)
+	corner := h.rect(idOf("corner"))
+	if corner.X+corner.Width != 590 || corner.Y+corner.Height != 330 {
+		t.Fatalf("an overlay in the area's corner is at %+v", corner)
+	}
+	if dialog := h.rect(idOf("dialog")); dialog != area {
+		t.Fatalf("a modal within the area covers %+v, not the area", dialog)
+	}
+	if outside := h.rect(idOf("outside")); outside.X != 10 || outside.Y != 10 {
+		t.Fatalf("an overlay after the area is at %+v, not the window's corner", outside)
+	}
+}

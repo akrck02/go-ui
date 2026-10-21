@@ -21,6 +21,26 @@ type root struct {
 	anchor  draw2d.Rect  // what a popup opens next to
 	placed  bool         // an overlay, placed in the window by options (see Overlay)
 	options LayerOptions // where an overlay goes, and how a modal or an overlay leaves
+	// bounds is where an overlay or a modal is laid out, when it was opened Within an area
+	// (bounded); otherwise the window
+	bounds  draw2d.Rect
+	bounded bool
+}
+
+// boundsOf is the area a root is laid out in: its bounds, or the whole window.
+func (ui *Context) boundsOf(placed *root) draw2d.Rect {
+	if placed.bounded {
+		return placed.bounds
+	}
+	return draw2d.Rect{Width: ui.width, Height: ui.height}
+}
+
+// sizeAlong is a rectangle's width or height.
+func sizeAlong(area draw2d.Rect, axis Direction) float32 {
+	if axis == Horizontal {
+		return area.Width
+	}
+	return area.Height
 }
 
 // Edge is a side of the window a panel can be docked to.
@@ -160,6 +180,9 @@ func (ui *Context) titleBar(title string, memory *panelMemory, options PanelOpti
 // rootSize is a root's size along an axis once its content is measured.
 func (ui *Context) rootSize(placed *root, axis Direction) float32 {
 	window := ui.windowAlong(axis)
+	if placed.bounded {
+		window = sizeAlong(placed.bounds, axis)
+	}
 	if placed.popup || placed.placed {
 		return min(ui.elements[placed.element].sizeAlong(axis), window)
 	}
@@ -213,7 +236,8 @@ func (ui *Context) positionRoot(placed *root) {
 		return
 	}
 	if placed.panel == nil {
-		element.rect.X, element.rect.Y = 0, 0
+		bounds := ui.boundsOf(placed)
+		element.rect.X, element.rect.Y = bounds.X, bounds.Y
 		return
 	}
 	switch placed.dock {
