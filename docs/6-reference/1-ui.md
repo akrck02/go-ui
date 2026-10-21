@@ -69,6 +69,16 @@ const (
 )
 ```
 
+### Backdrop
+
+Backdrop draws a box's background in its area.
+
+```go
+type Backdrop interface {
+	Paint(area draw2d.Rect, drawing *draw2d.List)
+}
+```
+
 ### ChipLook
 
 ChipLook is a chip's own colours: its fill and the ink of its text and icon. The zero value uses the theme's quiet colours (Sunken and InkSoft).
@@ -142,10 +152,12 @@ type Context struct {
 | `func (ui *Context) EditingWords() EditingWords` | EditingWords are the labels the bar over a selection shows: the ones set, or English. |
 | `func (ui *Context) End()` | End lays the interface out, paints it into the draw list and tells the input state whether the interface has the mouse or the keyboard. |
 | `func (ui *Context) FieldFocused(name string) bool` | FieldFocused tells whether the text field of a name, in the same scope, has the keyboard: a program that draws the field's box itself (a Material field, with its text before and after) colours it by that. |
+| `func (ui *Context) FilePicker(options FilePickerOptions) (path string, closed bool)` | FilePicker shows a sheet to choose a file or a folder. |
 | `func (ui *Context) FlatButton(label string) bool` | FlatButton adds a button with no fill or border until hovered: menu bars and toolbars. |
 | `func (ui *Context) FlatIconButton(icon, label string) bool` | FlatIconButton is FlatButton with an icon; with an empty label it is a square icon button. |
 | `func (ui *Context) Focus(path ...string)` | Focus gives the keyboard to a text field or a number field, found by its scopes and label as Area finds it, with its whole text selected: to start typing in a search box on a shortcut, or in the first field of a form that just opened. |
 | `func (ui *Context) FocusField(name string)` | FocusField gives the keyboard to the text field of a name, in the same scope, from the next time it is built: a search that opens ready to type in. |
+| `func (ui *Context) FocusedID() ID` | FocusedID is the control that has the focus after the last frame: the field being typed in, or the control Tab reached; 0 when none has it. |
 | `func (ui *Context) Fold(name string, open bool, duration time.Duration, layout Layout, content func())` | Fold lays content out in a box that opens to the content's height and closes to nothing with motion, clipping what does not show yet: the answer under a question, more under a list row. |
 | `func (ui *Context) Frame(layout Layout, look Look, content func())` | Frame adds a box with a layout and a look (fill, border, corners, shadow). |
 | `func (ui *Context) Grid(columns int, content func())` | Grid lays out what content adds in rows of a number of equal columns, across the whole width. |
@@ -216,6 +228,7 @@ type Context struct {
 | `func (ui *Context) Typing() bool` | Typing tells whether a text field had the focus in the last frame: a phone shows its on-screen keyboard while it does. |
 | `func (ui *Context) WantsKeyboard() bool` | WantsKeyboard tells whether a control had the keyboard in the last frame (a text field being typed in). |
 | `func (ui *Context) WantsMouse() bool` | WantsMouse tells whether the interface used the mouse in the last frame: the pointer was over a panel or a control, or dragging one. |
+| `func (ui *Context) Within(area draw2d.Rect, content func())` | Within lays out the panels, overlays and modals content opens in an area of the window instead of the whole window (a panel's X and Y count from the area's corner): an interface that a program shows inside a view of its own (a game played inside an editor). |
 
 ### Description
 
@@ -291,6 +304,42 @@ EditingWords are the labels of the bar over a selection on a touch screen.
 ```go
 type EditingWords struct {
 	Cut, Copy, Paste, SelectAll string
+}
+```
+
+### FileEntry
+
+FileEntry is a file or a folder in a folder.
+
+```go
+type FileEntry struct {
+	Name   string
+	Folder bool
+}
+```
+
+### FilePickerOptions
+
+FilePickerOptions say what a file picker chooses and where it starts.
+
+```go
+type FilePickerOptions struct {
+	// Title is the sheet's title, which also tells pickers apart; empty is "Choose a file" or
+	// "Choose a folder".
+	Title string
+	// Folder makes it choose a folder (the one open, or the one clicked) instead of a file.
+	Folder bool
+	// Start is the file or folder chosen before: the picker opens in it, or in the folder it is in.
+	// Empty, or nowhere, opens the home folder.
+	Start string
+	// Suffixes, when there are any, are the endings of the files shown (".glb", ".png"); the
+	// folders are always shown, to go through them.
+	Suffixes []string
+	// Places are folders offered on the left besides the home folder and the root: where the
+	// programs the person looks for are usually installed.
+	Places []string
+	// ReadFolder reads what a folder holds; empty reads the disk. Tests give a folder of their own.
+	ReadFolder func(folder string) ([]FileEntry, error)
 }
 ```
 
@@ -412,6 +461,10 @@ type Look struct {
 	Radius      float32
 	Shadow      bool // a soft shadow under it, for things that float over others
 	Clip        bool // children are cut to the box's area
+	// Backdrop, when set, draws more of the box's background, over Fill and Border and under its
+	// children: a frame of several colours, a pattern. A pointer to a style kept from frame to
+	// frame allocates nothing.
+	Backdrop Backdrop
 	// Edge is a solid band of this colour, EdgeWidth tall, just under the box, as if it stood on a
 	// block: a design system's main button. It takes no room in the layout, like a shadow.
 	Edge      draw2d.Color
@@ -634,6 +687,9 @@ type TextStyle struct {
 	Size   float32 // in pixels; 0 = the theme's text size
 	Weight draw2d.Weight
 	Color  draw2d.Color // the zero colour = the theme's ink
+	// Shadow, when visible, draws the text a second time a pixel right and down, in this colour,
+	// under it: the hard shadow pixel-art games give their text.
+	Shadow draw2d.Color
 }
 ```
 
@@ -714,7 +770,7 @@ type Theme struct {
 	// FieldFocusEdge lights a field's own edge in FocusRing while it is typed in, instead of a
 	// ring around it.
 	FieldFocusEdge bool
-	// PressScale is how big a control is drawn while it is held, around its centre (0.97 gives a
+	// PressScale is how big a button is drawn while it is held, around its centre (0.97 gives a
 	// little); its content shrinks with it and the layout does not move. 0 keeps it still.
 	PressScale float32
 }

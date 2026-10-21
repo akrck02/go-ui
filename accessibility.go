@@ -110,6 +110,7 @@ type readerState struct {
 	acting        map[ID]ReaderAction // the actions of this frame
 	textAsked     map[ID]string       // fields' new texts, by ScreenReaderSetText
 	texts         map[ID]string       // the new texts of this frame
+	tooltips      map[ID]string       // the tooltips of this frame, by control: an icon button's name
 }
 
 // SetScreenReader tells the interface whether a screen reader is on; the window does, on a phone.
@@ -186,6 +187,7 @@ func (ui *Context) beginReading() {
 	reader.descriptions = reader.descriptions[:0]
 	clear(reader.controls)
 	clear(reader.longPressable)
+	clear(reader.tooltips)
 	reader.acting, reader.asked = reader.asked, reader.acting
 	clear(reader.asked)
 	reader.texts, reader.textAsked = reader.textAsked, reader.texts
@@ -223,6 +225,18 @@ func (ui *Context) noteControl(id ID) {
 		ui.reader.controls = map[ID]bool{}
 	}
 	ui.reader.controls[id] = true
+}
+
+// noteTooltip remembers the tooltip of the control that looked at the mouse last, which names it
+// when it has no words of its own.
+func (ui *Context) noteTooltip(text string) {
+	if !ui.reader.on || ui.interacted == 0 {
+		return
+	}
+	if ui.reader.tooltips == nil {
+		ui.reader.tooltips = map[ID]string{}
+	}
+	ui.reader.tooltips[ui.interacted] = text
 }
 
 // noteLongPressable remembers that the program reads a control's long press.
@@ -402,6 +416,9 @@ func (walk readerWalk) control(index int, parent ID, clip draw2d.Rect, clipped b
 	named := &reader.nodes[position]
 	if named.Label == "" {
 		named.Label = strings.Join(words, " ")
+	}
+	if named.Label == "" {
+		named.Label = reader.tooltips[element.id] // a button with only an icon is called what its tooltip says
 	}
 	if named.Label == "" {
 		named.Label = strings.Join(icons, " ")

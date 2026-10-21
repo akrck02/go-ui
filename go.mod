@@ -2,7 +2,7 @@ module github.com/akrck02/go-ui
 
 go 1.25.6
 
-require github.com/akrck02/go-renderer v0.1.0
+require github.com/akrck02/go-renderer v0.2.1-0.20261021074501-5e59000911cc
 
 require (
 	github.com/go-gl/gl v0.0.0-20260331235117-4566fea9a276 // indirect

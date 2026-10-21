@@ -26,6 +26,7 @@ all the time.
 | Function | |
 |---|---|
 | `func AskForNotifications()` | AskForNotifications asks the person to allow notifications; on the desktop there is nothing to ask. |
+| `func Feel(Feeling)` | Feel gives a buzz on a phone; a desktop has nothing to buzz. |
 | `func FeelLongPress()` | FeelLongPress gives the buzz of a long press on a phone; a desktop has nothing to buzz. |
 | `func ForgetPreference(name string) error` | ForgetPreference lets go of the value kept under a name. |
 | `func Graphics() string` | Graphics describes a phone's OpenGL ES and GPU; on the desktop it is "". |
@@ -35,6 +36,7 @@ all the time.
 | `func Notify(id int, title, text string) bool` | Notify shows a notification; on the desktop it does not yet, and returns false. |
 | `func OpenLink(link string) bool` | OpenLink opens a link in the application that shows it (the browser for a web page), through the computer's own command for that. |
 | `func Preference(name string) (string, bool)` | Preference is the value kept under a name, and whether there is one. |
+| `func Quit()` | Quit ends the program's window once the frame being made ends, as closing it would: Run returns. |
 | `func Run(options Options, build func(context *ui.Context)) error` | Run opens the window and calls build in every update step, between the interface's Begin and End, until the window is closed. |
 | `func RunWith(context *ui.Context, options Options, build func(context *ui.Context)) error` | RunWith is Run with an interface context of your own (a custom theme or measurer). |
 | `func Share(title, text string) bool` | Share offers a text to other applications; a desktop has no sheet for that, so it returns false (put the text on the clipboard instead). |
@@ -76,12 +78,48 @@ const (
 | `func (backend *Backend) Set(text string) error` | Set reads a backend from a flag: automatic, metal or opengl. |
 | `func (backend *Backend) String() string` |  |
 
+### BelowView
+
+BelowView is a scene seen from a camera on the 3DS's bottom screen.
+
+```go
+type BelowView struct {
+	World  *scene.Scene
+	Camera models.Camera
+	Area   *draw2d.Rect // where a computer shows it, in window pixels; nil is nowhere
+}
+```
+
+### Feeling
+
+Feeling is a kind of buzz a touch gives, as a phone's own applications give them (Feel).
+
+```go
+type Feeling int
+```
+
+```go
+const (
+	// FeelingLongPress is the buzz of a touch that became a long press.
+	FeelingLongPress Feeling = iota
+	// FeelingTick is a light tick: something chosen, a switch flipped, a step on a dial.
+	FeelingTick
+	// FeelingConfirm says something went through.
+	FeelingConfirm
+	// FeelingReject says something went wrong or needs a look.
+	FeelingReject
+)
+```
+
 ### Options
 
 Options configure the window.
 
 ```go
 type Options struct {
+	// KeepStart gives the 3DS's START button to the program (a pause) instead of ending it; the
+	// HOME menu still ends it. Elsewhere it does nothing.
+	KeepStart     bool
 	Title         string
 	Width, Height int // window size in window pixels; 0 = 1280 × 800
 	// MinWidth and MinHeight stop the window from being made smaller than the layout needs; 0 = no
@@ -146,6 +184,18 @@ SceneView is a 3D scene seen from a camera, drawn behind the interface.
 type SceneView struct {
 	World  *scene.Scene
 	Camera models.Camera
+	// Drawing is the program's own drawing over the scene and under the interface: a game's life
+	// bar, a sight. On the 3DS it is painted on the top screen, in each eye when in 3D. Keep the
+	// list between frames (Reset it), so drawing it allocates nothing. Draw it on layer 0: a higher
+	// layer (SetLayer) covers the interface's menus and tooltips as well.
+	Drawing *draw2d.List
+	// Below is a second scene for the 3DS's bottom screen, with the interface painted over it (a
+	// map, a turning model); nil leaves the bottom screen to the interface alone. On a computer it
+	// is drawn only where its Area says (a preview of the console).
+	Below *BelowView
+	// Area is where the scene is drawn on a computer, in window pixels; nil is the whole window.
+	// Around it the window shows the theme's background (a preview of a console's screen).
+	Area *draw2d.Rect
 }
 ```
 

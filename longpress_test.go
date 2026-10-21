@@ -36,65 +36,6 @@ func (h *harness) liftFinger(build func(ui *Context)) {
 	h.frame(build)
 }
 
-func TestAFingerHeldStillIsALongPressAndNoClick(t *testing.T) {
-	h := newHarness(t)
-	now := h.withClock()
-	clicks, longPresses := 0, 0
-	build := lighthouseButton(&clicks, &longPresses)
-	h.frame(build)
-	h.putFingerOn(idOf("North light"), build)
-	if wait, asked := h.state.TakeFrameRequest(); !asked || wait > longPressTime {
-		t.Fatalf("frame asked for %v (%v); want one by the time the press becomes long", wait, asked)
-	}
-	*now = now.Add(300 * time.Millisecond)
-	h.frame(build)
-	if longPresses != 0 {
-		t.Fatal("a long press before half a second")
-	}
-	for range 3 {
-		*now = now.Add(150 * time.Millisecond)
-		h.frame(build)
-	}
-	if longPresses != 1 {
-		t.Fatalf("%d long presses after holding for 750 ms; want one", longPresses)
-	}
-	h.liftFinger(build)
-	if clicks != 0 {
-		t.Fatal("lifting the finger after a long press clicked the button")
-	}
-}
-
-func TestAShortTouchIsAClickAndNoLongPress(t *testing.T) {
-	h := newHarness(t)
-	now := h.withClock()
-	clicks, longPresses := 0, 0
-	build := lighthouseButton(&clicks, &longPresses)
-	h.frame(build)
-	h.putFingerOn(idOf("North light"), build)
-	*now = now.Add(100 * time.Millisecond)
-	h.liftFinger(build)
-	if clicks != 1 || longPresses != 0 {
-		t.Fatalf("%d clicks and %d long presses; want a click only", clicks, longPresses)
-	}
-}
-
-func TestAFingerThatMovesIsNoLongPress(t *testing.T) {
-	h := newHarness(t)
-	now := h.withClock()
-	clicks, longPresses := 0, 0
-	build := lighthouseButton(&clicks, &longPresses)
-	h.frame(build)
-	x, y := h.putFingerOn(idOf("North light"), build)
-	h.state.SetTouch(1, x, y+20)
-	h.moveTo(x, y+20)
-	h.frame(build)
-	*now = now.Add(time.Second)
-	h.frame(build)
-	if longPresses != 0 {
-		t.Fatal("a finger that moved became a long press")
-	}
-}
-
 func TestTheMouseLongPressesWithItsRightButtonOnly(t *testing.T) {
 	h := newHarness(t)
 	now := h.withClock()

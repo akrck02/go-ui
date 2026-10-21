@@ -65,6 +65,7 @@ The guides, one subject each:
 - [Themes](4-guides/8-themes.md): the tokens, light and dark
 - [Screen readers](4-guides/9-screen-readers.md)
 - [A window of its own](4-guides/10-desktop.md): interfaces without a scene
+- [Testing an interface](4-guides/11-testing-an-interface.md): `go test` presses, types and looks, with no display
 
 **Use**
 

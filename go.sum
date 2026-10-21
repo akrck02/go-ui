@@ -1,5 +1,7 @@
 github.com/akrck02/go-renderer v0.1.0 h1:XcuTMfi8P0+69nnNxjZZ+ytQ4DL1ulMiLZU3oHluXxw=
 github.com/akrck02/go-renderer v0.1.0/go.mod h1:Z835tJYTrI/B+rxk5BbIMsDFokk+P36R8kZ0CVbEZzA=
+github.com/akrck02/go-renderer v0.2.1-0.20261021074501-5e59000911cc h1:tMLArpsIlePTK/R323NJK/+8hNatc+PIBw0oTT1LfP4=
+github.com/akrck02/go-renderer v0.2.1-0.20261021074501-5e59000911cc/go.mod h1:Z835tJYTrI/B+rxk5BbIMsDFokk+P36R8kZ0CVbEZzA=
 github.com/go-gl/gl v0.0.0-20260331235117-4566fea9a276 h1:IO5P06Pcj9K04d+l4nrf3c2U56+dAotIFG6u4P1wAHI=
 github.com/go-gl/gl v0.0.0-20260331235117-4566fea9a276/go.mod h1:9YTyiznxEY1fVinfM7RvRcjRHbw2xLBJ3AAGIT0I4Nw=
 github.com/go-gl/glfw/v3.4/glfw v0.1.0-pre.1 h1:nIVzcwqIaO1mK8LFr0fGkKpgQD4wJDDHRyv4t5k40Ps=

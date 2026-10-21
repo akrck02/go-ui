@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"hash/maphash"
 	"runtime"
+	"sync/atomic"
 
 	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
@@ -29,6 +30,9 @@ import (
 
 // Options configure the window.
 type Options struct {
+	// KeepStart gives the 3DS's START button to the program (a pause) instead of ending it; the
+	// HOME menu still ends it. Elsewhere it does nothing.
+	KeepStart     bool
 	Title         string
 	Width, Height int // window size in window pixels; 0 = 1280 × 800
 	// MinWidth and MinHeight stop the window from being made smaller than the layout needs; 0 = no
@@ -70,10 +74,44 @@ type Options struct {
 type SceneView struct {
 	World  *scene.Scene
 	Camera models.Camera
+	// Drawing is the program's own drawing over the scene and under the interface: a game's life
+	// bar, a sight. On the 3DS it is painted on the top screen, in each eye when in 3D. Keep the
+	// list between frames (Reset it), so drawing it allocates nothing. Draw it on layer 0: a higher
+	// layer (SetLayer) covers the interface's menus and tooltips as well.
+	Drawing *draw2d.List
+	// Below is a second scene for the 3DS's bottom screen, with the interface painted over it (a
+	// map, a turning model); nil leaves the bottom screen to the interface alone. On a computer it
+	// is drawn only where its Area says (a preview of the console).
+	Below *BelowView
+	// Area is where the scene is drawn on a computer, in window pixels; nil is the whole window.
+	// Around it the window shows the theme's background (a preview of a console's screen).
+	Area *draw2d.Rect
 }
 
-// shownScene is the scene the last step asked for, shared by the step and the drawing.
-type shownScene struct{ view *SceneView }
+// BelowView is a scene seen from a camera on the 3DS's bottom screen.
+type BelowView struct {
+	World  *scene.Scene
+	Camera models.Camera
+	Area   *draw2d.Rect // where a computer shows it, in window pixels; nil is nowhere
+}
+
+// shownScene is the scene the last step asked for, shared by the step and the drawing, and the
+// list that holds the program's drawing and the interface together, kept between frames.
+type shownScene struct {
+	view     *SceneView
+	combined draw2d.List
+}
+
+// overScene is what is painted over the scene: the program's drawing, if any, then the interface.
+func (shown *shownScene) overScene(own, interfaceDrawing *draw2d.List) *draw2d.List {
+	if own.IsEmpty() {
+		return interfaceDrawing
+	}
+	shown.combined.Reset()
+	shown.combined.Commands = append(shown.combined.Commands, own.Commands...)
+	shown.combined.Commands = append(shown.combined.Commands, interfaceDrawing.Commands...)
+	return &shown.combined
+}
 
 // Backend is the graphics interface a window draws through.
 type Backend string
@@ -133,6 +171,17 @@ func Run(options Options, build func(context *ui.Context)) error {
 	return RunWith(context, options, build)
 }
 
+// quitAsked is set by Quit, from any goroutine, and taken by the window at the end of a frame.
+var quitAsked atomic.Bool
+
+// Quit ends the program's window once the frame being made ends, as closing it would: Run
+// returns. A game's "Quit" in its menu calls it; on a 3DS it goes back to the Homebrew Launcher.
+// It may be called from any goroutine.
+func Quit() { quitAsked.Store(true) }
+
+// takeQuit tells whether Quit was asked for since the last time, and forgets it.
+func takeQuit() bool { return quitAsked.Swap(false) }
+
 // interfaceApplication is the application every window runs: one interface step (Begin, build,
 // End) per update step, drawing only when something happens unless Continuous, and no frame when
 // it would look like the one shown.
@@ -168,9 +217,15 @@ func interfaceApplication(context *ui.Context, options Options, build func(conte
 				if delay, wanted := unclaimed.TakeFrameRequest(); wanted {
 					app.Input.RequestFrame(delay)
 				}
+				// and a captured pointer (a game that turns with the mouse), which the window applies
+				app.Input.LockCursor(unclaimed.CursorLocked())
+			}
+			if takeQuit() {
+				app.Stop = true
 			}
 			if view.view != nil {
-				view.view.World.Overlay.Drawing = context.Drawing() // the interface is painted over the scene
+				// the program's drawing and the interface are painted over the scene
+				view.view.World.Overlay.Drawing = view.overScene(view.view.Drawing, context.Drawing())
 			}
 			return nil
 		},

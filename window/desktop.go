@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
 	"github.com/akrck02/go-renderer/metal"
 	"github.com/akrck02/go-renderer/models"
@@ -110,7 +111,19 @@ func runOpenGL(context *ui.Context, app *models.Application, view *shownScene) e
 				sceneRenderer = created
 			}
 			sceneRenderer.OverlayScale = scale
-			sceneRenderer.Draw(view.view.World, view.view.Camera, framebufferWidth, framebufferHeight, time.Since(started).Seconds())
+			seconds := time.Since(started).Seconds()
+			if view.view.Area == nil {
+				sceneRenderer.Draw(view.view.World, view.view.Camera, framebufferWidth, framebufferHeight, seconds)
+				return nil
+			}
+			if flat == nil {
+				created, err := opengl.NewFlatRenderer()
+				if err != nil {
+					return err
+				}
+				flat = created
+			}
+			drawInAreas(sceneRenderer, flat, view.view, context.Theme.Background, framebufferWidth, framebufferHeight, scale, seconds)
 			return nil
 		}
 		if flat == nil {
@@ -124,4 +137,26 @@ func runOpenGL(context *ui.Context, app *models.Application, view *shownScene) e
 		return nil
 	}
 	return (&opengl.OpenGL{}).StartLoop(app)
+}
+
+// nothingToPaint is an empty list, painted to clear the frame.
+var nothingToPaint draw2d.List
+
+// drawInAreas draws a scene, and the one below it, in their areas of the window over the theme's
+// background, then the interface over all of them.
+func drawInAreas(renderer *opengl.SceneRenderer, flat *opengl.FlatRenderer, view *SceneView, background draw2d.Color, width, height int, scale float32, seconds float64) {
+	flat.Draw(&nothingToPaint, background, width, height, scale) // clears the frame to the background
+	renderer.DrawIn(view.World, view.Camera, framebufferArea(*view.Area, height, scale), seconds)
+	if below := view.Below; below != nil && below.Area != nil {
+		renderer.DrawIn(below.World, below.Camera, framebufferArea(*below.Area, height, scale), seconds)
+	}
+	renderer.DrawOverlay(view.World, width, height)
+}
+
+// framebufferArea is an area of the window in the framebuffer's pixels, counted from its bottom as
+// OpenGL counts.
+func framebufferArea(area draw2d.Rect, framebufferHeight int, scale float32) opengl.Area {
+	left, top := int(area.X*scale), int(area.Y*scale)
+	width, height := int(area.Width*scale), int(area.Height*scale)
+	return opengl.Area{X: left, Y: framebufferHeight - top - height, Width: width, Height: height}
 }

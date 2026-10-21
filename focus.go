@@ -51,6 +51,16 @@ func (ui *Context) keyboardWanted() bool {
 // keyboard back on it: Space on a Resume button must not also reach the game.
 func (ui *Context) HasKeyboard() bool { return ui.hasKeyboard || ui.keyboardUsed }
 
+// FocusedID is the control that has the focus after the last frame: the field being typed in, or
+// the control Tab reached; 0 when none has it. A control clicked with the pointer has it only if it
+// is a field.
+func (ui *Context) FocusedID() ID {
+	if ui.focus != 0 {
+		return ui.focus
+	}
+	return ui.keyboardFocus
+}
+
 // beginFocus works out, at the start of a frame, whether the interface has the keyboard, and
 // follows Tab when no field is taking the keys (a field follows its own).
 func (ui *Context) beginFocus() {

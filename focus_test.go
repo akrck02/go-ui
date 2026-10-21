@@ -416,3 +416,29 @@ func TestAHeldButtonShrinksItsLabelToo(t *testing.T) {
 		t.Fatalf("the label shrinks with the button: size %v from %v", after.Size, before.Size)
 	}
 }
+
+func TestFocusedIDNamesTheControlTabReachedAndTheFieldBeingTyped(t *testing.T) {
+	h := newHarness(t)
+	h.ui.KeyboardNavigation = Always
+	text := ""
+	build := func(ui *Context) {
+		ui.Button("Light the lamp")
+		ui.TextField("note", &text)
+	}
+	h.frame(build)
+	if h.ui.FocusedID() != 0 {
+		t.Fatal("something has the focus before any key")
+	}
+	h.state.SetKey(input.KeyTab, true)
+	h.frame(build)
+	h.state.SetKey(input.KeyTab, false)
+	h.frame(build)
+	if h.ui.FocusedID() != idOf("Light the lamp") {
+		t.Fatal("FocusedID does not name the button Tab reached")
+	}
+	h.ui.Focus("note")
+	h.frame(build)
+	if h.ui.FocusedID() != idOf("note") {
+		t.Fatal("FocusedID does not name the field being typed in")
+	}
+}
