@@ -131,6 +131,7 @@ type Window struct {
 | `func (window *Window) Frame()` | Frame runs one frame as a backend does: Begin, the interface, End, then the end of the input step, which forgets this frame's presses and typed text. |
 | `func (window *Window) Frames(count int)` | Frames runs a number of frames, with no time passing between them (see Wait). |
 | `func (window *Window) HoldKey(key input.Key)` | HoldKey puts a key down and runs a frame; it stays down until ReleaseKey. |
+| `func (window *Window) LongPress(label string) error` | LongPress holds a finger still on an element for a second, letting the time pass, then lifts it. |
 | `func (window *Window) MoveTo(x, y float32)` | MoveTo moves the pointer to a place in the window and runs a frame. |
 | `func (window *Window) MoveToElement(label string) error` | MoveToElement moves the pointer to the middle of an element (see Element) and runs a frame. |
 | `func (window *Window) Now() time.Time` | Now is the window's time. |
@@ -143,7 +144,11 @@ type Window struct {
 | `func (window *Window) ShiftTab()` | ShiftTab moves the focus to the control before, as Shift+Tab does. |
 | `func (window *Window) State() *input.State` | State is the window's input state, for what this package does not cover yet. |
 | `func (window *Window) Tab()` | Tab moves the focus to the next control, as the Tab key does. |
+| `func (window *Window) Tap(label string) error` | Tap touches the middle of an element that can be pressed and lifts the finger at once. |
 | `func (window *Window) Texts() []string` | Texts is every line of text the last frame drew, in drawing order: headings, labels, buttons' texts, a field's text. |
+| `func (window *Window) TouchDown(finger int64, x, y float32)` | TouchDown puts a finger on the screen and runs a frame. |
+| `func (window *Window) TouchMove(finger int64, x, y float32)` | TouchMove moves a finger that is down and runs a frame. |
+| `func (window *Window) TouchUp(finger int64)` | TouchUp lifts a finger and runs a frame. |
 | `func (window *Window) Type(text string)` | Type types a text in one frame, as a paste or a fast typist does: the control with the focus takes it. |
 | `func (window *Window) TypeOneByOne(text string)` | TypeOneByOne types a text one character a frame, as a person types. |
 | `func (window *Window) Wait(duration time.Duration)` | Wait lets time pass: it runs a frame about every sixtieth of a second until the duration has gone, so long presses, double-click intervals and animations see time move as on a screen. |
