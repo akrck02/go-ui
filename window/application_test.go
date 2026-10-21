@@ -132,3 +132,18 @@ func TestAScenesCapturedPointerReachesTheWindow(t *testing.T) {
 		t.Fatal("a scene that lets the pointer go leaves it captured")
 	}
 }
+
+func TestQuittingStopsTheWindowAfterTheFrame(t *testing.T) {
+	context, err := ui.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	shown, view := shownFrame{seed: maphash.MakeSeed()}, &shownScene{}
+	app := interfaceApplication(context, Options{}, func(context *ui.Context) { Quit() }, &shown, view)
+	if err := app.Update(app, 1.0/60); err != nil || !app.Stop {
+		t.Fatalf("a window asked to quit keeps running (%v)", err)
+	}
+	if takeQuit() {
+		t.Fatal("the quit asked for is not forgotten once taken")
+	}
+}

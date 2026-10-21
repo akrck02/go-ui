@@ -36,6 +36,7 @@ all the time.
 | `func Notify(id int, title, text string) bool` | Notify shows a notification; on the desktop it does not yet, and returns false. |
 | `func OpenLink(link string) bool` | OpenLink opens a link in the application that shows it (the browser for a web page), through the computer's own command for that. |
 | `func Preference(name string) (string, bool)` | Preference is the value kept under a name, and whether there is one. |
+| `func Quit()` | Quit ends the program's window once the frame being made ends, as closing it would: Run returns. |
 | `func Run(options Options, build func(context *ui.Context)) error` | Run opens the window and calls build in every update step, between the interface's Begin and End, until the window is closed. |
 | `func RunWith(context *ui.Context, options Options, build func(context *ui.Context)) error` | RunWith is Run with an interface context of your own (a custom theme or measurer). |
 | `func Share(title, text string) bool` | Share offers a text to other applications; a desktop has no sheet for that, so it returns false (put the text on the clipboard instead). |

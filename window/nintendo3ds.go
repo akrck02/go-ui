@@ -105,7 +105,7 @@ func (run *consoleRun) loop() {
 	for ctr.Running() {
 		reading := ctr.ReadControls()
 		pressed := run.controls.Pressed(reading)
-		if pressed&ctr.ButtonStart != 0 && !run.options.KeepStart {
+		if pressed&ctr.ButtonStart != 0 && !run.options.KeepStart || takeQuit() {
 			return
 		}
 		if pressed&ctr.ButtonSelect != 0 {

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"hash/maphash"
 	"runtime"
+	"sync/atomic"
 
 	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
@@ -170,6 +171,17 @@ func Run(options Options, build func(context *ui.Context)) error {
 	return RunWith(context, options, build)
 }
 
+// quitAsked is set by Quit, from any goroutine, and taken by the window at the end of a frame.
+var quitAsked atomic.Bool
+
+// Quit ends the program's window once the frame being made ends, as closing it would: Run
+// returns. A game's "Quit" in its menu calls it; on a 3DS it goes back to the Homebrew Launcher.
+// It may be called from any goroutine.
+func Quit() { quitAsked.Store(true) }
+
+// takeQuit tells whether Quit was asked for since the last time, and forgets it.
+func takeQuit() bool { return quitAsked.Swap(false) }
+
 // interfaceApplication is the application every window runs: one interface step (Begin, build,
 // End) per update step, drawing only when something happens unless Continuous, and no frame when
 // it would look like the one shown.
@@ -207,6 +219,9 @@ func interfaceApplication(context *ui.Context, options Options, build func(conte
 				}
 				// and a captured pointer (a game that turns with the mouse), which the window applies
 				app.Input.LockCursor(unclaimed.CursorLocked())
+			}
+			if takeQuit() {
+				app.Stop = true
 			}
 			if view.view != nil {
 				// the program's drawing and the interface are painted over the scene
