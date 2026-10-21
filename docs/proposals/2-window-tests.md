@@ -118,7 +118,8 @@ which before moving anything.
   for each error code; the chosen test in a card with its name, its messages and the replay: the
   recorded draw list painted with `Paint`, scaled to fit, the pointer as a ring, a press as a
   filled ring, and the found element outlined in the theme's `FocusRing`. Buttons and a `Slider`
-  step through the frames; the left and right arrows too.
+  step through the frames. (The arrow keys were dropped while building: `ui.Context` gives a
+  program no public way to read a key outside a scene.)
 - **Not taken**: an HTML report (the author asked for a Go UI window); recording always (it would
   cost every `go test`).
 
@@ -142,4 +143,4 @@ which before moving anything.
 - [x] T6 — Go UI's own tests move to `uitest` where it does the same; the private harness keeps only what reads private state · `*_test.go` at the root · R9 · `go vet ./...` and `go test ./...` pass with the same number of tests or more. Moved: the three long-press tests of a finger and the two click tests (`longpress_uitest_test.go`, `controls_uitest_test.go`); the rest read private state (`ui.previous`, `ui.active`, ids made with `frameWithID`) or the right mouse button, and keep the private harness
 - [x] T7 — The example and the guide: `ExampleWindow` (a lighthouse keeper's log: click a button, type a line, find it), `docs/4-guides/11-testing-an-interface.md`, a reference page `docs/6-reference/3-uitest.md` made by `generate.py`, links from the overview · `uitest/example_test.go`, `docs/` · R10 · the example's `// Output:` is checked by `go test`; the author reads the guide
 - [x] T8 — Recording: the `Test(t)` option, frames and errors kept only while `UITEST_RECORD` is set, one JSON file per test · `uitest/recording.go`, `options.go` · R12 · tests: `TestAWindowWithoutRecordingKeepsNothing`, `TestARecordedTestWritesItsFramesAndErrors`
-- [ ] T9 — The results viewer: `cmd/uitest` runs the tests and shows them, logic apart from look; a guide section on it · `cmd/uitest/main.go`, `results.go`, `view.go`, `docs/4-guides/11-testing-an-interface.md` · R12 · tests (with `uitest`): `TestFailedTestsComeFirst`, `TestTheArrowsStepThroughTheFrames`, `TestTheFoundElementIsHighlighted`; the window's look is checked by the author on a display
+- [x] T9 — The results viewer: `cmd/uitest` runs the tests and shows them, logic apart from look; a guide section on it · `cmd/uitest/main.go`, `results.go`, `replay.go`, `view.go`, `docs/4-guides/11-testing-an-interface.md` · R12 · tests (with `uitest`): `TestFailedTestsComeFirst`, `TestSteppingStopsAtTheEnds`, `TestTheStepButtonsMoveThroughTheFrames`, `TestChoosingATestShowsItsErrors`, `TestTheFoundElementIsHighlighted`, `TestAFrameWithNoTargetHasNoHighlight`; the window's look is checked by the author on a display

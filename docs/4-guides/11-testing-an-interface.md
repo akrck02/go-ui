@@ -129,7 +129,34 @@ if errors.Is(err, uitest.ErrorElementNotFound) {
 }
 ```
 
+## Seeing the results in a window
+
+When a test fails, it helps to see what its window showed. Make the window with `Test(t)`:
+
+```go
+window, err := uitest.New(build, uitest.Test(t))
+```
+
+Then run your tests through the viewer instead of `go test`:
+
+```bash
+go run github.com/akrck02/go-ui/cmd/uitest ./...
+go run github.com/akrck02/go-ui/cmd/uitest -dark ./editor/... -run TestSaving
+```
+
+It runs `go test` with the arguments you give, with recording on, and opens a Go UI window. The
+tests are listed on the left, failed ones first. On the right you see the chosen test's error
+codes and messages, and a replay of its frames. Step through them with *Previous frame*, *Next
+frame* or the slider. The pointer is a ring, filled while pressed; fingers are orange dots; the
+element an action found has an outline in the theme's focus colour. Click an error's code to jump
+to the frame it came after.
+
+Recording costs nothing in a plain `go test`: a window only keeps its frames while the
+`UITEST_RECORD` variable names a folder, which the viewer sets for you. The replay paints the
+recorded draw lists with real fonts, while the tests measured text with `FixedMeasurer`, so a
+label can look a little wider than its button. The viewer needs a display.
+
 ## What it cannot do yet
 
-There is no picture of a frame: Go Renderer cannot paint without a display yet. Read
-`DrawList()` instead.
+There is no picture of a frame without a display: Go Renderer cannot paint without one yet. Read
+`DrawList()` instead, or look at the frames in the viewer.
