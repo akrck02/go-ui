@@ -77,6 +77,17 @@ const (
 | `func (backend *Backend) Set(text string) error` | Set reads a backend from a flag: automatic, metal or opengl. |
 | `func (backend *Backend) String() string` |  |
 
+### BelowView
+
+BelowView is a scene seen from a camera on the 3DS's bottom screen.
+
+```go
+type BelowView struct {
+	World  *scene.Scene
+	Camera models.Camera
+}
+```
+
 ### Feeling
 
 Feeling is a kind of buzz a touch gives, as a phone's own applications give them (Feel).
@@ -104,6 +115,9 @@ Options configure the window.
 
 ```go
 type Options struct {
+	// KeepStart gives the 3DS's START button to the program (a pause) instead of ending it; the
+	// HOME menu still ends it. Elsewhere it does nothing.
+	KeepStart     bool
 	Title         string
 	Width, Height int // window size in window pixels; 0 = 1280 × 800
 	// MinWidth and MinHeight stop the window from being made smaller than the layout needs; 0 = no
@@ -172,6 +186,10 @@ type SceneView struct {
 	// bar, a sight. On the 3DS it is painted on the top screen, in each eye when in 3D. Keep the
 	// list between frames (Reset it), so drawing it allocates nothing.
 	Drawing *draw2d.List
+	// Below is a second scene for the 3DS's bottom screen, with the interface painted over it (a
+	// map, a turning model); nil leaves the bottom screen to the interface alone. Elsewhere it is
+	// not drawn.
+	Below *BelowView
 }
 ```
 

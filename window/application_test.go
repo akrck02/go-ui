@@ -111,3 +111,24 @@ func TestTheProgramsDrawingIsPaintedOverTheSceneAndUnderTheInterface(t *testing.
 		t.Fatalf("over the scene go %d commands, the program's first; want 1 and the interface's %d", len(painted), interfaceCommands)
 	}
 }
+
+func TestAScenesCapturedPointerReachesTheWindow(t *testing.T) {
+	context, err := ui.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	world, capture := scene.New(), true
+	options := Options{Scene: func(state *input.State, step float64) *SceneView {
+		state.LockCursor(capture)
+		return &SceneView{World: world}
+	}}
+	shown, view := shownFrame{seed: maphash.MakeSeed()}, &shownScene{}
+	app := interfaceApplication(context, options, func(context *ui.Context) {}, &shown, view)
+	if err := app.Update(app, 1.0/60); err != nil || !app.Input.CursorLocked() {
+		t.Fatalf("a scene that captures the pointer leaves the window's %v, %v", app.Input.CursorLocked(), err)
+	}
+	capture = false
+	if err := app.Update(app, 1.0/60); err != nil || app.Input.CursorLocked() {
+		t.Fatal("a scene that lets the pointer go leaves it captured")
+	}
+}

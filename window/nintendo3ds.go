@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/akrck02/go-renderer/ctr"
+	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
 	ui "github.com/akrck02/go-ui"
 )
@@ -104,7 +105,7 @@ func (run *consoleRun) loop() {
 	for ctr.Running() {
 		reading := ctr.ReadControls()
 		pressed := run.controls.Pressed(reading)
-		if pressed&ctr.ButtonStart != 0 {
+		if pressed&ctr.ButtonStart != 0 && !run.options.KeepStart {
 			return
 		}
 		if pressed&ctr.ButtonSelect != 0 {
@@ -205,11 +206,22 @@ func (run *consoleRun) draw(view *SceneView) {
 		lap(&times.Scene, &mark)
 		run.paintOverScene(view, separation > 0)
 		lap(&times.OverScene, &mark)
-		run.flat.Paint(drawing, background)
+		run.paintBottom(view.Below, drawing, background)
 		lap(&times.Interface, &mark)
 	}
 	ctr.EndFrame()
 	lap(&times.Submit, &mark)
+}
+
+// paintBottom paints the bottom screen: the interface alone, or over a scene of its own, drawn by
+// the top screen's renderer as the swapped layout does.
+func (run *consoleRun) paintBottom(below *BelowView, drawing *draw2d.List, background draw2d.Color) {
+	if below == nil {
+		run.flat.Paint(drawing, background)
+		return
+	}
+	run.scene.PaintOn(run.bottom, below.World, below.Camera)
+	run.flat.PaintOver(run.bottom, drawing)
 }
 
 // paintOverScene paints the program's drawing over the scene (SceneView.Drawing, or the older

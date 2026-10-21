@@ -29,6 +29,9 @@ import (
 
 // Options configure the window.
 type Options struct {
+	// KeepStart gives the 3DS's START button to the program (a pause) instead of ending it; the
+	// HOME menu still ends it. Elsewhere it does nothing.
+	KeepStart     bool
 	Title         string
 	Width, Height int // window size in window pixels; 0 = 1280 × 800
 	// MinWidth and MinHeight stop the window from being made smaller than the layout needs; 0 = no
@@ -74,6 +77,16 @@ type SceneView struct {
 	// bar, a sight. On the 3DS it is painted on the top screen, in each eye when in 3D. Keep the
 	// list between frames (Reset it), so drawing it allocates nothing.
 	Drawing *draw2d.List
+	// Below is a second scene for the 3DS's bottom screen, with the interface painted over it (a
+	// map, a turning model); nil leaves the bottom screen to the interface alone. Elsewhere it is
+	// not drawn.
+	Below *BelowView
+}
+
+// BelowView is a scene seen from a camera on the 3DS's bottom screen.
+type BelowView struct {
+	World  *scene.Scene
+	Camera models.Camera
 }
 
 // shownScene is the scene the last step asked for, shared by the step and the drawing, and the
@@ -187,6 +200,8 @@ func interfaceApplication(context *ui.Context, options Options, build func(conte
 				if delay, wanted := unclaimed.TakeFrameRequest(); wanted {
 					app.Input.RequestFrame(delay)
 				}
+				// and a captured pointer (a game that turns with the mouse), which the window applies
+				app.Input.LockCursor(unclaimed.CursorLocked())
 			}
 			if view.view != nil {
 				// the program's drawing and the interface are painted over the scene
