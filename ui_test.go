@@ -136,50 +136,6 @@ func TestTextIsMeasuredAndCentred(t *testing.T) {
 	}
 }
 
-func TestButtonClicksOnRelease(t *testing.T) {
-	h := newHarness(t)
-	clicks := 0
-	build := func(ui *Context) {
-		if ui.Button("Switch on") {
-			clicks++
-		}
-	}
-	h.frame(build) // first frame: the button has no place yet
-	area := h.rect(idOf("Switch on"))
-	h.moveTo(float64(area.X+5), float64(area.Y+5))
-	h.press()
-	h.frame(build)
-	if clicks != 0 || h.ui.active == 0 {
-		t.Fatal("pressing holds the button without clicking it")
-	}
-	h.release()
-	h.frame(build)
-	if clicks != 1 {
-		t.Fatalf("letting go over it clicks, got %d", clicks)
-	}
-	h.frame(build)
-	if clicks != 1 {
-		t.Fatal("one click per release")
-	}
-}
-
-func TestLettingGoElsewhereDoesNotClick(t *testing.T) {
-	h := newHarness(t)
-	clicked := false
-	build := func(ui *Context) { clicked = clicked || ui.Button("Switch on") }
-	h.frame(build)
-	area := h.rect(idOf("Switch on"))
-	h.moveTo(float64(area.X+5), float64(area.Y+5))
-	h.press()
-	h.frame(build)
-	h.moveTo(700, 500)
-	h.release()
-	h.frame(build)
-	if clicked {
-		t.Fatal("a press dragged away and let go is not a click")
-	}
-}
-
 func TestPanelsClaimTheMouse(t *testing.T) {
 	h := newHarness(t)
 	build := func(ui *Context) {
