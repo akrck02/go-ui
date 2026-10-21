@@ -140,7 +140,9 @@ type Options struct {
 	// Scene, when set, puts a 3D scene behind the interface. It is called at every step after the
 	// interface, with the input the interface did not claim (so the program can turn its camera
 	// without fighting a slider), and returns what to show this frame: nil for no scene. On the
-	// desktop a window with a scene draws through OpenGL.
+	// desktop a window with a scene draws through OpenGL. What it asks of that input's pointer
+	// (LockCursor) and screen (SetFullscreen, applied on a page at the next key or click) reaches
+	// the window.
 	Scene func(state *input.State, step float64) *SceneView
 	// MaxFramesPerSecond caps how often the window draws, to spare a battery; 0 = 60 on a phone,
 	// the display's own rate elsewhere (where vsync keeps it).
