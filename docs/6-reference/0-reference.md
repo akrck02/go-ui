@@ -102,7 +102,7 @@ clipboard (`Copy(text)`, `ClipboardText()`), and for on-screen keyboards `TypedF
 | Method | |
 |---|---|
 | `WantsMouse()`, `WantsKeyboard()` | Whether the interface claimed them in the last frame |
-| `KeyboardNavigation` (`WhenGiven`, `Always`), `TakeKeyboard()`, `ReleaseKeyboard()`, `HasKeyboard()` | When Tab, Enter and Space move between controls and press them, and when they stay with a game or a 3D view ([who has the keyboard](../5-components/10-the-keyboard.md)) |
+| `KeyboardNavigation` (`WhenGiven`, `Always`), `TakeKeyboard()`, `ReleaseKeyboard()`, `HasKeyboard()`, `FocusedID()` | When Tab, Enter and Space move between controls and press them, and when they stay with a game or a 3D view ([who has the keyboard](../5-components/10-the-keyboard.md)) |
 | `LessMotion` | Held controls keep their size, for people who asked the system for less motion |
 | `Pointer() (x, y)`, `Pressing()` | Where the pointer is; whether it is held |
 | `Touches()` | The fingers on a touch screen |

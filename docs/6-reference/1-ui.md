@@ -157,6 +157,7 @@ type Context struct {
 | `func (ui *Context) FlatIconButton(icon, label string) bool` | FlatIconButton is FlatButton with an icon; with an empty label it is a square icon button. |
 | `func (ui *Context) Focus(path ...string)` | Focus gives the keyboard to a text field or a number field, found by its scopes and label as Area finds it, with its whole text selected: to start typing in a search box on a shortcut, or in the first field of a form that just opened. |
 | `func (ui *Context) FocusField(name string)` | FocusField gives the keyboard to the text field of a name, in the same scope, from the next time it is built: a search that opens ready to type in. |
+| `func (ui *Context) FocusedID() ID` | FocusedID is the control that has the focus after the last frame: the field being typed in, or the control Tab reached; 0 when none has it. |
 | `func (ui *Context) Fold(name string, open bool, duration time.Duration, layout Layout, content func())` | Fold lays content out in a box that opens to the content's height and closes to nothing with motion, clipping what does not show yet: the answer under a question, more under a list row. |
 | `func (ui *Context) Frame(layout Layout, look Look, content func())` | Frame adds a box with a layout and a look (fill, border, corners, shadow). |
 | `func (ui *Context) Grid(columns int, content func())` | Grid lays out what content adds in rows of a number of equal columns, across the whole width. |

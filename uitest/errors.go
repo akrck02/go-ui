@@ -57,3 +57,13 @@ func CodeOf(err error) Code {
 func invalidSize(width, height float32) error {
 	return &Error{Code: InvalidSize, Message: fmt.Sprintf("a window of %vx%v layout pixels cannot show anything", width, height)}
 }
+
+// elementNotFound is the error of a label the last frame did not show, with what it did show.
+func elementNotFound(label string, shown []string) error {
+	return &Error{Code: ElementNotFound, Message: fmt.Sprintf("no element %s in the last frame; it showed %q", describe(label), shown)}
+}
+
+// elementAmbiguous is the error of a label shown more than once.
+func elementAmbiguous(label string, count int) error {
+	return &Error{Code: ElementAmbiguous, Message: fmt.Sprintf("%d elements are called %s; find one with ElementIn and its scope", count, describe(label))}
+}

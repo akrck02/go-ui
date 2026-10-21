@@ -27,7 +27,8 @@ func New(build func(context *ui.Context), options ...Option) (*Window, error) {
 	if chosen.width <= 0 || chosen.height <= 0 || chosen.scale <= 0 {
 		return nil, invalidSize(chosen.width, chosen.height)
 	}
-	window := &Window{context: ui.NewWithMeasurer(chosen.measurer), state: input.NewState(), build: build}
+	window := &Window{context: ui.NewWithMeasurer(chosen.measurer), build: build}
+	window.state = newState(chosen.width, chosen.height)
 	if chosen.theme != nil {
 		window.context.Theme = *chosen.theme
 	}
@@ -36,6 +37,14 @@ func New(build func(context *ui.Context), options ...Option) (*Window, error) {
 	window.state.Now = window.clock.read
 	window.resize(chosen.width, chosen.height, chosen.scale)
 	return window, nil
+}
+
+// newState makes an input state for a window of a size in layout pixels, at scale 1.
+func newState(width, height float32) *input.State {
+	state := input.NewState()
+	state.WindowWidth, state.WindowHeight = int(width), int(height)
+	state.FramebufferWidth, state.FramebufferHeight = int(width), int(height)
+	return state
 }
 
 // resize sets the window's and the framebuffer's sizes in the input state.
