@@ -17,7 +17,7 @@ You need to know a little Go; you need no experience with interfaces.
 |---|---|---|
 | **Go 1.25** or later | The language | [go.dev/dl](https://go.dev/dl/), then `go version` |
 | **A C compiler** | The desktop window is opened through cgo | Linux: `gcc`; macOS: `xcode-select --install`; Windows: [MinGW-w64](https://www.mingw-w64.org/) on the `PATH` |
-| **OpenGL 4.1** headers (Linux) | What draws on Linux and Windows; macOS draws through Metal | Debian, Ubuntu: `sudo apt install libgl1-mesa-dev xorg-dev` |
+| **OpenGL 4.1** headers (Linux) | What draws on Linux and Windows; macOS draws through Metal | Debian, Ubuntu: `sudo apt install libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev` |
 
 The library itself is pure Go: only programs that open a window need cgo. Tests do not, so
 `go test ./...` runs anywhere.
