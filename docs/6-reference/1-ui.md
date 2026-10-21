@@ -227,7 +227,7 @@ type Context struct {
 | `func (ui *Context) Typing() bool` | Typing tells whether a text field had the focus in the last frame: a phone shows its on-screen keyboard while it does. |
 | `func (ui *Context) WantsKeyboard() bool` | WantsKeyboard tells whether a control had the keyboard in the last frame (a text field being typed in). |
 | `func (ui *Context) WantsMouse() bool` | WantsMouse tells whether the interface used the mouse in the last frame: the pointer was over a panel or a control, or dragging one. |
-| `func (ui *Context) Within(area draw2d.Rect, content func())` | Within lays out the overlays and modals content opens in an area of the window instead of the whole window: an interface that a program shows inside a view of its own (a game played inside an editor). |
+| `func (ui *Context) Within(area draw2d.Rect, content func())` | Within lays out the panels, overlays and modals content opens in an area of the window instead of the whole window (a panel's X and Y count from the area's corner): an interface that a program shows inside a view of its own (a game played inside an editor). |
 
 ### Description
 

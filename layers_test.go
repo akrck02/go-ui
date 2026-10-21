@@ -200,3 +200,17 @@ func TestLayersOpenedWithinAnAreaAreLaidOutInIt(t *testing.T) {
 		t.Fatalf("an overlay after the area is at %+v, not the window's corner", outside)
 	}
 }
+
+func TestAPanelOpenedWithinAnAreaIsPlacedFromItsCorner(t *testing.T) {
+	h := newHarness(t)
+	area := draw2d.Rect{X: 200, Y: 100, Width: 400, Height: 240}
+	build := func(ui *Context) {
+		ui.Within(area, func() {
+			ui.PanelWith("Account", PanelOptions{X: 16, Y: 16, Width: Fixed(150), Locked: true}, func() { ui.Label("name") })
+		})
+	}
+	h.frame(build)
+	if panel := h.rect(idOf("Account")); panel.X != 216 || panel.Y != 116 {
+		t.Fatalf("a panel at 16, 16 within the area is at %+v", panel)
+	}
+}
