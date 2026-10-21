@@ -1,6 +1,7 @@
 # 3. Driving an interface: automatic modes, and tests on the device
 
-> Status: proposed · Author's approval: proposal ☐ plan ☐
+> Status: building · Author's approval: proposal ☑ (2026-10-21, "sigue, hazlo") plan ☑ (2026-10-21,
+> the same words: the author asked to go ahead without stopping)
 
 ## Why
 
@@ -43,14 +44,102 @@ computer, a phone or a 3DS, cannot be driven:
 - A script language with branches and loops: a script is a list of steps; a program that needs
   logic writes Go.
 
-## Open questions for the author
+## Decided questions
 
-1. **The script file's format.** Plain JSON, readable and diffable, or a line per step
-   (`click "Add an action"`), shorter to write by hand?
-2. **Where the shared code lives.** A new package (for example `uidrive`), used by `uitest` and by
-   windows; or inside `uitest`, renamed for both uses?
-3. **R7's place.** In Go UI for Android, which owns that layer, or in Go UI, which owns the
-   driver?
+1. **The script file's format: a line per step**, plain text a person reads and writes, with `#`
+   comments. Each line is parsed into a step; an error names its line.
+2. **The shared code lives in a new package, `uidrive`**: it finds elements by name in the live
+   interface, makes input for a step, and runs a script frame by frame on a clock. `uitest` is
+   rebuilt on it.
+3. **R7 lives in Go UI for Android**, which owns the layer it proves. It is a later task there,
+   not part of this change (see Tasks).
+
+## Design
+
+**A driver is a hook in the window loop.** `uidrive.Driver` is an interface of two methods:
+`Drive(state, context)` runs after the backend gathered the frame's real input and before the
+interface's `Begin`, and adds input to the state; `Show(drawing)` runs after `End`, and may draw
+over the interface. `window.Options.Driver` takes one. Desktop, web and Android share
+`interfaceApplication`'s `Update`, and the 3DS has its own `consoleRun.step`: both call the same
+two lines, behind `if driver != nil`, so a window without one does what it did (R1, R8).
+
+**`uidrive`** (new package, pure Go, so it builds for TinyGo and WebAssembly):
+
+| File | What it holds |
+|---|---|
+| `errors.go` | `Code`, `Error`, `CodeOf`; the element codes moved from `uitest`, which keep their stable names (`uitest.element-not-found`…) since programs and people check them; new `uidrive.script-not-read` (with the line) and `uidrive.script-stopped` |
+| `find.go` | `Element`, `Find`, `FindIn`, `FindWithin`, `FindAt`, `Texts`: what `uitest/find.go` did, over a `*ui.Context` (its screen reader's nodes and its drawing) |
+| `hand.go` | `Hand`: the pointer, the fingers and typing made as input on an `input.State` (move, press, release, touch, type, keys, let go of all) |
+| `script.go` | `Script`, `Step`, `Action`; `Parse` reads the line format and `Script.String` writes it |
+| `player.go` | `Player`: runs a script one frame at a time on the state's clock; a `Driver` |
+| `report.go` | one line per step, `uidrive: step 3 failed uitest.element-not-found: click "Remove"`, to an `io.Writer` the program gives |
+| `recorder.go` | `Recorder`: a `Driver` that adds nothing and writes down what a person does, as a `Script` |
+| `show.go` | the overlay: the pointer, the fingers and the element found, drawn by `Player.Show` when asked |
+
+`uitest` keeps its whole API. `Element`, `Error` and `Code` become aliases of `uidrive`'s; its
+finders call `uidrive.Find…`; its pointer, touches and keys go through a `uidrive.Hand`. It gains
+a `Driver` option (the window calls it each frame, as a real one) and `Window.Play(script)`, which
+runs a script with a sixtieth of a second per frame on the test clock (R3). `ui.Context` gains
+`Measurer()`, which finding a text needs. On Android the window keeps the screen reader's nodes on
+while driven, since a driver finds elements through them.
+
+**The script format**, one step per line:
+
+```text
+# a lighthouse keeper writes the day's log
+click "Add an entry"
+type "Fog at dawn"
+press Enter
+wait 0.5s
+until "Saved"            # waits up to 5s, or: until "Saved" 10s
+tap "Light the lamp"
+hold "Lens" 1s           # a long press
+drag "Boat" 120 0        # by a distance in layout pixels; or: drag "Boat" to "Harbour"
+scroll "Log" -3
+double-click "Entry"
+move-to "Help"
+click-at 40 300          # a place, when what is there has no name
+press Shift+Tab
+```
+
+**The person wins (R9):** a `Player` that finds input in the state before adding its own
+(`input.State.HasInput`) stops, lets go of what it holds, and ends with `uidrive.script-stopped`.
+
+**Alternatives not taken.** JSON scripts: diffable, but noisy to write by hand. Keeping the
+finding code in `uitest` and importing it from windows: `uitest` imports `testing`, which has no
+place in a program on a console. A driver as a `func`: an interface lets one value both drive and
+show, and a nil check costs the same. A second, input-replaying recorder (raw events with times):
+it would break when the layout moves; names survive a new layout.
+
+## Tasks
+
+- [ ] T1 — move finding into `uidrive` (`Element`, `Find…`, errors); `ui.Context.Measurer`; `uitest`
+  finds through it · `uidrive/errors.go`, `uidrive/find.go`, `ui.go`, `uitest/find.go`,
+  `uitest/errors.go` · serves R3 · test: `TestAButtonIsFoundByItsLabelInTheLiveInterface`, and
+  `uitest`'s tests unchanged
+- [ ] T2 — `uidrive.Hand` makes the pointer, touch and key input; `uitest` acts through it ·
+  `uidrive/hand.go`, `uitest/pointer.go`, `uitest/touch.go`, `uitest/keyboard.go` · serves R3 ·
+  test: `TestTheFirstFingerDownAlsoPressesThePointer`
+- [ ] T3 — the script format: `Parse` and `Script.String` · `uidrive/script.go` · serves R2 · test:
+  `TestAScriptWrittenAndReadAgainIsTheSame`, `TestAnUnknownStepIsAnErrorWithItsLine`
+- [ ] T4 — `Player` runs each step frame by frame; `uitest.Driver` and `Window.Play` · `uidrive/
+  player.go`, `uitest/window.go`, `uitest/play.go` · serves R2, R3 · test: one per step against a
+  made-up interface (`TestAClickStepPressesTheButtonByItsName`…)
+- [ ] T5 — the report, a line per step with its code · `uidrive/report.go` · serves R6 · test:
+  `TestTheReportSaysEachStepAndTheCodeOfAFailure`
+- [ ] T6 — a person's input stops a script · `uidrive/player.go` · serves R9 · test:
+  `TestAKeyPressedDuringAScriptStopsIt`
+- [ ] T7 — `window.Options.Driver` on every target, at no cost without one · `window/window.go`,
+  `window/nintendo3ds.go`, `window/android.go`, `window/drive.go` · serves R1, R8 · test:
+  `TestADriverAddsInputBeforeTheInterfaceRuns`, `TestAWindowWithoutADriverAllocatesNothingForIt`,
+  `BenchmarkAWindowStep…`; guide page `docs/4-guides/12-driving-a-window.md`
+- [ ] T8 — `Recorder` writes down a person's session as a script · `uidrive/recorder.go` · serves R4
+  · test: `TestARecordedSessionPlayedBackEndsInTheSameState`
+- [ ] T9 — the overlay: pointer, fingers and the element found · `uidrive/show.go`, `cmd/example` ·
+  serves R5 · test: `TestAShownPlayerDrawsThePointerAndTheElementItFound`; a capture
+- [ ] Later, in **go-ui-android** (not this change) — R7: a test that installs an application in
+  the emulator, plays a script on it with its report going to Android's log, and reads the log
+  for `uidrive: script passed`
 
 ## Result
 
