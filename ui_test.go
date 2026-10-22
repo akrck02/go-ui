@@ -1,12 +1,14 @@
 package ui
 
 import (
+	"errors"
 	"math"
 	"testing"
 	"unicode/utf8"
 
 	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
+	"github.com/akrck02/go-renderer/opengl/overlay"
 )
 
 // fakeMeasurer gives every character half the text size, so widths are easy to work out.
@@ -38,15 +40,15 @@ func (h *harness) frame(build func(ui *Context)) {
 	h.ui.Begin(h.state)
 	build(h.ui)
 	h.ui.End()
-	h.state.EndFrame()
+	h.state.Feed().EndFrame()
 }
 
-func (h *harness) moveTo(x, y float64) { h.state.MoveCursor(x, y) }
-func (h *harness) press()              { h.state.SetButton(input.MouseLeft, true) }
-func (h *harness) release()            { h.state.SetButton(input.MouseLeft, false) }
+func (h *harness) moveTo(x, y float64) { h.state.Feed().MoveCursor(x, y) }
+func (h *harness) press()              { h.state.Feed().SetButton(input.MouseLeft, true) }
+func (h *harness) release()            { h.state.Feed().SetButton(input.MouseLeft, false) }
 
 // rect returns where the element with an id was laid out in the last frame.
-func (h *harness) rect(id ID) draw2d.Rect {
+func (h *harness) rect(id ID) draw2d.Rectangle {
 	h.t.Helper()
 	area, found := h.ui.previous[id]
 	if !found {
@@ -153,7 +155,7 @@ func TestPanelsClaimTheMouse(t *testing.T) {
 	if !h.state.MouseClaimed() {
 		t.Fatal("the claim reaches the input state, for the camera")
 	}
-	h.state.EndFrame()
+	h.state.Feed().EndFrame()
 	h.moveTo(700, 500)
 	h.frame(build)
 	if h.ui.WantsMouse() {
@@ -313,7 +315,7 @@ func TestDockedPanelsSpanTheirEdge(t *testing.T) {
 	h.frame(func(ui *Context) {
 		ui.PanelWith("Tools", PanelOptions{Dock: DockRight, Width: Fixed(240)}, func() { ui.Label("Select") })
 	})
-	if docked := h.rect(idOf("Tools")); docked != (draw2d.Rect{X: 560, Y: 0, Width: 240, Height: 600}) {
+	if docked := h.rect(idOf("Tools")); docked != (draw2d.Rectangle{X: 560, Y: 0, Width: 240, Height: 600}) {
 		t.Fatalf("got %+v", docked)
 	}
 }
@@ -387,7 +389,7 @@ func TestSelectableRowsReportClicks(t *testing.T) {
 func TestClickableBoxesFollowThePointer(t *testing.T) {
 	h := newHarness(t)
 	clicked := 0
-	looks := Looks{Normal: Look{Fill: draw2d.Hex("#ffffff")}, Hovered: Look{Fill: draw2d.Hex("#eeeeee")}, Pressed: Look{Fill: draw2d.Hex("#dddddd")}}
+	looks := Looks{Normal: Look{Fill: draw2d.MustHex("#ffffff")}, Hovered: Look{Fill: draw2d.MustHex("#eeeeee")}, Pressed: Look{Fill: draw2d.MustHex("#dddddd")}}
 	build := func(ui *Context) {
 		if ui.Clickable("row", Layout{Width: Fixed(200), Height: Fixed(30)}, looks, func() { ui.Label("North Point") }) {
 			clicked++
@@ -448,5 +450,14 @@ func TestTextInAClippingBoxEndsInAnEllipsis(t *testing.T) {
 	}
 	if got := h.ui.elide("Rocky", TextStyle{Size: 13}, 4); got != "" {
 		t.Fatalf("no room: %q", got)
+	}
+}
+
+func TestAnInterfaceInFontsThatAreNotFontsIsFontNotRead(test *testing.T) {
+	if _, err := NewInFonts(overlay.Fonts{Regular: []byte("not a font")}); !errors.Is(err, overlay.FontNotRead) {
+		test.Fatalf("got %v, want %s", err, overlay.FontNotRead.Name())
+	}
+	if _, err := NewInFonts(overlay.Fonts{}); err != nil {
+		test.Fatalf("the default fonts: %v", err)
 	}
 }

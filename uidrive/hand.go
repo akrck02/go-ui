@@ -34,19 +34,19 @@ func (hand *Hand) Placed() bool { return hand.placed }
 
 // MoveTo moves the pointer to a place in the window, in layout pixels.
 func (hand *Hand) MoveTo(state *input.State, x, y float32) {
-	state.MoveCursor(float64(x), float64(y))
+	state.Feed().MoveCursor(float64(x), float64(y))
 	hand.placed, hand.x, hand.y = true, x, y
 }
 
 // Press holds the main button down where the pointer is.
 func (hand *Hand) Press(state *input.State) {
-	state.SetButton(input.MouseLeft, true)
+	state.Feed().SetButton(input.MouseLeft, true)
 	hand.down = true
 }
 
 // Release lets the main button go.
 func (hand *Hand) Release(state *input.State) {
-	state.SetButton(input.MouseLeft, false)
+	state.Feed().SetButton(input.MouseLeft, false)
 	hand.down = false
 }
 
@@ -64,18 +64,18 @@ func (hand *Hand) TouchDown(state *input.State, finger int64, x, y float32) {
 
 // TouchMove moves a finger that is down.
 func (hand *Hand) TouchMove(state *input.State, finger int64, x, y float32) {
-	state.SetTouch(finger, float64(x), float64(y))
+	state.Feed().SetTouch(finger, float64(x), float64(y))
 	hand.fingers = slices.DeleteFunc(hand.fingers, func(held fingerAt) bool { return held.finger == finger })
 	hand.fingers = append(hand.fingers, fingerAt{finger: finger, x: x, y: y})
 	if hand.isPointer(finger) {
-		state.MoveCursor(float64(x), float64(y))
+		state.Feed().MoveCursor(float64(x), float64(y))
 		hand.x, hand.y = x, y
 	}
 }
 
 // TouchUp lifts a finger.
 func (hand *Hand) TouchUp(state *input.State, finger int64) {
-	state.LiftTouch(finger)
+	state.Feed().LiftTouch(finger)
 	hand.fingers = slices.DeleteFunc(hand.fingers, func(held fingerAt) bool { return held.finger == finger })
 	if hand.isPointer(finger) {
 		hand.Release(state)
@@ -90,7 +90,7 @@ func (hand *Hand) isPointer(finger int64) bool {
 
 // HoldKey puts a key down; it stays down until ReleaseKey or LetGo.
 func (hand *Hand) HoldKey(state *input.State, key input.Key) {
-	state.SetKey(key, true)
+	state.Feed().SetKey(key, true)
 	if !slices.Contains(hand.keys, key) {
 		hand.keys = append(hand.keys, key)
 	}
@@ -98,14 +98,14 @@ func (hand *Hand) HoldKey(state *input.State, key input.Key) {
 
 // ReleaseKey lets a key go.
 func (hand *Hand) ReleaseKey(state *input.State, key input.Key) {
-	state.SetKey(key, false)
+	state.Feed().SetKey(key, false)
 	hand.keys = slices.DeleteFunc(hand.keys, func(held input.Key) bool { return held == key })
 }
 
 // Type types a text at once, as a paste or a fast typist does: the control with the focus takes it.
 func (hand *Hand) Type(state *input.State, text string) {
 	for _, character := range text {
-		state.AddCharacter(character)
+		state.Feed().AddCharacter(character)
 	}
 }
 
@@ -125,4 +125,4 @@ func (hand *Hand) LetGo(state *input.State) {
 
 // Scroll turns the wheel where the pointer is: a negative amount goes down the page, as a wheel
 // turned toward the person does.
-func (hand *Hand) Scroll(state *input.State, amount float32) { state.AddScroll(float64(amount)) }
+func (hand *Hand) Scroll(state *input.State, amount float32) { state.Feed().AddScroll(float64(amount)) }

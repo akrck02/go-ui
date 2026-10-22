@@ -123,13 +123,13 @@ func (ui *Context) addHandles(id ID, memory *fieldMemory) {
 }
 
 // fieldLine is the y of the bottom of a field's line of text, where the handles hang from.
-func (ui *Context) fieldLine(area draw2d.Rect) float32 {
+func (ui *Context) fieldLine(area draw2d.Rectangle) float32 {
 	metrics := ui.measure("Hg", TextStyle{Size: ui.scaledText(ui.Theme.TextSize)})
 	return area.Y + (area.Height+metrics.Height())/2
 }
 
 // textX is where a position of a field's text is on the screen.
-func (ui *Context) textX(area draw2d.Rect, memory *fieldMemory, position int) float32 {
+func (ui *Context) textX(area draw2d.Rectangle, memory *fieldMemory, position int) float32 {
 	return area.X + fieldPadding - memory.scroll + ui.textWidth(memory.shown(memory.editor.text[:position]), memory.weight)
 }
 
@@ -143,11 +143,11 @@ func (ui *Context) addHandle(field ID, memory *fieldMemory, id ID, kind int, x, 
 	}
 	box := handleBox(kind, x, line)
 	// a popup sits a little under its anchor and inside its padding: the anchor makes up for both
-	anchor := draw2d.Rect{X: box.X - popupPadding, Y: box.Y - popupPadding - popupSpacing}
+	anchor := draw2d.Rectangle{X: box.X - popupPadding, Y: box.Y - popupPadding - popupSpacing}
 	ui.popup(id, anchor, 0, false, Look{}, func() {
 		touched := ui.interact(id)
 		ui.frameWithID(childID(id, "drop"), Layout{Width: Fixed(box.Width), Height: Fixed(box.Height)}, Look{}, func() {
-			ui.Paint(Layout{Width: Grow(), Height: Grow()}, func(drawn draw2d.Rect, drawing *draw2d.List) {
+			ui.Paint(Layout{Width: Grow(), Height: Grow()}, func(drawn draw2d.Rectangle, drawing *draw2d.List) {
 				paintHandle(drawing, kind, drawn.X+(x-box.X), drawn.Y+(line-box.Y), ui.Theme.Primary)
 			})
 		})
@@ -185,15 +185,15 @@ func (ui *Context) dragHandle(field ID, memory *fieldMemory, kind int, touched i
 }
 
 // handleBox is the square a finger takes a handle in, around its drop: wider than it is drawn.
-func handleBox(kind int, x, line float32) draw2d.Rect {
+func handleBox(kind int, x, line float32) draw2d.Rectangle {
 	side := float32(3 * handleRadius)
 	switch kind {
 	case draggingStart:
-		return draw2d.Rect{X: x - side + handleRadius/2, Y: line, Width: side, Height: side}
+		return draw2d.Rectangle{X: x - side + handleRadius/2, Y: line, Width: side, Height: side}
 	case draggingEnd:
-		return draw2d.Rect{X: x - handleRadius/2, Y: line, Width: side, Height: side}
+		return draw2d.Rectangle{X: x - handleRadius/2, Y: line, Width: side, Height: side}
 	}
-	return draw2d.Rect{X: x - side/2, Y: line, Width: side, Height: side}
+	return draw2d.Rectangle{X: x - side/2, Y: line, Width: side, Height: side}
 }
 
 // paintHandle draws a drop with its point at x on the line: leaning left under the start of a
@@ -201,32 +201,32 @@ func handleBox(kind int, x, line float32) draw2d.Rect {
 func paintHandle(drawing *draw2d.List, kind int, x, line float32, colour draw2d.Color) {
 	radius := float32(handleRadius)
 	disc := func(centreX, centreY float32) {
-		drawing.Rectangle(draw2d.Rect{X: centreX - radius, Y: centreY - radius, Width: 2 * radius, Height: 2 * radius},
+		drawing.Rectangle(draw2d.Rectangle{X: centreX - radius, Y: centreY - radius, Width: 2 * radius, Height: 2 * radius},
 			radius, colour, draw2d.Transparent, 0)
 	}
 	switch kind {
 	case draggingStart:
 		disc(x-radius, line+radius)
-		drawing.Rectangle(draw2d.Rect{X: x - radius, Y: line, Width: radius, Height: radius}, 0, colour, draw2d.Transparent, 0)
+		drawing.Rectangle(draw2d.Rectangle{X: x - radius, Y: line, Width: radius, Height: radius}, 0, colour, draw2d.Transparent, 0)
 	case draggingEnd:
 		disc(x+radius, line+radius)
-		drawing.Rectangle(draw2d.Rect{X: x, Y: line, Width: radius, Height: radius}, 0, colour, draw2d.Transparent, 0)
+		drawing.Rectangle(draw2d.Rectangle{X: x, Y: line, Width: radius, Height: radius}, 0, colour, draw2d.Transparent, 0)
 	default:
 		disc(x, line+1.3*radius)
 		stem := 1.1 * radius
-		drawing.Rectangle(draw2d.Rect{X: x - stem/2, Y: line, Width: stem, Height: 1.3 * radius}, stem*0.3, colour, draw2d.Transparent, 0)
+		drawing.Rectangle(draw2d.Rectangle{X: x - stem/2, Y: line, Width: stem, Height: 1.3 * radius}, stem*0.3, colour, draw2d.Transparent, 0)
 	}
 }
 
 // addSelectionBar adds the bar of what can be done to the selection, centred over it above the
 // field, or under the handles when there is no room above.
-func (ui *Context) addSelectionBar(field ID, memory *fieldMemory, area draw2d.Rect, middle, line float32) {
+func (ui *Context) addSelectionBar(field ID, memory *fieldMemory, area draw2d.Rectangle, middle, line float32) {
 	barHeight := ui.Theme.ControlHeight + 2*popupPadding
 	top := area.Y - barHeight - 8
 	if top < ui.insets.Top+4 {
 		top = line + 3*handleRadius + 4
 	}
-	anchor := draw2d.Rect{X: middle, Y: top - popupSpacing}
+	anchor := draw2d.Rectangle{X: middle, Y: top - popupSpacing}
 	ui.centredPopup(selectionBarID(field), anchor, ui.popupLook(), func() {
 		ui.Push("##selection bar")
 		defer ui.Pop()

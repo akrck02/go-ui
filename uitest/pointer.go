@@ -15,13 +15,13 @@ const dragSteps = 10
 type point struct{ x, y float32 }
 
 // center is the middle of a rectangle.
-func center(area draw2d.Rect) point {
+func center(area draw2d.Rectangle) point {
 	return point{x: area.X + area.Width/2, y: area.Y + area.Height/2}
 }
 
 // MoveTo moves the pointer to a place in the window and runs a frame.
 func (window *Window) MoveTo(x, y float32) {
-	defer window.doing("Move", draw2d.Rect{}, false)()
+	defer window.doing("Move", draw2d.Rectangle{}, false)()
 	window.hand.MoveTo(window.state, x, y)
 	window.step()
 }
@@ -40,14 +40,14 @@ func (window *Window) MoveToElement(label string) error {
 
 // Press holds the main button down where the pointer is and runs a frame.
 func (window *Window) Press() {
-	defer window.doing("Press", draw2d.Rect{}, false)()
+	defer window.doing("Press", draw2d.Rectangle{}, false)()
 	window.hand.Press(window.state)
 	window.step()
 }
 
 // Release lets the main button go and runs a frame.
 func (window *Window) Release() {
-	defer window.doing("Release", draw2d.Rect{}, false)()
+	defer window.doing("Release", draw2d.Rectangle{}, false)()
 	window.hand.Release(window.state)
 	window.step()
 }
@@ -55,7 +55,7 @@ func (window *Window) Release() {
 // ClickAt moves the pointer to a place, presses and releases there, each with its frames, as a control
 // answers when the button is let go.
 func (window *Window) ClickAt(x, y float32) {
-	defer window.doing("Click", draw2d.Rect{}, false)()
+	defer window.doing("Click", draw2d.Rectangle{}, false)()
 	window.MoveTo(x, y)
 	window.Press()
 	window.Release()
@@ -90,7 +90,7 @@ func (window *Window) DoubleClick(label string) error {
 
 // Drag presses at one place, moves to another over several frames and lets go there.
 func (window *Window) Drag(fromX, fromY, toX, toY float32) {
-	defer window.doing("Drag", draw2d.Rect{}, false)()
+	defer window.doing("Drag", draw2d.Rectangle{}, false)()
 	window.MoveTo(fromX, fromY)
 	window.Press()
 	for step := 1; step <= dragSteps; step++ {

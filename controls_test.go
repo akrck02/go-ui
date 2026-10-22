@@ -164,12 +164,12 @@ func TestSelectWithTheKeyboard(t *testing.T) {
 	if !h.ui.WantsKeyboard() {
 		t.Fatal("an open select takes the keyboard")
 	}
-	h.state.SetKey(input.KeyDown, true)
+	h.state.Feed().SetKey(input.KeyDown, true)
 	h.frame(build)
-	h.state.SetKey(input.KeyDown, false)
-	h.state.SetKey(input.KeyEnter, true)
+	h.state.Feed().SetKey(input.KeyDown, false)
+	h.state.Feed().SetKey(input.KeyEnter, true)
 	h.frame(build)
-	h.state.SetKey(input.KeyEnter, false)
+	h.state.Feed().SetKey(input.KeyEnter, false)
 	h.frame(build)
 	if colour != 1 || h.ui.WantsKeyboard() {
 		t.Fatalf("down and enter choose the next option and close: %d", colour)
@@ -207,13 +207,13 @@ func TestScrollAreaScrollsWithTheWheelAndTheThumb(t *testing.T) {
 	h.frame(build)
 	h.moveTo(50, 50)
 	h.frame(build)
-	h.state.AddScroll(-1) // one notch down
+	h.state.Feed().AddScroll(-1) // one notch down
 	h.frame(build)
 	h.frame(build)
 	if first := h.rect(idOf("line0")); first.Y != -40 {
 		t.Fatalf("a notch scrolls the content up by the theme's step: %+v", first)
 	}
-	h.state.AddScroll(-100)
+	h.state.Feed().AddScroll(-100)
 	h.frame(build)
 	h.frame(build)
 	if last := h.rect(idOf("line9")); last.Bottom() != 100 {
@@ -295,7 +295,7 @@ func TestTooltipWaitsForThePointerToRest(t *testing.T) {
 			t.Fatalf("the tooltip waits; it showed after %d steps", step)
 		}
 	}
-	if delay, wanted := h.state.TakeFrameRequest(); !wanted || delay > h.ui.Theme.TooltipDelay {
+	if delay, wanted := h.state.Feed().TakeFrameRequest(); !wanted || delay > h.ui.Theme.TooltipDelay {
 		t.Fatalf("it asks for a frame when it is due: %v, %v", delay, wanted)
 	}
 	*now = now.Add(h.ui.Theme.TooltipDelay)

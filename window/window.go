@@ -21,10 +21,12 @@ import (
 	"runtime"
 	"sync/atomic"
 
+	"github.com/akrck02/go-renderer/camera"
 	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
-	"github.com/akrck02/go-renderer/models"
+	"github.com/akrck02/go-renderer/opengl/overlay"
 	"github.com/akrck02/go-renderer/scene"
+	rendererwindow "github.com/akrck02/go-renderer/window"
 	ui "github.com/akrck02/go-ui"
 	"github.com/akrck02/go-ui/uidrive"
 )
@@ -71,6 +73,9 @@ type Options struct {
 	// again. It is the moment to play again what Hidden stopped, such as a sound. On the desktop,
 	// where a hidden window has closed, it is not called.
 	Shown func()
+	// Fonts are what the interface's text is measured and drawn in, a font file for each weight;
+	// the zero value is go-renderer's default, the Go fonts.
+	Fonts overlay.Fonts
 	// Driver, when set, drives the window: at every frame it adds input before the interface runs
 	// and may draw over it after (uidrive.Player plays a script: a demo, a tutorial, a replay, a
 	// test on the device; uidrive.Recorder writes down what a person does). A person's own input
@@ -81,7 +86,7 @@ type Options struct {
 // SceneView is a 3D scene seen from a camera, drawn behind the interface.
 type SceneView struct {
 	World  *scene.Scene
-	Camera models.Camera
+	Camera camera.Lens
 	// Drawing is the program's own drawing over the scene and under the interface: a game's life
 	// bar, a sight. On the 3DS it is painted on the top screen, in each eye when in 3D. Keep the
 	// list between frames (Reset it), so drawing it allocates nothing. Draw it on layer 0: a higher
@@ -94,14 +99,14 @@ type SceneView struct {
 	Below *BelowView
 	// Area is where the scene is drawn on a computer, in window pixels; nil is the whole window.
 	// Around it the window shows the theme's background (a preview of a console's screen).
-	Area *draw2d.Rect
+	Area *draw2d.Rectangle
 }
 
 // BelowView is a scene seen from a camera on the 3DS's bottom screen.
 type BelowView struct {
 	World  *scene.Scene
-	Camera models.Camera
-	Area   *draw2d.Rect // where a computer shows it, in window pixels; nil is nowhere
+	Camera camera.Lens
+	Area   *draw2d.Rectangle // where a computer shows it, in window pixels; nil is nowhere
 	// Over draws it over the scene behind it in its area, with no background of its own (a radar
 	// floating in a corner of the view); otherwise its area shows its own sky. A console's second
 	// screen is its own, and keeps its background.
@@ -174,7 +179,7 @@ func (options *Options) RegisterFlags(flags *flag.FlagSet) {
 // Run opens the window and calls build in every update step, between the interface's Begin and
 // End, until the window is closed. It must be called from the main goroutine.
 func Run(options Options, build func(context *ui.Context)) error {
-	context, err := ui.New()
+	context, err := ui.NewInFonts(options.Fonts)
 	if err != nil {
 		return err
 	}
@@ -198,17 +203,26 @@ func takeQuit() bool { return quitAsked.Swap(false) }
 // interfaceApplication is the application every window runs: one interface step (Begin, build,
 // End) per update step, drawing only when something happens unless Continuous, and no frame when
 // it would look like the one shown.
-func interfaceApplication(context *ui.Context, options Options, build func(context *ui.Context), shown *shownFrame, view *shownScene) *models.Application {
-	return &models.Application{
-		Type:         models.WindowApplication,
-		Title:        options.Title,
-		MinWidth:     options.MinWidth,
-		MinHeight:    options.MinHeight,
-		Input:        input.NewState(),
-		DisableVsync: options.NoVsync,
-		DrawOnDemand: !options.Continuous,
-		FlatOnly:     options.Scene == nil,
-		Unchanged: func(app *models.Application) bool {
+func interfaceApplication(context *ui.Context, options Options, build func(context *ui.Context), shown *shownFrame, view *shownScene) *rendererwindow.Application {
+	return &rendererwindow.Application{
+		Options: rendererwindow.Options{
+			Title:        options.Title,
+			MinWidth:     options.MinWidth,
+			MinHeight:    options.MinHeight,
+			DisableVsync: options.NoVsync,
+			DrawOnDemand: !options.Continuous,
+			FlatOnly:     options.Scene == nil,
+		},
+		Input:     input.NewState(),
+		Callbacks: interfaceCallbacks(context, options, build, shown, view),
+	}
+}
+
+// interfaceCallbacks are what the window does every frame: an interface step per update, and no
+// frame when it would look like the one shown.
+func interfaceCallbacks(context *ui.Context, options Options, build func(context *ui.Context), shown *shownFrame, view *shownScene) rendererwindow.Callbacks {
+	return rendererwindow.Callbacks{
+		Unchanged: func(app *rendererwindow.Application) bool {
 			if view.view != nil {
 				// a scene can change without the interface changing: the program asks for frames
 				// while its camera moves, and is idle otherwise
@@ -218,7 +232,7 @@ func interfaceApplication(context *ui.Context, options Options, build func(conte
 			width, height, scale := frameSize(app)
 			return shown.same(context.Drawing(), context.Theme.Background, width, height, scale)
 		},
-		Update: func(app *models.Application, step float64) error {
+		Update: func(app *rendererwindow.Application, step float64) error {
 			driveBefore(options.Driver, app.Input, context)
 			context.Begin(app.Input)
 			build(context)
@@ -229,7 +243,7 @@ func interfaceApplication(context *ui.Context, options Options, build func(conte
 				unclaimed := app.Input.Unclaimed()
 				view.view = options.Scene(&unclaimed, step)
 				// the program asks for frames on its copy (while its camera moves): pass them on
-				if delay, wanted := unclaimed.TakeFrameRequest(); wanted {
+				if delay, wanted := unclaimed.Feed().TakeFrameRequest(); wanted {
 					app.Input.RequestFrame(delay)
 				}
 				// and a captured pointer (a game that turns with the mouse) and the whole screen, which
@@ -250,7 +264,7 @@ func interfaceApplication(context *ui.Context, options Options, build func(conte
 }
 
 // frameSize is the framebuffer's size in pixels and its pixels per layout pixel.
-func frameSize(app *models.Application) (width, height int, scale float32) {
+func frameSize(app *rendererwindow.Application) (width, height int, scale float32) {
 	state := app.Input
 	width, height = state.FramebufferWidth, state.FramebufferHeight
 	if width == 0 || height == 0 {

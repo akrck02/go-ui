@@ -47,7 +47,7 @@ type editor struct {
 	// the press that may become a click, and whether the pointer was on the panel then
 	pressX, pressY float64
 	pressOnPanel   bool
-	pointer        graphics.Vec4
+	pointer        graphics.Vector
 	pointerOnLand  bool
 }
 
@@ -56,7 +56,7 @@ func main() {
 	options.RegisterFlags(flag.CommandLine)
 	dark := flag.Bool("dark", false, "use the dark theme")
 	flag.Parse()
-	options.StartMap = !options.StartWalking
+	options.Start.Map = !options.Start.Walking
 
 	context, err := ui.New()
 	if err != nil {
@@ -70,7 +70,7 @@ func main() {
 	world.Overlay.Drawing = context.Drawing()
 	app := &editor{world: world, selected: -1, placing: true, size: 4}
 	if height, found := world.GroundHeight(14, 26); found {
-		app.place(graphics.Vec4{14, height, 26, 1}) // one to start with, by the square
+		app.place(graphics.Vector{14, height, 26, 1}) // one to start with, by the square
 	}
 
 	edit := func(world *scene.Scene, state *input.State, step float64, view viewer.View) {
@@ -95,7 +95,7 @@ func (app *editor) followPointer(state *input.State, view viewer.View) {
 
 // handlePointer places or selects on a click at a point of the ground (onLand false: the pointer
 // is over the water or off the island).
-func (app *editor) handlePointer(state *input.State, point graphics.Vec4, onLand bool) {
+func (app *editor) handlePointer(state *input.State, point graphics.Vector, onLand bool) {
 	app.pointer, app.pointerOnLand = point, onLand
 	if state.ButtonPressed(input.MouseLeft) {
 		app.pressX, app.pressY, app.pressOnPanel = state.CursorX, state.CursorY, state.MouseClaimed()
@@ -127,12 +127,12 @@ func (app *editor) handleKeys(state *input.State) {
 }
 
 // place puts a new hut at a point of the ground and selects it.
-func (app *editor) place(point graphics.Vec4) {
+func (app *editor) place(point graphics.Vector) {
 	app.named++
 	material := &scene.Material{Name: "hut", BaseColor: hutColour}
 	half := app.size / 2
 	node := &scene.Node{Name: "hut", Mesh: boxMesh(half, app.size*0.75, material),
-		Transform: graphics.Translate(graphics.Vec4{point[0], point[1], point[2], 0})}
+		Transform: graphics.Translate(graphics.Vector{point[0], point[1], point[2], 0})}
 	entry := &hut{name: fmt.Sprintf("Hut %d", app.named), size: app.size, node: node, material: material}
 	entry.label = &scene.Label{Node: node, Height: app.size, Text: entry.name, Icon: "house"}
 	app.world.Nodes = append(app.world.Nodes, node)
@@ -142,7 +142,7 @@ func (app *editor) place(point graphics.Vec4) {
 }
 
 // selectNearest selects the hut closest to a point, if one is within its own size of it.
-func (app *editor) selectNearest(point graphics.Vec4) {
+func (app *editor) selectNearest(point graphics.Vector) {
 	nearest, best := -1, math.Inf(1)
 	for index, entry := range app.huts {
 		position := entry.node.Transform
@@ -188,8 +188,8 @@ func without[T comparable](list []T, unwanted T) []T {
 }
 
 var (
-	hutColour      = graphics.Vec4{0.72, 0.52, 0.34, 1}
-	selectedColour = graphics.Vec4{0.95, 0.62, 0.2, 1}
+	hutColour      = graphics.Vector{0.72, 0.52, 0.34, 1}
+	selectedColour = graphics.Vector{0.95, 0.62, 0.2, 1}
 )
 
 // panel is the editor's window: the tools on the right, over the map.

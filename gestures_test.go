@@ -8,7 +8,7 @@ import (
 
 // dragFinger puts a finger down at a point and moves it by steps, a frame each, then lifts it.
 func dragFinger(h *harness, now *time.Time, build func(ui *Context), fromX, fromY, byX, byY float64, lift bool) {
-	h.state.SetTouch(1, fromX, fromY)
+	h.state.Feed().SetTouch(1, fromX, fromY)
 	h.moveTo(fromX, fromY)
 	h.press()
 	h.frame(build)
@@ -16,14 +16,14 @@ func dragFinger(h *harness, now *time.Time, build func(ui *Context), fromX, from
 	for step := 1; step <= steps; step++ {
 		*now = now.Add(16 * time.Millisecond)
 		x, y := fromX+byX*float64(step)/steps, fromY+byY*float64(step)/steps
-		h.state.SetTouch(1, x, y)
+		h.state.Feed().SetTouch(1, x, y)
 		h.moveTo(x, y)
 		h.frame(build)
 	}
 	if lift {
 		*now = now.Add(16 * time.Millisecond)
 		h.release()
-		h.state.LiftTouch(1)
+		h.state.Feed().LiftTouch(1)
 		h.frame(build)
 	}
 }
@@ -93,7 +93,7 @@ func TestPullingAListPastItsTopIsMeasured(t *testing.T) {
 		t.Fatalf("pulled %v while 160 pixels down; want it measured, at half the finger's way", pulling)
 	}
 	h.release()
-	h.state.LiftTouch(1)
+	h.state.Feed().LiftTouch(1)
 	h.frame(build)
 	h.frame(build)
 	if released < 60 || pulling != 0 {

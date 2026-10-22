@@ -23,7 +23,7 @@ type Look struct {
 
 // Backdrop draws a box's background in its area.
 type Backdrop interface {
-	Paint(area draw2d.Rect, drawing *draw2d.List)
+	Paint(area draw2d.Rectangle, drawing *draw2d.List)
 }
 
 type elementKind int
@@ -60,15 +60,15 @@ type element struct {
 	color   draw2d.Color // the icon's colour
 
 	parent, firstChild, lastChild, nextSibling int
-	rect                                       draw2d.Rect
-	capped                                     [2]bool                                      // reached its maximum while growing, per axis
-	content                                    [2]float32                                   // what the content needs, per axis, padding included
-	scroll                                     *scrollMemory                                // set on scroll areas
-	field                                      *fieldPaint                                  // set on text fields
-	painter                                    func(area draw2d.Rect, drawing *draw2d.List) // set on painted boxes (Paint)
-	description                                int                                          // 1 + its index in the screen reader's descriptions; 0 = none
-	lineBox                                    float32                                      // a text's height in the layout: its letters, or the theme's line height
-	filledWithPrimary                          bool                                         // a primary button: its focus ring goes inside
+	rect                                       draw2d.Rectangle
+	capped                                     [2]bool                                           // reached its maximum while growing, per axis
+	content                                    [2]float32                                        // what the content needs, per axis, padding included
+	scroll                                     *scrollMemory                                     // set on scroll areas
+	field                                      *fieldPaint                                       // set on text fields
+	painter                                    func(area draw2d.Rectangle, drawing *draw2d.List) // set on painted boxes (Paint)
+	description                                int                                               // 1 + its index in the screen reader's descriptions; 0 = none
+	lineBox                                    float32                                           // a text's height in the layout: its letters, or the theme's line height
+	filledWithPrimary                          bool                                              // a primary button: its focus ring goes inside
 }
 
 // intrinsic is the size of what the element shows itself (not its children) along an axis.

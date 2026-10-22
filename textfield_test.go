@@ -17,7 +17,7 @@ func (clipboard *fakeClipboard) SetClipboardText(text string) { clipboard.text =
 // typeText types characters in one step, as the backend reports them after the keyboard layout.
 func (h *harness) typeText(text string, build func(ui *Context)) {
 	for _, character := range text {
-		h.state.AddCharacter(character)
+		h.state.Feed().AddCharacter(character)
 	}
 	h.frame(build)
 }
@@ -25,13 +25,13 @@ func (h *harness) typeText(text string, build func(ui *Context)) {
 // key presses a key, with modifiers held, for one step.
 func (h *harness) key(key input.Key, build func(ui *Context), modifiers ...input.Key) {
 	for _, modifier := range modifiers {
-		h.state.SetKey(modifier, true)
+		h.state.Feed().SetKey(modifier, true)
 	}
-	h.state.SetKey(key, true)
+	h.state.Feed().SetKey(key, true)
 	h.frame(build)
-	h.state.SetKey(key, false)
+	h.state.Feed().SetKey(key, false)
 	for _, modifier := range modifiers {
-		h.state.SetKey(modifier, false)
+		h.state.Feed().SetKey(modifier, false)
 	}
 }
 
@@ -353,13 +353,13 @@ func TestAnIdleInterfaceAsksForNoFramesButACaretBlinks(t *testing.T) {
 	}
 	h.frame(build)
 	h.frame(build)
-	if _, wanted := h.state.TakeFrameRequest(); wanted {
+	if _, wanted := h.state.Feed().TakeFrameRequest(); wanted {
 		t.Fatal("nothing moves, so nothing needs drawing")
 	}
 	h.clickInside(scoped("Light", "Name"), build)
 	*now = now.Add(200 * time.Millisecond)
 	h.frame(build)
-	delay, wanted := h.state.TakeFrameRequest()
+	delay, wanted := h.state.Feed().TakeFrameRequest()
 	if !wanted || delay != caretBlink-200*time.Millisecond {
 		t.Fatalf("the caret asks for its next blink: %v, %v", delay, wanted)
 	}

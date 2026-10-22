@@ -39,7 +39,7 @@ func newAuditHarness(b *testing.B, lighthouses int) *auditHarness {
 	if lighthouses > 0 {
 		harness.app.lighthouses = manyLighthouses(lighthouses)
 	}
-	state.MoveCursor(10, 700) // the status bar: over the interface, on no control
+	state.Feed().MoveCursor(10, 700) // the status bar: over the interface, on no control
 	return harness
 }
 
@@ -61,7 +61,7 @@ func (harness *auditHarness) frame() {
 	harness.context.Begin(harness.state)
 	harness.app.draw(harness.context)
 	harness.context.End()
-	harness.state.EndFrame()
+	harness.state.Feed().EndFrame()
 }
 
 func (harness *auditHarness) warm() {
@@ -98,7 +98,7 @@ func BenchmarkAuditPointerOverRows(b *testing.B) {
 	harness := newAuditHarness(b, 0)
 	runAudit(b, harness, func(frame int) {
 		y := 330 + float64(frame%40)*8
-		harness.state.MoveCursor(500, y)
+		harness.state.Feed().MoveCursor(500, y)
 	})
 }
 
@@ -116,17 +116,17 @@ func BenchmarkAuditTypingInName(b *testing.B) {
 	harness.frame()
 	harness.context.Focus("0", "Name")
 	harness.frame()
-	harness.state.SetKey(input.KeyEnd, true) // caret to the end
+	harness.state.Feed().SetKey(input.KeyEnd, true) // caret to the end
 	harness.frame()
-	harness.state.SetKey(input.KeyEnd, false)
+	harness.state.Feed().SetKey(input.KeyEnd, false)
 	runAudit(b, harness, func(frame int) {
 		if frame%2 == 0 {
-			harness.state.AddCharacter('a')
+			harness.state.Feed().AddCharacter('a')
 			return
 		}
-		harness.state.SetKey(input.KeyBackspace, true)
-		harness.state.SetKey(input.KeyBackspace, false)
-		harness.state.RepeatKey(input.KeyBackspace)
+		harness.state.Feed().SetKey(input.KeyBackspace, true)
+		harness.state.Feed().SetKey(input.KeyBackspace, false)
+		harness.state.Feed().RepeatKey(input.KeyBackspace)
 	})
 }
 
@@ -143,7 +143,7 @@ func benchmarkMany(b *testing.B, count int, moving bool) {
 	harness := newAuditHarness(b, count)
 	var before func(int)
 	if moving {
-		before = func(frame int) { harness.state.MoveCursor(500, 330+float64(frame%40)*8) }
+		before = func(frame int) { harness.state.Feed().MoveCursor(500, 330+float64(frame%40)*8) }
 	}
 	runAudit(b, harness, before)
 }
@@ -166,7 +166,7 @@ func BenchmarkAuditPainter(b *testing.B) {
 				harness = newAuditHarness(b, 0)
 			}
 			harness.warm()
-			painter, err := overlay.NewPainter()
+			painter, err := overlay.NewPainter(overlay.Fonts{})
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -216,10 +216,10 @@ func TestAuditMeasureMisses(t *testing.T) {
 		{name: "typing in name", count: 0, setUp: func(harness *auditHarness) { harness.context.Focus("0", "Name") },
 			step: func(harness *auditHarness, frame int) {
 				if frame%2 == 0 {
-					harness.state.AddCharacter('a')
+					harness.state.Feed().AddCharacter('a')
 				} else {
-					harness.state.SetKey(input.KeyBackspace, true)
-					harness.state.SetKey(input.KeyBackspace, false)
+					harness.state.Feed().SetKey(input.KeyBackspace, true)
+					harness.state.Feed().SetKey(input.KeyBackspace, false)
 				}
 			}},
 		{name: "1000 lighthouses", count: 1000},
@@ -228,7 +228,7 @@ func TestAuditMeasureMisses(t *testing.T) {
 		{name: "3000 lighthouses", count: 3000},
 	}
 	for _, scenario := range scenarios {
-		inner, err := overlay.NewMeasurer()
+		inner, err := overlay.NewMeasurer(overlay.Fonts{})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -241,7 +241,7 @@ func TestAuditMeasureMisses(t *testing.T) {
 		if scenario.count > 0 {
 			harness.app.lighthouses = manyLighthouses(scenario.count)
 		}
-		state.MoveCursor(10, 700)
+		state.Feed().MoveCursor(10, 700)
 		harness.frame()
 		if scenario.setUp != nil {
 			scenario.setUp(harness)
@@ -298,7 +298,7 @@ func TestAuditDrawListComposition(t *testing.T) {
 				}
 			}
 		}
-		painter, err := overlay.NewPainter()
+		painter, err := overlay.NewPainter(overlay.Fonts{})
 		if err != nil {
 			t.Fatal(err)
 		}

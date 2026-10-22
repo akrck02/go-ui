@@ -193,7 +193,7 @@ func (ui *Context) paintFocusRing(element *element) {
 		return
 	}
 	area := element.rect
-	ring := draw2d.Rect{X: area.X - width, Y: area.Y - width, Width: area.Width + 2*width, Height: area.Height + 2*width}
+	ring := draw2d.Rectangle{X: area.X - width, Y: area.Y - width, Width: area.Width + 2*width, Height: area.Height + 2*width}
 	ui.drawing.Rectangle(ring, element.look.Radius+width, draw2d.Transparent, theme.FocusRing, width)
 }
 
@@ -206,10 +206,10 @@ func (ui *Context) shrinks(element *element) bool {
 
 // scaleCommands draws what was painted since first smaller (or larger) around the centre of area:
 // only the drawing changes, so the layout and where the pointer reaches stay where they were.
-func (ui *Context) scaleCommands(first int, area draw2d.Rect, scale float32) {
+func (ui *Context) scaleCommands(first int, area draw2d.Rectangle, scale float32) {
 	centreX, centreY := area.X+area.Width/2, area.Y+area.Height/2
-	around := func(rect draw2d.Rect) draw2d.Rect {
-		return draw2d.Rect{X: centreX + (rect.X-centreX)*scale, Y: centreY + (rect.Y-centreY)*scale,
+	around := func(rect draw2d.Rectangle) draw2d.Rectangle {
+		return draw2d.Rectangle{X: centreX + (rect.X-centreX)*scale, Y: centreY + (rect.Y-centreY)*scale,
 			Width: rect.Width * scale, Height: rect.Height * scale}
 	}
 	commands := ui.drawing.Commands[first:]

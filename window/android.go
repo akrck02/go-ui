@@ -8,7 +8,7 @@ import (
 	"github.com/akrck02/go-renderer/android"
 	"github.com/akrck02/go-renderer/gles"
 	"github.com/akrck02/go-renderer/input"
-	"github.com/akrck02/go-renderer/models"
+	rendererwindow "github.com/akrck02/go-renderer/window"
 	ui "github.com/akrck02/go-ui"
 )
 
@@ -29,7 +29,9 @@ func SystemPalettes() (Palettes, bool) {
 // Notify shows a notification in the phone's shade, even while the program is in the background:
 // a title and a line, and touching it opens the program. The same id replaces the one shown with
 // it before. It returns false when it could not, most often because notifications are not allowed.
-func Notify(id int, title, text string) bool { return android.Notify(id, title, text) }
+func Notify(id int, title, text string) bool {
+	return android.Notify(android.MessagesChannel(), id, title, text)
+}
 
 // NotificationsAllowed tells whether the program may show notifications.
 func NotificationsAllowed() bool { return android.NotificationsAllowed() }
@@ -71,7 +73,7 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 	app := interfaceApplication(context, options, build, &shown, view)
 	update := app.Update
 	reader := &screenReader{driven: options.Driver != nil}
-	app.Update = func(app *models.Application, step float64) error {
+	app.Update = func(app *rendererwindow.Application, step float64) error {
 		bars := android.CurrentInsets()
 		context.SetInsets(ui.Insets{Top: bars.Top, Bottom: bars.Bottom, Left: bars.Left, Right: bars.Right})
 		context.SetTextScale(android.TextScale()) // the person's text size, from the phone's settings
@@ -85,7 +87,7 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 	}
 	var flat *gles.FlatRenderer
 	var scene *gles.SceneRenderer
-	draw := func(gl android.GL, fresh bool) error {
+	draw := func(functions android.GL, fresh bool) error {
 		if fresh {
 			// a new graphics context (the first frame, or back from the background): new renderers
 			flat, scene = nil, nil
@@ -94,7 +96,7 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 		width, height, scale := frameSize(app)
 		if current := view.view; current != nil {
 			if scene == nil {
-				made, err := gles.NewSceneRenderer(gl)
+				made, err := gles.NewSceneRenderer(functions, options.Fonts)
 				if err != nil {
 					return err
 				}
@@ -105,7 +107,7 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 			return nil
 		}
 		if flat == nil {
-			made, err := gles.NewFlatRenderer(gl)
+			made, err := gles.NewFlatRenderer(functions, options.Fonts)
 			if err != nil {
 				return err
 			}

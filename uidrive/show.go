@@ -34,7 +34,7 @@ func (player *Player) Show(drawing *draw2d.List) {
 	drawing.SetLayer(ShownLayer)
 	defer drawing.SetLayer(0)
 	if area := player.found.Rect; area.Width > 0 && area.Height > 0 {
-		outline := draw2d.Rect{X: area.X - outlineMargin, Y: area.Y - outlineMargin,
+		outline := draw2d.Rectangle{X: area.X - outlineMargin, Y: area.Y - outlineMargin,
 			Width: area.Width + 2*outlineMargin, Height: area.Height + 2*outlineMargin}
 		drawing.Rectangle(outline, outlineRounding, noColour, outlineColour, outlineBorder)
 	}
@@ -51,6 +51,6 @@ func (player *Player) Show(drawing *draw2d.List) {
 }
 
 // circle is the square a circle of a radius around a place fills.
-func circle(x, y, radius float32) draw2d.Rect {
-	return draw2d.Rect{X: x - radius, Y: y - radius, Width: 2 * radius, Height: 2 * radius}
+func circle(x, y, radius float32) draw2d.Rectangle {
+	return draw2d.Rectangle{X: x - radius, Y: y - radius, Width: 2 * radius, Height: 2 * radius}
 }

@@ -13,21 +13,21 @@ const longPressHold = time.Second
 // TouchDown puts a finger on the screen and runs a frame. The first finger down also moves and
 // presses the pointer, as a phone's backend does, so controls answer it as a click.
 func (window *Window) TouchDown(finger int64, x, y float32) {
-	defer window.doing("Touch", draw2d.Rect{}, false)()
+	defer window.doing("Touch", draw2d.Rectangle{}, false)()
 	window.hand.TouchDown(window.state, finger, x, y)
 	window.step()
 }
 
 // TouchMove moves a finger that is down and runs a frame.
 func (window *Window) TouchMove(finger int64, x, y float32) {
-	defer window.doing("Move a finger", draw2d.Rect{}, false)()
+	defer window.doing("Move a finger", draw2d.Rectangle{}, false)()
 	window.hand.TouchMove(window.state, finger, x, y)
 	window.step()
 }
 
 // TouchUp lifts a finger and runs a frame.
 func (window *Window) TouchUp(finger int64) {
-	defer window.doing("Lift a finger", draw2d.Rect{}, false)()
+	defer window.doing("Lift a finger", draw2d.Rectangle{}, false)()
 	window.hand.TouchUp(window.state, finger)
 	window.step()
 }

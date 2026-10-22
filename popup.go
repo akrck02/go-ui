@@ -21,7 +21,7 @@ const (
 // popup adds a floating box under the anchor (or above it when there is no room below), at least
 // minimumWidth wide. A passive popup never takes the mouse (a tooltip). Describe after it still
 // describes the control it opened from, not the popup's last item.
-func (ui *Context) popup(id ID, anchor draw2d.Rect, minimumWidth float32, passive bool, look Look, content func()) {
+func (ui *Context) popup(id ID, anchor draw2d.Rectangle, minimumWidth float32, passive bool, look Look, content func()) {
 	outside, opener := ui.open, ui.finished
 	ui.open = nil
 	layout := Layout{Direction: Vertical, Width: Fit().Between(minimumWidth, 0), Padding: Pad(popupPadding)}
@@ -37,7 +37,7 @@ func (ui *Context) popup(id ID, anchor draw2d.Rect, minimumWidth float32, passiv
 }
 
 // centredPopup is a popup centred on its anchor's x: a bar over what it acts on.
-func (ui *Context) centredPopup(id ID, anchor draw2d.Rect, look Look, content func()) {
+func (ui *Context) centredPopup(id ID, anchor draw2d.Rectangle, look Look, content func()) {
 	ui.popup(id, anchor, 0, false, look, content)
 	for index := range ui.roots {
 		if ui.roots[index].id == id {
@@ -82,7 +82,7 @@ func (ui *Context) Tooltip(text string) {
 	}
 	theme := ui.Theme
 	x, y := float32(ui.state.CursorX), float32(ui.state.CursorY)
-	anchor := draw2d.Rect{X: x + 4, Y: y + 12, Width: 0, Height: 0}
+	anchor := draw2d.Rectangle{X: x + 4, Y: y + 12, Width: 0, Height: 0}
 	look := Look{Fill: theme.Ink.WithAlpha(0.92), Radius: theme.ControlRadius}
 	ui.popup(childID(ui.interacted, "##tooltip"), anchor, 0, true, look, func() {
 		ui.Box(Layout{Padding: PadXY(4, 1)}, func() {
@@ -108,7 +108,7 @@ func (ui *Context) Toast(text string, warning bool) {
 	ui.open = nil
 	layout := Layout{Direction: Horizontal, Padding: PadXY(12, 8), Gap: 8, AlignY: Center}
 	index := ui.openElement(element{id: id, kind: boxElement, layout: layout, look: Look{Fill: theme.Ink.WithAlpha(0.94), Radius: theme.ControlRadius + 2, Shadow: true}})
-	anchor := draw2d.Rect{X: ui.width / 2, Y: ui.height - 64 - 2*theme.TextSize}
+	anchor := draw2d.Rectangle{X: ui.width / 2, Y: ui.height - 64 - 2*theme.TextSize}
 	ui.roots = append(ui.roots, root{id: id, element: index, popup: true, passive: true, centred: true, anchor: anchor})
 	ui.IconSized(icon, theme.TextSize, iconColour)
 	ui.Text(text, TextStyle{Color: theme.Surface})

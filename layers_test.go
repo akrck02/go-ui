@@ -121,16 +121,16 @@ func TestAPlainFieldDrawsNoBoxOfItsOwn(t *testing.T) {
 
 func TestAPaintedBoxIsGivenItsArea(t *testing.T) {
 	h := newHarness(t)
-	var given draw2d.Rect
+	var given draw2d.Rectangle
 	h.frame(func(ui *Context) {
 		ui.Box(Layout{Padding: Pad(10)}, func() {
-			ui.Paint(Layout{Width: Fixed(40), Height: Fixed(30)}, func(area draw2d.Rect, drawing *draw2d.List) {
+			ui.Paint(Layout{Width: Fixed(40), Height: Fixed(30)}, func(area draw2d.Rectangle, drawing *draw2d.List) {
 				given = area
-				drawing.Rectangle(area, 4, draw2d.Hex("#ff0000"), draw2d.Transparent, 0)
+				drawing.Rectangle(area, 4, draw2d.MustHex("#ff0000"), draw2d.Transparent, 0)
 			})
 		})
 	})
-	if given != (draw2d.Rect{X: 10, Y: 10, Width: 40, Height: 30}) {
+	if given != (draw2d.Rectangle{X: 10, Y: 10, Width: 40, Height: 30}) {
 		t.Fatalf("painted at %+v; want the box's laid out area", given)
 	}
 	painted := false
@@ -180,7 +180,7 @@ func TestAModalCoversAnOverlay(t *testing.T) {
 
 func TestLayersOpenedWithinAnAreaAreLaidOutInIt(t *testing.T) {
 	h := newHarness(t)
-	area := draw2d.Rect{X: 200, Y: 100, Width: 400, Height: 240}
+	area := draw2d.Rectangle{X: 200, Y: 100, Width: 400, Height: 240}
 	build := func(ui *Context) {
 		ui.Within(area, func() {
 			ui.Overlay("corner", LayerOptions{AlignX: End, AlignY: End, Padding: Pad(10)}, func() { ui.Label("account") })
@@ -203,7 +203,7 @@ func TestLayersOpenedWithinAnAreaAreLaidOutInIt(t *testing.T) {
 
 func TestAPanelOpenedWithinAnAreaIsPlacedFromItsCorner(t *testing.T) {
 	h := newHarness(t)
-	area := draw2d.Rect{X: 200, Y: 100, Width: 400, Height: 240}
+	area := draw2d.Rectangle{X: 200, Y: 100, Width: 400, Height: 240}
 	build := func(ui *Context) {
 		ui.Within(area, func() {
 			ui.PanelWith("Account", PanelOptions{X: 16, Y: 16, Width: Fixed(150), Locked: true}, func() { ui.Label("name") })

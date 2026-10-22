@@ -23,25 +23,25 @@ type palette struct {
 
 func lightPalette() palette {
 	return palette{
-		primary: draw2d.Hex("#6750a4"), onPrimary: draw2d.Hex("#ffffff"),
-		primaryContainer: draw2d.Hex("#eaddff"), onPrimaryContainer: draw2d.Hex("#21005d"),
-		secondaryContainer: draw2d.Hex("#e8def8"), onSecondaryContainer: draw2d.Hex("#1d192b"),
-		surface: draw2d.Hex("#fef7ff"), onSurface: draw2d.Hex("#1d1b20"), onSurfaceVariant: draw2d.Hex("#49454f"),
-		containerLow: draw2d.Hex("#f7f2fa"), container: draw2d.Hex("#f3edf7"),
-		containerHigh: draw2d.Hex("#ece6f0"), containerHighest: draw2d.Hex("#e6e0e9"),
-		outline: draw2d.Hex("#79747e"), outlineVariant: draw2d.Hex("#cac4d0"), scrim: draw2d.Hex("#fef7ffcc"),
+		primary: draw2d.MustHex("#6750a4"), onPrimary: draw2d.MustHex("#ffffff"),
+		primaryContainer: draw2d.MustHex("#eaddff"), onPrimaryContainer: draw2d.MustHex("#21005d"),
+		secondaryContainer: draw2d.MustHex("#e8def8"), onSecondaryContainer: draw2d.MustHex("#1d192b"),
+		surface: draw2d.MustHex("#fef7ff"), onSurface: draw2d.MustHex("#1d1b20"), onSurfaceVariant: draw2d.MustHex("#49454f"),
+		containerLow: draw2d.MustHex("#f7f2fa"), container: draw2d.MustHex("#f3edf7"),
+		containerHigh: draw2d.MustHex("#ece6f0"), containerHighest: draw2d.MustHex("#e6e0e9"),
+		outline: draw2d.MustHex("#79747e"), outlineVariant: draw2d.MustHex("#cac4d0"), scrim: draw2d.MustHex("#fef7ffcc"),
 	}
 }
 
 func darkPalette() palette {
 	return palette{
-		primary: draw2d.Hex("#d0bcff"), onPrimary: draw2d.Hex("#381e72"),
-		primaryContainer: draw2d.Hex("#4f378b"), onPrimaryContainer: draw2d.Hex("#eaddff"),
-		secondaryContainer: draw2d.Hex("#4a4458"), onSecondaryContainer: draw2d.Hex("#e8def8"),
-		surface: draw2d.Hex("#141218"), onSurface: draw2d.Hex("#e6e0e9"), onSurfaceVariant: draw2d.Hex("#cac4d0"),
-		containerLow: draw2d.Hex("#1d1b20"), container: draw2d.Hex("#211f26"),
-		containerHigh: draw2d.Hex("#2b2930"), containerHighest: draw2d.Hex("#36343b"),
-		outline: draw2d.Hex("#938f99"), outlineVariant: draw2d.Hex("#49454f"), scrim: draw2d.Hex("#141218cc"),
+		primary: draw2d.MustHex("#d0bcff"), onPrimary: draw2d.MustHex("#381e72"),
+		primaryContainer: draw2d.MustHex("#4f378b"), onPrimaryContainer: draw2d.MustHex("#eaddff"),
+		secondaryContainer: draw2d.MustHex("#4a4458"), onSecondaryContainer: draw2d.MustHex("#e8def8"),
+		surface: draw2d.MustHex("#141218"), onSurface: draw2d.MustHex("#e6e0e9"), onSurfaceVariant: draw2d.MustHex("#cac4d0"),
+		containerLow: draw2d.MustHex("#1d1b20"), container: draw2d.MustHex("#211f26"),
+		containerHigh: draw2d.MustHex("#2b2930"), containerHighest: draw2d.MustHex("#36343b"),
+		outline: draw2d.MustHex("#938f99"), outlineVariant: draw2d.MustHex("#49454f"), scrim: draw2d.MustHex("#141218cc"),
 	}
 }
 
@@ -66,13 +66,13 @@ func materialTheme(colours palette, dark bool) ui.Theme {
 //go:embed fonts/Roboto-Regular.ttf fonts/Roboto-Medium.ttf fonts/Roboto-Bold.ttf
 var robotoFiles embed.FS
 
-// useRoboto draws every text in Roboto, Android's own typeface (SIL Open Font License, in fonts/).
-// It must run before the interface is made.
-func useRoboto() {
+// roboto is Roboto, Android's own typeface (SIL Open Font License, in fonts/), for every text.
+func roboto() overlay.Fonts {
+	// the files are embedded: reading them cannot fail
 	regular, _ := robotoFiles.ReadFile("fonts/Roboto-Regular.ttf")
 	medium, _ := robotoFiles.ReadFile("fonts/Roboto-Medium.ttf")
 	bold, _ := robotoFiles.ReadFile("fonts/Roboto-Bold.ttf")
-	overlay.UseFonts(overlay.Fonts{Regular: regular, Medium: medium, Bold: bold})
+	return overlay.Fonts{Regular: regular, Medium: medium, Bold: bold}
 }
 
 // material draws the pieces with one palette.

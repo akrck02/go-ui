@@ -85,7 +85,7 @@ func displayText(label string) string {
 // around it, outermost first: Area("Properties", "Apply") is the Apply button of the Properties
 // panel (panels open a scope with their title). Programs use it to place things next to a
 // control; tests and demonstrations, to click it.
-func (ui *Context) Area(path ...string) (draw2d.Rect, bool) {
+func (ui *Context) Area(path ...string) (draw2d.Rectangle, bool) {
 	area, found := ui.previous[idForPath(path)]
 	return area, found
 }

@@ -14,29 +14,29 @@ type root struct {
 	element int
 	panel   *panelMemory // nil for the screen and popups
 	dock    Edge
-	popup   bool         // floats over everything, next to anchor
-	sheet   bool         // covers the window over every panel, under the popups (see Sheet)
-	passive bool         // a popup that never takes the mouse (a tooltip)
-	centred bool         // a popup centred on its anchor's x (a toast)
-	anchor  draw2d.Rect  // what a popup opens next to
-	placed  bool         // an overlay, placed in the window by options (see Overlay)
-	options LayerOptions // where an overlay goes, and how a modal or an overlay leaves
+	popup   bool             // floats over everything, next to anchor
+	sheet   bool             // covers the window over every panel, under the popups (see Sheet)
+	passive bool             // a popup that never takes the mouse (a tooltip)
+	centred bool             // a popup centred on its anchor's x (a toast)
+	anchor  draw2d.Rectangle // what a popup opens next to
+	placed  bool             // an overlay, placed in the window by options (see Overlay)
+	options LayerOptions     // where an overlay goes, and how a modal or an overlay leaves
 	// bounds is where an overlay or a modal is laid out, when it was opened Within an area
 	// (bounded); otherwise the window
-	bounds  draw2d.Rect
+	bounds  draw2d.Rectangle
 	bounded bool
 }
 
 // boundsOf is the area a root is laid out in: its bounds, or the whole window.
-func (ui *Context) boundsOf(placed *root) draw2d.Rect {
+func (ui *Context) boundsOf(placed *root) draw2d.Rectangle {
 	if placed.bounded {
 		return placed.bounds
 	}
-	return draw2d.Rect{Width: ui.width, Height: ui.height}
+	return draw2d.Rectangle{Width: ui.width, Height: ui.height}
 }
 
 // sizeAlong is a rectangle's width or height.
-func sizeAlong(area draw2d.Rect, axis Direction) float32 {
+func sizeAlong(area draw2d.Rectangle, axis Direction) float32 {
 	if axis == Horizontal {
 		return area.Width
 	}

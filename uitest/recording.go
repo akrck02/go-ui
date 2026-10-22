@@ -36,7 +36,7 @@ type RecordedError struct {
 // action that ran it with the element it found.
 type RecordedFrame struct {
 	Action     string // `Click "Save"`, empty for a frame run on its own
-	Target     draw2d.Rect
+	Target     draw2d.Rectangle
 	HasTarget  bool
 	HasPointer bool // the pointer has been somewhere in the window
 	PointerX   float32
@@ -56,7 +56,7 @@ type recorder struct {
 	recording Recording
 	folder    string
 	action    string
-	target    draw2d.Rect
+	target    draw2d.Rectangle
 	hasTarget bool
 }
 
@@ -83,7 +83,7 @@ func (window *Window) startRecording(test testing.TB, width, height float32) {
 
 // doing names the action the next frames belong to, and the element it found; the function it
 // returns ends the action. An action inside another (a Click's Press) keeps the outer one's name.
-func (window *Window) doing(action string, target draw2d.Rect, hasTarget bool) func() {
+func (window *Window) doing(action string, target draw2d.Rectangle, hasTarget bool) func() {
 	recording := window.recording
 	if recording == nil || recording.action != "" {
 		return func() {}

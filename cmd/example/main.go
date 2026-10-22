@@ -70,7 +70,7 @@ func main() {
 		interfaceContext.End()
 		island.ShowLamp(world, light.on)
 	}
-	if err := viewer.Run(world, options, "go-ui example", update, 0); err != nil {
+	if err := viewer.Run(world, options, "go-ui example", update); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -86,9 +86,9 @@ func clickColourField(interfaceContext *ui.Context, state *input.State, steps in
 	if !found {
 		return
 	}
-	state.MoveCursor(float64(field.X+field.Width/2), float64(field.Y+field.Height/2))
-	state.SetButton(input.MouseLeft, true)
-	state.SetButton(input.MouseLeft, false)
+	state.Feed().MoveCursor(float64(field.X+field.Width/2), float64(field.Y+field.Height/2))
+	state.Feed().SetButton(input.MouseLeft, true)
+	state.Feed().SetButton(input.MouseLeft, false)
 }
 
 // propertiesPanel is the panel on the cover of go-ui's design: tabs, a select, a checkbox, a

@@ -42,9 +42,9 @@ AccessibleNode is one thing a screen reader can read and act on.
 
 ```go
 type AccessibleNode struct {
-	ID     ID          // the same from one frame to the next while the thing stays
-	Parent ID          // the scroll area it is in, or 0 for the window
-	Area   draw2d.Rect // where it shows, in layout pixels: the part a scroll area does not hide
+	ID     ID               // the same from one frame to the next while the thing stays
+	Parent ID               // the scroll area it is in, or 0 for the window
+	Area   draw2d.Rectangle // where it shows, in layout pixels: the part a scroll area does not hide
 	Description
 	Pressable     bool // a double tap presses it (ReaderPress)
 	LongPressable bool // the program reads LongPressed after it (ReaderLongPress)
@@ -75,7 +75,7 @@ Backdrop draws a box's background in its area.
 
 ```go
 type Backdrop interface {
-	Paint(area draw2d.Rect, drawing *draw2d.List)
+	Paint(area draw2d.Rectangle, drawing *draw2d.List)
 }
 ```
 
@@ -126,11 +126,12 @@ type Context struct {
 
 | Function or method | |
 |---|---|
-| `func New() (*Context, error)` | New returns an interface that measures text with go-renderer's fonts, in the default theme. |
+| `func New() (*Context, error)` | New returns an interface that measures text with go-renderer's default fonts, in the default theme. |
+| `func NewInFonts(fonts overlay.Fonts) (*Context, error)` | NewInFonts returns an interface that measures text in these fonts (a brand's, say), in the default theme. |
 | `func NewWithMeasurer(measurer draw2d.Measurer) *Context` | NewWithMeasurer returns an interface that measures text with a measurer of your choice: tests use a fake one, so they need no fonts. |
 | `func (ui *Context) Animate(name string, target float32, duration time.Duration) float32` | Animate eases a value towards a target over a duration, starting again from where it is when the target changes: a switch's handle going across, a tab's underline moving to the tab chosen. |
 | `func (ui *Context) Appear(name string, duration time.Duration) float32` | Appear goes from 0 to 1 over a duration from the frame something was first shown after it was not: a dialog fading and rising in, a note sliding up. |
-| `func (ui *Context) Area(path ...string) (draw2d.Rect, bool)` | Area tells where a control was drawn in the last frame, found by its label and the scopes around it, outermost first: Area("Properties", "Apply") is the Apply button of the Properties panel (panels open a scope with their title). |
+| `func (ui *Context) Area(path ...string) (draw2d.Rectangle, bool)` | Area tells where a control was drawn in the last frame, found by its label and the scopes around it, outermost first: Area("Properties", "Apply") is the Apply button of the Properties panel (panels open a scope with their title). |
 | `func (ui *Context) Back() bool` | Back answers the system's back (a phone's back gesture or button) in this frame, and tells whether there was one: the part of the interface the person is in goes back (a screen returns to the one before) and returns true. |
 | `func (ui *Context) Begin(state *input.State)` | Begin starts describing the interface for a frame, with the frame's input. |
 | `func (ui *Context) Box(layout Layout, content func())` | Box adds a box with a layout, and what content adds goes inside it. |
@@ -178,7 +179,7 @@ type Context struct {
 | `func (ui *Context) Modal(name string, options LayerOptions, content func()) (dismissed bool)` | Modal shows content over everything with what is behind it dimmed, as Sheet does, but drawn entirely by the program: a dialog, a sheet from the bottom of a phone. |
 | `func (ui *Context) NumberField(name string, value *float32, minimum, maximum, step float32, format string) bool` | NumberField adds a number between minimum and maximum, shown with format (for example "%.0f nm"), with buttons to take a step off or add one. |
 | `func (ui *Context) Overlay(name string, options LayerOptions, content func())` | Overlay shows content over the screen and its panels without dimming or blocking what is behind it: a note at the bottom with an action in it, a floating toolbar. |
-| `func (ui *Context) Paint(layout Layout, paint func(area draw2d.Rect, drawing *draw2d.List))` | Paint adds a box laid out as any other, which the program paints itself once the layout knows where it is: a shape go-ui has no control for (a loading indicator, a wave, a chart). |
+| `func (ui *Context) Paint(layout Layout, paint func(area draw2d.Rectangle, drawing *draw2d.List))` | Paint adds a box laid out as any other, which the program paints itself once the layout knows where it is: a shape go-ui has no control for (a loading indicator, a wave, a chart). |
 | `func (ui *Context) Panel(title string, content func())` | Panel adds a floating panel with a title bar; drag the bar to move it, click the chevron to fold it. |
 | `func (ui *Context) PanelWith(title string, options PanelOptions, content func())` | PanelWith adds a panel placed and sized by options. |
 | `func (ui *Context) Pointer() (x, y float32)` | Pointer is where the pointer is, in the window's layout pixels: a finger on a touch screen. |
@@ -229,7 +230,7 @@ type Context struct {
 | `func (ui *Context) Typing() bool` | Typing tells whether a text field had the focus in the last frame: a phone shows its on-screen keyboard while it does. |
 | `func (ui *Context) WantsKeyboard() bool` | WantsKeyboard tells whether a control had the keyboard in the last frame (a text field being typed in). |
 | `func (ui *Context) WantsMouse() bool` | WantsMouse tells whether the interface used the mouse in the last frame: the pointer was over a panel or a control, or dragging one. |
-| `func (ui *Context) Within(area draw2d.Rect, content func())` | Within lays out the panels, overlays and modals content opens in an area of the window instead of the whole window (a panel's X and Y count from the area's corner): an interface that a program shows inside a view of its own (a game played inside an editor). |
+| `func (ui *Context) Within(area draw2d.Rectangle, content func())` | Within lays out the panels, overlays and modals content opens in an area of the window instead of the whole window (a panel's X and Y count from the area's corner): an interface that a program shows inside a view of its own (a game played inside an editor). |
 
 ### Description
 
@@ -640,7 +641,7 @@ type Swipe struct {
 	Released bool    // the finger let go in this frame; Offset and Velocity are its last
 	// Area is where the box was laid out in the last frame (zero in its first): its width is a
 	// page's, for content that moves a page at a time.
-	Area draw2d.Rect
+	Area draw2d.Rectangle
 }
 ```
 

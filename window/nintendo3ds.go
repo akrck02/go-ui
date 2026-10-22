@@ -7,9 +7,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/akrck02/go-renderer/ctr"
 	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
+	"github.com/akrck02/go-renderer/nintendo3ds"
 	ui "github.com/akrck02/go-ui"
 )
 
@@ -18,15 +18,15 @@ import (
 // slider, and the interface on the bottom one, the touch screen, whose touches are the pointer.
 // SELECT swaps them: the scene goes below, where it can be touched, and the interface above, to be
 // read. START ends the program. The cross is the arrow keys, L and R minus and plus, A Enter and B
-// Escape (ctr.Controls).
+// Escape (nintendo3ds.Controls).
 
 // buttonsPressed are the console's buttons pressed this frame (ButtonsPressed).
-var buttonsPressed ctr.Buttons
+var buttonsPressed nintendo3ds.Buttons
 
 // ButtonsPressed are the console's buttons pressed this frame, for a program that answers them
 // itself (A to pick, B to go back) whatever the interface does with the keys they stand for.
 // Only on the 3DS.
-func ButtonsPressed() ctr.Buttons { return buttonsPressed }
+func ButtonsPressed() nintendo3ds.Buttons { return buttonsPressed }
 
 // Wake: the console draws every frame, so there is nothing to wake.
 func Wake() {}
@@ -57,22 +57,22 @@ const separationAtFullSlider = 0.03
 // RunWith is Run with an interface context of your own. It returns when START is pressed or the
 // system asks the program to close (the HOME menu, the power button).
 func RunWith(context *ui.Context, options Options, build func(context *ui.Context)) error {
-	top, err := ctr.Open()
+	top, err := nintendo3ds.OpenScreen()
 	if err != nil {
 		return err
 	}
 	defer top.Close()
-	bottom, err := ctr.OpenBottomScreen()
+	bottom, err := nintendo3ds.OpenSecondScreen()
 	if err != nil {
 		return err
 	}
-	flat, err := ctr.NewFlatRenderer(bottom)
+	flat, err := nintendo3ds.NewFlatRenderer(bottom, options.Fonts)
 	if err != nil {
 		return err
 	}
 	run := consoleRun{context: context, options: options, build: build, top: top, bottom: bottom, flat: flat, state: input.NewState()}
 	if options.Scene != nil {
-		if run.scene, err = ctr.NewSceneRenderer(top); err != nil {
+		if run.scene, err = nintendo3ds.NewSceneRenderer(top); err != nil {
 			return err
 		}
 	}
@@ -88,12 +88,12 @@ type consoleRun struct {
 	context  *ui.Context
 	options  Options
 	build    func(context *ui.Context)
-	top      *ctr.Screen
-	bottom   *ctr.BottomScreen
-	flat     *ctr.FlatRenderer
-	scene    *ctr.SceneRenderer
+	top      *nintendo3ds.Screen
+	bottom   *nintendo3ds.SecondScreen
+	flat     *nintendo3ds.FlatRenderer
+	scene    *nintendo3ds.SceneRenderer
 	state    *input.State
-	controls ctr.Controls
+	controls nintendo3ds.Controls
 	swapped  bool // the scene below and the interface above
 	// forScene and keysOnly are the input the scene and the interface get, kept here: made in
 	// step, they would go to the heap every frame
@@ -102,13 +102,13 @@ type consoleRun struct {
 
 func (run *consoleRun) loop() {
 	last := time.Now()
-	for ctr.Running() {
-		reading := ctr.ReadControls()
-		pressed := run.controls.Pressed(reading)
-		if pressed&ctr.ButtonStart != 0 && !run.options.KeepStart || takeQuit() {
+	for nintendo3ds.Running() {
+		reading := nintendo3ds.ReadControls()
+		pressed := reading.Pressed
+		if pressed&nintendo3ds.ButtonStart != 0 && !run.options.KeepStart || takeQuit() {
 			return
 		}
-		if pressed&ctr.ButtonSelect != 0 {
+		if pressed&nintendo3ds.ButtonSelect != 0 {
 			run.swapped = !run.swapped
 		}
 		run.controls.Apply(run.state, reading)
@@ -118,7 +118,7 @@ func (run *consoleRun) loop() {
 		last = now
 		view := run.step(step)
 		run.draw(view)
-		run.state.EndFrame()
+		run.state.Feed().EndFrame()
 		// TinyGo's scheduler on the console is cooperative, and waiting for the screen happens
 		// in C, which does not yield: without this the program's other goroutines (reads in the
 		// background) would never run.
@@ -130,13 +130,13 @@ func (run *consoleRun) loop() {
 // are the interface's, and the scene gets the input the interface did not claim (the keys); with
 // the screens swapped the touches are the scene's, and the interface, shown above, only the keys.
 func (run *consoleRun) step(step float64) *SceneView {
-	interfaceWidth, sceneWidth := ctr.BottomWidth, ctr.ScreenWidth
+	interfaceWidth, sceneWidth := nintendo3ds.SecondScreenWidth, nintendo3ds.ScreenWidth
 	if run.swapped {
-		interfaceWidth, sceneWidth = ctr.ScreenWidth, ctr.BottomWidth
+		interfaceWidth, sceneWidth = nintendo3ds.ScreenWidth, nintendo3ds.SecondScreenWidth
 	}
 	shaped := func(state *input.State, width int) {
-		state.WindowWidth, state.WindowHeight = width, ctr.BottomHeight
-		state.FramebufferWidth, state.FramebufferHeight = width, ctr.BottomHeight
+		state.WindowWidth, state.WindowHeight = width, nintendo3ds.SecondScreenHeight
+		state.FramebufferWidth, state.FramebufferHeight = width, nintendo3ds.SecondScreenHeight
 	}
 	shaped(run.state, interfaceWidth)
 	driveBefore(run.options.Driver, run.state, run.context)
@@ -144,9 +144,9 @@ func (run *consoleRun) step(step float64) *SceneView {
 	if run.swapped {
 		run.keysOnly = run.state.Unclaimed()
 		keysOnly := &run.keysOnly
-		keysOnly.SetButton(input.MouseLeft, false)
+		keysOnly.Feed().SetButton(input.MouseLeft, false)
 		keysOnly.CursorX, keysOnly.CursorY, keysOnly.CursorDeltaX, keysOnly.CursorDeltaY = -1e6, -1e6, 0, 0
-		keysOnly.ClearTouches()
+		keysOnly.Feed().ClearTouches()
 		forInterface = keysOnly
 	}
 	run.context.Begin(forInterface)
@@ -161,8 +161,8 @@ func (run *consoleRun) step(step float64) *SceneView {
 	if !run.swapped {
 		// the interface has the touch screen; the scene turns with the keys, and its pointer is
 		// off it (no hand to show over what is under the finger on the other screen)
-		forScene.SetButton(input.MouseLeft, false)
-		forScene.ClearTouches()
+		forScene.Feed().SetButton(input.MouseLeft, false)
+		forScene.Feed().ClearTouches()
 		forScene.CursorX, forScene.CursorY, forScene.CursorDeltaX, forScene.CursorDeltaY = -1e6, -1e6, 0, 0
 	}
 	shaped(forScene, sceneWidth)
@@ -187,7 +187,7 @@ func (run *consoleRun) draw(view *SceneView) {
 	drawing, background := run.context.Drawing(), run.context.Theme.Background
 	times := &frameTimes
 	mark := time.Now()
-	ctr.BeginFrame()
+	nintendo3ds.BeginFrame()
 	lap(&times.WaitForGPU, &mark)
 	switch {
 	case view == nil:
@@ -203,7 +203,7 @@ func (run *consoleRun) draw(view *SceneView) {
 		times.OverScene = 0
 	default:
 		focus := distance(view.Camera.Position, view.Camera.Target)
-		separation := ctr.Slider3D() * focus * separationAtFullSlider
+		separation := nintendo3ds.DepthSlider() * focus * separationAtFullSlider
 		run.scene.PaintStereo(view.World, view.Camera, separation, focus)
 		lap(&times.Scene, &mark)
 		run.paintOverScene(view, separation > 0)
@@ -211,7 +211,7 @@ func (run *consoleRun) draw(view *SceneView) {
 		run.paintBottom(view.Below, drawing, background)
 		lap(&times.Interface, &mark)
 	}
-	ctr.EndFrame()
+	nintendo3ds.EndFrame()
 	lap(&times.Submit, &mark)
 }
 
@@ -240,7 +240,7 @@ func (run *consoleRun) paintOverScene(view *SceneView, stereo bool) {
 		run.flat.PaintOver(run.top, over)
 		return
 	}
-	for _, eye := range []ctr.Eye{ctr.LeftEye, ctr.RightEye} {
+	for _, eye := range []nintendo3ds.Eye{nintendo3ds.LeftEye, nintendo3ds.RightEye} {
 		run.top.DrawOn(eye)
 		run.flat.PaintOver(run.top, over)
 	}

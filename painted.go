@@ -7,7 +7,7 @@ import "github.com/akrck02/go-renderer/draw2d"
 // given the box's area, in window pixels, and the frame's draw list, and adds rectangles, shadows,
 // texts and icons to it; what it adds is clipped as the box is. A painting that moves asks for the
 // next frame itself (RequestFrame).
-func (ui *Context) Paint(layout Layout, paint func(area draw2d.Rect, drawing *draw2d.List)) {
+func (ui *Context) Paint(layout Layout, paint func(area draw2d.Rectangle, drawing *draw2d.List)) {
 	ui.openElement(element{kind: boxElement, layout: layout, painter: paint})
 	ui.closeElement()
 }
@@ -17,7 +17,7 @@ func (ui *Context) Paint(layout Layout, paint func(area draw2d.Rect, drawing *dr
 // Give the box a size: a picture has no size of its own in the layout. Keep the draw2d.Image
 // between frames, so its pixels are uploaded once.
 func (ui *Context) Image(picture *draw2d.Image, layout Layout, radius float32) {
-	ui.Paint(layout, func(area draw2d.Rect, drawing *draw2d.List) {
+	ui.Paint(layout, func(area draw2d.Rectangle, drawing *draw2d.List) {
 		drawing.Image(picture, area, radius, draw2d.Color{1, 1, 1, 1})
 	})
 }

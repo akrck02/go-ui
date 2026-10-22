@@ -28,5 +28,5 @@ func (live *liveInterface) frame() {
 	live.context.Begin(live.state)
 	live.build(live.context)
 	live.context.End()
-	live.state.EndFrame()
+	live.state.Feed().EndFrame()
 }

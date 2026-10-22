@@ -62,7 +62,7 @@ func TestAWrappingRowFollowsTheWidthItIsGiven(t *testing.T) {
 func TestChipsReportClicksAndRemovals(t *testing.T) {
 	h := newHarness(t)
 	clicks, removals := 0, 0
-	look := ChipLook{Fill: draw2d.Hex("#dff3e8"), Ink: draw2d.Hex("#1e7d4f")}
+	look := ChipLook{Fill: draw2d.MustHex("#dff3e8"), Ink: draw2d.MustHex("#1e7d4f")}
 	build := func(ui *Context) {
 		ui.Row(func() {
 			if ui.Chip("anchor", "Harbour", look) {

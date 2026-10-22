@@ -64,8 +64,8 @@ func (frames *filmFrames) step(by time.Duration) bool {
 	frames.context.Begin(frames.state)
 	frames.video.Update(frames.context)
 	frames.context.End()
-	_, asked := frames.state.TakeFrameRequest()
-	frames.state.EndFrame()
+	_, asked := frames.state.Feed().TakeFrameRequest()
+	frames.state.Feed().EndFrame()
 	return asked
 }
 

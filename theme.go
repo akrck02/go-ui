@@ -88,24 +88,24 @@ type Theme struct {
 // LightTheme is the default: a light, quiet look that reads well over any scene.
 func LightTheme() Theme {
 	return Theme{
-		Background:    draw2d.Hex("#f6f8fb"),
-		Surface:       draw2d.Hex("#ffffff"),
-		Sunken:        draw2d.Hex("#f1f4f8"),
-		Ink:           draw2d.Hex("#14202f"),
-		InkSoft:       draw2d.Hex("#4a5768"),
-		InkQuiet:      draw2d.Hex("#6b7889"),
-		Line:          draw2d.Hex("#dde3ea"),
-		ControlLine:   draw2d.Hex("#dde3ea"),
-		Primary:       draw2d.Hex("#1f5fc4"),
-		OnPrimary:     draw2d.Hex("#ffffff"),
-		PrimaryTint:   draw2d.Hex("#eaf1fd"),
-		Positive:      draw2d.Hex("#1e7d4f"),
-		Warning:       draw2d.Hex("#a86400"),
-		Danger:        draw2d.Hex("#c0392b"),
-		FocusRing:     draw2d.Hex("#1f5fc466"),
-		Selection:     draw2d.Hex("#1f5fc45c"),
-		Shadow:        draw2d.Hex("#14202f2e"),
-		Scrim:         draw2d.Hex("#14202f59"),
+		Background:    draw2d.MustHex("#f6f8fb"),
+		Surface:       draw2d.MustHex("#ffffff"),
+		Sunken:        draw2d.MustHex("#f1f4f8"),
+		Ink:           draw2d.MustHex("#14202f"),
+		InkSoft:       draw2d.MustHex("#4a5768"),
+		InkQuiet:      draw2d.MustHex("#6b7889"),
+		Line:          draw2d.MustHex("#dde3ea"),
+		ControlLine:   draw2d.MustHex("#dde3ea"),
+		Primary:       draw2d.MustHex("#1f5fc4"),
+		OnPrimary:     draw2d.MustHex("#ffffff"),
+		PrimaryTint:   draw2d.MustHex("#eaf1fd"),
+		Positive:      draw2d.MustHex("#1e7d4f"),
+		Warning:       draw2d.MustHex("#a86400"),
+		Danger:        draw2d.MustHex("#c0392b"),
+		FocusRing:     draw2d.MustHex("#1f5fc466"),
+		Selection:     draw2d.MustHex("#1f5fc45c"),
+		Shadow:        draw2d.MustHex("#14202f2e"),
+		Scrim:         draw2d.MustHex("#14202f59"),
 		TextSize:      13,
 		SmallTextSize: 11,
 		HeadingSize:   15,
@@ -132,24 +132,24 @@ func LightTheme() Theme {
 // DarkTheme is the light theme's tokens for a dark look, with the same sizes.
 func DarkTheme() Theme {
 	theme := LightTheme()
-	theme.Background = draw2d.Hex("#121a23")
-	theme.Surface = draw2d.Hex("#1b2633")
-	theme.Sunken = draw2d.Hex("#243241")
-	theme.Ink = draw2d.Hex("#e8edf3")
-	theme.InkSoft = draw2d.Hex("#b4c0ce")
-	theme.InkQuiet = draw2d.Hex("#8b98a8")
-	theme.Line = draw2d.Hex("#334355")
-	theme.ControlLine = draw2d.Hex("#334355")
-	theme.Primary = draw2d.Hex("#5b8fe8")
-	theme.OnPrimary = draw2d.Hex("#0d1620")
-	theme.PrimaryTint = draw2d.Hex("#22344d")
-	theme.Positive = draw2d.Hex("#4cc38a")
-	theme.Warning = draw2d.Hex("#e5a64a")
-	theme.Danger = draw2d.Hex("#ef7a6c")
-	theme.FocusRing = draw2d.Hex("#5b8fe880")
-	theme.Selection = draw2d.Hex("#5b8fe880")
-	theme.Shadow = draw2d.Hex("#00000066")
-	theme.Scrim = draw2d.Hex("#0000008c")
+	theme.Background = draw2d.MustHex("#121a23")
+	theme.Surface = draw2d.MustHex("#1b2633")
+	theme.Sunken = draw2d.MustHex("#243241")
+	theme.Ink = draw2d.MustHex("#e8edf3")
+	theme.InkSoft = draw2d.MustHex("#b4c0ce")
+	theme.InkQuiet = draw2d.MustHex("#8b98a8")
+	theme.Line = draw2d.MustHex("#334355")
+	theme.ControlLine = draw2d.MustHex("#334355")
+	theme.Primary = draw2d.MustHex("#5b8fe8")
+	theme.OnPrimary = draw2d.MustHex("#0d1620")
+	theme.PrimaryTint = draw2d.MustHex("#22344d")
+	theme.Positive = draw2d.MustHex("#4cc38a")
+	theme.Warning = draw2d.MustHex("#e5a64a")
+	theme.Danger = draw2d.MustHex("#ef7a6c")
+	theme.FocusRing = draw2d.MustHex("#5b8fe880")
+	theme.Selection = draw2d.MustHex("#5b8fe880")
+	theme.Shadow = draw2d.MustHex("#00000066")
+	theme.Scrim = draw2d.MustHex("#0000008c")
 	return theme
 }
 

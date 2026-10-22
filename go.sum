@@ -8,6 +8,10 @@ github.com/akrck02/go-renderer v0.2.1-0.20261022092847-057ed3e43b93 h1:d7fhv6FkW
 github.com/akrck02/go-renderer v0.2.1-0.20261022092847-057ed3e43b93/go.mod h1:Z835tJYTrI/B+rxk5BbIMsDFokk+P36R8kZ0CVbEZzA=
 github.com/akrck02/go-renderer v0.2.1-0.20261022102242-dc967092bb13 h1:lVKrdhkHOcdcI4kkCSM3EybhnNjkdFf8kyqly+FHOaA=
 github.com/akrck02/go-renderer v0.2.1-0.20261022102242-dc967092bb13/go.mod h1:Z835tJYTrI/B+rxk5BbIMsDFokk+P36R8kZ0CVbEZzA=
+github.com/akrck02/go-renderer v0.2.1-0.20261022142733-3772848b3775 h1:CTDXtg6z6q1OxDPqYWAOCg6vA0D4gVP2iGO477ElE6k=
+github.com/akrck02/go-renderer v0.2.1-0.20261022142733-3772848b3775/go.mod h1:Z835tJYTrI/B+rxk5BbIMsDFokk+P36R8kZ0CVbEZzA=
+github.com/akrck02/go-renderer v0.2.1-0.20261022165616-c94e9f596875 h1:70WgoJ1MPwU+zGmSJzC294+ZXR/UlfFclVsATjWTKDo=
+github.com/akrck02/go-renderer v0.2.1-0.20261022165616-c94e9f596875/go.mod h1:Z835tJYTrI/B+rxk5BbIMsDFokk+P36R8kZ0CVbEZzA=
 github.com/go-gl/gl v0.0.0-20260331235117-4566fea9a276 h1:IO5P06Pcj9K04d+l4nrf3c2U56+dAotIFG6u4P1wAHI=
 github.com/go-gl/gl v0.0.0-20260331235117-4566fea9a276/go.mod h1:9YTyiznxEY1fVinfM7RvRcjRHbw2xLBJ3AAGIT0I4Nw=
 github.com/go-gl/glfw/v3.4/glfw v0.1.0-pre.1 h1:nIVzcwqIaO1mK8LFr0fGkKpgQD4wJDDHRyv4t5k40Ps=

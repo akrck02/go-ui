@@ -63,7 +63,7 @@ func (player *Player) Drive(state *input.State, context *ui.Context) {
 		player.done = true
 		return
 	}
-	if player.started && state.HasInput() {
+	if player.started && state.Feed().HasInput() {
 		player.fail(state, scriptStopped(player.index+1))
 		return
 	}

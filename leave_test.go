@@ -48,7 +48,7 @@ func TestALayerLeavesFadingAndMovingAfterItIsNoLongerShown(t *testing.T) {
 		t.Fatalf("half way the note is at %v with alpha %v; want it lower than %v and fainter than %v",
 			halfway.Area.Y, halfway.Fill[3], before.Area.Y, before.Fill[3])
 	}
-	if _, asked := h.state.TakeFrameRequest(); !asked {
+	if _, asked := h.state.Feed().TakeFrameRequest(); !asked {
 		t.Fatal("a leaving note asked for no next frame")
 	}
 	*now = now.Add(150 * time.Millisecond)
@@ -141,7 +141,7 @@ func TestAnImageIsDrawnInItsBox(t *testing.T) {
 	h.frame(build)
 	for _, command := range h.ui.Drawing().Commands {
 		if command.Kind == draw2d.ImageKind && command.Picture == photo {
-			if command.Area != (draw2d.Rect{X: 10, Y: 10, Width: 120, Height: 90}) || command.Radius != 12 {
+			if command.Area != (draw2d.Rectangle{X: 10, Y: 10, Width: 120, Height: 90}) || command.Radius != 12 {
 				t.Fatalf("image drawn at %+v with radius %v; want its box, rounded by 12", command.Area, command.Radius)
 			}
 			return

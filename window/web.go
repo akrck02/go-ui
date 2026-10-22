@@ -126,7 +126,7 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 	if err != nil {
 		return err
 	}
-	renderer, err := gles.NewFlatRenderer(functions)
+	renderer, err := gles.NewFlatRenderer(functions, options.Fonts)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 			return nil
 		}
 		if sceneRenderer == nil {
-			created, err := gles.NewSceneRenderer(functions)
+			created, err := gles.NewSceneRenderer(functions, options.Fonts)
 			if err != nil {
 				return err
 			}

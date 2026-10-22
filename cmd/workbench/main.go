@@ -49,9 +49,9 @@ type workbench struct {
 }
 
 var tags = []tag{
-	{"Painted", ui.ChipLook{Fill: draw2d.Hex("#e3effd"), Ink: draw2d.Hex("#1f5fc4")}},
-	{"Checked", ui.ChipLook{Fill: draw2d.Hex("#dff3e8"), Ink: draw2d.Hex("#1e7d4f")}},
-	{"Worn", ui.ChipLook{Fill: draw2d.Hex("#fdf0dc"), Ink: draw2d.Hex("#a86400")}},
+	{"Painted", ui.ChipLook{Fill: draw2d.MustHex("#e3effd"), Ink: draw2d.MustHex("#1f5fc4")}},
+	{"Checked", ui.ChipLook{Fill: draw2d.MustHex("#dff3e8"), Ink: draw2d.MustHex("#1e7d4f")}},
+	{"Worn", ui.ChipLook{Fill: draw2d.MustHex("#fdf0dc"), Ink: draw2d.MustHex("#a86400")}},
 	{"Spare", ui.ChipLook{}},
 }
 
@@ -90,7 +90,7 @@ func main() {
 		app.followDrop(interfaceContext)
 		island.ShowLamp(world, true)
 	}
-	if err := viewer.Run(world, options, "Lighthouse workbench", update, 0); err != nil {
+	if err := viewer.Run(world, options, "Lighthouse workbench", update); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -341,11 +341,11 @@ func playDemo(context *ui.Context, state *input.State, demo string, steps int) {
 		clickOn(context, state, "Remove…")
 	case demo == "drag" && steps == 2:
 		if area, found := context.Area("palette", "Checked"); found {
-			state.MoveCursor(float64(area.X+area.Width/2), float64(area.Y+area.Height/2))
-			state.SetButton(input.MouseLeft, true)
+			state.Feed().MoveCursor(float64(area.X+area.Width/2), float64(area.Y+area.Height/2))
+			state.Feed().SetButton(input.MouseLeft, true)
 		}
 	case demo == "drag" && steps == 3:
-		state.MoveCursor(float64(state.WindowWidth)/2, float64(state.WindowHeight)/2)
+		state.Feed().MoveCursor(float64(state.WindowWidth)/2, float64(state.WindowHeight)/2)
 	}
 }
 
@@ -354,7 +354,7 @@ func clickOn(context *ui.Context, state *input.State, path ...string) {
 	if !found {
 		return
 	}
-	state.MoveCursor(float64(area.X+area.Width/2), float64(area.Y+area.Height/2))
-	state.SetButton(input.MouseLeft, true)
-	state.SetButton(input.MouseLeft, false)
+	state.Feed().MoveCursor(float64(area.X+area.Width/2), float64(area.Y+area.Height/2))
+	state.Feed().SetButton(input.MouseLeft, true)
+	state.Feed().SetButton(input.MouseLeft, false)
 }

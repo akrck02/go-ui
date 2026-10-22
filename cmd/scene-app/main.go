@@ -30,7 +30,7 @@ type lighthouse struct {
 	character   string
 	rangeNM     int
 	lit         bool
-	band        graphics.Vec4
+	band        graphics.Vector
 }
 
 // register is the application's state.
@@ -72,7 +72,7 @@ func main() {
 		}
 		island.ShowLamp(world, current.lit)
 	}
-	if err := viewer.Run(world, options, "Lighthouse register", update, 0); err != nil {
+	if err := viewer.Run(world, options, "Lighthouse register", update); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -81,10 +81,10 @@ func main() {
 func newRegister() *register {
 	return &register{
 		lighthouses: []*lighthouse{
-			{name: "North Point", place: "Rocky island, north shore", built: 1850, height: 30, focalHeight: 40, character: "Fl W 5s", rangeNM: 20, lit: true, band: graphics.Vec4{0.8, 0.2, 0.18, 1}},
-			{name: "South Cape", place: "Headland, south coast", built: 1870, height: 20, focalHeight: 60, character: "Fl(2) W 10s", rangeNM: 18, lit: true, band: graphics.Vec4{0.15, 0.25, 0.55, 1}},
-			{name: "Gull Rock", place: "Reef, outer bay", built: 1900, height: 15, focalHeight: 20, character: "Iso R 4s", rangeNM: 10, lit: false, band: graphics.Vec4{0.1, 0.1, 0.1, 1}},
-			{name: "Harbour Light", place: "Breakwater, harbour mouth", built: 1920, height: 10, focalHeight: 12, character: "Oc G 3s", rangeNM: 6, lit: true, band: graphics.Vec4{0.15, 0.5, 0.3, 1}},
+			{name: "North Point", place: "Rocky island, north shore", built: 1850, height: 30, focalHeight: 40, character: "Fl W 5s", rangeNM: 20, lit: true, band: graphics.Vector{0.8, 0.2, 0.18, 1}},
+			{name: "South Cape", place: "Headland, south coast", built: 1870, height: 20, focalHeight: 60, character: "Fl(2) W 10s", rangeNM: 18, lit: true, band: graphics.Vector{0.15, 0.25, 0.55, 1}},
+			{name: "Gull Rock", place: "Reef, outer bay", built: 1900, height: 15, focalHeight: 20, character: "Iso R 4s", rangeNM: 10, lit: false, band: graphics.Vector{0.1, 0.1, 0.1, 1}},
+			{name: "Harbour Light", place: "Breakwater, harbour mouth", built: 1920, height: 10, focalHeight: 12, character: "Oc G 3s", rangeNM: 6, lit: true, band: graphics.Vector{0.15, 0.5, 0.3, 1}},
 		},
 		tool: "Select", view: "Perspective", saved: true,
 	}
@@ -277,7 +277,7 @@ func (app *register) addLighthouse() {
 	number := len(app.lighthouses) + 1
 	app.lighthouses = append(app.lighthouses, &lighthouse{
 		name: fmt.Sprintf("Lighthouse %d", number), place: "Not placed yet", built: 2000,
-		height: 10, focalHeight: 10, character: "Fl W 5s", rangeNM: 10, band: graphics.Vec4{0.8, 0.6, 0.1, 1},
+		height: 10, focalHeight: 10, character: "Fl W 5s", rangeNM: 10, band: graphics.Vector{0.8, 0.6, 0.1, 1},
 	})
 	app.selected = len(app.lighthouses) - 1
 	app.saved = false

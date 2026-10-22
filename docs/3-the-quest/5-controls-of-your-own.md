@@ -32,7 +32,7 @@ func favouriteButton(context *ui.Context, favourite *bool) {
 	}
 	colour := theme.InkQuiet
 	if *favourite {
-		colour = draw2d.Hex("#e8a317")
+		colour = draw2d.MustHex("#e8a317")
 	}
 	if context.Clickable("favourite", square, looks, func() {
 		context.IconSized("star", 20, colour)
@@ -76,18 +76,18 @@ The register shows a light's *character*, a mark for every flash in twenty secon
 // flashes paints the light's character over twenty seconds: a mark for every flash.
 func flashes(context *ui.Context, period float32, colour draw2d.Color) {
 	theme := context.Theme
-	context.Paint(ui.Layout{Width: ui.Grow(), Height: ui.Fixed(24)}, func(area draw2d.Rect, drawing *draw2d.List) {
+	context.Paint(ui.Layout{Width: ui.Grow(), Height: ui.Fixed(24)}, func(area draw2d.Rectangle, drawing *draw2d.List) {
 		drawing.Rectangle(area, 4, theme.Sunken, draw2d.Transparent, 0)
 		const seconds = 20
 		for second := float32(0); second < seconds; second += period {
 			x := area.X + area.Width*second/seconds
-			drawing.Rectangle(draw2d.Rect{X: x + 2, Y: area.Y + 4, Width: 6, Height: area.Height - 8}, 3, colour, draw2d.Transparent, 0)
+			drawing.Rectangle(draw2d.Rectangle{X: x + 2, Y: area.Y + 4, Width: 6, Height: area.Height - 8}, 3, colour, draw2d.Transparent, 0)
 		}
 	})
 }
 
 // lampColours are the colours a flash is painted in, by colours' order.
-var lampColours = []draw2d.Color{draw2d.Hex("#f5f0d0"), draw2d.Hex("#d64545"), draw2d.Hex("#3f9b5b"), draw2d.Hex("#e8a317")}
+var lampColours = []draw2d.Color{draw2d.MustHex("#f5f0d0"), draw2d.MustHex("#d64545"), draw2d.MustHex("#3f9b5b"), draw2d.MustHex("#e8a317")}
 ```
 
 ```go
@@ -105,7 +105,7 @@ token and every control follows:
 
 ```go
 func (program *register) build(context *ui.Context) {
-	context.Theme.Primary = draw2d.Hex("#00796b") // a teal of the register's own
+	context.Theme.Primary = draw2d.MustHex("#00796b") // a teal of the register's own
 	context.Theme.PrimaryTint = context.Theme.Primary.WithAlpha(0.12)
 	…
 ```
@@ -229,7 +229,7 @@ func main() {
 
 // build describes the whole interface, in every frame.
 func (program *register) build(context *ui.Context) {
-	context.Theme.Primary = draw2d.Hex("#00796b") // a teal of the register's own
+	context.Theme.Primary = draw2d.MustHex("#00796b") // a teal of the register's own
 	context.Theme.PrimaryTint = context.Theme.Primary.WithAlpha(0.12)
 	context.Box(ui.Layout{Direction: ui.Vertical, Width: ui.Grow(), Height: ui.Grow()}, func() {
 		program.toolbar(context)

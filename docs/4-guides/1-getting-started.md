@@ -134,7 +134,9 @@ At `End` the laid-out boxes become commands of a `draw2d.List` (rounded rectangl
 lines of text, icons), each panel on its own layer and its content clipped to it. Go Renderer
 paints that list after the scene, in the same pass and atlas as its labels, so the whole interface
 is one draw call. Text is measured with Go Renderer's own fonts (`overlay.NewMeasurer`) at the
-screen's density, so what is laid out is exactly what is painted.
+screen's density, so what is laid out is exactly what is painted. A program with fonts of its own
+(a brand's) sets `window.Options.Fonts`: the window measures and paints in them (and a program that
+makes its interface itself uses `ui.NewInFonts` with the same fonts).
 
 A frame of three panels with three hundred controls builds, lays out and paints in about 0.1 ms
 (`go test -bench .`). More in [performance and battery](../8-project/1-performance-audit.md).

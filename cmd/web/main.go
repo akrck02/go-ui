@@ -19,8 +19,9 @@ import (
 	"github.com/akrck02/go-renderer/gles"
 	"github.com/akrck02/go-renderer/graphics"
 	"github.com/akrck02/go-renderer/input"
-	"github.com/akrck02/go-renderer/models"
+	"github.com/akrck02/go-renderer/opengl/overlay"
 	"github.com/akrck02/go-renderer/scene"
+	rendererwindow "github.com/akrck02/go-renderer/window"
 	ui "github.com/akrck02/go-ui"
 	"github.com/akrck02/go-ui/internal/island"
 )
@@ -48,7 +49,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	renderer, err := gles.NewSceneRenderer(functions)
+	renderer, err := gles.NewSceneRenderer(functions, overlay.Fonts{})
 	if err != nil {
 		return err
 	}
@@ -60,10 +61,10 @@ func run() error {
 	world.Overlay.Drawing = interfaceContext.Drawing()
 	light := &lighthouse{name: "North Point", on: true, rangeNM: 18}
 	orbit, size := orbitAround(world)
-	app := &models.Application{Input: input.NewState(), DrawOnDemand: true,
-		Camera: models.Camera{Near: size * 0.001, Far: size * 20}}
-	var shown models.Camera
-	app.Update = func(app *models.Application, step float64) error {
+	app := &rendererwindow.Application{Input: input.NewState(), Options: rendererwindow.Options{DrawOnDemand: true},
+		Camera: camera.Lens{Near: size * 0.001, Far: size * 20}}
+	var shown camera.Lens
+	app.Update = func(app *rendererwindow.Application, step float64) error {
 		interfaceContext.Begin(app.Input)
 		propertiesPanel(interfaceContext, light)
 		statusBar(interfaceContext, light)
@@ -140,8 +141,8 @@ func orbitAround(world *scene.Scene) (*camera.Orbit, float32) {
 	if size <= 0 || math.IsInf(float64(size), 0) {
 		size = 10
 	}
-	center := graphics.Vec4{(minimum[0] + maximum[0]) / 2, 0, (minimum[2] + maximum[2]) / 2, 1}
-	orbit := camera.NewOrbit(center, float64(size)*1.6)
+	center := graphics.Vector{(minimum[0] + maximum[0]) / 2, 0, (minimum[2] + maximum[2]) / 2, 1}
+	orbit := camera.NewOrbit(center, size*1.6)
 	orbit.MaximumDistance = float64(size) * 4
 	orbit.Ground = world.GroundHeight
 	return orbit, size

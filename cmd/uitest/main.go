@@ -30,7 +30,7 @@ func main() {
 		os.Exit(1)
 	}
 	shown := newResults(tests, recordings)
-	shown.measurer, err = overlay.NewMeasurer() // the fonts the window paints with
+	shown.measurer, err = overlay.NewMeasurer(overlay.Fonts{}) // the fonts the window paints with
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

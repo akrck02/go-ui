@@ -13,8 +13,9 @@ import (
 	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/input"
 	"github.com/akrck02/go-renderer/metal"
-	"github.com/akrck02/go-renderer/models"
 	"github.com/akrck02/go-renderer/opengl"
+	"github.com/akrck02/go-renderer/opengl/overlay"
+	rendererwindow "github.com/akrck02/go-renderer/window"
 	ui "github.com/akrck02/go-ui"
 )
 
@@ -79,32 +80,31 @@ func RunWith(context *ui.Context, options Options, build func(context *ui.Contex
 	view := &shownScene{}
 	app := interfaceApplication(context, options, build, &shown, view)
 	app.Width, app.Height = width, height
-	app.Renderer = &opengl.OpenGLRenderer{}
 	if options.CapturePath != "" {
-		app.Type, app.CapturePath = models.HeadlessApplication, options.CapturePath
+		app.Kind, app.CapturePath = rendererwindow.Headless, options.CapturePath
 	}
 	if options.Backend.usesMetal() && options.Scene == nil { // Metal's window draws flat interfaces only
-		err := runMetal(context, app)
-		if !errors.Is(err, metal.ErrUnavailable) || options.Backend == Metal {
+		err := runMetal(context, app, options.Fonts)
+		if !errors.Is(err, metal.Unavailable) || options.Backend == Metal {
 			return err
 		}
 		log.Printf("window: %v; drawing through OpenGL", err)
 		shown = shownFrame{seed: shown.seed}
 		app.Input = input.NewState()
 	}
-	return runOpenGL(context, app, view)
+	return runOpenGL(context, app, view, options.Fonts)
 }
 
 // runOpenGL draws the window through OpenGL: the interface alone, or over a scene.
-func runOpenGL(context *ui.Context, app *models.Application, view *shownScene) error {
+func runOpenGL(context *ui.Context, app *rendererwindow.Application, view *shownScene, fonts overlay.Fonts) error {
 	var flat *opengl.FlatRenderer
 	var sceneRenderer *opengl.SceneRenderer
 	started := time.Now()
-	app.Draw = func(app *models.Application) error {
+	app.Draw = func(app *rendererwindow.Application) error {
 		framebufferWidth, framebufferHeight, scale := frameSize(app)
 		if view.view != nil {
 			if sceneRenderer == nil {
-				created, err := opengl.NewSceneRenderer()
+				created, err := opengl.NewSceneRenderer(fonts)
 				if err != nil {
 					return err
 				}
@@ -117,7 +117,7 @@ func runOpenGL(context *ui.Context, app *models.Application, view *shownScene) e
 				return nil
 			}
 			if flat == nil {
-				created, err := opengl.NewFlatRenderer()
+				created, err := opengl.NewFlatRenderer(fonts)
 				if err != nil {
 					return err
 				}
@@ -127,7 +127,7 @@ func runOpenGL(context *ui.Context, app *models.Application, view *shownScene) e
 			return nil
 		}
 		if flat == nil {
-			created, err := opengl.NewFlatRenderer()
+			created, err := opengl.NewFlatRenderer(fonts)
 			if err != nil {
 				return err
 			}
@@ -136,7 +136,7 @@ func runOpenGL(context *ui.Context, app *models.Application, view *shownScene) e
 		flat.Draw(context.Drawing(), context.Theme.Background, framebufferWidth, framebufferHeight, scale)
 		return nil
 	}
-	return (&opengl.OpenGL{}).StartLoop(app)
+	return (&opengl.Window{}).Run(app)
 }
 
 // nothingToPaint is an empty list, painted to clear the frame.
@@ -175,7 +175,7 @@ func drawBelow(renderer *opengl.SceneRenderer, below *BelowView, area opengl.Are
 
 // framebufferArea is an area of the window in the framebuffer's pixels, counted from its bottom as
 // OpenGL counts.
-func framebufferArea(area draw2d.Rect, framebufferHeight int, scale float32) opengl.Area {
+func framebufferArea(area draw2d.Rectangle, framebufferHeight int, scale float32) opengl.Area {
 	left, top := int(area.X*scale), int(area.Y*scale)
 	width, height := int(area.Width*scale), int(area.Height*scale)
 	return opengl.Area{X: left, Y: framebufferHeight - top - height, Width: width, Height: height}

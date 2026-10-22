@@ -79,7 +79,7 @@ func TestASceneIsAskedForWithTheUnclaimedInputAndDrawnUnderTheInterface(t *testi
 	if sawClaimed {
 		t.Fatal("the scene got input the interface had claimed")
 	}
-	if _, wanted := app.Input.TakeFrameRequest(); !wanted {
+	if _, wanted := app.Input.Feed().TakeFrameRequest(); !wanted {
 		t.Fatal("the frame the scene asked for was lost")
 	}
 	if app.Unchanged(app) {
@@ -96,7 +96,7 @@ func TestTheProgramsDrawingIsPaintedOverTheSceneAndUnderTheInterface(t *testing.
 	var own draw2d.List
 	options := Options{Scene: func(state *input.State, step float64) *SceneView {
 		own.Reset()
-		own.Rectangle(draw2d.Rect{Width: 100, Height: 10}, 0, draw2d.Hex("#ff0000"), draw2d.Transparent, 0)
+		own.Rectangle(draw2d.Rectangle{Width: 100, Height: 10}, 0, draw2d.MustHex("#ff0000"), draw2d.Transparent, 0)
 		return &SceneView{World: world, Drawing: &own}
 	}}
 	shown, view := shownFrame{seed: maphash.MakeSeed()}, &shownScene{}

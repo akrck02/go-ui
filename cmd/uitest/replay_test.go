@@ -19,18 +19,18 @@ func (wideMeasurer) HasIcon(string) bool { return true }
 
 func TestTheReplayKeepsTheWindowsShape(t *testing.T) {
 	recording := uitest.Recording{Width: 400, Height: 300}
-	place, fits := fitWindow(recording, draw2d.Rect{X: 0, Y: 0, Width: 1000, Height: 300})
+	place, fits := fitWindow(recording, draw2d.Rectangle{X: 0, Y: 0, Width: 1000, Height: 300})
 	if !fits {
 		t.Fatal("a window did not fit an area bigger than it")
 	}
 	if place.scale != 1 || place.origin.X != 300 || place.origin.Width != 400 || place.origin.Height != 300 {
 		t.Fatalf("placed at %+v, scale %v; want centred at scale 1", place.origin, place.scale)
 	}
-	big, _ := fitWindow(recording, draw2d.Rect{Width: 1000, Height: 900})
+	big, _ := fitWindow(recording, draw2d.Rectangle{Width: 1000, Height: 900})
 	if big.scale != 1 {
 		t.Fatalf("a big area enlarged the window to scale %v; want 1", big.scale)
 	}
-	small, _ := fitWindow(recording, draw2d.Rect{Width: 200, Height: 300})
+	small, _ := fitWindow(recording, draw2d.Rectangle{Width: 200, Height: 300})
 	if small.scale != 0.5 || small.origin.Height != 150 {
 		t.Fatalf("a narrow area gave scale %v and %+v; want 0.5, the shape kept", small.scale, small.origin)
 	}
@@ -39,11 +39,11 @@ func TestTheReplayKeepsTheWindowsShape(t *testing.T) {
 func TestATextIsShrunkToTheWidthItWasMeasuredAt(t *testing.T) {
 	frame := uitest.RecordedFrame{Commands: []draw2d.Command{{
 		Kind: draw2d.TextKind, Text: "Light", Size: 10, Baseline: 20, Fill: draw2d.Color{0, 0, 0, 1},
-		Area: draw2d.Rect{X: 10, Y: 10, Width: 25}, // FixedMeasurer's width: 5 characters of half the size
+		Area: draw2d.Rectangle{X: 10, Y: 10, Width: 25}, // FixedMeasurer's width: 5 characters of half the size
 	}}}
 	shown := replay{recording: uitest.Recording{Width: 400, Height: 300}, frame: frame, theme: ui.LightTheme(), measurer: wideMeasurer{}}
 	var drawing draw2d.List
-	shown.paint(draw2d.Rect{Width: 400, Height: 300}, &drawing)
+	shown.paint(draw2d.Rectangle{Width: 400, Height: 300}, &drawing)
 	for _, command := range drawing.Commands {
 		if command.Kind == draw2d.TextKind && command.Text == "Light" {
 			if command.Size != 5 {

@@ -22,22 +22,22 @@ func rectanglesFilled(h *harness, fill draw2d.Color) []draw2d.Command {
 
 func TestAThemeThatOnlyChangesThePrimaryColourStillChoosesWithIt(t *testing.T) {
 	h := newHarness(t)
-	h.ui.Theme.Primary, h.ui.Theme.PrimaryTint = draw2d.Hex("#336699"), draw2d.Hex("#ddeeff")
+	h.ui.Theme.Primary, h.ui.Theme.PrimaryTint = draw2d.MustHex("#336699"), draw2d.MustHex("#ddeeff")
 	h.frame(func(ui *Context) { ui.Selectable("lamp", "North Point", true) })
-	if len(rectanglesFilled(h, draw2d.Hex("#ddeeff"))) != 1 {
+	if len(rectanglesFilled(h, draw2d.MustHex("#ddeeff"))) != 1 {
 		t.Fatal("a theme that leaves Chosen alone marks the chosen item with its own PrimaryTint")
 	}
 }
 
 func TestChosenItemsTakeTheThemesChosenColours(t *testing.T) {
 	h := newHarness(t)
-	h.ui.Theme.Chosen, h.ui.Theme.ChosenInk, h.ui.Theme.ChosenWeight = draw2d.Hex("#eeeeee"), draw2d.Hex("#111111"), draw2d.Bold
+	h.ui.Theme.Chosen, h.ui.Theme.ChosenInk, h.ui.Theme.ChosenWeight = draw2d.MustHex("#eeeeee"), draw2d.MustHex("#111111"), draw2d.Bold
 	h.frame(func(ui *Context) { ui.Selectable("lamp", "North Point", true) })
-	if len(rectanglesFilled(h, draw2d.Hex("#eeeeee"))) != 1 {
+	if len(rectanglesFilled(h, draw2d.MustHex("#eeeeee"))) != 1 {
 		t.Fatal("the chosen item is filled with Chosen")
 	}
 	for _, command := range h.ui.Drawing().Commands {
-		if command.Kind == draw2d.TextKind && (command.Fill != draw2d.Hex("#111111") || command.Weight != draw2d.Bold) {
+		if command.Kind == draw2d.TextKind && (command.Fill != draw2d.MustHex("#111111") || command.Weight != draw2d.Bold) {
 			t.Fatalf("the chosen label is written in ChosenInk and ChosenWeight, got %v weight %d", command.Fill, command.Weight)
 		}
 	}
@@ -72,7 +72,7 @@ func TestButtonsTakeTheThemesRoomAndCorners(t *testing.T) {
 
 func TestTheMainButtonStandsOnItsEdgeWithoutTakingRoom(t *testing.T) {
 	h := newHarness(t)
-	edge := draw2d.Hex("#224466")
+	edge := draw2d.MustHex("#224466")
 	h.ui.Theme.PrimaryEdge, h.ui.Theme.EdgeWidth = edge, 2
 	h.frame(func(ui *Context) { ui.PrimaryButton("Save") })
 	button := h.rect(idOf("Save"))
@@ -90,9 +90,9 @@ func TestTheMainButtonStandsOnItsEdgeWithoutTakingRoom(t *testing.T) {
 
 func TestWithoutAnEdgeWidthNoEdgeIsDrawn(t *testing.T) {
 	h := newHarness(t)
-	h.ui.Theme.PrimaryEdge = draw2d.Hex("#224466")
+	h.ui.Theme.PrimaryEdge = draw2d.MustHex("#224466")
 	h.frame(func(ui *Context) { ui.PrimaryButton("Save") })
-	if len(rectanglesFilled(h, draw2d.Hex("#224466"))) != 0 {
+	if len(rectanglesFilled(h, draw2d.MustHex("#224466"))) != 0 {
 		t.Fatal("a zero EdgeWidth draws no edge, as go-ui always did")
 	}
 }
@@ -120,11 +120,11 @@ func TestALineOfTextIsAsTallAsTheThemesLineHeight(t *testing.T) {
 func TestACheckBoxTakesTheThemesSizeCornersAndEdges(t *testing.T) {
 	h := newHarness(t)
 	theme := &h.ui.Theme
-	theme.CheckSize, theme.CheckRadius, theme.CheckBorder, theme.CheckedBorder = 22, 6, 2, draw2d.Hex("#224466")
+	theme.CheckSize, theme.CheckRadius, theme.CheckBorder, theme.CheckedBorder = 22, 6, 2, draw2d.MustHex("#224466")
 	done := true
 	h.frame(func(ui *Context) { ui.Checkbox("Done", &done) })
 	for _, command := range rectanglesFilled(h, theme.Primary) {
-		if command.Area.Width != 22 || command.Radius != 6 || command.Border != draw2d.Hex("#224466") || command.BorderWidth != 2 {
+		if command.Area.Width != 22 || command.Radius != 6 || command.Border != draw2d.MustHex("#224466") || command.BorderWidth != 2 {
 			t.Fatalf("a ticked box is CheckSize wide with CheckRadius corners and the CheckedBorder edge, got %+v", command)
 		}
 		return

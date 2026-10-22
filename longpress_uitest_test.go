@@ -49,7 +49,7 @@ func TestAFingerHeldStillIsALongPressAndNoClick(t *testing.T) {
 	window := openWindow(t, countingButton(&clicks, &longPresses))
 	x, y := middleOf(t, window, "North light")
 	window.TouchDown(1, x, y)
-	if wait, asked := window.State().TakeFrameRequest(); !asked || wait > longPressNeeds {
+	if wait, asked := window.State().Feed().TakeFrameRequest(); !asked || wait > longPressNeeds {
 		t.Fatalf("frame asked for %v (%v); want one by the time the press becomes long", wait, asked)
 	}
 	window.Wait(300 * time.Millisecond)

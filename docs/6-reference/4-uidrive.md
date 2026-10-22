@@ -108,12 +108,12 @@ Element is what the last frame showed of a control, a text or a scroll area.
 
 ```go
 type Element struct {
-	ID        ui.ID       // the one the interface gives it, 0 when it was not on screen
-	Label     string      // what a screen reader calls it: a button's text, a described label
-	Rect      draw2d.Rect // where it was laid out, in layout pixels
-	Visible   bool        // some of it shows: not scrolled away, not behind a dialog or sheet
-	Focused   bool        // it has the focus (ui.Context.FocusedID)
-	Pressable bool        // a click or a tap does something to it
+	ID        ui.ID            // the one the interface gives it, 0 when it was not on screen
+	Label     string           // what a screen reader calls it: a button's text, a described label
+	Rect      draw2d.Rectangle // where it was laid out, in layout pixels
+	Visible   bool             // some of it shows: not scrolled away, not behind a dialog or sheet
+	Focused   bool             // it has the focus (ui.Context.FocusedID)
+	Pressable bool             // a click or a tap does something to it
 }
 ```
 

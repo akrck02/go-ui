@@ -171,14 +171,14 @@ func (memory *scrollMemory) keepInRange(content, view float32) {
 }
 
 // thumbArea is where the thumb is drawn in an area, and whether there is one.
-func (memory *scrollMemory) thumbArea(area draw2d.Rect) (draw2d.Rect, bool) {
+func (memory *scrollMemory) thumbArea(area draw2d.Rectangle) (draw2d.Rectangle, bool) {
 	if memory.content <= memory.view+0.5 || memory.view <= 0 {
-		return draw2d.Rect{}, false
+		return draw2d.Rectangle{}, false
 	}
 	length := max(area.Height*memory.view/memory.content, minimumThumb)
 	travel := area.Height - length - 4
 	position := memory.offset / (memory.content - memory.view) * travel
-	return draw2d.Rect{X: area.Right() - scrollBarWidth - 3, Y: area.Y + 2 + position, Width: scrollBarWidth, Height: length}, true
+	return draw2d.Rectangle{X: area.Right() - scrollBarWidth - 3, Y: area.Y + 2 + position, Width: scrollBarWidth, Height: length}, true
 }
 
 // recordScrollBars notes where every thumb is (with its wider reach) for the next frame's mouse.
@@ -189,7 +189,7 @@ func (ui *Context) recordScrollBars() {
 			continue
 		}
 		if thumb, shown := element.scroll.thumbArea(element.rect); shown {
-			reach := draw2d.Rect{X: thumb.Right() - scrollBarReach, Y: thumb.Y, Width: scrollBarReach + 3, Height: thumb.Height}
+			reach := draw2d.Rectangle{X: thumb.Right() - scrollBarReach, Y: thumb.Y, Width: scrollBarReach + 3, Height: thumb.Height}
 			ui.current[element.scroll.thumbID] = reach
 		}
 	}

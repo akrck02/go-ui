@@ -122,7 +122,7 @@ RecordedFrame is one frame: what was drawn, where the pointer and the fingers we
 ```go
 type RecordedFrame struct {
 	Action     string // `Click "Save"`, empty for a frame run on its own
-	Target     draw2d.Rect
+	Target     draw2d.Rectangle
 	HasTarget  bool
 	HasPointer bool // the pointer has been somewhere in the window
 	PointerX   float32

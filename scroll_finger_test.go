@@ -23,12 +23,12 @@ func TestAFingerDragsAListAndItGlidesOnWithoutTouchingWhatItStartedOn(t *testing
 	h.frame(build)
 	step := func(y float64) {
 		*now = now.Add(16 * time.Millisecond)
-		h.state.SetTouch(1, 20, y)
+		h.state.Feed().SetTouch(1, 20, y)
 		h.moveTo(20, y)
 		h.frame(build)
 	}
 	// on a row's button, which the drag must not press
-	h.state.SetTouch(1, 20, 150)
+	h.state.Feed().SetTouch(1, 20, 150)
 	h.moveTo(20, 150)
 	h.press()
 	h.frame(build)
@@ -36,7 +36,7 @@ func TestAFingerDragsAListAndItGlidesOnWithoutTouchingWhatItStartedOn(t *testing
 		step(y)
 	}
 	h.release()
-	h.state.LiftTouch(1)
+	h.state.Feed().LiftTouch(1)
 	*now = now.Add(16 * time.Millisecond)
 	h.frame(build)
 	memory := remember(h.ui, idOf("list"), func() *scrollMemory { return nil })
@@ -72,15 +72,15 @@ func TestATouchThatHardlyMovesStillPresses(t *testing.T) {
 	h.frame(build)
 	row := h.rect(idOf("row 0"))
 	x, y := float64(row.X+row.Width/2), float64(row.Y+row.Height/2)
-	h.state.SetTouch(1, x, y)
+	h.state.Feed().SetTouch(1, x, y)
 	h.moveTo(x, y)
 	h.press()
 	h.frame(build)
-	h.state.SetTouch(1, x, y+3)
+	h.state.Feed().SetTouch(1, x, y+3)
 	h.moveTo(x, y+3)
 	h.frame(build)
 	h.release()
-	h.state.LiftTouch(1)
+	h.state.Feed().LiftTouch(1)
 	h.frame(build)
 	if clicked != 1 {
 		t.Fatalf("%d clicks; a touch moving 3 pixels is a touch", clicked)

@@ -59,7 +59,7 @@ func TestATableBuildsOnlyTheRowsInSight(t *testing.T) {
 		t.Fatal("a row out of sight is not built")
 	}
 	h.moveTo(float64(table.X+100), float64(table.Y+150))
-	h.state.AddScroll(-1000) // to the end
+	h.state.Feed().AddScroll(-1000) // to the end
 	h.frame(scene.build)
 	h.frame(scene.build)
 	last := h.rect(rowID("part-299"))
@@ -104,7 +104,7 @@ func TestTableHeaderAndRowsLineUp(t *testing.T) {
 	scene := &tableScene{}
 	h.frame(scene.build)
 	h.frame(scene.build)
-	headerCount, rowCount := draw2d.Rect{}, draw2d.Rect{}
+	headerCount, rowCount := draw2d.Rectangle{}, draw2d.Rectangle{}
 	for index := range h.ui.elements {
 		element := &h.ui.elements[index]
 		if element.kind != textElement {

@@ -33,7 +33,7 @@ import (
 // goroutine that runs the update steps.
 type Context struct {
 	// within is the area overlays and modals are laid out in while isWithin (Within)
-	within   draw2d.Rect
+	within   draw2d.Rectangle
 	isWithin bool
 
 	Theme Theme
@@ -45,7 +45,7 @@ type Context struct {
 	width    float32 // window size, in layout pixels
 	height   float32
 	drawing  draw2d.List
-	clip     draw2d.Rect // while painting: the clip of the boxes around, when clipped
+	clip     draw2d.Rectangle // while painting: the clip of the boxes around, when clipped
 	clipped  bool
 	// insideFrost is true while the children of a frosted box are painted (see isFrosted).
 	insideFrost bool
@@ -59,11 +59,11 @@ type Context struct {
 	scopes   []ID
 	seen     map[ID]int // how many times an id was used this frame, to tell repeats apart
 
-	previous map[ID]draw2d.Rect // where things were in the last frame
-	current  map[ID]draw2d.Rect
+	previous map[ID]draw2d.Rectangle // where things were in the last frame
+	current  map[ID]draw2d.Rectangle
 	// what of a thing showed, where a box around it clipped it: what the pointer could reach in
 	// the last frame (reachOf), for things clipped; the others are reached wholly
-	previousReach, currentReach map[ID]draw2d.Rect
+	previousReach, currentReach map[ID]draw2d.Rectangle
 	order                       []ID // panels from back to front
 	hoveredRoot                 ID
 	hot                         ID   // the control under the mouse
@@ -118,7 +118,7 @@ type Context struct {
 	interacted             ID                   // the last control that looked at the mouse, for Tooltip
 	// surfaces are the painted boxes on the screen (outside panels) in the last frame: bars and
 	// side columns of an application layout. The pointer over one belongs to the interface.
-	surfaces, nextSurfaces []draw2d.Rect
+	surfaces, nextSurfaces []draw2d.Rectangle
 	overSurface            bool
 
 	wantsMouse, wantsKeyboard bool
@@ -137,9 +137,14 @@ type Context struct {
 	reader                         readerState // what a screen reader is told and asks (accessibility.go)
 }
 
-// New returns an interface that measures text with go-renderer's fonts, in the default theme.
-func New() (*Context, error) {
-	measurer, err := overlay.NewMeasurer()
+// New returns an interface that measures text with go-renderer's default fonts, in the default
+// theme.
+func New() (*Context, error) { return NewInFonts(overlay.Fonts{}) }
+
+// NewInFonts returns an interface that measures text in these fonts (a brand's, say), in the
+// default theme. The window must draw in the same fonts (window.Options.Fonts).
+func NewInFonts(fonts overlay.Fonts) (*Context, error) {
+	measurer, err := overlay.NewMeasurer(fonts)
 	if err != nil {
 		return nil, err
 	}
@@ -154,10 +159,10 @@ func NewWithMeasurer(measurer draw2d.Measurer) *Context {
 		measurer:      measurer,
 		texts:         textCache{entries: map[textKey]draw2d.TextMetrics{}, older: map[textKey]draw2d.TextMetrics{}},
 		seen:          map[ID]int{},
-		previous:      map[ID]draw2d.Rect{},
-		current:       map[ID]draw2d.Rect{},
-		previousReach: map[ID]draw2d.Rect{},
-		currentReach:  map[ID]draw2d.Rect{},
+		previous:      map[ID]draw2d.Rectangle{},
+		current:       map[ID]draw2d.Rectangle{},
+		previousReach: map[ID]draw2d.Rectangle{},
+		currentReach:  map[ID]draw2d.Rectangle{},
 		panels:        map[ID]*panelMemory{},
 		memory:        map[ID]*remembered{},
 	}

@@ -77,9 +77,9 @@ func (description *Description) merge(other Description) {
 
 // AccessibleNode is one thing a screen reader can read and act on.
 type AccessibleNode struct {
-	ID     ID          // the same from one frame to the next while the thing stays
-	Parent ID          // the scroll area it is in, or 0 for the window
-	Area   draw2d.Rect // where it shows, in layout pixels: the part a scroll area does not hide
+	ID     ID               // the same from one frame to the next while the thing stays
+	Parent ID               // the scroll area it is in, or 0 for the window
+	Area   draw2d.Rectangle // where it shows, in layout pixels: the part a scroll area does not hide
 	Description
 	Pressable     bool // a double tap presses it (ReaderPress)
 	LongPressable bool // the program reads LongPressed after it (ReaderLongPress)
@@ -270,7 +270,7 @@ func (ui *Context) readNodes() {
 			continue // behind a modal: it cannot be touched, so it is not read
 		}
 		walk := readerWalk{ui: ui}
-		walk.box(placed.element, 0, draw2d.Rect{}, false)
+		walk.box(placed.element, 0, draw2d.Rectangle{}, false)
 	}
 }
 
@@ -302,7 +302,7 @@ type readerWalk struct {
 
 // box reads a box that is not a control: its controls and scroll areas become nodes, and its own
 // texts are read together, as one node where the first of them is.
-func (walk readerWalk) box(index int, parent ID, clip draw2d.Rect, clipped bool) {
+func (walk readerWalk) box(index int, parent ID, clip draw2d.Rectangle, clipped bool) {
 	ui := walk.ui
 	element := &ui.elements[index]
 	area, shown := visibleArea(element.rect, clip, clipped)
@@ -350,7 +350,7 @@ func (walk readerWalk) isNode(element *element, description Description) bool {
 }
 
 // texts starts a node of text where a text is.
-func (walk readerWalk) texts(index int, parent ID, area draw2d.Rect, description Description) int {
+func (walk readerWalk) texts(index int, parent ID, area draw2d.Rectangle, description Description) int {
 	ui := walk.ui
 	element := &ui.elements[index]
 	node := AccessibleNode{Parent: parent, Area: area, Description: description}
@@ -366,7 +366,7 @@ func (walk readerWalk) texts(index int, parent ID, area draw2d.Rect, description
 }
 
 // addText reads another text of a box with those before it.
-func (walk readerWalk) addText(position int, area draw2d.Rect, text string, description Description) {
+func (walk readerWalk) addText(position int, area draw2d.Rectangle, text string, description Description) {
 	node := &walk.ui.reader.nodes[position]
 	node.Label += " " + text
 	node.Area = union(node.Area, area)
@@ -377,7 +377,7 @@ func (walk readerWalk) addText(position int, area draw2d.Rect, text string, desc
 
 // control makes a node of a control, a scroll area or a box described, named by the texts inside it
 // that are not in another control.
-func (walk readerWalk) control(index int, parent ID, clip draw2d.Rect, clipped bool) {
+func (walk readerWalk) control(index int, parent ID, clip draw2d.Rectangle, clipped bool) {
 	ui := walk.ui
 	element := &ui.elements[index]
 	area, _ := visibleArea(element.rect, clip, clipped)
@@ -427,7 +427,7 @@ func (walk readerWalk) control(index int, parent ID, clip draw2d.Rect, clipped b
 
 // gather collects the texts inside a control that name it; a control inside it is a node of its
 // own, and its texts are its own.
-func (walk readerWalk) gather(index int, parent ID, clip draw2d.Rect, clipped bool, words, icons *[]string) {
+func (walk readerWalk) gather(index int, parent ID, clip draw2d.Rectangle, clipped bool, words, icons *[]string) {
 	ui := walk.ui
 	element := &ui.elements[index]
 	_, shown := visibleArea(element.rect, clip, clipped)
@@ -479,7 +479,7 @@ func (ui *Context) nodeID(id ID) ID {
 }
 
 // visibleArea is the part of a box a clip leaves, and whether any of it shows.
-func visibleArea(rect, clip draw2d.Rect, clipped bool) (draw2d.Rect, bool) {
+func visibleArea(rect, clip draw2d.Rectangle, clipped bool) (draw2d.Rectangle, bool) {
 	if clipped {
 		rect = rect.Intersect(clip)
 	}
@@ -487,7 +487,7 @@ func visibleArea(rect, clip draw2d.Rect, clipped bool) (draw2d.Rect, bool) {
 }
 
 // innerClip is the clip inside a box: its own area, when it cuts its children to it.
-func innerClip(element *element, clip draw2d.Rect, clipped bool) (draw2d.Rect, bool) {
+func innerClip(element *element, clip draw2d.Rectangle, clipped bool) (draw2d.Rectangle, bool) {
 	if !element.look.Clip {
 		return clip, clipped
 	}
@@ -498,10 +498,10 @@ func innerClip(element *element, clip draw2d.Rect, clipped bool) (draw2d.Rect, b
 }
 
 // union is the smallest rectangle around two.
-func union(first, second draw2d.Rect) draw2d.Rect {
+func union(first, second draw2d.Rectangle) draw2d.Rectangle {
 	left, top := min(first.X, second.X), min(first.Y, second.Y)
 	right, bottom := max(first.Right(), second.Right()), max(first.Bottom(), second.Bottom())
-	return draw2d.Rect{X: left, Y: top, Width: right - left, Height: bottom - top}
+	return draw2d.Rectangle{X: left, Y: top, Width: right - left, Height: bottom - top}
 }
 
 // scrollForReader moves a scroll area by most of its view when a screen reader asks.
@@ -532,7 +532,7 @@ func (ui *Context) paintReaderFocus() {
 		ui.drawing.SetLayer(readerLayer)
 		ring := node.Area
 		ui.drawing.Rectangle(ring, 4, draw2d.Transparent, ui.Theme.Ink, 4)
-		inner := draw2d.Rect{X: ring.X + 3, Y: ring.Y + 3, Width: ring.Width - 6, Height: ring.Height - 6}
+		inner := draw2d.Rectangle{X: ring.X + 3, Y: ring.Y + 3, Width: ring.Width - 6, Height: ring.Height - 6}
 		ui.drawing.Rectangle(inner, 2, draw2d.Transparent, ui.Theme.Background, 2)
 		ui.drawing.SetLayer(0)
 		return

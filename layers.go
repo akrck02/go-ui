@@ -77,7 +77,7 @@ func (ui *Context) Overlay(name string, options LayerOptions, content func()) {
 // Within lays out the panels, overlays and modals content opens in an area of the window instead
 // of the whole window (a panel's X and Y count from the area's corner): an interface that a program shows inside a view of its own (a game played inside
 // an editor). Popups and tooltips still go anywhere in the window.
-func (ui *Context) Within(area draw2d.Rect, content func()) {
+func (ui *Context) Within(area draw2d.Rectangle, content func()) {
 	outside, wasWithin := ui.within, ui.isWithin
 	ui.within, ui.isWithin = area, true
 	content()
