@@ -36,9 +36,9 @@ things declared after it.</p>
 
 <p>AccessibleNode is one thing a screen reader can read and act on.</p>
 <pre><code class="language-go"><span class="kd">type</span> <span class="nx">AccessibleNode</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span class="nx">ID</span>     <span class="nx">ID</span>          <span class="c1">// the same from one frame to the next while the thing stays</span>
-	<span class="nx">Parent</span> <span class="nx">ID</span>          <span class="c1">// the scroll area it is in, or 0 for the window</span>
-	<span class="nx">Area</span>   <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span> <span class="c1">// where it shows, in layout pixels: the part a scroll area does not hide</span>
+	<span class="nx">ID</span>     <span class="nx">ID</span>               <span class="c1">// the same from one frame to the next while the thing stays</span>
+	<span class="nx">Parent</span> <span class="nx">ID</span>               <span class="c1">// the scroll area it is in, or 0 for the window</span>
+	<span class="nx">Area</span>   <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rectangle</span> <span class="c1">// where it shows, in layout pixels: the part a scroll area does not hide</span>
 	<span class="nx">Description</span>
 	<span class="nx">Pressable</span>     <span class="kt">bool</span> <span class="c1">// a double tap presses it (ReaderPress)</span>
 	<span class="nx">LongPressable</span> <span class="kt">bool</span> <span class="c1">// the program reads LongPressed after it (ReaderLongPress)</span>
@@ -63,7 +63,7 @@ things declared after it.</p>
 
 <p>Backdrop draws a box&rsquo;s background in its area.</p>
 <pre><code class="language-go"><span class="kd">type</span> <span class="nx">Backdrop</span> <span class="kd">interface</span> <span class="p">{</span>
-	<span class="nf">Paint</span><span class="p">(</span><span class="nx">area</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span><span class="p">,</span> <span class="nx">drawing</span> <span class="o">*</span><span class="nx">draw2d</span><span class="p">.</span><span class="nx">List</span><span class="p">)</span>
+	<span class="nf">Paint</span><span class="p">(</span><span class="nx">area</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rectangle</span><span class="p">,</span> <span class="nx">drawing</span> <span class="o">*</span><span class="nx">draw2d</span><span class="p">.</span><span class="nx">List</span><span class="p">)</span>
 <span class="p">}</span>
 </code></pre>
 
@@ -117,7 +117,12 @@ things declared after it.</p>
 <tbody>
 <tr>
 <td><code>func New() (*Context, error)</code></td>
-<td>New returns an interface that measures text with go-renderer&rsquo;s fonts, in the default theme.</td>
+<td>New returns an interface that measures text with go-renderer&rsquo;s default fonts, in the default theme.</td>
+</tr>
+
+<tr>
+<td><code>func NewInFonts(fonts overlay.Fonts) (*Context, error)</code></td>
+<td>NewInFonts returns an interface that measures text in these fonts (a brand&rsquo;s, say), in the default theme.</td>
 </tr>
 
 <tr>
@@ -136,7 +141,7 @@ things declared after it.</p>
 </tr>
 
 <tr>
-<td><code>func (ui *Context) Area(path ...string) (draw2d.Rect, bool)</code></td>
+<td><code>func (ui *Context) Area(path ...string) (draw2d.Rectangle, bool)</code></td>
 <td>Area tells where a control was drawn in the last frame, found by its label and the scopes around it, outermost first: Area(&ldquo;Properties&rdquo;, &ldquo;Apply&rdquo;) is the Apply button of the Properties panel (panels open a scope with their title).</td>
 </tr>
 
@@ -376,7 +381,7 @@ things declared after it.</p>
 </tr>
 
 <tr>
-<td><code>func (ui *Context) Paint(layout Layout, paint func(area draw2d.Rect, drawing *draw2d.List))</code></td>
+<td><code>func (ui *Context) Paint(layout Layout, paint func(area draw2d.Rectangle, drawing *draw2d.List))</code></td>
 <td>Paint adds a box laid out as any other, which the program paints itself once the layout knows where it is: a shape go-ui has no control for (a loading indicator, a wave, a chart).</td>
 </tr>
 
@@ -631,7 +636,7 @@ things declared after it.</p>
 </tr>
 
 <tr>
-<td><code>func (ui *Context) Within(area draw2d.Rect, content func())</code></td>
+<td><code>func (ui *Context) Within(area draw2d.Rectangle, content func())</code></td>
 <td>Within lays out the panels, overlays and modals content opens in an area of the window instead of the whole window (a panel&rsquo;s X and Y count from the area&rsquo;s corner): an interface that a program shows inside a view of its own (a game played inside an editor).</td>
 </tr>
 </tbody>
@@ -1034,7 +1039,7 @@ things declared after it.</p>
 	<span class="nx">Released</span> <span class="kt">bool</span>    <span class="c1">// the finger let go in this frame; Offset and Velocity are its last</span>
 	<span class="c1">// Area is where the box was laid out in the last frame (zero in its first): its width is a</span>
 	<span class="c1">// page&#39;s, for content that moves a page at a time.</span>
-	<span class="nx">Area</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span>
+	<span class="nx">Area</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rectangle</span>
 <span class="p">}</span>
 </code></pre>
 

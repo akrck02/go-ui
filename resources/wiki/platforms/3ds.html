@@ -2,7 +2,7 @@
 
 <p><strong>Status:</strong> a first step (October 2026). Built with a TinyGo that has a <code>nintendo3ds</code> target, a
 go-ui program runs on the console as homebrew, from the Homebrew Launcher: <code>window.Run</code> opens the
-console&rsquo;s two screens, drawn through go-renderer&rsquo;s <code>ctr</code> (citro3d). A large program (a 3D scene
+console&rsquo;s two screens, drawn through go-renderer&rsquo;s <code>nintendo3ds</code> (citro3d). A large program (a 3D scene
 above, an interface of its own below) runs on a New 3DS XL at full speed; the
 same drawing, with a loop of its own, runs in go-3ds&rsquo;s explorer.</p>
 
@@ -71,7 +71,7 @@ ends the program.</p>
 
 <tr>
 <td>Circle pad</td>
-<td>The stick (<code>input.State.StickX</code>, <code>StickY</code>): go-renderer&rsquo;s cameras move with it</td>
+<td>The stick (<code>input.State.Stick</code>): go-renderer&rsquo;s cameras move with it</td>
 </tr>
 </tbody>
 </table>
@@ -86,7 +86,7 @@ Preferences last only the run: TinyGo&rsquo;s <code>os</code> cannot reach the S
 
 <h2 id="how-it-runs">How it runs</h2>
 
-<p><code>window/nintendo3ds.go</code> reads the controls into the input state each frame (<code>ctr.Controls</code>),
+<p><code>window/nintendo3ds.go</code> reads the controls into the input state each frame (<code>nintendo3ds.Controls</code>),
 builds the interface, asks the program for its scene, and draws both in one frame:
 <code>SceneRenderer.PaintStereo</code> (or <code>PaintOn</code> the bottom screen) and <code>FlatRenderer.PaintOn</code>. It draws
 every frame, as fast as the screen shows them, and yields to the program&rsquo;s other goroutines after

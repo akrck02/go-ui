@@ -148,7 +148,9 @@ go <span class="nb">test</span> -run xxx -bench .             <span class="c1">#
 lines of text, icons), each panel on its own layer and its content clipped to it. Go Renderer
 paints that list after the scene, in the same pass and atlas as its labels, so the whole interface
 is one draw call. Text is measured with Go Renderer&rsquo;s own fonts (<code>overlay.NewMeasurer</code>) at the
-screen&rsquo;s density, so what is laid out is exactly what is painted.</p>
+screen&rsquo;s density, so what is laid out is exactly what is painted. A program with fonts of its own
+(a brand&rsquo;s) sets <code>window.Options.Fonts</code>: the window measures and paints in them (and a program that
+makes its interface itself uses <code>ui.NewInFonts</code> with the same fonts).</p>
 
 <p>A frame of three panels with three hundred controls builds, lays out and paints in about 0.1 ms
 (<code>go test -bench .</code>). More in <a href="./project/performance-audit">performance and battery</a>.</p>

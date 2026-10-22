@@ -118,12 +118,12 @@ with no display.</p>
 
 <p>Element is what the last frame showed of a control, a text or a scroll area.</p>
 <pre><code class="language-go"><span class="kd">type</span> <span class="nx">Element</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span class="nx">ID</span>        <span class="nx">ui</span><span class="p">.</span><span class="nx">ID</span>       <span class="c1">// the one the interface gives it, 0 when it was not on screen</span>
-	<span class="nx">Label</span>     <span class="kt">string</span>      <span class="c1">// what a screen reader calls it: a button&#39;s text, a described label</span>
-	<span class="nx">Rect</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span> <span class="c1">// where it was laid out, in layout pixels</span>
-	<span class="nx">Visible</span>   <span class="kt">bool</span>        <span class="c1">// some of it shows: not scrolled away, not behind a dialog or sheet</span>
-	<span class="nx">Focused</span>   <span class="kt">bool</span>        <span class="c1">// it has the focus (ui.Context.FocusedID)</span>
-	<span class="nx">Pressable</span> <span class="kt">bool</span>        <span class="c1">// a click or a tap does something to it</span>
+	<span class="nx">ID</span>        <span class="nx">ui</span><span class="p">.</span><span class="nx">ID</span>            <span class="c1">// the one the interface gives it, 0 when it was not on screen</span>
+	<span class="nx">Label</span>     <span class="kt">string</span>           <span class="c1">// what a screen reader calls it: a button&#39;s text, a described label</span>
+	<span class="nx">Rect</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rectangle</span> <span class="c1">// where it was laid out, in layout pixels</span>
+	<span class="nx">Visible</span>   <span class="kt">bool</span>             <span class="c1">// some of it shows: not scrolled away, not behind a dialog or sheet</span>
+	<span class="nx">Focused</span>   <span class="kt">bool</span>             <span class="c1">// it has the focus (ui.Context.FocusedID)</span>
+	<span class="nx">Pressable</span> <span class="kt">bool</span>             <span class="c1">// a click or a tap does something to it</span>
 <span class="p">}</span>
 </code></pre>
 

@@ -160,7 +160,7 @@ code when what it looks for is not there.</p>
 <p>RecordedFrame is one frame: what was drawn, where the pointer and the fingers were, and the action that ran it with the element it found.</p>
 <pre><code class="language-go"><span class="kd">type</span> <span class="nx">RecordedFrame</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span class="nx">Action</span>     <span class="kt">string</span> <span class="c1">// `Click &#34;Save&#34;`, empty for a frame run on its own</span>
-	<span class="nx">Target</span>     <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span>
+	<span class="nx">Target</span>     <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rectangle</span>
 	<span class="nx">HasTarget</span>  <span class="kt">bool</span>
 	<span class="nx">HasPointer</span> <span class="kt">bool</span> <span class="c1">// the pointer has been somewhere in the window</span>
 	<span class="nx">PointerX</span>   <span class="kt">float32</span>
