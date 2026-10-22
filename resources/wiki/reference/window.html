@@ -167,6 +167,10 @@ all the time.</p>
 	<span class="nx">World</span>  <span class="o">*</span><span class="nx">scene</span><span class="p">.</span><span class="nx">Scene</span>
 	<span class="nx">Camera</span> <span class="nx">models</span><span class="p">.</span><span class="nx">Camera</span>
 	<span class="nx">Area</span>   <span class="o">*</span><span class="nx">draw2d</span><span class="p">.</span><span class="nx">Rect</span> <span class="c1">// where a computer shows it, in window pixels; nil is nowhere</span>
+	<span class="c1">// Over draws it over the scene behind it in its area, with no background of its own (a radar</span>
+	<span class="c1">// floating in a corner of the view); otherwise its area shows its own sky. A console&#39;s second</span>
+	<span class="c1">// screen is its own, and keeps its background.</span>
+	<span class="nx">Over</span> <span class="kt">bool</span>
 <span class="p">}</span>
 </code></pre>
 
@@ -292,7 +296,8 @@ all the time.</p>
 	<span class="nx">Drawing</span> <span class="o">*</span><span class="nx">draw2d</span><span class="p">.</span><span class="nx">List</span>
 	<span class="c1">// Below is a second scene for the 3DS&#39;s bottom screen, with the interface painted over it (a</span>
 	<span class="c1">// map, a turning model); nil leaves the bottom screen to the interface alone. On a computer it</span>
-	<span class="c1">// is drawn only where its Area says (a preview of the console).</span>
+	<span class="c1">// is drawn only where its Area says: beside the scene (a preview of the console), or in a</span>
+	<span class="c1">// corner of a scene that fills the window (a radar), under the program&#39;s drawing.</span>
 	<span class="nx">Below</span> <span class="o">*</span><span class="nx">BelowView</span>
 	<span class="c1">// Area is where the scene is drawn on a computer, in window pixels; nil is the whole window.</span>
 	<span class="c1">// Around it the window shows the theme&#39;s background (a preview of a console&#39;s screen).</span>
