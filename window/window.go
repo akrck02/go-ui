@@ -102,6 +102,10 @@ type BelowView struct {
 	World  *scene.Scene
 	Camera models.Camera
 	Area   *draw2d.Rect // where a computer shows it, in window pixels; nil is nowhere
+	// Over draws it over the scene behind it in its area, with no background of its own (a radar
+	// floating in a corner of the view); otherwise its area shows its own sky. A console's second
+	// screen is its own, and keeps its background.
+	Over bool
 }
 
 // shownScene is the scene the last step asked for, shared by the step and the drawing, and the
