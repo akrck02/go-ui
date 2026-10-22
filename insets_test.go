@@ -29,7 +29,7 @@ func TestAProgramCanAskForTheNextFrame(t *testing.T) {
 	context.Begin(state)
 	context.RequestFrame(250 * time.Millisecond)
 	context.End()
-	if delay, wanted := state.TakeFrameRequest(); !wanted || delay > 250*time.Millisecond {
+	if delay, wanted := state.Feed().TakeFrameRequest(); !wanted || delay > 250*time.Millisecond {
 		t.Fatalf("frame wanted %v in %v; want one within 250 ms", wanted, delay)
 	}
 }
@@ -40,8 +40,8 @@ func TestTheInterfaceListsTheFingers(t *testing.T) {
 		t.Fatal("fingers before any frame")
 	}
 	state := input.NewState()
-	state.SetTouch(1, 10, 20)
-	state.SetTouch(2, 30, 40)
+	state.Feed().SetTouch(1, 10, 20)
+	state.Feed().SetTouch(2, 30, 40)
 	context.Begin(state)
 	touches := context.Touches()
 	context.End()

@@ -12,10 +12,10 @@ Start from a theme of go-ui's, then set what your design system asks for:
 
 ```go
 theme := ui.LightTheme()
-theme.Primary, theme.OnPrimary = draw2d.Hex("#2f6f8f"), draw2d.Hex("#ffffff")
+theme.Primary, theme.OnPrimary = draw2d.MustHex("#2f6f8f"), draw2d.MustHex("#ffffff")
 
 theme.ButtonRadius, theme.ButtonPadding, theme.ButtonWeight = 10, 18, draw2d.Bold
-theme.PrimaryEdge, theme.EdgeWidth = draw2d.Hex("#214e64"), 2 // the main button stands on a block
+theme.PrimaryEdge, theme.EdgeWidth = draw2d.MustHex("#214e64"), 2 // the main button stands on a block
 theme.Chosen, theme.ChosenInk = theme.Sunken, theme.Ink       // what is chosen is brighter, not coloured
 theme.LineHeight, theme.HeadingLineHeight = 1.5, 1.2
 

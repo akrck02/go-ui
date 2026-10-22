@@ -109,7 +109,8 @@ OpenGL scene renderer on the desktop.
 clickables (`material.go`): a top app bar and a navigation bar painted under the system's bars,
 list items with a round icon and a Material switch, filter chips, pill-shaped buttons, cards and
 floating buttons, in Material Design 3's baseline colours, light and dark, and in Roboto, Android's
-typeface (embedded under the SIL Open Font License, in `cmd/mobile/fonts`). Its three destinations
+typeface (embedded under the SIL Open Font License, in `cmd/mobile/fonts`, and given to the window
+as `Options.Fonts`). Its three destinations
 are a list of lighthouses with their details, a map with the 3D island (drag to turn, buttons to
 come closer, a slider for the time of day) and settings (the dark theme, the screen's size and
 insets).

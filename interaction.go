@@ -94,7 +94,7 @@ func (ui *Context) finishInteraction() {
 
 // reachOf is where the pointer could reach a thing in the last frame: the part that showed, when a
 // box around it clipped it (a list scrolled), else all of it.
-func (ui *Context) reachOf(id ID) (draw2d.Rect, bool) {
+func (ui *Context) reachOf(id ID) (draw2d.Rectangle, bool) {
 	if area, clipped := ui.previousReach[id]; clipped {
 		return area, !area.IsEmpty()
 	}

@@ -185,4 +185,4 @@ func center(found Element) (x, y float32) {
 }
 
 // rectangleAt is an empty rectangle at a place, whose middle is the place.
-func rectangleAt(x, y float32) draw2d.Rect { return draw2d.Rect{X: x, Y: y} }
+func rectangleAt(x, y float32) draw2d.Rectangle { return draw2d.Rectangle{X: x, Y: y} }

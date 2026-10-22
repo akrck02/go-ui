@@ -7,18 +7,18 @@ import (
 )
 
 // stripes is a backdrop that draws one band across the top of its area.
-type stripes struct{ painted []draw2d.Rect }
+type stripes struct{ painted []draw2d.Rectangle }
 
-func (backdrop *stripes) Paint(area draw2d.Rect, drawing *draw2d.List) {
+func (backdrop *stripes) Paint(area draw2d.Rectangle, drawing *draw2d.List) {
 	backdrop.painted = append(backdrop.painted, area)
-	drawing.Rectangle(draw2d.Rect{X: area.X, Y: area.Y, Width: area.Width, Height: 2}, 0, draw2d.Hex("#ff0000"), draw2d.Color{}, 0)
+	drawing.Rectangle(draw2d.Rectangle{X: area.X, Y: area.Y, Width: area.Width, Height: 2}, 0, draw2d.MustHex("#ff0000"), draw2d.Color{}, 0)
 }
 
 func TestABackdropPaintsInItsBoxArea(t *testing.T) {
 	h := newHarness(t)
 	backdrop := &stripes{}
 	build := func(ui *Context) {
-		ui.Frame(Layout{Width: Fixed(120), Height: Fixed(40)}, Look{Fill: draw2d.Hex("#ffffff"), Backdrop: backdrop}, func() {
+		ui.Frame(Layout{Width: Fixed(120), Height: Fixed(40)}, Look{Fill: draw2d.MustHex("#ffffff"), Backdrop: backdrop}, func() {
 			ui.Label("Inside")
 		})
 	}
@@ -30,7 +30,7 @@ func TestABackdropPaintsInItsBoxArea(t *testing.T) {
 
 func TestATextShadowGoesUnderTheTextAPixelAway(t *testing.T) {
 	h := newHarness(t)
-	shadow, ink := draw2d.Hex("#203040"), draw2d.Hex("#f0f0f0")
+	shadow, ink := draw2d.MustHex("#203040"), draw2d.MustHex("#f0f0f0")
 	h.frame(func(ui *Context) { ui.Text("Shaded", TextStyle{Color: ink, Shadow: shadow}) })
 	var under, over *draw2d.Command
 	for index := range h.ui.drawing.Commands {

@@ -31,7 +31,7 @@ func newAuditWindow(tb testing.TB) *auditWindow {
 	if err != nil {
 		tb.Fatal(err)
 	}
-	painter, err := overlay.NewPainter()
+	painter, err := overlay.NewPainter(overlay.Fonts{})
 	if err != nil {
 		tb.Fatal(err)
 	}
@@ -66,7 +66,7 @@ func (window *auditWindow) update() {
 	window.ui.Begin(window.state)
 	window.build(window.ui)
 	window.ui.End()
-	window.state.EndFrame()
+	window.state.Feed().EndFrame()
 }
 
 func (window *auditWindow) paint() []overlay.Quad {
@@ -119,9 +119,9 @@ func TestAuditFrame(t *testing.T) {
 
 	seed := maphash.MakeSeed()
 	first := hashDrawing(seed, list)
-	window.state.MoveCursor(1270, 710) // over empty background, far from every control
+	window.state.Feed().MoveCursor(1270, 710) // over empty background, far from every control
 	window.update()
-	window.state.MoveCursor(1271, 711)
+	window.state.Feed().MoveCursor(1271, 711)
 	window.update()
 	afterMove := hashDrawing(seed, window.ui.Drawing())
 	window.update() // the on-demand follow-up frame, no input

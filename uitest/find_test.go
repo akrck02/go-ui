@@ -148,9 +148,9 @@ func TestTheFocusedElementSaysSo(t *testing.T) {
 		context.Button("Light the lamp")
 		context.Button("Ring the bell")
 	})
-	window.State().SetKey(input.KeyTab, true)
+	window.State().Feed().SetKey(input.KeyTab, true)
 	window.Frame()
-	window.State().SetKey(input.KeyTab, false)
+	window.State().Feed().SetKey(input.KeyTab, false)
 	window.Frame()
 	element, err := window.Element("Light the lamp")
 	if err != nil {

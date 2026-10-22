@@ -123,7 +123,7 @@ context.Box(ui.Layout{Width: ui.Grow(), Wrap: true, Gap: 6}, func() { // tags: r
 		}
 	}
 })
-context.Chip("circle-alert", "Needs repair", ui.ChipLook{Fill: draw2d.Hex("#fdecea"), Ink: draw2d.Hex("#b3261e")})
+context.Chip("circle-alert", "Needs repair", ui.ChipLook{Fill: draw2d.MustHex("#fdecea"), Ink: draw2d.MustHex("#b3261e")})
 ```
 
 ![Three filter chips, four tags with ×, a red Needs repair chip](../images/components/buttons-chips.png)

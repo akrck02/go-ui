@@ -172,7 +172,7 @@ func TestAPressFocusesAField(t *testing.T) {
 	if !h.ui.Typing() || !h.node("Name").Typing {
 		t.Fatal("pressed by the screen reader, the field takes the keyboard")
 	}
-	h.state.AddCharacter('!')
+	h.state.Feed().AddCharacter('!')
 	h.frame(build)
 	if name != "Keeper!" {
 		t.Fatalf("typing goes on at the end of the text: %q", name)

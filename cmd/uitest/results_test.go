@@ -11,7 +11,7 @@ import (
 
 // sampleRecordings are two tests of a made-up interface: one passed with three frames, one failed.
 func sampleRecordings() []uitest.Recording {
-	button := draw2d.Rect{X: 20, Y: 20, Width: 120, Height: 32}
+	button := draw2d.Rectangle{X: 20, Y: 20, Width: 120, Height: 32}
 	frame := func(action string, hasTarget bool) uitest.RecordedFrame {
 		return uitest.RecordedFrame{Action: action, Target: button, HasTarget: hasTarget, PointerX: 80, PointerY: 36,
 			Commands: []draw2d.Command{{Kind: draw2d.RectangleKind, Area: button, Fill: draw2d.Color{0.2, 0.4, 0.8, 1}}}}

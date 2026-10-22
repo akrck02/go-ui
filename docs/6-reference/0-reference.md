@@ -22,7 +22,7 @@ the context's methods by what they are for.
 | `Begin(state *input.State)`, `End()` | Open and close a frame: `End` lays out, paints and claims the mouse and keyboard. `window.Run` calls both for you |
 | `Drawing() *draw2d.List` | What go-renderer paints: give it to `scene.Overlay.Drawing` once |
 | `Push(name)`, `Pop()` | Open and close a scope, so controls in a loop have ids of their own |
-| `Area(path...) (draw2d.Rect, bool)` | Where a control was drawn in the last frame, by its scopes and label |
+| `Area(path...) (draw2d.Rectangle, bool)` | Where a control was drawn in the last frame, by its scopes and label |
 | `RequestFrame(delay)` | Ask for another frame within a delay, for something that moves |
 | `Size() (width, height)`, `Insets()` | The window's size, and how much of each edge the system's bars cover |
 | `Theme` (field) | The tokens every control reads: `ui.LightTheme()`, `ui.DarkTheme()` |

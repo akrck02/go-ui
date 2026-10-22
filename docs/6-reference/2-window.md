@@ -85,8 +85,8 @@ BelowView is a scene seen from a camera on the 3DS's bottom screen.
 ```go
 type BelowView struct {
 	World  *scene.Scene
-	Camera models.Camera
-	Area   *draw2d.Rect // where a computer shows it, in window pixels; nil is nowhere
+	Camera camera.Camera
+	Area   *draw2d.Rectangle // where a computer shows it, in window pixels; nil is nowhere
 	// Over draws it over the scene behind it in its area, with no background of its own (a radar
 	// floating in a corner of the view); otherwise its area shows its own sky. A console's second
 	// screen is its own, and keeps its background.
@@ -161,6 +161,9 @@ type Options struct {
 	// again. It is the moment to play again what Hidden stopped, such as a sound. On the desktop,
 	// where a hidden window has closed, it is not called.
 	Shown func()
+	// Fonts are what the interface's text is measured and drawn in, a font file for each weight;
+	// the zero value is go-renderer's default, the Go fonts.
+	Fonts overlay.Fonts
 	// Driver, when set, drives the window: at every frame it adds input before the interface runs
 	// and may draw over it after (uidrive.Player plays a script: a demo, a tutorial, a replay, a
 	// test on the device; uidrive.Recorder writes down what a person does). A person's own input
@@ -194,7 +197,7 @@ SceneView is a 3D scene seen from a camera, drawn behind the interface.
 ```go
 type SceneView struct {
 	World  *scene.Scene
-	Camera models.Camera
+	Camera camera.Camera
 	// Drawing is the program's own drawing over the scene and under the interface: a game's life
 	// bar, a sight. On the 3DS it is painted on the top screen, in each eye when in 3D. Keep the
 	// list between frames (Reset it), so drawing it allocates nothing. Draw it on layer 0: a higher
@@ -207,7 +210,7 @@ type SceneView struct {
 	Below *BelowView
 	// Area is where the scene is drawn on a computer, in window pixels; nil is the whole window.
 	// Around it the window shows the theme's background (a preview of a console's screen).
-	Area *draw2d.Rect
+	Area *draw2d.Rectangle
 }
 ```
 

@@ -31,7 +31,7 @@ func (window *Window) Wait(duration time.Duration) {
 	if duration <= 0 {
 		return
 	}
-	defer window.doing(fmt.Sprintf("Wait %v", duration), draw2d.Rect{}, false)()
+	defer window.doing(fmt.Sprintf("Wait %v", duration), draw2d.Rectangle{}, false)()
 	start := window.clock.now
 	frames := max(1, int((duration+frameDuration/2)/frameDuration))
 	for frame := 1; frame <= frames; frame++ {

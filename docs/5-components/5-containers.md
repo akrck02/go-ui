@@ -98,11 +98,11 @@ A box laid out like any other, then handed to your function with its final recta
 ```go
 readings := []float32{0.2, 0.5, 0.4, 0.8, 0.6, 0.9, 0.7}
 primary := context.Theme.Primary
-context.Paint(ui.Layout{Width: ui.Grow(), Height: ui.Fixed(80)}, func(area draw2d.Rect, drawing *draw2d.List) {
+context.Paint(ui.Layout{Width: ui.Grow(), Height: ui.Fixed(80)}, func(area draw2d.Rectangle, drawing *draw2d.List) {
 	barWidth := area.Width / float32(len(readings))
 	for index, reading := range readings {
 		height := area.Height * reading
-		bar := draw2d.Rect{X: area.X + float32(index)*barWidth + 4, Y: area.Bottom() - height, Width: barWidth - 8, Height: height}
+		bar := draw2d.Rectangle{X: area.X + float32(index)*barWidth + 4, Y: area.Bottom() - height, Width: barWidth - 8, Height: height}
 		drawing.Rectangle(bar, 3, primary, draw2d.Transparent, 0)
 	}
 })

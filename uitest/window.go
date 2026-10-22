@@ -83,7 +83,7 @@ func (window *Window) Frame() {
 		window.driver.Show(window.context.Drawing())
 	}
 	window.recordFrame()
-	window.state.EndFrame()
+	window.state.Feed().EndFrame()
 }
 
 // Frames runs a number of frames, with no time passing between them (see Wait).
@@ -113,7 +113,7 @@ func (window *Window) step() {
 	window.Frame()
 	window.Frame()
 	for range maximumSettlingFrames {
-		wait, asked := window.state.TakeFrameRequest()
+		wait, asked := window.state.Feed().TakeFrameRequest()
 		if !asked {
 			return
 		}

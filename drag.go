@@ -212,7 +212,7 @@ func (ui *Context) showDrag() {
 	ui.cursor = input.CursorMove
 	theme := ui.Theme
 	x, y := float32(ui.state.CursorX), float32(ui.state.CursorY)
-	anchor := draw2d.Rect{X: x + 12, Y: y + 4}
+	anchor := draw2d.Rectangle{X: x + 12, Y: y + 4}
 	look := Look{Fill: theme.Surface, Border: theme.Primary, BorderWidth: 1, Radius: chipHeight / 2, Shadow: true}
 	ui.popup(childID(drag.source, "##dragging"), anchor, 0, true, look, func() {
 		ui.Box(Layout{Height: Fixed(chipHeight - 8), Padding: PadXY(6, 0), AlignY: Center}, func() {

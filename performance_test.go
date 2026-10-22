@@ -15,7 +15,7 @@ func TestRowsOutOfSightAreNotPainted(t *testing.T) {
 		ui.ScrollArea("rows", Layout{Width: Fixed(300), Height: Fixed(200)}, func() {
 			for index := 0; index < 500; index++ {
 				ui.Push(strconv.Itoa(index))
-				ui.Frame(Layout{Width: Grow(), Height: Fixed(20)}, Look{Fill: draw2d.Hex("#ffffff")}, func() {
+				ui.Frame(Layout{Width: Grow(), Height: Fixed(20)}, Look{Fill: draw2d.MustHex("#ffffff")}, func() {
 					ui.Label(fmt.Sprintf("Row %d", index))
 				})
 				ui.Pop()
@@ -61,12 +61,12 @@ func TestTheCaretStopsBlinkingAfterAWhile(t *testing.T) {
 	h.frame(build)
 	h.clickInside(idOf("Name"), build)
 	h.frame(build)
-	if _, wanted := h.state.TakeFrameRequest(); !wanted {
+	if _, wanted := h.state.Feed().TakeFrameRequest(); !wanted {
 		t.Fatal("a fresh caret blinks")
 	}
 	*now = now.Add(caretBlinksFor + time.Second)
 	h.frame(build)
-	if _, wanted := h.state.TakeFrameRequest(); wanted {
+	if _, wanted := h.state.Feed().TakeFrameRequest(); wanted {
 		t.Fatal("after a while without typing the caret stays shown and asks for no frames")
 	}
 	if !h.ui.memory[idOf("Name")].value.(*fieldMemory).paint.caretShown {
@@ -74,7 +74,7 @@ func TestTheCaretStopsBlinkingAfterAWhile(t *testing.T) {
 	}
 	h.typeText("s", build)
 	h.frame(build)
-	if _, wanted := h.state.TakeFrameRequest(); !wanted {
+	if _, wanted := h.state.Feed().TakeFrameRequest(); !wanted {
 		t.Fatal("typing starts the blinking again")
 	}
 }

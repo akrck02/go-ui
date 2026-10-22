@@ -18,7 +18,6 @@ import (
 	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/graphics"
 	"github.com/akrck02/go-renderer/input"
-	"github.com/akrck02/go-renderer/models"
 	"github.com/akrck02/go-renderer/scene"
 	"github.com/akrck02/go-renderer/scene/sample"
 	ui "github.com/akrck02/go-ui"
@@ -63,8 +62,8 @@ type application struct {
 
 	world  *scene.Scene
 	orbit  *camera.Orbit
-	camera models.Camera
-	shown  models.Camera // the camera of the frame on screen, to tell when it still moves
+	camera camera.Camera
+	shown  camera.Camera // the camera of the frame on screen, to tell when it still moves
 }
 
 func main() {
@@ -73,7 +72,7 @@ func main() {
 	flag.Parse()
 	options.Width, options.Height = 412, 892 // a phone's size on the desktop
 
-	useRoboto() // before the window makes its interface, which reads the fonts
+	options.Fonts = roboto() // the interface measures and draws its text in Roboto
 	program := newApplication(options.Dark)
 	options.Scene = program.scene
 	if err := window.Run(options, program.build); err != nil {
@@ -289,23 +288,23 @@ func (program *application) scene(state *input.State, step float64) *window.Scen
 
 // sunAt is where the sun is at an hour: rising in the east at six, highest at noon, setting in the
 // west at six in the evening, and under the horizon at night.
-func sunAt(hour float32) graphics.Vec4 {
+func sunAt(hour float32) graphics.Vector {
 	angle := (float64(hour) - 6) / 12 * math.Pi
-	return graphics.Vec4{float32(math.Cos(angle)), float32(math.Sin(angle)), 0.35, 0}.Normalize()
+	return graphics.Vector{float32(math.Cos(angle)), float32(math.Sin(angle)), 0.35, 0}.Normalize()
 }
 
 // orbitAround places an orbit camera over the middle of the scene, as the desktop viewer does.
-func orbitAround(world *scene.Scene) (*camera.Orbit, models.Camera) {
+func orbitAround(world *scene.Scene) (*camera.Orbit, camera.Camera) {
 	minimum, maximum := world.Bounds()
 	size := float32(math.Max(float64(maximum[0]-minimum[0]), float64(maximum[2]-minimum[2])))
 	if size <= 0 || math.IsInf(float64(size), 0) {
 		size = 10
 	}
-	center := graphics.Vec4{(minimum[0] + maximum[0]) / 2, 0, (minimum[2] + maximum[2]) / 2, 1}
-	orbit := camera.NewOrbit(center, float64(size)*1.3)
+	center := graphics.Vector{(minimum[0] + maximum[0]) / 2, 0, (minimum[2] + maximum[2]) / 2, 1}
+	orbit := camera.NewOrbit(center, size*1.3)
 	orbit.MaximumDistance = float64(size) * 3
 	orbit.Ground = world.GroundHeight
-	return orbit, models.Camera{Near: size * 0.001, Far: size * 10}
+	return orbit, camera.Camera{Near: size * 0.001, Far: size * 10}
 }
 
 // settings holds the theme and what the program knows about the screen.

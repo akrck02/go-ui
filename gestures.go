@@ -99,7 +99,7 @@ type Swipe struct {
 	Released bool    // the finger let go in this frame; Offset and Velocity are its last
 	// Area is where the box was laid out in the last frame (zero in its first): its width is a
 	// page's, for content that moves a page at a time.
-	Area draw2d.Rect
+	Area draw2d.Rectangle
 }
 
 // SwipeBox lays content out in a box a finger drags along an axis (sideways, for pages, cards in a

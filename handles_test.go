@@ -7,7 +7,7 @@ import (
 
 // fingerAt puts one finger down at a point, for one step, without lifting it.
 func (h *harness) fingerAt(x, y float32, build func(ui *Context)) {
-	h.state.SetTouch(1, float64(x), float64(y))
+	h.state.Feed().SetTouch(1, float64(x), float64(y))
 	h.moveTo(float64(x), float64(y))
 	h.press()
 	h.frame(build)
@@ -90,7 +90,7 @@ func TestAHandleDraggedMovesItsEnd(t *testing.T) {
 	target := h.rect(field).X + fieldPadding + h.ui.textWidth("North light", 0)
 	grabbed := handle.X + handle.Width/2 - (h.rect(field).X + fieldPadding + h.ui.textWidth("North", 0))
 	h.moveTo(float64(target+grabbed), float64(handle.Y+handle.Height/2))
-	h.state.SetTouch(1, float64(target+grabbed), float64(handle.Y+handle.Height/2))
+	h.state.Feed().SetTouch(1, float64(target+grabbed), float64(handle.Y+handle.Height/2))
 	h.frame(build)
 	if selected := h.ui.memory[field].value.(*fieldMemory).editor.selectedText(); selected != "North light" {
 		t.Fatalf("the end follows the handle's point: %q", selected)

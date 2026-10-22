@@ -96,7 +96,7 @@ update := func(world *scene.Scene, state *input.State, step float64) {
 	})
 	interfaceContext.End()
 }
-viewer.Run(world, options, "Lighthouse", update, 0)
+viewer.Run(world, options, "Lighthouse", update)
 ```
 
 Tab, Enter and Space stay with the scene until the interface is given the keyboard; an

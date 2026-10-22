@@ -18,7 +18,7 @@ There are two ways in:
 
 | | `viewer.Run` (Go Renderer) | `window.Options.Scene` (Go UI) |
 |---|---|---|
-| The cameras | The viewer's: orbit, walking, map, its keys and flags | Yours: a `camera.Orbit` or anything that fills a `models.Camera` |
+| The cameras | The viewer's: orbit, walking, map, its keys and flags | Yours: a `camera.Orbit` or anything that fills a `camera.Camera` |
 | Runs on | The desktop | The desktop, a web page and Android |
 | Good for | Tools over a scene: editors, inspectors, simulations | Applications with a scene inside: a phone app with a map |
 
@@ -85,17 +85,17 @@ func main() {
 		world.Environment.SunDirection = sunDirection(elevation, azimuth)
 		world.Environment.EffectiveSky().Clouds.Coverage = clouds
 	}
-	if err := viewer.Run(world, options, "Sky", update, 0); err != nil {
+	if err := viewer.Run(world, options, "Sky", update); err != nil {
 		log.Fatal(err)
 	}
 }
 
 // sunDirection points towards a sun at an elevation and an azimuth (clockwise from north, −z), in
 // degrees.
-func sunDirection(elevation, azimuth float32) graphics.Vec4 {
+func sunDirection(elevation, azimuth float32) graphics.Vector {
 	up := float64(elevation) * math.Pi / 180
 	around := float64(azimuth) * math.Pi / 180
-	return graphics.Vec4{
+	return graphics.Vector{
 		float32(math.Cos(up) * math.Sin(around)),
 		float32(math.Sin(up)),
 		float32(-math.Cos(up) * math.Cos(around)),
@@ -138,7 +138,6 @@ import (
 	"github.com/akrck02/go-renderer/camera"
 	"github.com/akrck02/go-renderer/graphics"
 	"github.com/akrck02/go-renderer/input"
-	"github.com/akrck02/go-renderer/models"
 	"github.com/akrck02/go-renderer/scene/sample"
 	ui "github.com/akrck02/go-ui"
 	"github.com/akrck02/go-ui/window"
@@ -151,9 +150,9 @@ func main() {
 
 	world := sample.Island()
 	minimum, maximum := world.Bounds()
-	middle := graphics.Vec4{(minimum[0] + maximum[0]) / 2, 0, (minimum[2] + maximum[2]) / 2, 1}
-	orbit := camera.NewOrbit(middle, float64(maximum[0]-minimum[0]))
-	view := models.Camera{Up: graphics.Vec4{0, 1, 0, 0}}
+	middle := graphics.Vector{(minimum[0] + maximum[0]) / 2, 0, (minimum[2] + maximum[2]) / 2, 1}
+	orbit := camera.NewOrbit(middle, maximum[0]-minimum[0])
+	view := camera.Camera{Up: graphics.Vector{0, 1, 0, 0}}
 
 	options.Scene = func(state *input.State, step float64) *window.SceneView {
 		orbit.Update(state, step, &view) // state holds only what the interface did not claim

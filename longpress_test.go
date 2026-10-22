@@ -23,7 +23,7 @@ func lighthouseButton(clicks, longPresses *int) func(ui *Context) {
 func (h *harness) putFingerOn(id ID, build func(ui *Context)) (x, y float64) {
 	area := h.rect(id)
 	x, y = float64(area.X+area.Width/2), float64(area.Y+area.Height/2)
-	h.state.SetTouch(1, x, y)
+	h.state.Feed().SetTouch(1, x, y)
 	h.moveTo(x, y)
 	h.press()
 	h.frame(build)
@@ -32,7 +32,7 @@ func (h *harness) putFingerOn(id ID, build func(ui *Context)) (x, y float64) {
 
 func (h *harness) liftFinger(build func(ui *Context)) {
 	h.release()
-	h.state.LiftTouch(1)
+	h.state.Feed().LiftTouch(1)
 	h.frame(build)
 }
 
@@ -53,9 +53,9 @@ func TestTheMouseLongPressesWithItsRightButtonOnly(t *testing.T) {
 	if clicks != 1 || longPresses != 0 {
 		t.Fatalf("%d clicks and %d long presses after holding the left button; want a slow click", clicks, longPresses)
 	}
-	h.state.SetButton(input.MouseRight, true)
+	h.state.Feed().SetButton(input.MouseRight, true)
 	h.frame(build)
-	h.state.SetButton(input.MouseRight, false)
+	h.state.Feed().SetButton(input.MouseRight, false)
 	h.frame(build)
 	if longPresses != 1 {
 		t.Fatalf("%d long presses after a right click; want one", longPresses)

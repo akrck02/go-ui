@@ -32,7 +32,7 @@ type replay struct {
 }
 
 // paint fits the recorded window into the area, centred, and paints the frame in it.
-func (replay replay) paint(area draw2d.Rect, drawing *draw2d.List) {
+func (replay replay) paint(area draw2d.Rectangle, drawing *draw2d.List) {
 	place, fits := fitWindow(replay.recording, area)
 	if !fits {
 		return
@@ -50,13 +50,13 @@ func (replay replay) paint(area draw2d.Rect, drawing *draw2d.List) {
 // fitWindow places a recorded window in an area, centred, keeping its shape: at its own size when
 // it fits, smaller when it does not. It is never enlarged, so its text and controls show as big as
 // the test's window had them.
-func fitWindow(recording uitest.Recording, area draw2d.Rect) (placement, bool) {
+func fitWindow(recording uitest.Recording, area draw2d.Rectangle) (placement, bool) {
 	if recording.Width <= 0 || recording.Height <= 0 || area.IsEmpty() {
 		return placement{}, false
 	}
 	scale := min(area.Width/recording.Width, area.Height/recording.Height, 1)
 	width, height := recording.Width*scale, recording.Height*scale
-	origin := draw2d.Rect{X: area.X + (area.Width-width)/2, Y: area.Y + (area.Height-height)/2, Width: width, Height: height}
+	origin := draw2d.Rectangle{X: area.X + (area.Width-width)/2, Y: area.Y + (area.Height-height)/2, Width: width, Height: height}
 	return placement{origin: origin, scale: scale}, true
 }
 
@@ -75,8 +75,8 @@ func (replay replay) paintMarks(place placement, drawing *draw2d.List) {
 }
 
 // paintSpot paints a ring where the pointer or a finger is; a pressed one is filled.
-func paintSpot(drawing *draw2d.List, center draw2d.Rect, color draw2d.Color, pressed bool) {
-	spot := draw2d.Rect{X: center.X - pointerRadius, Y: center.Y - pointerRadius, Width: 2 * pointerRadius, Height: 2 * pointerRadius}
+func paintSpot(drawing *draw2d.List, center draw2d.Rectangle, color draw2d.Color, pressed bool) {
+	spot := draw2d.Rectangle{X: center.X - pointerRadius, Y: center.Y - pointerRadius, Width: 2 * pointerRadius, Height: 2 * pointerRadius}
 	fill := draw2d.Transparent
 	if pressed {
 		fill = color
@@ -93,20 +93,20 @@ func inLayers(commands []draw2d.Command) []draw2d.Command {
 
 // placement maps the recorded window's layout pixels into the viewer's.
 type placement struct {
-	origin   draw2d.Rect
+	origin   draw2d.Rectangle
 	scale    float32
 	measurer draw2d.Measurer // see replay.measurer
 }
 
 // rect places a recorded rectangle.
-func (place placement) rect(area draw2d.Rect) draw2d.Rect {
-	return draw2d.Rect{X: place.origin.X + area.X*place.scale, Y: place.origin.Y + area.Y*place.scale,
+func (place placement) rect(area draw2d.Rectangle) draw2d.Rectangle {
+	return draw2d.Rectangle{X: place.origin.X + area.X*place.scale, Y: place.origin.Y + area.Y*place.scale,
 		Width: area.Width * place.scale, Height: area.Height * place.scale}
 }
 
 // point places a recorded point, as an empty rectangle at it.
-func (place placement) point(x, y float32) draw2d.Rect {
-	return draw2d.Rect{X: place.origin.X + x*place.scale, Y: place.origin.Y + y*place.scale}
+func (place placement) point(x, y float32) draw2d.Rectangle {
+	return draw2d.Rectangle{X: place.origin.X + x*place.scale, Y: place.origin.Y + y*place.scale}
 }
 
 // paintCommand paints one recorded command, scaled, inside its own clip.

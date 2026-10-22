@@ -13,7 +13,7 @@ func clockedFrame(context *Context, state *input.State, at time.Time, build func
 	context.Begin(state)
 	build()
 	context.End()
-	state.EndFrame()
+	state.Feed().EndFrame()
 }
 
 func TestAValueEasesToItsTargetAndAsksForFramesMeanwhile(t *testing.T) {
@@ -31,14 +31,14 @@ func TestAValueEasesToItsTargetAndAsksForFramesMeanwhile(t *testing.T) {
 	if value <= 0.5 || value >= 1 {
 		t.Fatalf("value %v halfway through; want past half (it eases out) and short of 1", value)
 	}
-	if _, wanted := state.TakeFrameRequest(); !wanted {
+	if _, wanted := state.Feed().TakeFrameRequest(); !wanted {
 		t.Fatal("no frame asked for while the value moves")
 	}
 	clockedFrame(context, state, start.Add(200*time.Millisecond), build)
 	if value != 1 {
 		t.Fatalf("value %v after its time; want 1", value)
 	}
-	if _, wanted := state.TakeFrameRequest(); wanted {
+	if _, wanted := state.Feed().TakeFrameRequest(); wanted {
 		t.Fatal("frames asked for after the value arrived")
 	}
 }
@@ -83,12 +83,12 @@ func TestTheBackClosesTheFrontModalAndIsAnsweredOnce(t *testing.T) {
 		}
 	}
 	h.frame(build)
-	h.state.PressBack()
+	h.state.Feed().PressBack()
 	h.frame(build)
 	if dismissed != 1 || screenBack != 0 {
 		t.Fatalf("modal dismissed %d, screen went back %d: the modal answers the back alone", dismissed, screenBack)
 	}
-	h.state.PressBack()
+	h.state.Feed().PressBack()
 	h.frame(build)
 	if screenBack != 1 {
 		t.Fatal("with the modal gone, the screen does not get the back")

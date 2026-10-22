@@ -9,12 +9,12 @@ import (
 
 // Element is what the last frame showed of a control, a text or a scroll area.
 type Element struct {
-	ID        ui.ID       // the one the interface gives it, 0 when it was not on screen
-	Label     string      // what a screen reader calls it: a button's text, a described label
-	Rect      draw2d.Rect // where it was laid out, in layout pixels
-	Visible   bool        // some of it shows: not scrolled away, not behind a dialog or sheet
-	Focused   bool        // it has the focus (ui.Context.FocusedID)
-	Pressable bool        // a click or a tap does something to it
+	ID        ui.ID            // the one the interface gives it, 0 when it was not on screen
+	Label     string           // what a screen reader calls it: a button's text, a described label
+	Rect      draw2d.Rectangle // where it was laid out, in layout pixels
+	Visible   bool             // some of it shows: not scrolled away, not behind a dialog or sheet
+	Focused   bool             // it has the focus (ui.Context.FocusedID)
+	Pressable bool             // a click or a tap does something to it
 }
 
 // Find finds what the last frame showed with this label: a button's text, a field's name, a line
@@ -199,7 +199,7 @@ func labels(context *ui.Context) []string {
 }
 
 // coveredFromAbove tells whether a filled rectangle of a higher layer covers an area.
-func coveredFromAbove(drawing *draw2d.List, area draw2d.Rect, layer int) bool {
+func coveredFromAbove(drawing *draw2d.List, area draw2d.Rectangle, layer int) bool {
 	for _, command := range drawing.Commands {
 		covers := command.Kind == draw2d.RectangleKind && command.Layer > layer && command.Fill.IsVisible()
 		if covers && contains(command.Area, area) {
@@ -211,7 +211,7 @@ func coveredFromAbove(drawing *draw2d.List, area draw2d.Rect, layer int) bool {
 
 // boxAround is the smallest rectangle a drawing painted that holds an area, or the area itself
 // when nothing painted holds it.
-func boxAround(drawing *draw2d.List, area draw2d.Rect) draw2d.Rect {
+func boxAround(drawing *draw2d.List, area draw2d.Rectangle) draw2d.Rectangle {
 	smallest, found := area, false
 	for _, command := range drawing.Commands {
 		painted := command.Fill.IsVisible() || command.Border.IsVisible()
@@ -226,7 +226,7 @@ func boxAround(drawing *draw2d.List, area draw2d.Rect) draw2d.Rect {
 }
 
 // contains tells whether a rectangle holds another.
-func contains(outer, inner draw2d.Rect) bool {
+func contains(outer, inner draw2d.Rectangle) bool {
 	return inner.X >= outer.X && inner.Y >= outer.Y &&
 		inner.X+inner.Width <= outer.X+outer.Width && inner.Y+inner.Height <= outer.Y+outer.Height
 }

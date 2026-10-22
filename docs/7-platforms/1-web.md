@@ -33,10 +33,10 @@ in a browser the program puts the pieces together itself, in about thirty lines:
 ```go
 canvas, _ := browser.OpenCanvas("view")
 functions, _ := canvas.WebGL(true)              // antialiased, for the 3D edges
-renderer, _ := gles.NewSceneRenderer(functions)
+renderer, _ := gles.NewSceneRenderer(functions, overlay.Fonts{})
 world.Overlay.Drawing = interfaceContext.Drawing()
 
-app.Update = func(app *models.Application, step float64) error {
+app.Update = func(app *rendererwindow.Application, step float64) error {
 	interfaceContext.Begin(app.Input)
 	lighthousePanel(interfaceContext, light)
 	interfaceContext.End()

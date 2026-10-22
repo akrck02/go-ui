@@ -459,14 +459,14 @@ func (ui *Context) keepCaretInSight(id ID, scroll, caretX, textWidth float32) fl
 
 // paintFieldFocus marks the field being typed in: its own edge lit in FocusRing when the theme
 // asks for it (FieldFocusEdge), else a ring around it.
-func (ui *Context) paintFieldFocus(rect draw2d.Rect, radius float32) {
+func (ui *Context) paintFieldFocus(rect draw2d.Rectangle, radius float32) {
 	theme := ui.Theme
 	width := theme.focusWidth()
 	if theme.FieldFocusEdge {
 		ui.drawing.Rectangle(rect, radius, draw2d.Transparent, theme.FocusRing, width)
 		return
 	}
-	ring := draw2d.Rect{X: rect.X - width, Y: rect.Y - width, Width: rect.Width + 2*width, Height: rect.Height + 2*width}
+	ring := draw2d.Rectangle{X: rect.X - width, Y: rect.Y - width, Width: rect.Width + 2*width, Height: rect.Height + 2*width}
 	ui.drawing.Rectangle(ring, radius+width, draw2d.Transparent, theme.FocusRing, width)
 }
 
@@ -478,7 +478,7 @@ func (ui *Context) paintField(element *element) {
 	if paint.focused && !paint.plain {
 		ui.paintFieldFocus(rect, element.look.Radius)
 	}
-	clip := draw2d.Rect{X: rect.X + fieldPadding - 1, Y: rect.Y, Width: rect.Width - 2*fieldPadding + 2, Height: rect.Height}
+	clip := draw2d.Rectangle{X: rect.X + fieldPadding - 1, Y: rect.Y, Width: rect.Width - 2*fieldPadding + 2, Height: rect.Height}
 	ui.drawing.PushClip(clip)
 	defer ui.drawing.PopClip()
 	size := ui.scaledText(theme.TextSize)
@@ -486,7 +486,7 @@ func (ui *Context) paintField(element *element) {
 	baseline := rect.Y + (rect.Height-metrics.Height())/2 + metrics.Ascent
 	x := rect.X + fieldPadding - paint.scroll
 	if paint.focused && paint.selectionEnd > paint.selectionStart {
-		selection := draw2d.Rect{X: x + paint.selectionStart, Y: baseline - metrics.Ascent - 1, Width: paint.selectionEnd - paint.selectionStart, Height: metrics.Height() + 2}
+		selection := draw2d.Rectangle{X: x + paint.selectionStart, Y: baseline - metrics.Ascent - 1, Width: paint.selectionEnd - paint.selectionStart, Height: metrics.Height() + 2}
 		ui.drawing.Rectangle(selection, 2, theme.Selection, draw2d.Transparent, 0)
 	}
 	if paint.text == "" && paint.placeholder != "" {
@@ -496,11 +496,11 @@ func (ui *Context) paintField(element *element) {
 	}
 	if paint.focused && paint.composeEnd > paint.composeStart {
 		// the word the keyboard is still making is underlined, as on the phone's own fields
-		line := draw2d.Rect{X: x + paint.composeStart, Y: baseline + 3, Width: paint.composeEnd - paint.composeStart, Height: composingLine}
+		line := draw2d.Rectangle{X: x + paint.composeStart, Y: baseline + 3, Width: paint.composeEnd - paint.composeStart, Height: composingLine}
 		ui.drawing.Rectangle(line, 0, theme.Ink, draw2d.Transparent, 0)
 	}
 	if paint.focused && paint.caretShown {
-		caret := draw2d.Rect{X: x + paint.caretX - 0.75, Y: baseline - metrics.Ascent - 1, Width: 1.5, Height: metrics.Height() + 2}
+		caret := draw2d.Rectangle{X: x + paint.caretX - 0.75, Y: baseline - metrics.Ascent - 1, Width: 1.5, Height: metrics.Height() + 2}
 		ui.drawing.Rectangle(caret, 0, theme.Ink, draw2d.Transparent, 0)
 	}
 }

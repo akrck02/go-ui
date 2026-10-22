@@ -28,7 +28,7 @@ func newAuditContext(tb testing.TB) (*Context, *input.State) {
 	state.FramebufferWidth, state.FramebufferHeight = 2560, 1440
 	clock := time.Unix(1_000_000, 0)
 	state.Now = func() time.Time { return clock }
-	state.MoveCursor(10, 700)
+	state.Feed().MoveCursor(10, 700)
 	return context, state
 }
 
@@ -90,7 +90,7 @@ func auditFrame(context *Context, state *input.State, build func(ui *Context)) {
 	context.Begin(state)
 	build(context)
 	context.End()
-	state.EndFrame()
+	state.Feed().EndFrame()
 }
 
 // TestAuditSizes logs the size of the structs copied on every element and command.
@@ -159,7 +159,7 @@ func BenchmarkAuditPhases(b *testing.B) {
 			build(context)
 			b.StopTimer()
 			context.End()
-			state.EndFrame()
+			state.Feed().EndFrame()
 			b.StartTimer()
 		}
 	})
@@ -176,7 +176,7 @@ func BenchmarkAuditPhases(b *testing.B) {
 				b.StopTimer()
 				context.building = true
 				context.End()
-				state.EndFrame()
+				state.Feed().EndFrame()
 				b.StartTimer()
 			}
 		})
@@ -248,11 +248,11 @@ func BenchmarkAuditTextField(b *testing.B) {
 			if frame/150%2 == 1 {
 				key = input.KeyRight
 			}
-			state.SetKey(key, true)
-			state.SetKey(key, false)
+			state.Feed().SetKey(key, true)
+			state.Feed().SetKey(key, false)
 		}},
 		{"drag-selecting", func(state *input.State, frame int) {
-			state.MoveCursor(40+float64(frame%300), 30)
+			state.Feed().MoveCursor(40+float64(frame%300), 30)
 		}},
 	} {
 		b.Run(variant.name, func(b *testing.B) {
@@ -265,8 +265,8 @@ func BenchmarkAuditTextField(b *testing.B) {
 			context.Focus("note")
 			auditFrame(context, state, build)
 			if variant.name == "drag-selecting" {
-				state.MoveCursor(40, 30)
-				state.SetButton(input.MouseLeft, true)
+				state.Feed().MoveCursor(40, 30)
+				state.Feed().SetButton(input.MouseLeft, true)
 				auditFrame(context, state, build)
 			}
 			measurer := &countingAuditMeasurer{inner: context.measurer}

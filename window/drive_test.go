@@ -15,7 +15,7 @@ import (
 type enterPresser struct{ shown int }
 
 func (driver *enterPresser) Drive(state *input.State, _ *ui.Context) {
-	state.SetKey(input.KeyEnter, true)
+	state.Feed().SetKey(input.KeyEnter, true)
 }
 
 func (driver *enterPresser) Show(drawing *draw2d.List) {
@@ -41,7 +41,7 @@ func lampStep(options Options, enters *int) func() {
 	app.Input.FramebufferWidth, app.Input.FramebufferHeight = 400, 300
 	return func() {
 		_ = app.Update(app, 1.0/60) // a flat interface's step returns no error
-		app.Input.EndFrame()
+		app.Input.Feed().EndFrame()
 	}
 }
 

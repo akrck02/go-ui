@@ -11,18 +11,18 @@ import (
 func Build() *scene.Scene {
 	world := scene.New()
 	world.Nodes = append(world.Nodes,
-		box("island", [3]float32{0, -0.5, 0}, [3]float32{24, 1, 18}, graphics.Vec4{0.45, 0.55, 0.38, 1}),
-		box("rock", [3]float32{-5, 0.5, 3}, [3]float32{4, 1, 3}, graphics.Vec4{0.55, 0.53, 0.5, 1}),
-		box("tower", [3]float32{0, 4, 0}, [3]float32{2.4, 8, 2.4}, graphics.Vec4{0.95, 0.95, 0.93, 1}),
-		box("band", [3]float32{0, 5, 0}, [3]float32{2.5, 1.2, 2.5}, graphics.Vec4{0.8, 0.2, 0.18, 1}),
-		box("lamp", [3]float32{0, 8.7, 0}, [3]float32{1.8, 1.4, 1.8}, graphics.Vec4{1, 0.85, 0.4, 1}),
-		box("roof", [3]float32{0, 9.7, 0}, [3]float32{2.2, 0.6, 2.2}, graphics.Vec4{0.3, 0.34, 0.4, 1}),
+		box("island", [3]float32{0, -0.5, 0}, [3]float32{24, 1, 18}, graphics.Vector{0.45, 0.55, 0.38, 1}),
+		box("rock", [3]float32{-5, 0.5, 3}, [3]float32{4, 1, 3}, graphics.Vector{0.55, 0.53, 0.5, 1}),
+		box("tower", [3]float32{0, 4, 0}, [3]float32{2.4, 8, 2.4}, graphics.Vector{0.95, 0.95, 0.93, 1}),
+		box("band", [3]float32{0, 5, 0}, [3]float32{2.5, 1.2, 2.5}, graphics.Vector{0.8, 0.2, 0.18, 1}),
+		box("lamp", [3]float32{0, 8.7, 0}, [3]float32{1.8, 1.4, 1.8}, graphics.Vector{1, 0.85, 0.4, 1}),
+		box("roof", [3]float32{0, 9.7, 0}, [3]float32{2.2, 0.6, 2.2}, graphics.Vector{0.3, 0.34, 0.4, 1}),
 	)
 	return world
 }
 
 // box is a coloured box centred at a point.
-func box(name string, centre, size [3]float32, color graphics.Vec4) *scene.Node {
+func box(name string, centre, size [3]float32, color graphics.Vector) *scene.Node {
 	faces := []struct{ normal, right, up [3]float32 }{
 		{[3]float32{1, 0, 0}, [3]float32{0, 0, -1}, [3]float32{0, 1, 0}},
 		{[3]float32{-1, 0, 0}, [3]float32{0, 0, 1}, [3]float32{0, 1, 0}},
@@ -31,7 +31,7 @@ func box(name string, centre, size [3]float32, color graphics.Vec4) *scene.Node 
 		{[3]float32{0, 0, 1}, [3]float32{1, 0, 0}, [3]float32{0, 1, 0}},
 		{[3]float32{0, 0, -1}, [3]float32{-1, 0, 0}, [3]float32{0, 1, 0}},
 	}
-	mesh := &scene.Mesh{Name: name, Ground: name == "island", Material: &scene.Material{BaseColor: graphics.Vec4{1, 1, 1, 1}}}
+	mesh := &scene.Mesh{Name: name, Ground: name == "island", Material: &scene.Material{BaseColor: graphics.Vector{1, 1, 1, 1}}}
 	for _, face := range faces {
 		base := uint32(len(mesh.Positions) / 3)
 		for _, corner := range [4][2]float32{{-1, -1}, {1, -1}, {1, 1}, {-1, 1}} {
@@ -48,7 +48,7 @@ func box(name string, centre, size [3]float32, color graphics.Vec4) *scene.Node 
 }
 
 // Paint colours the tower's band, so the scene shows which lighthouse is selected.
-func Paint(world *scene.Scene, band graphics.Vec4) {
+func Paint(world *scene.Scene, band graphics.Vector) {
 	for _, node := range world.Nodes {
 		if node.Name != "band" || node.Mesh == nil {
 			continue

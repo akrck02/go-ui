@@ -11,7 +11,7 @@ func (ui *Context) paint() {
 	ui.drawing.Reset()
 	for _, placed := range ui.roots {
 		ui.drawing.SetLayer(ui.layerOf(placed.id))
-		ui.clip, ui.clipped = draw2d.Rect{}, false
+		ui.clip, ui.clipped = draw2d.Rectangle{}, false
 		first := len(ui.drawing.Commands)
 		ui.paintElement(placed.element)
 		ui.keepForLeaving(placed.id, placed.options.Leave, first)
@@ -216,7 +216,7 @@ func (ui *Context) measure(text string, style TextStyle) draw2d.TextMetrics {
 func (ui *Context) outOfReach(index int) {
 	element := &ui.elements[index]
 	if element.id != 0 {
-		ui.currentReach[element.id] = draw2d.Rect{}
+		ui.currentReach[element.id] = draw2d.Rectangle{}
 	}
 	for child := element.firstChild; child >= 0; child = ui.elements[child].nextSibling {
 		ui.outOfReach(child)

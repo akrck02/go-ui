@@ -201,7 +201,7 @@ func TestTheRingLiesOnTheEdge(t *testing.T) {
 	h.frame(build)
 	ring, found := h.ringAround(h.ui.Theme.FocusRing)
 	button := h.rect(idOf("Ring the bell"))
-	grown := draw2d.Rect{X: button.X - 2, Y: button.Y - 2, Width: button.Width + 4, Height: button.Height + 4}
+	grown := draw2d.Rectangle{X: button.X - 2, Y: button.Y - 2, Width: button.Width + 4, Height: button.Height + 4}
 	if !found || ring.Area != grown || ring.BorderWidth != 2 {
 		t.Fatalf("the ring is %v wide around %v, want 2 around %v", ring.BorderWidth, ring.Area, grown)
 	}
@@ -244,13 +244,13 @@ func (h *harness) holdOn(id ID, build func(ui *Context)) {
 }
 
 // fillOf finds the rectangle a button fills, by its colour.
-func (h *harness) fillOf(colour draw2d.Color) draw2d.Rect {
+func (h *harness) fillOf(colour draw2d.Color) draw2d.Rectangle {
 	for _, command := range h.ui.Drawing().Commands {
 		if command.Kind == draw2d.RectangleKind && command.Fill == colour {
 			return command.Area
 		}
 	}
-	return draw2d.Rect{}
+	return draw2d.Rectangle{}
 }
 
 func TestAHeldButtonShrinks(t *testing.T) {
@@ -307,12 +307,12 @@ func TestThePauseMenuOfTheGuideWorks(t *testing.T) {
 		if !h.ui.HasKeyboard() && h.state.Pressed(input.KeySpace) {
 			jumps++
 		}
-		h.state.EndFrame()
+		h.state.Feed().EndFrame()
 	}
 	press := func(key input.Key) {
-		h.state.SetKey(key, true)
+		h.state.Feed().SetKey(key, true)
 		step()
-		h.state.SetKey(key, false)
+		h.state.Feed().SetKey(key, false)
 	}
 	press(input.KeySpace)
 	press(input.KeyP)
@@ -429,9 +429,9 @@ func TestFocusedIDNamesTheControlTabReachedAndTheFieldBeingTyped(t *testing.T) {
 	if h.ui.FocusedID() != 0 {
 		t.Fatal("something has the focus before any key")
 	}
-	h.state.SetKey(input.KeyTab, true)
+	h.state.Feed().SetKey(input.KeyTab, true)
 	h.frame(build)
-	h.state.SetKey(input.KeyTab, false)
+	h.state.Feed().SetKey(input.KeyTab, false)
 	h.frame(build)
 	if h.ui.FocusedID() != idOf("Light the lamp") {
 		t.Fatal("FocusedID does not name the button Tab reached")
