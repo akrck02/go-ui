@@ -62,8 +62,8 @@ func run() error {
 	light := &lighthouse{name: "North Point", on: true, rangeNM: 18}
 	orbit, size := orbitAround(world)
 	app := &rendererwindow.Application{Input: input.NewState(), Options: rendererwindow.Options{DrawOnDemand: true},
-		Camera: camera.Camera{Near: size * 0.001, Far: size * 20}}
-	var shown camera.Camera
+		Camera: camera.Lens{Near: size * 0.001, Far: size * 20}}
+	var shown camera.Lens
 	app.Update = func(app *rendererwindow.Application, step float64) error {
 		interfaceContext.Begin(app.Input)
 		propertiesPanel(interfaceContext, light)

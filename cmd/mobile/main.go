@@ -62,8 +62,8 @@ type application struct {
 
 	world  *scene.Scene
 	orbit  *camera.Orbit
-	camera camera.Camera
-	shown  camera.Camera // the camera of the frame on screen, to tell when it still moves
+	camera camera.Lens
+	shown  camera.Lens // the camera of the frame on screen, to tell when it still moves
 }
 
 func main() {
@@ -294,7 +294,7 @@ func sunAt(hour float32) graphics.Vector {
 }
 
 // orbitAround places an orbit camera over the middle of the scene, as the desktop viewer does.
-func orbitAround(world *scene.Scene) (*camera.Orbit, camera.Camera) {
+func orbitAround(world *scene.Scene) (*camera.Orbit, camera.Lens) {
 	minimum, maximum := world.Bounds()
 	size := float32(math.Max(float64(maximum[0]-minimum[0]), float64(maximum[2]-minimum[2])))
 	if size <= 0 || math.IsInf(float64(size), 0) {
@@ -304,7 +304,7 @@ func orbitAround(world *scene.Scene) (*camera.Orbit, camera.Camera) {
 	orbit := camera.NewOrbit(center, size*1.3)
 	orbit.MaximumDistance = float64(size) * 3
 	orbit.Ground = world.GroundHeight
-	return orbit, camera.Camera{Near: size * 0.001, Far: size * 10}
+	return orbit, camera.Lens{Near: size * 0.001, Far: size * 10}
 }
 
 // settings holds the theme and what the program knows about the screen.

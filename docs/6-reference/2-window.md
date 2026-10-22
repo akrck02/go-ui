@@ -85,7 +85,7 @@ BelowView is a scene seen from a camera on the 3DS's bottom screen.
 ```go
 type BelowView struct {
 	World  *scene.Scene
-	Camera camera.Camera
+	Camera camera.Lens
 	Area   *draw2d.Rectangle // where a computer shows it, in window pixels; nil is nowhere
 	// Over draws it over the scene behind it in its area, with no background of its own (a radar
 	// floating in a corner of the view); otherwise its area shows its own sky. A console's second
@@ -197,7 +197,7 @@ SceneView is a 3D scene seen from a camera, drawn behind the interface.
 ```go
 type SceneView struct {
 	World  *scene.Scene
-	Camera camera.Camera
+	Camera camera.Lens
 	// Drawing is the program's own drawing over the scene and under the interface: a game's life
 	// bar, a sight. On the 3DS it is painted on the top screen, in each eye when in 3D. Keep the
 	// list between frames (Reset it), so drawing it allocates nothing. Draw it on layer 0: a higher

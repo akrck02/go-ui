@@ -18,7 +18,7 @@ There are two ways in:
 
 | | `viewer.Run` (Go Renderer) | `window.Options.Scene` (Go UI) |
 |---|---|---|
-| The cameras | The viewer's: orbit, walking, map, its keys and flags | Yours: a `camera.Orbit` or anything that fills a `camera.Camera` |
+| The cameras | The viewer's: orbit, walking, map, its keys and flags | Yours: a `camera.Orbit` or anything that fills a `camera.Lens` |
 | Runs on | The desktop | The desktop, a web page and Android |
 | Good for | Tools over a scene: editors, inspectors, simulations | Applications with a scene inside: a phone app with a map |
 
@@ -152,7 +152,7 @@ func main() {
 	minimum, maximum := world.Bounds()
 	middle := graphics.Vector{(minimum[0] + maximum[0]) / 2, 0, (minimum[2] + maximum[2]) / 2, 1}
 	orbit := camera.NewOrbit(middle, maximum[0]-minimum[0])
-	view := camera.Camera{Up: graphics.Vector{0, 1, 0, 0}}
+	view := camera.Lens{Up: graphics.Vector{0, 1, 0, 0}}
 
 	options.Scene = func(state *input.State, step float64) *window.SceneView {
 		orbit.Update(state, step, &view) // state holds only what the interface did not claim
