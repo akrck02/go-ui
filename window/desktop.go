@@ -159,9 +159,18 @@ func drawInAreas(renderer *opengl.SceneRenderer, flat *opengl.FlatRenderer, view
 	}
 	renderer.DrawIn(view.World, view.Camera, whole, seconds)
 	if below := view.Below; below != nil && below.Area != nil {
-		renderer.DrawIn(below.World, below.Camera, framebufferArea(*below.Area, height, scale), seconds)
+		drawBelow(renderer, below, framebufferArea(*below.Area, height, scale), seconds)
 	}
 	renderer.DrawOverlay(view.World, width, height)
+}
+
+// drawBelow draws the scene below in its area: over the scene behind it, or with its own sky.
+func drawBelow(renderer *opengl.SceneRenderer, below *BelowView, area opengl.Area, seconds float64) {
+	if below.Over {
+		renderer.DrawOver(below.World, below.Camera, area, seconds)
+		return
+	}
+	renderer.DrawIn(below.World, below.Camera, area, seconds)
 }
 
 // framebufferArea is an area of the window in the framebuffer's pixels, counted from its bottom as
