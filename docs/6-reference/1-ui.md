@@ -703,7 +703,8 @@ type TextStyle struct {
 	// under it: the hard shadow pixel-art games give their text.
 	Shadow draw2d.Color
 	// LineHeight, when above 0, makes this line as tall as its size × this, with the letters in
-	// the middle, as CSS's line-height does; 0 follows the theme's LineHeight.
+	// the middle, as CSS's line-height does; 0 follows the theme's LineHeight, and
+	// LettersLineHeight keeps the line as tall as its letters.
 	LineHeight float32
 }
 ```

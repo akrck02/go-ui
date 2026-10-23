@@ -43,9 +43,14 @@ type TextStyle struct {
 	// under it: the hard shadow pixel-art games give their text.
 	Shadow draw2d.Color
 	// LineHeight, when above 0, makes this line as tall as its size × this, with the letters in
-	// the middle, as CSS's line-height does; 0 follows the theme's LineHeight.
+	// the middle, as CSS's line-height does; 0 follows the theme's LineHeight, and
+	// LettersLineHeight keeps the line as tall as its letters.
 	LineHeight float32
 }
+
+// LettersLineHeight is a TextStyle.LineHeight that keeps a line as tall as its letters, whatever
+// the theme says: CSS's line-height: normal, which buttons and tabs often use.
+const LettersLineHeight float32 = -1
 
 // element is one box of this frame's tree: a container, a line of text or an icon. Elements live
 // in one slice reused every frame and point at each other by index (-1 = none), so building the

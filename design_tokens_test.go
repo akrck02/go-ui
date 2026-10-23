@@ -128,6 +128,21 @@ func TestATextsOwnLineHeightWinsOverTheThemes(t *testing.T) {
 	}
 }
 
+func TestATextCanKeepTheHeightOfItsLettersWhateverTheTheme(t *testing.T) {
+	h := newHarness(t)
+	h.frame(func(ui *Context) {
+		ui.Box(Layout{Direction: Vertical}, func() { ui.Text("Harbour", TextStyle{Size: 30}) })
+	})
+	letters := h.ui.elements[2].rect.Height
+	h.ui.Theme.LineHeight = 1.5
+	h.frame(func(ui *Context) {
+		ui.Box(Layout{Direction: Vertical}, func() { ui.Text("Harbour", TextStyle{Size: 30, LineHeight: LettersLineHeight}) })
+	})
+	if line := h.ui.elements[2].rect.Height; !near(line, letters) {
+		t.Fatalf("a text asking for its letters' height is %v tall, not %v", line, letters)
+	}
+}
+
 func TestACheckBoxTakesTheThemesSizeCornersAndEdges(t *testing.T) {
 	h := newHarness(t)
 	theme := &h.ui.Theme
