@@ -277,6 +277,26 @@ func TestGridPlacesChildrenInRows(t *testing.T) {
 	}
 }
 
+func TestStackedChildrenShareTheBoxAndKeepTheirAlignment(t *testing.T) {
+	h := newHarness(t)
+	h.frame(func(ui *Context) {
+		ui.Box(Layout{Direction: Stacked, Padding: Pad(10), AlignX: End}, func() {
+			ui.frameWithID(idOf("picture"), Layout{Width: Fixed(200), Height: Fixed(100)}, Look{}, nil)
+			ui.frameWithID(idOf("label"), Layout{Width: Fixed(40), Height: Fixed(20)}, Look{}, nil)
+			ui.frameWithID(idOf("cover"), Layout{Width: Grow(), Height: Grow()}, Look{}, nil)
+		})
+	})
+	if picture := h.rect(idOf("picture")); picture.X != 10 || picture.Y != 10 {
+		t.Fatalf("the biggest child fills the box inside its padding: %+v", picture)
+	}
+	if label := h.rect(idOf("label")); label.X != 10+200-40 || label.Y != 10 {
+		t.Fatalf("a smaller child sits where the box aligns it, over the first: %+v", label)
+	}
+	if cover := h.rect(idOf("cover")); cover.Width != 200 || cover.Height != 100 {
+		t.Fatalf("a growing child takes the whole box: %+v", cover)
+	}
+}
+
 func TestTooltipWaitsForThePointerToRest(t *testing.T) {
 	h := newHarness(t)
 	now := h.withClock()

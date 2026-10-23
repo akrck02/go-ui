@@ -202,6 +202,15 @@ func (theme Theme) chosen() (fill, ink draw2d.Color) {
 	return orColour(theme.Chosen, theme.PrimaryTint), orColour(theme.ChosenInk, theme.Primary)
 }
 
+// lineBoxOf is how tall a line of text in style is laid out: its own line height when it has one,
+// or the theme's.
+func (theme Theme) lineBoxOf(style TextStyle, letters float32) float32 {
+	if style.LineHeight > 0 {
+		return max(letters, style.Size*style.LineHeight)
+	}
+	return theme.lineBox(style.Size, letters)
+}
+
 // lineBox is how tall a line of text of this size is laid out: the letters' own height, or the
 // theme's line height when it asks for more.
 func (theme Theme) lineBox(size, letters float32) float32 {

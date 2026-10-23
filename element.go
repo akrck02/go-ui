@@ -42,6 +42,9 @@ type TextStyle struct {
 	// Shadow, when visible, draws the text a second time a pixel right and down, in this colour,
 	// under it: the hard shadow pixel-art games give their text.
 	Shadow draw2d.Color
+	// LineHeight, when above 0, makes this line as tall as its size × this, with the letters in
+	// the middle, as CSS's line-height does; 0 follows the theme's LineHeight.
+	LineHeight float32
 }
 
 // element is one box of this frame's tree: a container, a line of text or an icon. Elements live
@@ -225,7 +228,7 @@ func (ui *Context) textElement(text string, style TextStyle) element {
 		style.Color = ui.Theme.Ink
 	}
 	metrics := ui.measure(text, style)
-	return element{kind: textElement, text: text, style: style, metrics: metrics, lineBox: ui.Theme.lineBox(style.Size, metrics.Height())}
+	return element{kind: textElement, text: text, style: style, metrics: metrics, lineBox: ui.Theme.lineBoxOf(style, metrics.Height())}
 }
 
 // Label adds a line of body text.

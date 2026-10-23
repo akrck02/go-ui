@@ -6,6 +6,10 @@ type Direction int
 const (
 	Horizontal Direction = iota // left to right
 	Vertical                    // top to bottom
+	// Stacked lays the children one over the other, each placed by the box's AlignX and AlignY
+	// and as big as the biggest: a label over a picture, a badge on a button's corner. Later
+	// children are drawn over earlier ones. It is CSS's grid with every child in the same cell.
+	Stacked
 )
 
 // Align places children inside the free space of their box, along one axis.
