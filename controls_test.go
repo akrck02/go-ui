@@ -297,6 +297,31 @@ func TestStackedChildrenShareTheBoxAndKeepTheirAlignment(t *testing.T) {
 	}
 }
 
+func TestSpacingSharesTheFreeSpaceAsCSSDoes(t *testing.T) {
+	for _, each := range []struct {
+		align  Align
+		wanted [3]float32 // where each of the three 20-pixel children starts in 200 pixels
+	}{
+		{SpaceBetween, [3]float32{0, 90, 180}},
+		{SpaceAround, [3]float32{(140.0 / 3) / 2, (140.0/3)*1.5 + 20, (140.0/3)*2.5 + 40}},
+		{SpaceEvenly, [3]float32{35, 90, 145}},
+	} {
+		h := newHarness(t)
+		h.frame(func(ui *Context) {
+			ui.Box(Layout{Width: Fixed(200), AlignX: each.align}, func() {
+				for index := range 3 {
+					ui.frameWithID(idOf("child"+string(rune('0'+index))), Layout{Width: Fixed(20), Height: Fixed(10)}, Look{}, nil)
+				}
+			})
+		})
+		for index, wanted := range each.wanted {
+			if got := h.rect(idOf("child" + string(rune('0'+index)))).X; !near(got, wanted) {
+				t.Fatalf("align %d: child %d starts at %v, wanted %v", each.align, index, got, wanted)
+			}
+		}
+	}
+}
+
 func TestTooltipWaitsForThePointerToRest(t *testing.T) {
 	h := newHarness(t)
 	now := h.withClock()

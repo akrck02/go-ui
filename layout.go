@@ -19,6 +19,12 @@ const (
 	Start  Align = iota // left or top
 	Center              // in the middle
 	End                 // right or bottom
+	// The next three share the free space between the children, along the box's direction (across
+	// it, they place each child at the start). They are CSS's justify-content values of the same
+	// names, and Gap is kept as the least space between two children.
+	SpaceBetween // the first child at the start, the last at the end, the rest evenly between
+	SpaceAround  // each child with the same space on both sides, so the edges get half
+	SpaceEvenly  // the same space before, between and after the children
 )
 
 type sizingKind int
@@ -355,14 +361,15 @@ func (ui *Context) placeAlongMainAxis(element *element, axis Direction) {
 	if childCount > 1 {
 		used += element.layout.Gap * float32(childCount-1)
 	}
-	position := element.positionAlong(axis) + element.layout.Padding.before(axis) + alignOffset(element.layout.align(axis), inner-used)
+	before, between := spread(element.layout.align(axis), inner-used, childCount)
+	position := element.positionAlong(axis) + element.layout.Padding.before(axis) + before
 	if element.scroll != nil && axis == Vertical {
 		element.scroll.keepInRange(element.content[Vertical], element.rect.Height)
 		position -= element.scroll.offset
 	}
 	for child := element.firstChild; child >= 0; child = ui.elements[child].nextSibling {
 		ui.elements[child].setPosition(axis, position)
-		position += ui.elements[child].sizeAlong(axis) + element.layout.Gap
+		position += ui.elements[child].sizeAlong(axis) + element.layout.Gap + between
 	}
 }
 
@@ -373,6 +380,28 @@ func (ui *Context) placeAcross(element *element, axis Direction) {
 		childElement := &ui.elements[child]
 		childElement.setPosition(axis, start+alignOffset(element.layout.align(axis), inner-childElement.sizeAlong(axis)))
 	}
+}
+
+// spread is where the first child starts in free space along a box's direction, and the space
+// added between each two children, for an alignment and a number of children.
+func spread(align Align, free float32, children int) (before, between float32) {
+	if free <= 0 || children == 0 {
+		return 0, 0
+	}
+	switch align {
+	case SpaceBetween:
+		if children == 1 {
+			return 0, 0
+		}
+		return 0, free / float32(children-1)
+	case SpaceAround:
+		share := free / float32(children)
+		return share / 2, share
+	case SpaceEvenly:
+		share := free / float32(children+1)
+		return share, share
+	}
+	return alignOffset(align, free), 0
 }
 
 // alignOffset is where content starts inside free space; with no room to spare it starts at the

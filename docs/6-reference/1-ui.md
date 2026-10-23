@@ -66,6 +66,12 @@ const (
 	Start  Align = iota // left or top
 	Center              // in the middle
 	End                 // right or bottom
+	// The next three share the free space between the children, along the box's direction (across
+	// it, they place each child at the start). They are CSS's justify-content values of the same
+	// names, and Gap is kept as the least space between two children.
+	SpaceBetween // the first child at the start, the last at the end, the rest evenly between
+	SpaceAround  // each child with the same space on both sides, so the edges get half
+	SpaceEvenly  // the same space before, between and after the children
 )
 ```
 
