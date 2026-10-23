@@ -441,7 +441,11 @@ type Layout struct {
 	// between lines. The box needs a width that does not follow its content (Grow in a column,
 	// Fixed, Percent), or it is one line as wide as all its children.
 	// (Next to Gap, it takes the padding the compiler leaves there: boxes stay as small.)
-	Wrap   bool
+	Wrap bool
+	// LineGap, on a box that wraps, is the space between its lines instead of Gap, as CSS's
+	// row-gap: words keep a space between them while their lines touch. 0 keeps Gap; NoLineGap
+	// puts none.
+	LineGap float32
 	AlignX Align // where the children sit horizontally when there is room to spare
 	AlignY Align // where the children sit vertically when there is room to spare
 	// Columns, when above 0, makes a grid: children fill rows of this many equal cells, left to

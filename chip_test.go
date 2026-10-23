@@ -103,3 +103,23 @@ func TestAChipLeftAtZeroTakesTheThemeColours(t *testing.T) {
 		}
 	}
 }
+
+func TestTheLinesOfAWrappingRowCanTouchWhileItsChildrenKeepTheirGap(t *testing.T) {
+	h := newHarness(t)
+	h.frame(func(ui *Context) {
+		ui.frameWithID(idOf("words"), Layout{Width: Fixed(130), Gap: 10, LineGap: NoLineGap, Wrap: true}, Look{}, func() {
+			for index := range 3 {
+				ui.frameWithID(idOf("word"+strconv.Itoa(index)), Layout{Width: Fixed(60), Height: Fixed(20)}, Look{}, nil)
+			}
+		})
+	})
+	if second := h.rect(idOf("word1")); second.X != 70 {
+		t.Fatalf("words on a line keep the gap: %+v", second)
+	}
+	if third := h.rect(idOf("word2")); third.Y != 20 {
+		t.Fatalf("the second line starts right under the first: %+v", third)
+	}
+	if box := h.rect(idOf("words")); box.Height != 40 {
+		t.Fatalf("the box is as tall as its two lines and nothing between: %v", box.Height)
+	}
+}

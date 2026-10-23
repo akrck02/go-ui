@@ -48,7 +48,7 @@ func (ui *Context) fitWrapped(element *element) {
 		lines++
 		first = line.next
 	}
-	content += element.layout.Gap*float32(max(lines-1, 0)) + element.layout.Padding.along(Vertical)
+	content += element.layout.lineGap()*float32(max(lines-1, 0)) + element.layout.Padding.along(Vertical)
 	ui.sizeFromContent(element, Vertical, content)
 }
 
@@ -90,7 +90,7 @@ func (ui *Context) placeWrapped(element *element) {
 			childElement.rect.Y = top + alignOffset(element.layout.AlignY, line.height-childElement.rect.Height)
 			x += childElement.rect.Width + element.layout.Gap
 		}
-		top += line.height + element.layout.Gap
+		top += line.height + element.layout.lineGap()
 		first = line.next
 	}
 }

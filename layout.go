@@ -119,12 +119,30 @@ type Layout struct {
 	// between lines. The box needs a width that does not follow its content (Grow in a column,
 	// Fixed, Percent), or it is one line as wide as all its children.
 	// (Next to Gap, it takes the padding the compiler leaves there: boxes stay as small.)
-	Wrap   bool
-	AlignX Align // where the children sit horizontally when there is room to spare
-	AlignY Align // where the children sit vertically when there is room to spare
+	Wrap bool
+	// LineGap, on a box that wraps, is the space between its lines instead of Gap, as CSS's
+	// row-gap: words keep a space between them while their lines touch. 0 keeps Gap; NoLineGap
+	// puts none.
+	LineGap float32
+	AlignX  Align // where the children sit horizontally when there is room to spare
+	AlignY  Align // where the children sit vertically when there is room to spare
 	// Columns, when above 0, makes a grid: children fill rows of this many equal cells, left to
 	// right and then down, with Gap between cells both ways. Direction is not used then.
 	Columns int
+}
+
+// NoLineGap is a Layout.LineGap that puts the lines of a wrapping box right under each other.
+const NoLineGap float32 = -1
+
+// lineGap is the space between two lines of a wrapping box.
+func (layout Layout) lineGap() float32 {
+	switch {
+	case layout.LineGap == NoLineGap:
+		return 0
+	case layout.LineGap > 0:
+		return layout.LineGap
+	}
+	return layout.Gap
 }
 
 // wraps tells whether a box breaks its children into lines. Callers test layout.Wrap on its own
