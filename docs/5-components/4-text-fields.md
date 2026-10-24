@@ -25,6 +25,20 @@ row("Password", func() { context.TextFieldWith("password", &password, ui.TextFie
 
 ![Name, Code in monospace and a hidden Password](../images/components/fields-form.png)
 
+## `EntryField`
+
+A line that is sent with Enter, such as a tag to add or a message to post. It returns true on the
+step Enter is pressed; the program takes the text, clears it, and gives the field the keyboard back
+so the next one can be typed straight away.
+
+```go
+if context.EntryField("tag", &typed, ui.TextFieldOptions{Placeholder: "Add a tag…"}) {
+	tags = append(tags, typed)
+	typed = ""
+	context.FocusField("tag")
+}
+```
+
 ## A search
 
 Nothing needs to "listen" to the field: the list below reads `search` in the same frame.

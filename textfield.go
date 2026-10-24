@@ -119,6 +119,13 @@ func (ui *Context) TextFieldWith(name string, text *string, options TextFieldOpt
 	return *text != before
 }
 
+// EntryField is TextFieldWith for a line that is sent with Enter: a tag to add, a message to post.
+// It returns true on the step Enter is pressed in it; the program takes the text, clears it, and
+// gives the field the keyboard back (FocusField) to type the next.
+func (ui *Context) EntryField(name string, text *string, options TextFieldOptions) (submitted bool) {
+	return ui.editField(ui.idFor(name), text, options) == fieldSubmitted
+}
+
 // editField runs a text field: focus, mouse, keys, and its box. It writes the text as it is
 // typed and tells how the edit ended, if it did during this step.
 func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fieldEvent {

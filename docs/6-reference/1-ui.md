@@ -174,6 +174,7 @@ type Context struct {
 | `func (ui *Context) EditTypedField(edit KeyboardText)` | EditTypedField puts what an on-screen keyboard made of the field's text in it, in the next frame: the field takes the whole text as typing (one line, cut at its MaxLength), the selection and the word being composed. |
 | `func (ui *Context) EditingWords() EditingWords` | EditingWords are the labels the bar over a selection shows: the ones set, or English. |
 | `func (ui *Context) End()` | End lays the interface out, paints it into the draw list and tells the input state whether the interface has the mouse or the keyboard. |
+| `func (ui *Context) EntryField(name string, text *string, options TextFieldOptions) (submitted bool)` | EntryField is TextFieldWith for a line that is sent with Enter: a tag to add, a message to post. |
 | `func (ui *Context) FieldFocused(name string) bool` | FieldFocused tells whether the text field of a name, in the same scope, has the keyboard: a program that draws the field's box itself (a Material field, with its text before and after) colours it by that. |
 | `func (ui *Context) FilePicker(options FilePickerOptions) (path string, closed bool)` | FilePicker shows a sheet to choose a file or a folder. |
 | `func (ui *Context) FlatButton(label string) bool` | FlatButton adds a button with no fill or border until hovered: menu bars and toolbars. |
@@ -472,7 +473,7 @@ type Layout struct {
 
 ### Leave
 
-Leave is how a layer goes when the program stops showing it: over Duration it fades out, dimming and all, as it moves by X and Y (a sheet sliding back down, a drawer back off the side). Its zero value goes at once.
+Leave is how a layer goes when the program stops showing it: over Duration it fades out, dimming and all, as it moves by X and Y (a modal's dimming fades where it is) (a sheet sliding back down, a drawer back off the side). Its zero value goes at once.
 
 ```go
 type Leave struct {
