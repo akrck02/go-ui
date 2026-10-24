@@ -50,7 +50,7 @@ func TestADraggedSourceFollowsThePointerWhereItWasTaken(t *testing.T) {
 }
 
 // A row of a list draws no background of its own; lifted as it is, its words would float over
-// the page and be lost in it. It is lifted on a card of the theme's surface, as wide as it is.
+// the page and be lost in it. It is lifted on a card of the theme's surface, a little wider than it.
 func TestASourceWithoutABackgroundIsLiftedOnACard(t *testing.T) {
 	h := newHarness(t)
 	scene := &dragScene{}
@@ -67,9 +67,42 @@ func TestASourceWithoutABackgroundIsLiftedOnACard(t *testing.T) {
 
 	for _, command := range h.ui.drawing.Commands {
 		if command.Kind == draw2d.RectangleKind && command.Layer == dragLayer &&
-			command.Fill == h.ui.Theme.Surface && command.Area.Width == source.Width {
+			command.Fill == h.ui.Theme.Surface && command.Area.Width > source.Width {
 			return
 		}
 	}
 	t.Errorf("the source is lifted with no card under it")
+}
+
+// A target holding one card of its own has the card marked when a drop would land there: a
+// mark painted under the card would be hidden by it.
+func TestATargetHoldingACardHasTheCardMarked(t *testing.T) {
+	h := newHarness(t)
+	build := func(ui *Context) {
+		ui.Box(Layout{Gap: 100, Padding: Pad(20)}, func() {
+			ui.DragSource("Lamp", "lamp", Layout{Width: Fixed(100), Height: Fixed(40)}, func() { ui.Text("Lamp", TextStyle{}) })
+			ui.DropTarget("Shelf", Layout{Width: Fixed(150), Height: Fixed(100)}, nil, func() {
+				ui.Frame(Layout{Width: Grow(), Height: Grow()}, Look{Fill: ui.Theme.Surface, Radius: 18}, nil)
+			})
+		})
+	}
+	h.frame(build)
+	h.frame(build)
+	source, shelf := h.rect(idOf("Lamp")), h.rect(idOf("Shelf"))
+	h.moveTo(float64(source.X+10), float64(source.Y+10))
+	h.frame(build)
+	h.press()
+	h.frame(build)
+	h.moveTo(float64(shelf.X+20), float64(shelf.Y+20))
+	h.frame(build)
+	h.frame(build)
+	for _, command := range h.ui.drawing.Commands {
+		if command.Kind == draw2d.RectangleKind && command.Area == shelf && command.Radius == 18 {
+			if command.BorderWidth != dropLineWidth || command.Fill == h.ui.Theme.Surface {
+				t.Errorf("the card is not marked while a drop would land on it")
+			}
+			return
+		}
+	}
+	t.Errorf("the card is not drawn")
 }

@@ -191,9 +191,33 @@ func (ui *Context) DropTarget(name string, layout Layout, accepts func(payload a
 	if drag.phase == dragDropped {
 		return drag.payload, true
 	}
-	theme := ui.Theme
-	ui.elements[index].look = Look{Fill: theme.PrimaryTint, Border: theme.Primary, BorderWidth: 1.5, Radius: theme.ControlRadius}
+	ui.highlightDrop(index)
 	return nil, false
+}
+
+// How a target shows that a drop would land on it: a line of the primary colour, half seen, and
+// a wash of its tint over the card's own fill. Soft, so a board does not flash as a card crosses it.
+const (
+	dropLineWidth = 1.5
+	dropLineAlpha = 0.35
+	dropTint      = 0.25
+)
+
+// highlightDrop marks a target as the place a drop would land. A target holding one card of its
+// own (a column of a board) has the card marked, as the card would hide a mark painted under it;
+// any other target is washed with the tint, with the controls' corners.
+func (ui *Context) highlightDrop(target int) {
+	theme := ui.Theme
+	line := theme.Primary.WithAlpha(dropLineAlpha)
+	element := ui.elements[target]
+	child := element.firstChild
+	if child >= 0 && child == element.lastChild && ui.elements[child].look.Fill.IsVisible() {
+		card := &ui.elements[child].look
+		card.Fill = card.Fill.Mix(theme.PrimaryTint, dropTint)
+		card.Border, card.BorderWidth = line, dropLineWidth
+		return
+	}
+	ui.elements[target].look = Look{Fill: theme.PrimaryTint, Border: line, BorderWidth: dropLineWidth, Radius: theme.ControlRadius}
 }
 
 // Dragging tells whether a payload is being dragged, and where the pointer is: a program shows
@@ -258,7 +282,11 @@ func (ui *Context) liftCommands(first int, area draw2d.Rectangle) {
 	drag.lifted = append(drag.lifted[:0], ui.drawing.Commands[first:]...)
 	drag.liftedArea, drag.liftedShape, drag.liftedRadius = area, area, ui.Theme.PanelRadius
 	drag.liftedBare = !drawsBackground(drag.lifted, area)
-	if !drag.liftedBare {
+	if drag.liftedBare {
+		// The card reaches past the content, so the content does not touch its edge.
+		inset := ui.Theme.Padding
+		drag.liftedShape = draw2d.Rectangle{X: area.X - inset, Y: area.Y, Width: area.Width + 2*inset, Height: area.Height}
+	} else {
 		drag.liftedRadius = drag.lifted[0].Radius
 	}
 	for index := range ui.drawing.Commands[first:] {
