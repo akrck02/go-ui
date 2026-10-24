@@ -156,7 +156,7 @@ func (ui *Context) buttonColours(variant buttonVariant, result interaction) (fil
 		} else if result.hovered {
 			fill = fill.Mix(theme.Ink, 0.12)
 		}
-		return fill, fill, theme.OnPrimary
+		return fill, shadeBorder(fill, theme.Ink, result), theme.OnPrimary
 	case dangerButton, dangerFlatButton:
 		return ui.dangerColours(variant, result)
 	case flatButton:
@@ -168,13 +168,13 @@ func (ui *Context) buttonColours(variant buttonVariant, result interaction) (fil
 		}
 		return draw2d.Transparent, draw2d.Transparent, orColour(theme.FlatInk, theme.InkSoft)
 	default:
-		fill, border = theme.Surface, theme.ControlLine
+		fill = theme.Surface
 		if pressed {
 			fill = theme.Line
 		} else if result.hovered {
 			fill = theme.Sunken
 		}
-		return fill, border, theme.Ink
+		return fill, shadeBorder(theme.ControlLine, theme.Ink, result), theme.Ink
 	}
 }
 
@@ -193,7 +193,26 @@ func (ui *Context) dangerColours(variant buttonVariant, result interaction) (fil
 	case result.hovered:
 		fill = tint.Mix(theme.Danger, dangerHover)
 	}
-	return fill, fill, theme.Danger
+	return fill, shadeBorder(fill, theme.Danger, result), theme.Danger
+}
+
+// How much deeper a button's border turns, towards a darker colour of its own family: a step
+// under the pointer, two while pressed. The border answers the finger without changing its hue.
+const (
+	borderHoverShade = 0.15
+	borderPressShade = 0.3
+)
+
+// shadeBorder is a button's border in its state: the border itself at rest, a shade deeper
+// towards ink when hovered, and deeper still when pressed.
+func shadeBorder(border, ink draw2d.Color, result interaction) draw2d.Color {
+	switch {
+	case result.held && result.hovered:
+		return border.Mix(ink, borderPressShade)
+	case result.hovered:
+		return border.Mix(ink, borderHoverShade)
+	}
+	return border
 }
 
 // Selectable adds an item with an optional icon that shows whether it is selected, and returns

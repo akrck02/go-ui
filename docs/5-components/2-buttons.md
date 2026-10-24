@@ -69,6 +69,9 @@ context.Frame(ui.Layout{Width: ui.Grow(), Padding: ui.PadXY(8, 4), Gap: 2, Align
 
 ![A toolbar with undo, redo, File, Edit and View](../images/components/buttons-toolbar.png)
 
+Every button answers the pointer with its border as well as its fill: a shade deeper towards
+ink when hovered, deeper still while pressed, so it reacts in its own colour family.
+
 ## Buttons that destroy
 
 Deleting, emptying, throwing away: these should never look like an ordinary action. `DangerButton`
