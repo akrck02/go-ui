@@ -107,14 +107,14 @@ func TestATargetHoldingACardHasTheCardMarked(t *testing.T) {
 	t.Errorf("the card is not drawn")
 }
 
-// A source that is a card inside a little padding, with its shadow, already has a background:
+// A source that is a short card with a margin under it, and its shadow, already has a background:
 // it is lifted as it is, not on a second card around the first.
 func TestACardInsideItsSourceIsNotLiftedOnAnotherCard(t *testing.T) {
 	h := newHarness(t)
 	build := func(ui *Context) {
 		ui.Box(Layout{Padding: Pad(20)}, func() {
-			ui.DragSource("Note", "note", Layout{Width: Fixed(200), Padding: Pad(4)}, func() {
-				ui.Frame(Layout{Width: Grow(), Height: Fixed(120)}, Look{Fill: ui.Theme.Background, Radius: 12, Shadow: true}, nil)
+			ui.DragSource("Note", "note", Layout{Width: Fixed(200), Padding: Padding{Bottom: 16}}, func() {
+				ui.Frame(Layout{Width: Grow(), Height: Fixed(60)}, Look{Fill: ui.Theme.Background, Radius: 12, Shadow: true}, nil)
 			})
 		})
 	}

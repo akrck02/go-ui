@@ -297,10 +297,13 @@ func (ui *Context) liftCommands(first int, area draw2d.Rectangle) {
 	}
 }
 
-// backgroundCover is how much of a source's width and height a filled rectangle must cover to
-// be taken for its background: a card inside a padded source still counts, a picture in a row
-// does not.
-const backgroundCover = 0.9
+// A filled rectangle is taken for a source's background when it spans nearly all of its width
+// and at least half its height: a card with a margin under it still counts, however short the
+// card, and a picture at the start of a row does not.
+const (
+	backgroundWidth  = 0.9
+	backgroundHeight = 0.5
+)
 
 // background is the rectangle a source drew as its own background, the first filled one that
 // covers nearly all of it (a shadow under it does not count), and whether there is one.
@@ -309,7 +312,7 @@ func background(commands []draw2d.Command, area draw2d.Rectangle) (draw2d.Comman
 		if command.Kind != draw2d.RectangleKind || !command.Fill.IsVisible() {
 			continue
 		}
-		covers := command.Area.Width >= area.Width*backgroundCover && command.Area.Height >= area.Height*backgroundCover
+		covers := command.Area.Width >= area.Width*backgroundWidth && command.Area.Height >= area.Height*backgroundHeight
 		return command, covers
 	}
 	return draw2d.Command{}, false
