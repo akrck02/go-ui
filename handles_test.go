@@ -27,7 +27,7 @@ func (h *harness) tapOn(id ID, build func(ui *Context)) {
 
 // letterX is the middle of a character of a field's text, on the screen.
 func (h *harness) letterX(field ID, text string, index int) float32 {
-	return h.rect(field).X + fieldPadding + h.ui.textWidth(text[:index], 0) + h.ui.textWidth("x", 0)/2
+	return h.rect(field).X + fieldPadding + h.ui.textWidth(text[:index], 0, 0) + h.ui.textWidth("x", 0, 0)/2
 }
 
 func TestAFingerHeldOnAWordSelectsItWithHandlesAndABar(t *testing.T) {
@@ -87,8 +87,8 @@ func TestAHandleDraggedMovesItsEnd(t *testing.T) {
 	h.frame(build)
 	handle := h.rect(endHandleID(field))
 	h.fingerAt(handle.X+handle.Width/2, handle.Y+handle.Height/2, build)
-	target := h.rect(field).X + fieldPadding + h.ui.textWidth("North light", 0)
-	grabbed := handle.X + handle.Width/2 - (h.rect(field).X + fieldPadding + h.ui.textWidth("North", 0))
+	target := h.rect(field).X + fieldPadding + h.ui.textWidth("North light", 0, 0)
+	grabbed := handle.X + handle.Width/2 - (h.rect(field).X + fieldPadding + h.ui.textWidth("North", 0, 0))
 	h.moveTo(float64(target+grabbed), float64(handle.Y+handle.Height/2))
 	h.state.Feed().SetTouch(1, float64(target+grabbed), float64(handle.Y+handle.Height/2))
 	h.frame(build)

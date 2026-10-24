@@ -691,6 +691,10 @@ type TextFieldOptions struct {
 	Plain bool
 	// Secret shows a dot for each character (a password), and lets nothing be copied or cut.
 	Secret bool
+	// Size is the text's size in pixels; 0 is the theme's. Height is the field's; the zero value
+	// is the theme's ControlHeight. A big figure that can be typed over (a price) takes both.
+	Size   float32
+	Height Sizing
 }
 ```
 

@@ -130,7 +130,7 @@ func (ui *Context) fieldLine(area draw2d.Rectangle) float32 {
 
 // textX is where a position of a field's text is on the screen.
 func (ui *Context) textX(area draw2d.Rectangle, memory *fieldMemory, position int) float32 {
-	return area.X + fieldPadding - memory.scroll + ui.textWidth(memory.shown(memory.editor.text[:position]), memory.weight)
+	return area.X + fieldPadding - memory.scroll + ui.textWidth(memory.shown(memory.editor.text[:position]), memory.weight, memory.size)
 }
 
 // addHandle adds one handle with its point at x on the line, in a popup a finger can take it in,

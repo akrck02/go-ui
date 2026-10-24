@@ -441,3 +441,25 @@ func TestAFieldGivenTheKeyboardIsTypedIn(t *testing.T) {
 		t.Fatalf("query %q, typing %v; want the field typed in without a touch", query, h.ui.Typing())
 	}
 }
+
+func TestAFieldCanWriteItsTextBiggerInATallerBox(t *testing.T) {
+	h := newHarness(t)
+	price := "12"
+	const size, height = 26, 60
+	build := func(ui *Context) {
+		ui.TextFieldWith("Price", &price, TextFieldOptions{Size: size, Height: Fixed(height)})
+	}
+	h.frame(build)
+	if box := h.rect(idOf("Price")); box.Height != height {
+		t.Errorf("the field is %v tall, want %v", box.Height, height)
+	}
+	var written draw2d.Command
+	for _, command := range h.ui.drawing.Commands {
+		if command.Text == price {
+			written = command
+		}
+	}
+	if written.Size != size {
+		t.Errorf("the text is written at %v, want %v", written.Size, size)
+	}
+}
