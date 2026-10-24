@@ -463,3 +463,19 @@ func TestAFieldCanWriteItsTextBiggerInATallerBox(t *testing.T) {
 		t.Errorf("the text is written at %v, want %v", written.Size, size)
 	}
 }
+
+func TestAFittedFieldIsAsWideAsItsTextAndGrowsAsItIsTypedIn(t *testing.T) {
+	h := newHarness(t)
+	amount := "6"
+	build := func(ui *Context) { ui.TextFieldWith("Amount", &amount, TextFieldOptions{FitText: true}) }
+	h.frame(build)
+	narrow := h.rect(idOf("Amount")).Width
+	if want := h.ui.textWidth("6", 0, 0) + 2*fieldPadding + caretRoom; narrow != want {
+		t.Errorf("the field is %v wide, want %v", narrow, want)
+	}
+	amount = "1250"
+	h.frame(build)
+	if wide := h.rect(idOf("Amount")).Width; wide <= narrow {
+		t.Errorf("with a longer amount the field is %v wide, not wider than %v", wide, narrow)
+	}
+}

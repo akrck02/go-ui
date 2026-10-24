@@ -695,6 +695,9 @@ type TextFieldOptions struct {
 	// is the theme's ControlHeight. A big figure that can be typed over (a price) takes both.
 	Size   float32
 	Height Sizing
+	// FitText makes the field as wide as its text, or its placeholder while empty, and grows it
+	// as it is typed in: an amount with its unit written after it. Width is not used then.
+	FitText bool
 }
 ```
 

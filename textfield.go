@@ -25,6 +25,9 @@ type TextFieldOptions struct {
 	// is the theme's ControlHeight. A big figure that can be typed over (a price) takes both.
 	Size   float32
 	Height Sizing
+	// FitText makes the field as wide as its text, or its placeholder while empty, and grows it
+	// as it is typed in: an amount with its unit written after it. Width is not used then.
+	FitText bool
 }
 
 // FieldFocused tells whether the text field of a name, in the same scope, has the keyboard: a
@@ -264,6 +267,19 @@ func (ui *Context) textWidth(text string, weight draw2d.Weight, size float32) fl
 	return ui.measure(text, TextStyle{Size: ui.scaledText(ui.fieldTextSize(size)), Weight: weight}).Width
 }
 
+// fittedFieldWidth is the width of a FitText field: its text, or its placeholder while empty,
+// its padding and room for the caret at the end.
+func (ui *Context) fittedFieldWidth(paint *fieldPaint, memory *fieldMemory) float32 {
+	shown := paint.text
+	if shown == "" {
+		shown = paint.placeholder
+	}
+	return ui.textWidth(shown, memory.weight, memory.size) + 2*fieldPadding + caretRoom
+}
+
+// caretRoom is the space a fitted field keeps after its text for the caret.
+const caretRoom = 2
+
 // fieldTextSize is a field's text size: its own, or the theme's when it has none.
 func (ui *Context) fieldTextSize(size float32) float32 {
 	if size > 0 {
@@ -375,7 +391,10 @@ func (ui *Context) addField(id ID, memory *fieldMemory, text string, options Tex
 	}
 	paint.scroll = memory.scroll
 	width := options.Width
-	if width == (Sizing{}) {
+	switch {
+	case options.FitText:
+		width = Fixed(ui.fittedFieldWidth(paint, memory))
+	case width == (Sizing{}):
 		width = Grow()
 	}
 	paint.weight, paint.plain, paint.size = options.Weight, options.Plain, options.Size
@@ -395,7 +414,11 @@ func (ui *Context) addField(id ID, memory *fieldMemory, text string, options Tex
 	if height == (Sizing{}) {
 		height = Fixed(theme.ControlHeight)
 	}
-	layout := Layout{Width: width.Between(max(width.Min, 2*fieldPadding+20), width.Max), Height: height}
+	narrowest := float32(2*fieldPadding + 20)
+	if options.FitText {
+		narrowest = 0 // a fitted field is as narrow as its text
+	}
+	layout := Layout{Width: width.Between(max(width.Min, narrowest), width.Max), Height: height}
 	index := ui.frameWithID(id, layout, look, nil)
 	ui.elements[index].field = paint
 	read := Description{Role: FieldRole, Label: options.Placeholder, Secret: options.Secret}
