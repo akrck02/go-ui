@@ -8,10 +8,16 @@ import (
 type buttonVariant int
 
 const (
-	secondaryButton buttonVariant = iota // a white button with a border
-	primaryButton                        // the main action, filled with the primary colour
-	flatButton                           // no fill or border until hovered: icons in title bars
+	secondaryButton  buttonVariant = iota // a white button with a border
+	primaryButton                         // the main action, filled with the primary colour
+	flatButton                            // no fill or border until hovered: icons in title bars
+	dangerButton                          // an action that destroys: red ink on a soft red fill
+	dangerFlatButton                      // a flat button that destroys: red ink, the soft red fill when hovered
 )
+
+// dangerHover is how much more of Danger a destructive button takes under the pointer, and twice
+// that while pressed.
+const dangerHover = 0.08
 
 // Button adds a button and returns true on the frame it is clicked (pressed and let go over it).
 func (ui *Context) Button(label string) bool {
@@ -58,6 +64,28 @@ func (ui *Context) FlatIconButton(icon, label string) bool {
 	return clicked
 }
 
+// DangerButton adds a button for an action that destroys something (delete, empty): red ink on
+// a soft red fill, so it is never taken for an ordinary action.
+func (ui *Context) DangerButton(label string) bool {
+	return ui.button(label, displayText(label), "", dangerButton)
+}
+
+// DangerIconButton is DangerButton with an icon before its label; a label of only a hidden part
+// ("##Delete") shows the icon alone, read by that name.
+func (ui *Context) DangerIconButton(icon, label string) bool {
+	clicked := ui.button(label, displayText(label), icon, dangerButton)
+	ui.nameWithoutWords(label)
+	return clicked
+}
+
+// DangerFlatIconButton is FlatIconButton for an action that destroys: its icon and words in red,
+// on the soft red fill when hovered. For a delete beside each row of a list.
+func (ui *Context) DangerFlatIconButton(icon, label string) bool {
+	clicked := ui.button(label, displayText(label), icon, dangerFlatButton)
+	ui.nameWithoutWords(label)
+	return clicked
+}
+
 // flatIconButton is a borderless icon button, for title bars.
 func (ui *Context) flatIconButton(name, icon string) bool {
 	return ui.button(name, "", icon, flatButton)
@@ -91,7 +119,7 @@ func (ui *Context) buttonWithID(id ID, text, icon string, variant buttonVariant,
 		padding = Padding{}
 		width = Fixed(height)
 	}
-	if variant == flatButton {
+	if variant == flatButton || variant == dangerFlatButton {
 		height = theme.flatHeight()
 		padding = PadXY(theme.flatPadding(), 0)
 		if text == "" {
@@ -129,6 +157,8 @@ func (ui *Context) buttonColours(variant buttonVariant, result interaction) (fil
 			fill = fill.Mix(theme.Ink, 0.12)
 		}
 		return fill, fill, theme.OnPrimary
+	case dangerButton, dangerFlatButton:
+		return ui.dangerColours(variant, result)
 	case flatButton:
 		if pressed {
 			return theme.Line, draw2d.Transparent, theme.Ink
@@ -146,6 +176,24 @@ func (ui *Context) buttonColours(variant buttonVariant, result interaction) (fil
 		}
 		return fill, border, theme.Ink
 	}
+}
+
+// dangerColours are a destructive button's fill, border and ink: red ink always, the soft red
+// fill (always, or under the pointer for a flat one), deeper when hovered and pressed.
+func (ui *Context) dangerColours(variant buttonVariant, result interaction) (fill, border, ink draw2d.Color) {
+	theme := ui.Theme
+	tint := theme.dangerTint()
+	fill = tint
+	if variant == dangerFlatButton && !result.hovered {
+		fill = draw2d.Transparent
+	}
+	switch {
+	case result.held && result.hovered:
+		fill = tint.Mix(theme.Danger, 2*dangerHover)
+	case result.hovered:
+		fill = tint.Mix(theme.Danger, dangerHover)
+	}
+	return fill, fill, theme.Danger
 }
 
 // Selectable adds an item with an optional icon that shows whether it is selected, and returns

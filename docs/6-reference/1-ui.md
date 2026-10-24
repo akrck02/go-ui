@@ -161,6 +161,10 @@ type Context struct {
 | `func (ui *Context) ClipboardText() string` | ClipboardText is the text on the system's clipboard, "" when there is none. |
 | `func (ui *Context) Column(content func())` | Column stacks what content adds from top to bottom, across the whole width. |
 | `func (ui *Context) Copy(text string)` | Copy puts a text on the system's clipboard (a link, a code, what a row holds), to paste in another application. |
+| `func (ui *Context) DangerButton(label string) bool` | DangerButton adds a button for an action that destroys something (delete, empty): red ink on a soft red fill, so it is never taken for an ordinary action. |
+| `func (ui *Context) DangerFlatIconButton(icon, label string) bool` | DangerFlatIconButton is FlatIconButton for an action that destroys: its icon and words in red, on the soft red fill when hovered. |
+| `func (ui *Context) DangerIconButton(icon, label string) bool` | DangerIconButton is DangerButton with an icon before its label; a label of only a hidden part ("##Delete") shows the icon alone, read by that name. |
+| `func (ui *Context) DangerMenuItem(icon, label, hint string) bool` | DangerMenuItem is MenuItem for a choice that destroys something: its icon and words in red. |
 | `func (ui *Context) Describe(description Description)` | Describe tells a screen reader more about the box added just before it (a control, a text): what it is, its name, its value and its state. |
 | `func (ui *Context) DragSource(name string, payload any, layout Layout, content func()) bool` | DragSource adds a box whose content can be dragged away, carrying payload: press it and move the pointer a few pixels. |
 | `func (ui *Context) Dragging() (Drag, bool)` | Dragging tells whether a payload is being dragged, and where the pointer is: a program shows where it would land on its scene while Drag.OverScreen is true. |
@@ -761,10 +765,13 @@ type Theme struct {
 	Positive    draw2d.Color
 	Warning     draw2d.Color
 	Danger      draw2d.Color
-	FocusRing   draw2d.Color
-	Selection   draw2d.Color // behind selected text
-	Shadow      draw2d.Color
-	Scrim       draw2d.Color // over everything behind a sheet, dimming it
+	// DangerTint is the soft fill of a destructive button, a wash of Danger like paper stained
+	// red; left empty, it is Danger mixed lightly into Surface.
+	DangerTint draw2d.Color
+	FocusRing  draw2d.Color
+	Selection  draw2d.Color // behind selected text
+	Shadow     draw2d.Color
+	Scrim      draw2d.Color // over everything behind a sheet, dimming it
 
 	TextSize      float32
 	SmallTextSize float32

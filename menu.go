@@ -91,6 +91,16 @@ func (ui *Context) followMenuKeys(memory *menuMemory) {
 // on the right (a keyboard shortcut, say). It returns true on the step it is chosen, and closes
 // the menu then. Outside a menu it is a plain row that returns true when clicked.
 func (ui *Context) MenuItem(icon, label, hint string) bool {
+	return ui.menuItem(icon, label, hint, ui.Theme.InkSoft, ui.Theme.Ink)
+}
+
+// DangerMenuItem is MenuItem for a choice that destroys something: its icon and words in red.
+func (ui *Context) DangerMenuItem(icon, label, hint string) bool {
+	return ui.menuItem(icon, label, hint, ui.Theme.Danger, ui.Theme.Danger)
+}
+
+// menuItem is a menu's row with its icon and words in the colours given.
+func (ui *Context) menuItem(icon, label, hint string, iconInk, ink draw2d.Color) bool {
 	theme := ui.Theme
 	menu, position := ui.menu, ui.menuItems
 	ui.menuItems++
@@ -98,11 +108,11 @@ func (ui *Context) MenuItem(icon, label, hint string) bool {
 	layout := Layout{Width: Grow(), Height: Fixed(theme.ControlHeight), Padding: PadXY(8, 0), Gap: 8, AlignY: Center}
 	row, result := ui.pressable(ui.idFor(label), layout, Look{}, func() {
 		if icon != "" {
-			ui.IconSized(icon, theme.IconSize, theme.InkSoft)
+			ui.IconSized(icon, theme.IconSize, iconInk)
 		} else {
 			ui.Box(Layout{Width: Fixed(theme.IconSize)}, nil) // labels line up whether or not items have icons
 		}
-		ui.Text(displayText(label), TextStyle{})
+		ui.Text(displayText(label), TextStyle{Color: ink})
 		ui.Spacer()
 		if hint != "" {
 			ui.Text(hint, TextStyle{Size: theme.SmallTextSize, Color: theme.InkQuiet, Weight: draw2d.Regular})

@@ -26,10 +26,13 @@ type Theme struct {
 	Positive    draw2d.Color
 	Warning     draw2d.Color
 	Danger      draw2d.Color
-	FocusRing   draw2d.Color
-	Selection   draw2d.Color // behind selected text
-	Shadow      draw2d.Color
-	Scrim       draw2d.Color // over everything behind a sheet, dimming it
+	// DangerTint is the soft fill of a destructive button, a wash of Danger like paper stained
+	// red; left empty, it is Danger mixed lightly into Surface.
+	DangerTint draw2d.Color
+	FocusRing  draw2d.Color
+	Selection  draw2d.Color // behind selected text
+	Shadow     draw2d.Color
+	Scrim      draw2d.Color // over everything behind a sheet, dimming it
 
 	TextSize      float32
 	SmallTextSize float32
@@ -234,4 +237,13 @@ func (theme Theme) fieldLine() draw2d.Color {
 		return theme.FieldLine
 	}
 	return theme.ControlLine
+}
+
+// dangerWash is how much of Danger tints the surface for a destructive button, when the theme
+// gives no DangerTint.
+const dangerWash = 0.12
+
+// dangerTint is the fill of destructive buttons: DangerTint, or a light wash of Danger.
+func (theme Theme) dangerTint() draw2d.Color {
+	return orColour(theme.DangerTint, theme.Surface.Mix(theme.Danger, dangerWash))
 }

@@ -69,6 +69,25 @@ context.Frame(ui.Layout{Width: ui.Grow(), Padding: ui.PadXY(8, 4), Gap: 2, Align
 
 ![A toolbar with undo, redo, File, Edit and View](../images/components/buttons-toolbar.png)
 
+## Buttons that destroy
+
+Deleting, emptying, throwing away: these should never look like an ordinary action. `DangerButton`
+and `DangerIconButton` write in the theme's `Danger` red on a soft red fill (`DangerTint`, or a
+light wash of `Danger` when the theme leaves it empty). `DangerFlatIconButton` is the quiet one
+for a delete beside each row: red, with the fill only under the pointer. In a menu,
+`DangerMenuItem` writes its choice in red.
+
+```go
+if context.DangerIconButton("trash-2", "Delete sale") {
+	confirming = true
+}
+for _, row := range rows {
+	if context.DangerFlatIconButton("trash-2", "##Remove "+row.Name) {
+		remove(row)
+	}
+}
+```
+
 ## `Selectable`
 
 An item that shows whether it is chosen, and returns `true` when clicked. In a **row** it fits its
