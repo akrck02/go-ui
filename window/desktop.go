@@ -8,6 +8,7 @@ import (
 	"log"
 	"os/exec"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/akrck02/go-renderer/draw2d"
@@ -31,9 +32,38 @@ func Graphics() string { return "" }
 // this is always "".
 func LastCrash() string { return "" }
 
-// SystemPrefersDark tells whether the system is set to a dark theme. On the desktop it is not
-// asked yet, and the answer is false: use Options.Dark.
-func SystemPrefersDark() bool { return false }
+// SystemPrefersDark tells whether the system is set to a dark theme, asking it through its own
+// command: the global interface style on macOS, GNOME's colour scheme on Linux (which KDE and
+// most desktops keep too), the apps' theme in the registry on Windows. A system that cannot be
+// asked answers false.
+func SystemPrefersDark() bool {
+	asking := darkQuestions[runtime.GOOS]
+	if asking == nil {
+		asking = darkQuestions["linux"]
+	}
+	// a command that fails (macOS in light mode, a Linux without gsettings) has asked nothing:
+	// its output is empty, and empty means light
+	output, _ := exec.Command(asking[0], asking[1:]...).Output()
+	return darkAnswer(runtime.GOOS, string(output))
+}
+
+// darkQuestions are the commands that ask each system for its theme.
+var darkQuestions = map[string][]string{
+	"darwin":  {"defaults", "read", "-g", "AppleInterfaceStyle"},
+	"linux":   {"gsettings", "get", "org.gnome.desktop.interface", "color-scheme"},
+	"windows": {"reg", "query", `HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize`, "/v", "AppsUseLightTheme"},
+}
+
+// darkAnswer reads what a system's command answered about its theme: true for a dark one.
+func darkAnswer(system, output string) bool {
+	switch system {
+	case "darwin":
+		return strings.TrimSpace(output) == "Dark"
+	case "windows":
+		return strings.Contains(output, "0x0")
+	}
+	return strings.Contains(output, "prefer-dark")
+}
 
 // OpenLink opens a link in the application that shows it (the browser for a web page), through
 // the computer's own command for that. It returns false when the command failed.

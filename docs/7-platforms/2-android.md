@@ -65,7 +65,7 @@ to the next run; `window.Graphics()` names the phone's OpenGL ES and GPU, or the
 the window drawing. `cmd/mobile` shows both in its settings, and warns on its first screen after a
 crash, so a screenshot is enough to know what happened.
 
-**The dark theme.** `window.SystemPrefersDark()` tells whether the phone (or the browser) is set to
+**The dark theme.** `window.SystemPrefersDark()` tells whether the phone (or the browser, or the computer) is set to
 a dark theme, so a program can follow it; `cmd/mobile` asks at every frame until a theme is chosen
 in its settings.
 
