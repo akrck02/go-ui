@@ -6,8 +6,9 @@ import (
 )
 
 // Dragging and dropping: a box made a drag source (DragSource) carries a value of the program's
-// (the payload). Pressing it and moving the pointer a few pixels starts a drag: a small label with
-// the source's name follows the pointer, and the interface holds the mouse, so cameras stay still.
+// (the payload). Pressing it and moving the pointer a few pixels starts a drag: the source itself
+// is lifted and follows the pointer, held where it was taken, leaving a faint trace in its place
+// (a small label with its name when it is not on screen), and the interface holds the mouse, so cameras stay still.
 // Letting go over a drop target (DropTarget) hands it the payload; letting go over the open screen
 // (no panel, no painted box, no target) leaves the payload for the program, which may drop it on
 // its scene (DroppedOnScreen). Escape cancels the drag.
@@ -42,6 +43,14 @@ type dragState struct {
 	targets, lastTargets []ID
 	over                 ID
 	overScreen           bool // the pointer is over the open screen: a release there drops on the scene
+	// grabX and grabY are where the source was taken, from its corner, so what follows the pointer
+	// stays under the finger at the same spot. lifted is what the source drew this frame, copied
+	// to follow the pointer (liftedArea is where it was drawn); kept from frame to frame so a drag
+	// allocates nothing once it has started.
+	grabX, grabY float32
+	lifted       []draw2d.Command
+	liftedArea   draw2d.Rectangle
+	liftedRadius float32 // of the first rectangle it drew: its shadow is rounded as it is
 }
 
 // Drag is a payload being dragged, or dropped, and where the pointer is, in layout pixels.
@@ -124,6 +133,8 @@ func (ui *Context) DragSource(name string, payload any, layout Layout, content f
 	if drag.phase == dragIdle && drag.armed == id && ui.state.Button(input.MouseLeft) && ui.movedPastThreshold() {
 		drag.phase, drag.source, drag.payload, drag.label = dragMoving, id, payload, displayText(name)
 		drag.overScreen = false
+		area := ui.previous[id]
+		drag.grabX, drag.grabY = drag.pressX-area.X, drag.pressY-area.Y
 		ui.active = id // the drag takes the mouse from whatever inside was pressed
 	}
 	dragged := drag.source == id && drag.phase != dragIdle
@@ -202,15 +213,18 @@ func (ui *Context) dragNow() Drag {
 	return Drag{Payload: ui.drag.payload, X: float32(ui.state.CursorX), Y: float32(ui.state.CursorY), OverScreen: ui.drag.overScreen}
 }
 
-// showDrag adds, at the end of a step, the label that follows the pointer while dragging, and the
-// pointer's shape. go-renderer has no closed-hand shape, so a drag shows the four arrows of
-// something being moved.
+// showDrag adds, at the end of a step, the pointer's shape while dragging and, when the source is
+// not on screen to be lifted (paintLifted), a label with its name that follows the pointer.
+// go-renderer has no closed-hand shape, so a drag shows the four arrows of something being moved.
 func (ui *Context) showDrag() {
 	drag := &ui.drag
 	if drag.phase != dragMoving {
 		return
 	}
 	ui.cursor = input.CursorMove
+	if _, shown := ui.previous[drag.source]; shown {
+		return // the source itself follows the pointer
+	}
 	theme := ui.Theme
 	x, y := float32(ui.state.CursorX), float32(ui.state.CursorY)
 	anchor := draw2d.Rectangle{X: x + 12, Y: y + 4}
@@ -221,3 +235,58 @@ func (ui *Context) showDrag() {
 		})
 	})
 }
+
+// liftedAlpha is how much of the source stays in its place while a copy of it is dragged: a faint
+// trace of where it comes from.
+const liftedAlpha = 0.35
+
+// isLifted tells whether a box is the source being dragged, whose drawing follows the pointer.
+func (ui *Context) isLifted(element *element) bool {
+	return ui.drag.phase == dragMoving && element.id == ui.drag.source
+}
+
+// liftCommands copies what the dragged source drew, from the command first on, to draw it again
+// under the pointer, and fades it where it is.
+func (ui *Context) liftCommands(first int, area draw2d.Rectangle) {
+	drag := &ui.drag
+	drag.lifted = append(drag.lifted[:0], ui.drawing.Commands[first:]...)
+	drag.liftedArea, drag.liftedRadius = area, 0
+	for _, command := range drag.lifted {
+		if command.Kind == draw2d.RectangleKind {
+			drag.liftedRadius = command.Radius
+			break
+		}
+	}
+	for index := range ui.drawing.Commands[first:] {
+		command := &ui.drawing.Commands[first+index]
+		command.Fill[3] *= liftedAlpha
+		command.Border[3] *= liftedAlpha
+	}
+}
+
+// paintLifted draws the dragged source under the pointer, over everything, with a shadow: it is
+// lifted off the page. Clips are dropped, as it has left the box that held it.
+func (ui *Context) paintLifted() {
+	drag := &ui.drag
+	if drag.phase != dragMoving || len(drag.lifted) == 0 {
+		return
+	}
+	moveX := float32(ui.state.CursorX) - drag.grabX - drag.liftedArea.X
+	moveY := float32(ui.state.CursorY) - drag.grabY - drag.liftedArea.Y
+	shadow := drag.liftedArea
+	shadow.X, shadow.Y = shadow.X+moveX, shadow.Y+moveY
+	ui.drawing.SetLayer(dragLayer)
+	ui.drawing.Shadow(shadow, drag.liftedRadius, ui.Theme.ShadowBlur*2, ui.Theme.ShadowDrop*2, ui.Theme.Shadow)
+	for _, command := range drag.lifted {
+		command.Layer, command.HasClip = dragLayer, false
+		command.Area.X += moveX
+		command.Area.Y += moveY
+		command.Baseline += moveY
+		ui.drawing.Commands = append(ui.drawing.Commands, command)
+	}
+	ui.drawing.SetLayer(0)
+	drag.lifted = drag.lifted[:0]
+}
+
+// dragLayer is the layer of what is dragged: over popups, as it is in the hand.
+const dragLayer = popupLayer * 2

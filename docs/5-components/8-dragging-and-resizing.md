@@ -4,7 +4,8 @@
 
 Drag a value of yours (`any`) from one box to another. A press that moves four pixels becomes a
 drag; less is a click, which `DragSource` returns, so a chip inside can still be clicked. While
-dragging, the source's name follows the pointer, the interface holds the mouse and the keyboard,
+dragging, the source itself is lifted and follows the pointer, held at the spot where it was taken,
+with a faint trace left in its place; the interface holds the mouse and the keyboard,
 and Escape cancels.
 
 A target says which payloads it takes (`accepts`; nil takes any), is highlighted while one is

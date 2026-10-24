@@ -88,7 +88,9 @@ if drop, dropped := context.DroppedOnScreen(); dropped {
 Any box can be a **drag source** carrying a value of yours (`any`). A press on it that moves four
 pixels or more becomes a drag; less is a click, which `DragSource` returns, so a chip inside can
 still be clicked. Buttons inside keep their clicks too, but a drag that starts on them takes the
-mouse from them. While dragging, the source's name follows the pointer in a small label, the pointer
+mouse from them. While dragging, the source itself follows the pointer, as a card in the hand: what it drew
+is drawn again under the pointer, over everything and with a shadow, held where it was taken, and
+a faint copy stays in its place. The pointer
 shows four arrows (Go Renderer has no closed-hand shape), and the interface holds the mouse and the
 keyboard, so cameras stay still and Escape cancels the drag.
 

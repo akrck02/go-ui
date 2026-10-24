@@ -18,6 +18,7 @@ func (ui *Context) paint() {
 	}
 	ui.drawing.SetLayer(0)
 	ui.paintLeaving()
+	ui.paintLifted()
 }
 
 func (ui *Context) paintElement(index int) {
@@ -38,6 +39,10 @@ func (ui *Context) paintElement(index int) {
 }
 
 func (ui *Context) paintBox(element *element) {
+	if ui.isLifted(element) {
+		first := len(ui.drawing.Commands)
+		defer ui.liftCommands(first, element.rect)
+	}
 	if look := element.look; look.Fade > 0 || look.ShiftX != 0 || look.ShiftY != 0 {
 		first := len(ui.drawing.Commands)
 		defer ui.moveCommands(first, element.rect, look.ShiftX, look.ShiftY, 1-min(look.Fade, 1))
