@@ -16,8 +16,9 @@ const dragSteps = 10
 const touchFinger = 1
 
 // plan finds a step's element in what the last frame showed and makes its moves, a frame each,
-// ending with one frame that only lets the interface show what the step changed.
-func plan(hand *Hand, step Step, context *ui.Context) ([]move, Element, error) {
+// ending with one frame that only lets the interface show what the step changed. With glideFrames
+// above zero, the pointer first travels to the element over that many frames.
+func plan(hand *Hand, step Step, context *ui.Context, glideFrames int) ([]move, Element, error) {
 	found, err := findFor(step, context)
 	if err != nil {
 		return nil, Element{}, err
@@ -27,7 +28,23 @@ func plan(hand *Hand, step Step, context *ui.Context) ([]move, Element, error) {
 	if err != nil {
 		return nil, Element{}, err
 	}
+	if found.Rect.Width > 0 && hand.placed {
+		moves = append(glide(hand, x, y, glideFrames), moves...)
+	}
 	return append(moves, settle), found, nil
+}
+
+// glide moves the pointer from where it is to a place over some frames, easing in and out as a
+// hand does.
+func glide(hand *Hand, x, y float32, frames int) []move {
+	fromX, fromY := hand.x, hand.y
+	moves := make([]move, 0, frames)
+	for frame := 1; frame <= frames; frame++ {
+		share := float32(frame) / float32(frames)
+		eased := share * share * (3 - 2*share)
+		moves = append(moves, moveTo(hand, fromX+(x-fromX)*eased, fromY+(y-fromY)*eased))
+	}
+	return moves
 }
 
 // findFor finds the element a step acts on: a pressable one for a click or a tap, a visible one

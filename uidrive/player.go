@@ -18,6 +18,9 @@ type PlayOptions struct {
 	// WithoutOutline, with Show, leaves out the outline around the element each step found: only
 	// the pointer and the fingers are drawn, as a person filming a demo would want.
 	WithoutOutline bool
+	// GlideFrames, when above zero, is how many frames the pointer takes to travel to each
+	// element, so a film shows where it goes; at zero it jumps there, as tests want.
+	GlideFrames int
 }
 
 // Player plays a script in a window, one frame at a time: it is a Driver. Each step finds its
@@ -85,7 +88,7 @@ func (player *Player) Drive(state *input.State, context *ui.Context) {
 func (player *Player) playFrame(state *input.State, context *ui.Context) error {
 	step := player.script[player.index]
 	if !player.planned {
-		moves, found, err := plan(&player.hand, step, context)
+		moves, found, err := plan(&player.hand, step, context, player.options.GlideFrames)
 		if err != nil {
 			return err
 		}

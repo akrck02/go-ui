@@ -78,3 +78,42 @@ func TestAShownPlayerWithoutOutlineDrawsOnlyThePointer(test *testing.T) {
 
 // pointerWidest is wider than anything the pointer draws, in layout pixels: a wider ring is an outline.
 const pointerWidest = 40
+
+func TestAGlidingPointerTravelsToTheElementOverSeveralFrames(test *testing.T) {
+	script, err := uidrive.Parse("click-at 0 0\nmove-to \"Light the lamp\"\nwait 1s")
+	if err != nil {
+		test.Fatal(err)
+	}
+	const glideFrames = 6
+	player := uidrive.Play(script, uidrive.PlayOptions{Show: true, GlideFrames: glideFrames})
+	window := keeperWindow(test, &lighthouse{}, uitest.Driver(player))
+	button, err := window.Element("Light the lamp")
+	if err != nil {
+		test.Fatal(err)
+	}
+	middleX := button.Rect.X + button.Rect.Width/2
+	var places []float32
+	for range 2 * glideFrames {
+		window.Frame()
+		places = append(places, pointerX(window.DrawList().Commands))
+	}
+	between := 0
+	for _, x := range places {
+		if x > 1 && x < middleX-1 {
+			between++
+		}
+	}
+	if between < glideFrames/2 {
+		test.Errorf("the pointer was seen on its way only %d times: %v", between, places)
+	}
+}
+
+// pointerX is the middle of the pointer's ring among the shown commands, or -1 when none is drawn.
+func pointerX(commands []draw2d.Command) float32 {
+	for _, command := range commands {
+		if command.Layer == uidrive.ShownLayer && command.Area.Width < pointerWidest {
+			return command.Area.X + command.Area.Width/2
+		}
+	}
+	return -1
+}

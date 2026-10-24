@@ -185,6 +185,9 @@ type PlayOptions struct {
 	// WithoutOutline, with Show, leaves out the outline around the element each step found: only
 	// the pointer and the fingers are drawn, as a person filming a demo would want.
 	WithoutOutline bool
+	// GlideFrames, when above zero, is how many frames the pointer takes to travel to each
+	// element, so a film shows where it goes; at zero it jumps there, as tests want.
+	GlideFrames int
 }
 ```
 
