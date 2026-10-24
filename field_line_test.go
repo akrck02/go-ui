@@ -56,3 +56,23 @@ func TestAHoveredFieldDeepensItsOwnLine(t *testing.T) {
 	}
 	t.Errorf("the hovered field is not bordered by a shade of its own line")
 }
+
+// An empty field's example words are fainter than any value: «@name» in a field must not read as
+// a name typed in.
+func TestAPlaceholderIsFainterThanTheQuietestInk(t *testing.T) {
+	h := newHarness(t)
+	text := ""
+	build := func(ui *Context) { ui.TextFieldWith("Name", &text, TextFieldOptions{Placeholder: "@name"}) }
+	h.frame(build)
+	h.frame(build)
+	for _, command := range h.ui.drawing.Commands {
+		if command.Kind == draw2d.TextKind && command.Text == "@name" {
+			darkness := func(colour draw2d.Color) float32 { return 3 - colour[0] - colour[1] - colour[2] }
+			if darkness(command.Fill) >= darkness(h.ui.Theme.InkQuiet) {
+				t.Errorf("the placeholder is as dark as quiet ink: %v", command.Fill)
+			}
+			return
+		}
+	}
+	t.Errorf("the placeholder is not drawn")
+}

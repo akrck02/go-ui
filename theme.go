@@ -26,6 +26,9 @@ type Theme struct {
 	Positive    draw2d.Color
 	Warning     draw2d.Color
 	Danger      draw2d.Color
+	// Placeholder is the ink of a field's example words while it is empty; left empty, it is
+	// InkQuiet faded towards Surface, so an example never reads as a value typed in.
+	Placeholder draw2d.Color
 	// DangerTint is the soft fill of a destructive button, a wash of Danger like paper stained
 	// red; left empty, it is Danger mixed lightly into Surface.
 	DangerTint draw2d.Color
@@ -246,4 +249,13 @@ const dangerWash = 0.12
 // dangerTint is the fill of destructive buttons: DangerTint, or a light wash of Danger.
 func (theme Theme) dangerTint() draw2d.Color {
 	return orColour(theme.DangerTint, theme.Surface.Mix(theme.Danger, dangerWash))
+}
+
+// placeholderFade is how far towards Surface a placeholder fades from InkQuiet, when the theme
+// gives no Placeholder.
+const placeholderFade = 0.45
+
+// placeholder is the ink of a field's example words: Placeholder, or InkQuiet faded.
+func (theme Theme) placeholder() draw2d.Color {
+	return orColour(theme.Placeholder, theme.InkQuiet.Mix(theme.Surface, placeholderFade))
 }

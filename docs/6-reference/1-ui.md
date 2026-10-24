@@ -765,6 +765,9 @@ type Theme struct {
 	Positive    draw2d.Color
 	Warning     draw2d.Color
 	Danger      draw2d.Color
+	// Placeholder is the ink of a field's example words while it is empty; left empty, it is
+	// InkQuiet faded towards Surface, so an example never reads as a value typed in.
+	Placeholder draw2d.Color
 	// DangerTint is the soft fill of a destructive button, a wash of Danger like paper stained
 	// red; left empty, it is Danger mixed lightly into Surface.
 	DangerTint draw2d.Color

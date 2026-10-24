@@ -532,7 +532,7 @@ func (ui *Context) paintField(element *element) {
 		ui.drawing.Rectangle(selection, 2, theme.Selection, draw2d.Transparent, 0)
 	}
 	if paint.text == "" && paint.placeholder != "" {
-		ui.drawing.Text(paint.placeholder, x, baseline, size, draw2d.Regular, theme.InkQuiet)
+		ui.drawing.Text(paint.placeholder, x, baseline, size, draw2d.Regular, theme.placeholder())
 	} else {
 		ui.drawing.Text(paint.text, x, baseline, size, paint.weight, theme.Ink)
 	}
