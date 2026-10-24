@@ -14,7 +14,7 @@ func (ui *Context) paint() {
 		ui.clip, ui.clipped = draw2d.Rectangle{}, false
 		first := len(ui.drawing.Commands)
 		ui.paintElement(placed.element)
-		ui.keepForLeaving(placed.id, placed.options.Leave, first)
+		ui.keepForLeaving(placed.id, placed.options.Leave, first, placed.sheet)
 	}
 	ui.drawing.SetLayer(0)
 	ui.paintLeaving()

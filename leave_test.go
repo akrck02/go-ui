@@ -223,3 +223,27 @@ func TestAPopoverOpensUnderItsControlAndClosesOutside(t *testing.T) {
 		t.Fatal("a touch outside did not close the popover")
 	}
 }
+
+// A modal's dimming covers the screen behind it; as the dialog sinks away, the dimming only fades
+// where it is. Sliding it would uncover a band of undimmed screen at its edge.
+func TestALeavingModalsDimmingFadesWithoutMoving(t *testing.T) {
+	h := newHarness(t)
+	now := h.withClock()
+	shown := true
+	build := noteLayer(&shown, Leave{Duration: 200 * time.Millisecond, Y: 100})
+	h.frame(build)
+	window := draw2d.Rectangle{Width: 800, Height: 600}
+	shown = false
+	h.frame(build)
+	*now = now.Add(100 * time.Millisecond)
+	h.frame(build)
+	for _, command := range h.ui.Drawing().Commands {
+		if command.Kind == draw2d.RectangleKind && command.Area.Width == window.Width {
+			if command.Area != window {
+				t.Errorf("the dimming moved to %v as the dialog left", command.Area)
+			}
+			return
+		}
+	}
+	t.Errorf("the dimming went at once")
+}

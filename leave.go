@@ -12,7 +12,7 @@ import (
 // after the program stopped. It is only a picture: nothing in it can be touched.
 
 // Leave is how a layer goes when the program stops showing it: over Duration it fades out,
-// dimming and all, as it moves by X and Y (a sheet sliding back down, a drawer back off the side).
+// dimming and all, as it moves by X and Y (a modal's dimming fades where it is) (a sheet sliding back down, a drawer back off the side).
 // Its zero value goes at once.
 type Leave struct {
 	Duration time.Duration
@@ -21,15 +21,18 @@ type Leave struct {
 
 // leavingLayer is what a layer painted in the last frame it was shown, and how it leaves.
 type leavingLayer struct {
-	commands  []draw2d.Command
-	leave     Leave
+	commands []draw2d.Command
+	leave    Leave
+	// dimmed is true for a modal's layer, whose first command is the dimming over the screen: it
+	// fades where it is, as only the dialog on it leaves.
+	dimmed    bool
 	lastFrame int       // the last frame it was shown in
 	started   time.Time // when it began leaving; zero while it is shown
 }
 
 // keepForLeaving keeps what a layer painted in this frame (the commands from first on), for when
-// the program stops showing it.
-func (ui *Context) keepForLeaving(id ID, leave Leave, first int) {
+// the program stops showing it; dimmed tells that the first of them dims the screen behind.
+func (ui *Context) keepForLeaving(id ID, leave Leave, first int, dimmed bool) {
 	if leave.Duration <= 0 {
 		return
 	}
@@ -42,7 +45,7 @@ func (ui *Context) keepForLeaving(id ID, leave Leave, first int) {
 		ui.leaving[id] = layer
 	}
 	layer.commands = append(layer.commands[:0], ui.drawing.Commands[first:]...)
-	layer.leave, layer.lastFrame, layer.started = leave, ui.frame, time.Time{}
+	layer.leave, layer.dimmed, layer.lastFrame, layer.started = leave, dimmed, ui.frame, time.Time{}
 }
 
 // paintLeaving paints the layers the program stopped showing, a step further on their way, and
@@ -71,14 +74,18 @@ func (ui *Context) paintOnItsWay(layer *leavingLayer, progress float32) {
 	moved := progress * progress
 	shiftX, shiftY := layer.leave.X*moved, layer.leave.Y*moved
 	shown := 1 - progress
-	for _, command := range layer.commands {
+	for index, command := range layer.commands {
+		command.Fill[3] *= shown
+		command.Border[3] *= shown
+		if index == 0 && layer.dimmed { // the dimming stays over the screen, only fading
+			ui.drawing.Commands = append(ui.drawing.Commands, command)
+			continue
+		}
 		command.Area.X += shiftX
 		command.Area.Y += shiftY
 		command.Clip.X += shiftX
 		command.Clip.Y += shiftY
 		command.Baseline += shiftY
-		command.Fill[3] *= shown
-		command.Border[3] *= shown
 		ui.drawing.Commands = append(ui.drawing.Commands, command)
 	}
 }
