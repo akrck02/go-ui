@@ -5,7 +5,9 @@
 Drag a value of yours (`any`) from one box to another. A press that moves four pixels becomes a
 drag; less is a click, which `DragSource` returns, so a chip inside can still be clicked. While
 dragging, the source itself is lifted and follows the pointer, held at the spot where it was taken,
-with a faint trace left in its place; the interface holds the mouse and the keyboard,
+with a faint trace left in its place. A source with no background of its own, such as a row of a
+list, is lifted on a card of the theme's surface so it stays readable. The interface holds the
+mouse and the keyboard,
 and Escape cancels.
 
 A target says which payloads it takes (`accepts`; nil takes any), is highlighted while one is

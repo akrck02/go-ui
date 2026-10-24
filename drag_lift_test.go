@@ -48,3 +48,28 @@ func TestADraggedSourceFollowsThePointerWhereItWasTaken(t *testing.T) {
 		t.Errorf("a label with the source's name still follows the pointer")
 	}
 }
+
+// A row of a list draws no background of its own; lifted as it is, its words would float over
+// the page and be lost in it. It is lifted on a card of the theme's surface, as wide as it is.
+func TestASourceWithoutABackgroundIsLiftedOnACard(t *testing.T) {
+	h := newHarness(t)
+	scene := &dragScene{}
+	h.frame(scene.build)
+	h.frame(scene.build)
+	source := h.rect(idOf("Lamp"))
+	h.moveTo(float64(source.X+source.Width-6), float64(source.Y+6))
+	h.frame(scene.build)
+	h.press()
+	h.frame(scene.build)
+	h.moveTo(400, 300)
+	h.frame(scene.build)
+	h.frame(scene.build)
+
+	for _, command := range h.ui.drawing.Commands {
+		if command.Kind == draw2d.RectangleKind && command.Layer == dragLayer &&
+			command.Fill == h.ui.Theme.Surface && command.Area.Width == source.Width {
+			return
+		}
+	}
+	t.Errorf("the source is lifted with no card under it")
+}

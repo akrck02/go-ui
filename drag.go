@@ -50,6 +50,9 @@ type dragState struct {
 	grabX, grabY float32
 	lifted       []draw2d.Command
 	liftedArea   draw2d.Rectangle
+	// liftedBare is true when the source drew no background of its own (a row of a list): it is
+	// lifted on a card of the theme's surface, or its words would float over the page unreadable.
+	liftedBare bool
 	// liftedShape is the first rectangle it drew, with its corner radius: the shadow falls under
 	// it, not under the margins the source keeps around it.
 	liftedShape  draw2d.Rectangle
@@ -253,18 +256,26 @@ func (ui *Context) isLifted(element *element) bool {
 func (ui *Context) liftCommands(first int, area draw2d.Rectangle) {
 	drag := &ui.drag
 	drag.lifted = append(drag.lifted[:0], ui.drawing.Commands[first:]...)
-	drag.liftedArea, drag.liftedShape, drag.liftedRadius = area, area, 0
-	for _, command := range drag.lifted {
-		if command.Kind == draw2d.RectangleKind {
-			drag.liftedShape, drag.liftedRadius = command.Area, command.Radius
-			break
-		}
+	drag.liftedArea, drag.liftedShape, drag.liftedRadius = area, area, ui.Theme.PanelRadius
+	drag.liftedBare = !drawsBackground(drag.lifted, area)
+	if !drag.liftedBare {
+		drag.liftedRadius = drag.lifted[0].Radius
 	}
 	for index := range ui.drawing.Commands[first:] {
 		command := &ui.drawing.Commands[first+index]
 		command.Fill[3] *= liftedAlpha
 		command.Border[3] *= liftedAlpha
 	}
+}
+
+// drawsBackground tells whether what a source drew starts with a filled rectangle over its whole
+// area: its own background, which the lifted copy can keep.
+func drawsBackground(commands []draw2d.Command, area draw2d.Rectangle) bool {
+	if len(commands) == 0 {
+		return false
+	}
+	first := commands[0]
+	return first.Kind == draw2d.RectangleKind && first.Area == area && first.Fill[3] > 0
 }
 
 // paintLifted draws the dragged source under the pointer, over everything, with a shadow: it is
@@ -280,6 +291,9 @@ func (ui *Context) paintLifted() {
 	shadow.X, shadow.Y = shadow.X+moveX, shadow.Y+moveY
 	ui.drawing.SetLayer(dragLayer)
 	ui.drawing.Shadow(shadow, drag.liftedRadius, ui.Theme.ShadowBlur*liftedShadow, ui.Theme.ShadowDrop, ui.Theme.Shadow)
+	if drag.liftedBare {
+		ui.drawing.Rectangle(shadow, drag.liftedRadius, ui.Theme.Surface, ui.Theme.Line, 1)
+	}
 	for _, command := range drag.lifted {
 		command.Layer, command.HasClip = dragLayer, false
 		command.Area.X += moveX
