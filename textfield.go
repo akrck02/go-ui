@@ -405,7 +405,7 @@ func (ui *Context) addField(id ID, memory *fieldMemory, text string, options Tex
 	case focused:
 		look.Border, look.BorderWidth = theme.Primary, 1.5
 	case result.hovered:
-		look.Border = theme.InkQuiet
+		look.Border = theme.fieldLine().Mix(theme.Ink, borderHoverShade)
 	}
 	if result.hovered || result.held {
 		ui.cursor = input.CursorText

@@ -34,3 +34,25 @@ func TestFieldsAreBorderedByFieldLineWhenTheThemeGivesOne(t *testing.T) {
 		}
 	}
 }
+
+// Under the pointer a field's border only deepens a shade of its own line: a soft design stays
+// soft, instead of jumping to a dark grey.
+func TestAHoveredFieldDeepensItsOwnLine(t *testing.T) {
+	soft := draw2d.MustHex("#dddddd")
+	h := newHarness(t)
+	h.ui.Theme.FieldLine = soft
+	text := ""
+	build := func(ui *Context) { ui.TextField("Name", &text) }
+	h.frame(build)
+	area := h.rect(idOf("Name"))
+	h.moveTo(float64(area.X+5), float64(area.Y+5))
+	h.frame(build)
+	h.frame(build)
+	want := soft.Mix(h.ui.Theme.Ink, borderHoverShade)
+	for _, command := range h.ui.drawing.Commands {
+		if command.Kind == draw2d.RectangleKind && command.Area == area && command.Border == want {
+			return
+		}
+	}
+	t.Errorf("the hovered field is not bordered by a shade of its own line")
+}

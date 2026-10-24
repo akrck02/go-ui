@@ -35,7 +35,7 @@ func (ui *Context) Select(name string, selected *int, options []string) bool {
 	})
 	look := Look{Fill: theme.Surface, Border: theme.fieldLine(), BorderWidth: 1, Radius: theme.ControlRadius}
 	if result.hovered {
-		look.Border = theme.InkQuiet
+		look.Border = theme.fieldLine().Mix(theme.Ink, borderHoverShade)
 		ui.cursor = input.CursorHand
 	}
 	if memory.open {
