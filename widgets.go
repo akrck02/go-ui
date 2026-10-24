@@ -30,13 +30,16 @@ func (ui *Context) PrimaryIconButton(icon, label string) bool {
 }
 
 // IconButton adds a button with an icon (a Lucide name) before its label; with an empty label it
-// is a square button with the icon alone, named by the icon.
+// is a square button with the icon alone, named by the icon. A label of only a hidden part
+// ("##Close") shows the icon alone too, and a screen reader reads it by that name.
 func (ui *Context) IconButton(icon, label string) bool {
 	name := label
 	if name == "" {
 		name = icon
 	}
-	return ui.button(name, displayText(label), icon, secondaryButton)
+	clicked := ui.button(name, displayText(label), icon, secondaryButton)
+	ui.nameWithoutWords(label)
+	return clicked
 }
 
 // FlatButton adds a button with no fill or border until hovered: menu bars and toolbars.
@@ -50,7 +53,9 @@ func (ui *Context) FlatIconButton(icon, label string) bool {
 	if name == "" {
 		name = icon
 	}
-	return ui.button(name, displayText(label), icon, flatButton)
+	clicked := ui.button(name, displayText(label), icon, flatButton)
+	ui.nameWithoutWords(label)
+	return clicked
 }
 
 // flatIconButton is a borderless icon button, for title bars.

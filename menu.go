@@ -31,6 +31,7 @@ func (ui *Context) MenuButton(icon, label string, content func()) {
 	id := ui.idFor(name)
 	memory := remember(ui, id, func() *menuMemory { return &menuMemory{highlight: -1} })
 	result := ui.buttonWithID(id, displayText(label), icon, flatButton, memory.open)
+	ui.nameWithoutWords(label)
 	if result.clicked {
 		memory.open, memory.highlight = !memory.open, -1
 	}

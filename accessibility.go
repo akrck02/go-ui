@@ -239,6 +239,17 @@ func (ui *Context) noteTooltip(text string) {
 	ui.reader.tooltips[ui.interacted] = text
 }
 
+// nameWithoutWords names the control that looked at the mouse last by what its label hides, when
+// it shows no words: an icon button labelled "##Close" is read as «Close», not by its icon.
+func (ui *Context) nameWithoutWords(label string) {
+	if displayText(label) != "" {
+		return
+	}
+	if hidden := hiddenName(label); hidden != "" {
+		ui.noteTooltip(hidden)
+	}
+}
+
 // noteLongPressable remembers that the program reads a control's long press.
 func (ui *Context) noteLongPressable(id ID) {
 	if !ui.reader.on || id == 0 {

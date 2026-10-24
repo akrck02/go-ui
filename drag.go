@@ -118,6 +118,7 @@ func (ui *Context) pointerOverOpenScreen() bool {
 func (ui *Context) DragSource(name string, payload any, layout Layout, content func()) bool {
 	id := ui.idFor(name)
 	_, result := ui.pressable(id, layout, Look{}, content)
+	ui.noteTooltip(displayText(name)) // what it holds are controls of their own: the source is read by its name
 	ui.armDrag(id)
 	drag := &ui.drag
 	if drag.phase == dragIdle && drag.armed == id && ui.state.Button(input.MouseLeft) && ui.movedPastThreshold() {

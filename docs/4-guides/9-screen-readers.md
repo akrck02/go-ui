@@ -34,8 +34,10 @@ interfaceContext.Describe(ui.Description{Role: ui.SwitchRole, Label: "Beacon", C
 What `Describe` leaves empty stays as the boxes tell it. `Hidden` leaves out a decoration, or a label
 read already with the field it names. A control with an icon alone and no label is read by the
 `Tooltip` that follows it ("Go back"), as the pointer's note already says what it does. With no
-tooltip it is read by the icon's name ("arrow left") for want of a better one: describe it with
-what it does. After a menu button
+tooltip it is read by the name its label hides: `IconButton("trash-2", "##Delete the note")` shows
+the icon alone and is read «Delete the note». With neither, it is read by the icon's name ("arrow
+left") for want of a better one: describe it with what it does. A drag source is read by its name,
+as what it holds are controls of their own. After a menu button
 or a select, `Describe` describes the button, even while its list is open over it.
 
 ## What the screen reader asks

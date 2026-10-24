@@ -81,6 +81,13 @@ func displayText(label string) string {
 	return label
 }
 
+// hiddenName is the part of a label after "##", which names a control without showing: "##Close"
+// is a button with only an icon, read as «Close»; empty when the label has no hidden part.
+func hiddenName(label string) string {
+	_, hidden, _ := strings.Cut(label, "##")
+	return hidden
+}
+
 // Area tells where a control was drawn in the last frame, found by its label and the scopes
 // around it, outermost first: Area("Properties", "Apply") is the Apply button of the Properties
 // panel (panels open a scope with their title). Programs use it to place things next to a
