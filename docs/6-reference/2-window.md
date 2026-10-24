@@ -40,7 +40,7 @@ all the time.
 | `func Run(options Options, build func(context *ui.Context)) error` | Run opens the window and calls build in every update step, between the interface's Begin and End, until the window is closed. |
 | `func RunWith(context *ui.Context, options Options, build func(context *ui.Context)) error` | RunWith is Run with an interface context of your own (a custom theme or measurer). |
 | `func Share(title, text string) bool` | Share offers a text to other applications; a desktop has no sheet for that, so it returns false (put the text on the clipboard instead). |
-| `func SystemPrefersDark() bool` | SystemPrefersDark tells whether the system is set to a dark theme. |
+| `func SystemPrefersDark() bool` | SystemPrefersDark tells whether the system is set to a dark theme, asking it through its own command: the global interface style on macOS, GNOME's colour scheme on Linux (which KDE and most desktops keep too), the apps' theme in the registry on Windows. |
 | `func Wake()` | Wake makes the window draw a frame now: call it when the program's data changes on another goroutine (a file loaded, a message arrived), since the window otherwise sleeps until input. |
 
 ### Constants and variables

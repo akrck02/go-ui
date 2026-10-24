@@ -117,6 +117,7 @@ func (program *register) build(context *ui.Context) {
 | `Background`, `Surface`, `Sunken` | Behind everything; panels and bars; wells and hovered controls |
 | `Ink`, `InkSoft`, `InkQuiet` | Body text; secondary text and icons; hints |
 | `Line`, `ControlLine` | Separators; the borders of fields and buttons |
+| `FieldLine` | The borders of fields and selects, when they should be softer than buttons; empty, they take `ControlLine` |
 | `Primary`, `OnPrimary`, `PrimaryTint` | The main action, the text on it, a light wash of it |
 | `Positive`, `Warning`, `Danger` | States |
 | `TextSize`, `HeadingSize`, `ControlHeight`, `Gap`, `Padding`, `ControlRadius`… | Sizes, in layout pixels |

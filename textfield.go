@@ -398,7 +398,7 @@ func (ui *Context) addField(id ID, memory *fieldMemory, text string, options Tex
 		width = Grow()
 	}
 	paint.weight, paint.plain, paint.size = options.Weight, options.Plain, options.Size
-	look := Look{Fill: theme.Surface, Border: theme.ControlLine, BorderWidth: 1, Radius: theme.ControlRadius}
+	look := Look{Fill: theme.Surface, Border: theme.fieldLine(), BorderWidth: 1, Radius: theme.ControlRadius}
 	switch {
 	case options.Plain:
 		look = Look{}

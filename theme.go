@@ -17,6 +17,9 @@ type Theme struct {
 	InkQuiet    draw2d.Color // hints and captions
 	Line        draw2d.Color // borders and separators
 	ControlLine draw2d.Color // borders of fields, selects and secondary buttons: stronger than Line, so a control reads as one
+	// FieldLine is the border of text and number fields and selects, when a design wants them
+	// softer than buttons; left empty, they take ControlLine.
+	FieldLine   draw2d.Color
 	Primary     draw2d.Color // the main action
 	OnPrimary   draw2d.Color // text on the main action
 	PrimaryTint draw2d.Color // a light wash of the primary colour (a selected row)
@@ -222,4 +225,13 @@ func (theme Theme) lineBox(size, letters float32) float32 {
 		multiple = theme.HeadingLineHeight
 	}
 	return max(letters, size*multiple)
+}
+
+// fieldLine is the border of a field or a select: FieldLine when the theme gives one, ControlLine
+// otherwise.
+func (theme Theme) fieldLine() draw2d.Color {
+	if theme.FieldLine.IsVisible() {
+		return theme.FieldLine
+	}
+	return theme.ControlLine
 }

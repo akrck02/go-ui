@@ -31,6 +31,18 @@ things declared after it.
 ### Constants and variables
 
 ```go
+const LettersLineHeight float32 = -1
+```
+
+LettersLineHeight is a TextStyle.LineHeight that keeps a line as tall as its letters, whatever the theme says: CSS's line-height: normal, which buttons and tabs often use.
+
+```go
+const NoLineGap float32 = -1
+```
+
+NoLineGap is a Layout.LineGap that puts the lines of a wrapping box right under each other.
+
+```go
 var EnglishEditingWords = EditingWords{Cut: "Cut", Copy: "Copy", Paste: "Paste", SelectAll: "Select all"}
 ```
 
@@ -446,8 +458,8 @@ type Layout struct {
 	// row-gap: words keep a space between them while their lines touch. 0 keeps Gap; NoLineGap
 	// puts none.
 	LineGap float32
-	AlignX Align // where the children sit horizontally when there is room to spare
-	AlignY Align // where the children sit vertically when there is room to spare
+	AlignX  Align // where the children sit horizontally when there is room to spare
+	AlignY  Align // where the children sit vertically when there is room to spare
 	// Columns, when above 0, makes a grid: children fill rows of this many equal cells, left to
 	// right and then down, with Gap between cells both ways. Direction is not used then.
 	Columns int
@@ -740,6 +752,9 @@ type Theme struct {
 	InkQuiet    draw2d.Color // hints and captions
 	Line        draw2d.Color // borders and separators
 	ControlLine draw2d.Color // borders of fields, selects and secondary buttons: stronger than Line, so a control reads as one
+	// FieldLine is the border of text and number fields and selects, when a design wants them
+	// softer than buttons; left empty, they take ControlLine.
+	FieldLine   draw2d.Color
 	Primary     draw2d.Color // the main action
 	OnPrimary   draw2d.Color // text on the main action
 	PrimaryTint draw2d.Color // a light wash of the primary colour (a selected row)

@@ -211,7 +211,7 @@ func (ui *Context) NumberField(name string, value *float32, minimum, maximum, st
 func (ui *Context) stepNumber(id ID, name string, memory *numberMemory, value *float32, step float32, format string) {
 	theme := ui.Theme
 	layout := Layout{Width: Grow(), Height: Fixed(theme.ControlHeight), Padding: PadXY(2, 0), AlignY: Center}
-	ui.Frame(layout, Look{Fill: theme.Surface, Border: theme.ControlLine, BorderWidth: 1, Radius: theme.ControlRadius}, func() {
+	ui.Frame(layout, Look{Fill: theme.Surface, Border: theme.fieldLine(), BorderWidth: 1, Radius: theme.ControlRadius}, func() {
 		ui.Push(name)
 		ui.withoutTab(func() { // the number is typed, so its buttons are no Tab stops
 			if ui.FlatIconButton("minus", "") {

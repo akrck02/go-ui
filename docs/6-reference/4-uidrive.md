@@ -207,7 +207,7 @@ type Player struct {
 | `func (player *Player) Done() bool` | Done tells whether the script has ended: every step played, or one failed. |
 | `func (player *Player) Drive(state *input.State, context *ui.Context)` | Drive plays a frame of the script. |
 | `func (player *Player) Err() error` | Err is why the script ended early: the failed step's error, with its code. |
-| `func (player *Player) Show(drawing *draw2d.List)` | Show draws, when the player's options ask for it, what it does over the interface: an outline around the element its steps found, the pointer as a ring (filled while pressed) and each finger as a dot. |
+| `func (player *Player) Show(drawing *draw2d.List)` | Show draws, when the player's options ask for it, what it does over the interface: an outline around the element its steps found (unless WithoutOutline), the pointer as a ring (filled while pressed) and each finger as a dot. |
 
 ### Recorder
 
