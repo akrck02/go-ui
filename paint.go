@@ -38,6 +38,10 @@ func (ui *Context) paintElement(index int) {
 }
 
 func (ui *Context) paintBox(element *element) {
+	if look := element.look; look.Fade > 0 || look.ShiftX != 0 || look.ShiftY != 0 {
+		first := len(ui.drawing.Commands)
+		defer ui.moveCommands(first, element.rect, look.ShiftX, look.ShiftY, 1-min(look.Fade, 1))
+	}
 	if ui.shrinks(element) {
 		first := len(ui.drawing.Commands)
 		defer ui.scaleCommands(first, element.rect, ui.Theme.PressScale)
@@ -220,5 +224,23 @@ func (ui *Context) outOfReach(index int) {
 	}
 	for child := element.firstChild; child >= 0; child = ui.elements[child].nextSibling {
 		ui.outOfReach(child)
+	}
+}
+
+// moveCommands moves and fades what a box drew, from the command first on: by x and y, and to
+// shown of its opacity. A clip of the box's own moves with it; one from around it stays.
+func (ui *Context) moveCommands(first int, area draw2d.Rectangle, x, y, shown float32) {
+	commands := ui.drawing.Commands[first:]
+	for index := range commands {
+		command := &commands[index]
+		if command.HasClip && area.Intersect(command.Clip) == command.Clip {
+			command.Clip.X += x
+			command.Clip.Y += y
+		}
+		command.Area.X += x
+		command.Area.Y += y
+		command.Baseline += y
+		command.Fill[3] *= shown
+		command.Border[3] *= shown
 	}
 }

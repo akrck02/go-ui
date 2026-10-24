@@ -485,6 +485,12 @@ type Look struct {
 	// block: a design system's main button. It takes no room in the layout, like a shadow.
 	Edge      draw2d.Color
 	EdgeWidth float32
+	// Fade makes the box and all it holds that much see-through, from 0 (as it is) to 1 (gone): a
+	// screen fading in with Context.Appear.
+	Fade float32
+	// ShiftX and ShiftY draw the box and all it holds that many pixels away, without moving it in
+	// the layout or for the pointer: a dialog rising into place, a note sliding in.
+	ShiftX, ShiftY float32
 }
 ```
 

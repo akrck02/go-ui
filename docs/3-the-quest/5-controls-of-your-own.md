@@ -126,7 +126,14 @@ func (program *register) build(context *ui.Context) {
 Controls of your own can move. `context.Animate(name, target, duration)` eases a value towards a
 target and asks for frames only while it moves; `context.Appear(name, duration)` eases from 0 to 1
 the first time something is shown; `context.Fold(name, open, duration, layout, content)` opens a
-box to its content's height and closes it to nothing.
+box to its content's height and closes it to nothing. To move a whole box with all it holds, give
+its look a `Fade` (0 as it is, 1 gone) or a `ShiftX` and `ShiftY`: it is drawn see-through or
+moved, but stays where it is in the layout, so nothing around it jumps. A dialog that rises in:
+
+```go
+shown := context.Appear("welcome", 250*time.Millisecond)
+look.Fade, look.ShiftY = 1-shown, 24*(1-shown)
+```
 
 #### Checkpoint
 

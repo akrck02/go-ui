@@ -117,6 +117,7 @@ clipboard (`Copy(text)`, `ClipboardText()`), and for on-screen keyboards `TypedF
 |---|---|
 | `Animate(name, target, duration) float32` | Eases a value to its target, asking for frames while it moves |
 | `Appear(name, duration) float32` | Eases from 0 to 1 the first time something is shown |
+| `Look.Fade`, `Look.ShiftX`, `Look.ShiftY` | Draw a box and all it holds see-through or moved, without moving it in the layout |
 | `LayerOptions.Leave` | A modal or overlay leaves with motion |
 
 ## Screen readers
