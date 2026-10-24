@@ -50,7 +50,10 @@ type dragState struct {
 	grabX, grabY float32
 	lifted       []draw2d.Command
 	liftedArea   draw2d.Rectangle
-	liftedRadius float32 // of the first rectangle it drew: its shadow is rounded as it is
+	// liftedShape is the first rectangle it drew, with its corner radius: the shadow falls under
+	// it, not under the margins the source keeps around it.
+	liftedShape  draw2d.Rectangle
+	liftedRadius float32
 }
 
 // Drag is a payload being dragged, or dropped, and where the pointer is, in layout pixels.
@@ -250,10 +253,10 @@ func (ui *Context) isLifted(element *element) bool {
 func (ui *Context) liftCommands(first int, area draw2d.Rectangle) {
 	drag := &ui.drag
 	drag.lifted = append(drag.lifted[:0], ui.drawing.Commands[first:]...)
-	drag.liftedArea, drag.liftedRadius = area, 0
+	drag.liftedArea, drag.liftedShape, drag.liftedRadius = area, area, 0
 	for _, command := range drag.lifted {
 		if command.Kind == draw2d.RectangleKind {
-			drag.liftedRadius = command.Radius
+			drag.liftedShape, drag.liftedRadius = command.Area, command.Radius
 			break
 		}
 	}
@@ -273,10 +276,10 @@ func (ui *Context) paintLifted() {
 	}
 	moveX := float32(ui.state.CursorX) - drag.grabX - drag.liftedArea.X
 	moveY := float32(ui.state.CursorY) - drag.grabY - drag.liftedArea.Y
-	shadow := drag.liftedArea
+	shadow := drag.liftedShape
 	shadow.X, shadow.Y = shadow.X+moveX, shadow.Y+moveY
 	ui.drawing.SetLayer(dragLayer)
-	ui.drawing.Shadow(shadow, drag.liftedRadius, ui.Theme.ShadowBlur*2, ui.Theme.ShadowDrop*2, ui.Theme.Shadow)
+	ui.drawing.Shadow(shadow, drag.liftedRadius, ui.Theme.ShadowBlur*liftedShadow, ui.Theme.ShadowDrop, ui.Theme.Shadow)
 	for _, command := range drag.lifted {
 		command.Layer, command.HasClip = dragLayer, false
 		command.Area.X += moveX
@@ -287,6 +290,10 @@ func (ui *Context) paintLifted() {
 	ui.drawing.SetLayer(0)
 	drag.lifted = drag.lifted[:0]
 }
+
+// liftedShadow is how much wider than a panel's the shadow of what is dragged spreads: lifted
+// higher, it casts a softer shadow.
+const liftedShadow = 1.5
 
 // dragLayer is the layer of what is dragged: over popups, as it is in the hand.
 const dragLayer = popupLayer * 2
