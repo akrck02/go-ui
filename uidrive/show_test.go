@@ -51,3 +51,30 @@ func TestAPlayerNotAskedToShowDrawsNothing(test *testing.T) {
 		}
 	}
 }
+
+func TestAShownPlayerWithoutOutlineDrawsOnlyThePointer(test *testing.T) {
+	script, err := uidrive.Parse("move-to \"Light the lamp\"\nwait 1s")
+	if err != nil {
+		test.Fatal(err)
+	}
+	player := uidrive.Play(script, uidrive.PlayOptions{Show: true, WithoutOutline: true})
+	window := keeperWindow(test, &lighthouse{}, uitest.Driver(player))
+	window.Wait(500 * time.Millisecond)
+	shown := 0
+	for _, command := range window.DrawList().Commands {
+		if command.Layer != uidrive.ShownLayer {
+			continue
+		}
+		shown++
+		if command.Kind == draw2d.RectangleKind && command.Border.IsVisible() && !command.Fill.IsVisible() &&
+			command.Area.Width > pointerWidest {
+			test.Errorf("an outline was drawn around the element: %v", command.Area)
+		}
+	}
+	if shown == 0 {
+		test.Error("the pointer was not drawn either")
+	}
+}
+
+// pointerWidest is wider than anything the pointer draws, in layout pixels: a wider ring is an outline.
+const pointerWidest = 40

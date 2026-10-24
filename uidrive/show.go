@@ -25,7 +25,7 @@ var (
 )
 
 // Show draws, when the player's options ask for it, what it does over the interface: an outline
-// around the element its steps found, the pointer as a ring (filled while pressed) and each finger
+// around the element its steps found (unless WithoutOutline), the pointer as a ring (filled while pressed) and each finger
 // as a dot. Without Show it draws nothing.
 func (player *Player) Show(drawing *draw2d.List) {
 	if !player.options.Show || player.done {
@@ -33,7 +33,7 @@ func (player *Player) Show(drawing *draw2d.List) {
 	}
 	drawing.SetLayer(ShownLayer)
 	defer drawing.SetLayer(0)
-	if area := player.found.Rect; area.Width > 0 && area.Height > 0 {
+	if area := player.found.Rect; area.Width > 0 && area.Height > 0 && !player.options.WithoutOutline {
 		outline := draw2d.Rectangle{X: area.X - outlineMargin, Y: area.Y - outlineMargin,
 			Width: area.Width + 2*outlineMargin, Height: area.Height + 2*outlineMargin}
 		drawing.Rectangle(outline, outlineRounding, noColour, outlineColour, outlineBorder)

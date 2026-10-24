@@ -182,6 +182,9 @@ type PlayOptions struct {
 	// Show draws the pointer, the fingers and the element each step found over the interface, so
 	// a demo or a tutorial is seen, not only run (show.go).
 	Show bool
+	// WithoutOutline, with Show, leaves out the outline around the element each step found: only
+	// the pointer and the fingers are drawn, as a person filming a demo would want.
+	WithoutOutline bool
 }
 ```
 
