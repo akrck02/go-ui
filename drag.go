@@ -281,13 +281,14 @@ func (ui *Context) liftCommands(first int, area draw2d.Rectangle) {
 	drag := &ui.drag
 	drag.lifted = append(drag.lifted[:0], ui.drawing.Commands[first:]...)
 	drag.liftedArea, drag.liftedShape, drag.liftedRadius = area, area, ui.Theme.PanelRadius
-	drag.liftedBare = !drawsBackground(drag.lifted, area)
+	card, backed := background(drag.lifted, area)
+	drag.liftedBare = !backed
 	if drag.liftedBare {
 		// The card reaches past the content, so the content does not touch its edge.
 		inset := ui.Theme.Padding
 		drag.liftedShape = draw2d.Rectangle{X: area.X - inset, Y: area.Y, Width: area.Width + 2*inset, Height: area.Height}
 	} else {
-		drag.liftedRadius = drag.lifted[0].Radius
+		drag.liftedShape, drag.liftedRadius = card.Area, card.Radius
 	}
 	for index := range ui.drawing.Commands[first:] {
 		command := &ui.drawing.Commands[first+index]
@@ -296,14 +297,22 @@ func (ui *Context) liftCommands(first int, area draw2d.Rectangle) {
 	}
 }
 
-// drawsBackground tells whether what a source drew starts with a filled rectangle over its whole
-// area: its own background, which the lifted copy can keep.
-func drawsBackground(commands []draw2d.Command, area draw2d.Rectangle) bool {
-	if len(commands) == 0 {
-		return false
+// backgroundCover is how much of a source's width and height a filled rectangle must cover to
+// be taken for its background: a card inside a padded source still counts, a picture in a row
+// does not.
+const backgroundCover = 0.9
+
+// background is the rectangle a source drew as its own background, the first filled one that
+// covers nearly all of it (a shadow under it does not count), and whether there is one.
+func background(commands []draw2d.Command, area draw2d.Rectangle) (draw2d.Command, bool) {
+	for _, command := range commands {
+		if command.Kind != draw2d.RectangleKind || !command.Fill.IsVisible() {
+			continue
+		}
+		covers := command.Area.Width >= area.Width*backgroundCover && command.Area.Height >= area.Height*backgroundCover
+		return command, covers
 	}
-	first := commands[0]
-	return first.Kind == draw2d.RectangleKind && first.Area == area && first.Fill[3] > 0
+	return draw2d.Command{}, false
 }
 
 // paintLifted draws the dragged source under the pointer, over everything, with a shadow: it is

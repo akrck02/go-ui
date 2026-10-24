@@ -106,3 +106,31 @@ func TestATargetHoldingACardHasTheCardMarked(t *testing.T) {
 	}
 	t.Errorf("the card is not drawn")
 }
+
+// A source that is a card inside a little padding, with its shadow, already has a background:
+// it is lifted as it is, not on a second card around the first.
+func TestACardInsideItsSourceIsNotLiftedOnAnotherCard(t *testing.T) {
+	h := newHarness(t)
+	build := func(ui *Context) {
+		ui.Box(Layout{Padding: Pad(20)}, func() {
+			ui.DragSource("Note", "note", Layout{Width: Fixed(200), Padding: Pad(4)}, func() {
+				ui.Frame(Layout{Width: Grow(), Height: Fixed(120)}, Look{Fill: ui.Theme.Background, Radius: 12, Shadow: true}, nil)
+			})
+		})
+	}
+	h.frame(build)
+	h.frame(build)
+	source := h.rect(idOf("Note"))
+	h.moveTo(float64(source.X+20), float64(source.Y+20))
+	h.frame(build)
+	h.press()
+	h.frame(build)
+	h.moveTo(500, 400)
+	h.frame(build)
+	h.frame(build)
+	for _, command := range h.ui.drawing.Commands {
+		if command.Kind == draw2d.RectangleKind && command.Layer == dragLayer && command.Fill == h.ui.Theme.Surface {
+			t.Fatalf("the card is lifted on a second card")
+		}
+	}
+}
