@@ -10,12 +10,16 @@ const sheetLayer = 50000
 
 // SheetOptions size a sheet.
 type SheetOptions struct {
-	Width Sizing // the card's width; zero = 420 pixels
+	Width Sizing // the card's width; zero = 420 pixels. A fixed width shrinks to fit a narrow window
 }
 
 // sheetWidth is a sheet's width when the options leave it out: room for a sentence and a row of
 // buttons.
 const sheetWidth = 420
+
+// sheetMargin is the dimmed room kept round a sheet, in pixels: on a phone a wide sheet shrinks to
+// the window less this on each side, rather than running off it.
+const sheetMargin = 24
 
 // sheetMemory is what a sheet keeps: the last frame it was shown, to tell when it opens.
 type sheetMemory struct {
@@ -35,7 +39,7 @@ func (ui *Context) Sheet(title string, options SheetOptions, content func()) (di
 	escaped = escaped || (ui.frontSheet(id) && ui.Back())
 	outside := ui.open
 	ui.open = nil
-	backdrop := Layout{Direction: Vertical, Width: Grow(), Height: Grow(), Padding: Pad(24), AlignX: Center, AlignY: Center}
+	backdrop := Layout{Direction: Vertical, Width: Grow(), Height: Grow(), Padding: Pad(sheetMargin), AlignX: Center, AlignY: Center}
 	index := ui.openElement(element{id: id, kind: boxElement, layout: backdrop, look: Look{Fill: ui.Theme.Scrim}})
 	ui.roots = append(ui.roots, root{id: id, element: index, sheet: true})
 	ui.nextSheets = append(ui.nextSheets, id)
@@ -57,6 +61,17 @@ func (ui *Context) dropOutsideFocusWhenOpening(id ID) {
 	memory.lastFrame = ui.frame
 }
 
+// withinWindow is a fixed width no wider than the window less margins (both sides together);
+// other sizings already follow the room they are given.
+func (ui *Context) withinWindow(width Sizing, margins float32) Sizing {
+	windowWidth, _ := ui.Size()
+	room := max(windowWidth-margins, 0)
+	if width.kind != fixedSizing || width.value <= room {
+		return width
+	}
+	return Fixed(room)
+}
+
 // sheetCard is the card of a sheet: a title with a close button, and the content. It takes the
 // mouse over its own background, so only a click outside it reaches the backdrop. It returns true
 // when the close button is clicked.
@@ -66,6 +81,7 @@ func (ui *Context) sheetCard(id ID, title string, options SheetOptions, content 
 	if width == (Sizing{}) {
 		width = Fixed(sheetWidth)
 	}
+	width = ui.withinWindow(width, 2*sheetMargin)
 	cardID := childID(id, "##card")
 	look := Look{Fill: theme.Surface, Border: theme.Line, BorderWidth: 1, Radius: theme.PanelRadius, Shadow: true, Clip: true}
 	closed := false

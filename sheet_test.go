@@ -130,3 +130,31 @@ func TestOpeningASheetTakesTheFocusFromAFieldBehind(t *testing.T) {
 		t.Fatal("Tab goes round the sheet's own controls only, back to its field")
 	}
 }
+
+func TestASheetNeverRunsOffANarrowWindow(t *testing.T) {
+	h := newHarness(t)
+	h.state.WindowWidth, h.state.FramebufferWidth = 360, 360
+	build := func(ui *Context) {
+		ui.Sheet("Pay", SheetOptions{Width: Fixed(700)}, func() { ui.Text("Total", TextStyle{}) })
+	}
+	h.frame(build)
+	h.frame(build)
+	card := h.rect(childID(idOf("Pay"), "##card"))
+	if card.X < 0 || card.X+card.Width > 360 {
+		t.Fatalf("a sheet 700 wide in a window 360 wide runs off it: %+v", card)
+	}
+}
+
+func TestAModalNeverRunsOffANarrowWindow(t *testing.T) {
+	h := newHarness(t)
+	h.state.WindowWidth, h.state.FramebufferWidth = 360, 360
+	build := func(ui *Context) {
+		ui.Modal("Pay", LayerOptions{Width: Fixed(700), Padding: Pad(16), AlignX: Center}, func() { ui.Text("Total", TextStyle{}) })
+	}
+	h.frame(build)
+	h.frame(build)
+	content := h.rect(childID(idOf("Pay"), "##content"))
+	if content.X < 16 || content.X+content.Width > 360-16 {
+		t.Fatalf("a modal 700 wide in a window 360 wide runs off it: %+v", content)
+	}
+}

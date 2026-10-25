@@ -43,7 +43,8 @@ func (ui *Context) Modal(name string, options LayerOptions, content func()) (dis
 	ui.Push(name)
 	contentID := childID(id, "##content")
 	start := len(ui.focusables)
-	ui.frameWithID(contentID, Layout{Direction: Vertical, Width: options.Width, Height: options.Height}, Look{}, content)
+	width := ui.withinWindow(options.Width, options.Padding.Left+options.Padding.Right) // never off a phone
+	ui.frameWithID(contentID, Layout{Direction: Vertical, Width: width, Height: options.Height}, Look{}, content)
 	ui.sheetFocusStart, ui.sheetFocusEnd = start, len(ui.focusables)
 	ui.pointerOn(contentID) // a touch on the content is not one on the backdrop
 	ui.Pop()

@@ -622,7 +622,7 @@ SheetOptions size a sheet.
 
 ```go
 type SheetOptions struct {
-	Width Sizing // the card's width; zero = 420 pixels
+	Width Sizing // the card's width; zero = 420 pixels. A fixed width shrinks to fit a narrow window
 }
 ```
 
