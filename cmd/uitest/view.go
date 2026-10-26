@@ -250,6 +250,7 @@ func (results *results) stepControls(context *ui.Context, frames int, action str
 	})
 	context.Row(func() {
 		context.Caption(fmt.Sprintf("Frame %d of %d", results.frame+1, frames))
+		context.Checkbox("At the host's speed", &results.playback.atHostSpeed)
 		if action != "" {
 			context.Chip("mouse-pointer-click", action, ui.ChipLook{})
 		}

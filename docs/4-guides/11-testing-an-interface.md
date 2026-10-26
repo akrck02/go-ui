@@ -180,7 +180,9 @@ It runs `go test` with the arguments you give, with recording on, and opens a Go
 test it ran is listed on the left by package, failed ones first; the chips above it (*All*,
 *Failed*, *With a window*, each with how many) narrow the list. A test with no window shows what it wrote. A window test shows its error codes
 and messages, and a replay of its frames. *Play* shows them one after another, a tenth of a second
-each, and stops at the last; *Pause* holds the frame shown. Step through them with *Previous
+each, so every step can be seen, and stops at the last; tick *At the host's speed* to show one
+recorded frame per frame your screen draws instead, and see an animation move as fast as it would
+in the real window. *Pause* holds the frame shown. Step through them with *Previous
 frame*, *Next frame* or the slider. The pointer is a ring, filled while pressed; fingers are
 orange dots; the element an action found has an outline in the theme's focus colour. Click an
 error's code to jump to the frame it came after.

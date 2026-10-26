@@ -5,16 +5,22 @@ import "time"
 // Playing a test's frames one after another, as a film: the viewer moves to the next frame each
 // time a frame's time has passed, and stops at the last one. A test's frames are its steps (a
 // click, a key, a wait), not moments of equal length, so each is shown for the same time, long
-// enough to see what changed.
+// enough to see what changed. At the host's speed instead, the replay shows one recorded frame per
+// frame the viewer's window draws, to see motion as the test's window would have drawn it.
 
 // playbackFrame is how long each frame is shown while the replay plays.
 const playbackFrame = 100 * time.Millisecond
 
+// nextHostFrame asks for the window's very next frame: the display's refresh is what paces it.
+const nextHostFrame = time.Nanosecond
+
 // playback is whether the replay plays, and when it last moved to the next frame.
 type playback struct {
 	playing bool
-	movedAt time.Time
-	now     func() time.Time // the viewer's clock: time.Now, or a test's
+	// atHostSpeed shows one recorded frame per frame drawn, rather than each for playbackFrame.
+	atHostSpeed bool
+	movedAt     time.Time
+	now         func() time.Time // the viewer's clock: time.Now, or a test's
 }
 
 // clock is the time now, by the viewer's clock.
@@ -47,6 +53,9 @@ func (results *results) advance() time.Duration {
 	if !playback.playing {
 		return 0
 	}
+	if playback.atHostSpeed {
+		return results.advanceOneFrame()
+	}
 	now := results.clock()
 	passed := int(now.Sub(playback.movedAt) / playbackFrame)
 	if passed > 0 {
@@ -59,4 +68,16 @@ func (results *results) advance() time.Duration {
 		return 0
 	}
 	return playbackFrame - now.Sub(playback.movedAt)
+}
+
+// advanceOneFrame moves the replay on by one frame, for a replay at the host's speed, and stops it
+// at the last frame.
+func (results *results) advanceOneFrame() time.Duration {
+	results.step(1)
+	recording, _ := results.current()
+	if results.frame >= len(recording.Frames)-1 {
+		results.playback.playing = false
+		return 0
+	}
+	return nextHostFrame
 }

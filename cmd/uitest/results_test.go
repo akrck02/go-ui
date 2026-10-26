@@ -150,3 +150,27 @@ func TestPauseKeepsTheFrameShown(t *testing.T) {
 		t.Fatalf("a paused replay moved to frame %d", results.frame)
 	}
 }
+
+func TestAtTheHostsSpeedEachDrawnFrameShowsTheNextRecordedOne(t *testing.T) {
+	window, results := openViewer(t)
+	now := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	results.playback.now = func() time.Time { return now } // the clock stays still: frames drawn pace it
+	if err := window.Click("At the host's speed"); err != nil {
+		t.Fatal(err)
+	}
+	if err := window.Click("Play"); err != nil {
+		t.Fatal(err)
+	}
+	start := results.frame
+	window.Frame()
+	if results.frame != start+1 {
+		t.Fatalf("a drawn frame moved the replay from %d to %d, want one frame on", start, results.frame)
+	}
+	recording, _ := results.current()
+	for range recording.Frames {
+		window.Frame()
+	}
+	if results.frame != len(recording.Frames)-1 || results.playback.playing {
+		t.Fatalf("the replay is at frame %d, playing %v; want the last frame, stopped", results.frame, results.playback.playing)
+	}
+}
