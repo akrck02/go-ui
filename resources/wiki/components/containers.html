@@ -66,6 +66,17 @@ or a finger, which glides on when let go. Give it a height that does not follow 
 <p><code>ScrollOffset(name)</code> says how far it is scrolled (a bar that shrinks over it); <code>ScrollPull(name)</code>
 measures a pull past its top (a list that refreshes).</p>
 
+<p><strong>From the end.</strong> A chat or a log reads from the bottom: <code>ScrollAreaFromEnd</code> opens at the end of
+its content and keeps the end in view as new lines arrive. Scroll up to read older lines and it
+stays put, so nothing moves under the reader&rsquo;s eyes; scroll back to the end and it follows again.
+With <code>AlignY: ui.End</code>, a few lines sit at the bottom of the box, as in a new chat.</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">ScrollAreaFromEnd</span><span class="p">(</span><span class="s">&#34;log&#34;</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">Layout</span><span class="p">{</span><span class="nx">Width</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(),</span> <span class="nx">Gap</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="nx">AlignY</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">End</span><span class="p">},</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">line</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">lighthouseLog</span> <span class="p">{</span>
+		<span class="nx">context</span><span class="p">.</span><span class="nf">Label</span><span class="p">(</span><span class="nx">line</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">})</span>
+</code></pre>
+
 <h2 id="fold"><code>Fold</code></h2>
 
 <p>A box that opens to its content&rsquo;s height and closes to nothing, with motion: the answer under a

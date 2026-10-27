@@ -23,6 +23,18 @@ password (a dot per character, nothing can be copied or cut).</p>
 
 <p><img src="./images/components/fields-form.png" alt="Name, Code in monospace and a hidden Password" /></p>
 
+<h2 id="entryfield"><code>EntryField</code></h2>
+
+<p>A line that is sent with Enter, such as a tag to add or a message to post. It returns true on the
+step Enter is pressed; the program takes the text, clears it, and gives the field the keyboard back
+so the next one can be typed straight away.</p>
+<pre><code class="language-go"><span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">EntryField</span><span class="p">(</span><span class="s">&#34;tag&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">typed</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextFieldOptions</span><span class="p">{</span><span class="nx">Placeholder</span><span class="p">:</span> <span class="s">&#34;Add a tag…&#34;</span><span class="p">})</span> <span class="p">{</span>
+	<span class="nx">tags</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">tags</span><span class="p">,</span> <span class="nx">typed</span><span class="p">)</span>
+	<span class="nx">typed</span> <span class="p">=</span> <span class="s">&#34;&#34;</span>
+	<span class="nx">context</span><span class="p">.</span><span class="nf">FocusField</span><span class="p">(</span><span class="s">&#34;tag&#34;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+
 <h2 id="a-search">A search</h2>
 
 <p>Nothing needs to &ldquo;listen&rdquo; to the field: the list below reads <code>search</code> in the same frame.</p>

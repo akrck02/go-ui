@@ -109,7 +109,8 @@ takes the mouse and the keyboard: nothing behind reacts, a field behind loses th
 sheet opens, Tab goes round the sheet&rsquo;s own fields, and <code>End</code> claims both, so cameras and shortcuts
 keep still. It returns <code>true</code> on the step the person asks to close it: Escape (unless a field, a
 select or a menu inside it takes Escape first), the × in its title or a click on the backdrop.
-<code>SheetOptions.Width</code> sizes the card (420 px by default). Popups (a select inside the sheet) open
+<code>SheetOptions.Width</code> sizes the card (420 px by default); a fixed width shrinks on a window too
+narrow for it, so a sheet never runs off a phone. A modal&rsquo;s fixed width does the same. Popups (a select inside the sheet) open
 over it. The dimming colour is the theme&rsquo;s <code>Scrim</code>.</p>
 
 <h2 id="choosing-a-file">Choosing a file</h2>

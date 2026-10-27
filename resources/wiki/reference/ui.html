@@ -27,6 +27,14 @@ are drawn now: invisible at sixty frames a second, and it lets a box be sized by
 things declared after it.</p>
 
 <h3 id="constants-and-variables">Constants and variables</h3>
+<pre><code class="language-go"><span class="kd">const</span> <span class="nx">LettersLineHeight</span> <span class="kt">float32</span> <span class="p">=</span> <span class="o">-</span><span class="mi">1</span>
+</code></pre>
+
+<p>LettersLineHeight is a TextStyle.LineHeight that keeps a line as tall as its letters, whatever the theme says: CSS&rsquo;s line-height: normal, which buttons and tabs often use.</p>
+<pre><code class="language-go"><span class="kd">const</span> <span class="nx">NoLineGap</span> <span class="kt">float32</span> <span class="p">=</span> <span class="o">-</span><span class="mi">1</span>
+</code></pre>
+
+<p>NoLineGap is a Layout.LineGap that puts the lines of a wrapping box right under each other.</p>
 <pre><code class="language-go"><span class="kd">var</span> <span class="nx">EnglishEditingWords</span> <span class="p">=</span> <span class="nx">EditingWords</span><span class="p">{</span><span class="nx">Cut</span><span class="p">:</span> <span class="s">&#34;Cut&#34;</span><span class="p">,</span> <span class="nx">Copy</span><span class="p">:</span> <span class="s">&#34;Copy&#34;</span><span class="p">,</span> <span class="nx">Paste</span><span class="p">:</span> <span class="s">&#34;Paste&#34;</span><span class="p">,</span> <span class="nx">SelectAll</span><span class="p">:</span> <span class="s">&#34;Select all&#34;</span><span class="p">}</span>
 </code></pre>
 
@@ -56,6 +64,12 @@ things declared after it.</p>
 	<span class="nx">Start</span>  <span class="nx">Align</span> <span class="p">=</span> <span class="kc">iota</span> <span class="c1">// left or top</span>
 	<span class="nx">Center</span>              <span class="c1">// in the middle</span>
 	<span class="nx">End</span>                 <span class="c1">// right or bottom</span>
+	<span class="c1">// The next three share the free space between the children, along the box&#39;s direction (across</span>
+	<span class="c1">// it, they place each child at the start). They are CSS&#39;s justify-content values of the same</span>
+	<span class="c1">// names, and Gap is kept as the least space between two children.</span>
+	<span class="nx">SpaceBetween</span> <span class="c1">// the first child at the start, the last at the end, the rest evenly between</span>
+	<span class="nx">SpaceAround</span>  <span class="c1">// each child with the same space on both sides, so the edges get half</span>
+	<span class="nx">SpaceEvenly</span>  <span class="c1">// the same space before, between and after the children</span>
 <span class="p">)</span>
 </code></pre>
 
@@ -201,6 +215,26 @@ things declared after it.</p>
 </tr>
 
 <tr>
+<td><code>func (ui *Context) DangerButton(label string) bool</code></td>
+<td>DangerButton adds a button for an action that destroys something (delete, empty): red ink on a soft red fill, so it is never taken for an ordinary action.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) DangerFlatIconButton(icon, label string) bool</code></td>
+<td>DangerFlatIconButton is FlatIconButton for an action that destroys: its icon and words in red, on the soft red fill when hovered.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) DangerIconButton(icon, label string) bool</code></td>
+<td>DangerIconButton is DangerButton with an icon before its label; a label of only a hidden part (&ldquo;##Delete&rdquo;) shows the icon alone, read by that name.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) DangerMenuItem(icon, label, hint string) bool</code></td>
+<td>DangerMenuItem is MenuItem for a choice that destroys something: its icon and words in red.</td>
+</tr>
+
+<tr>
 <td><code>func (ui *Context) Describe(description Description)</code></td>
 <td>Describe tells a screen reader more about the box added just before it (a control, a text): what it is, its name, its value and its state.</td>
 </tr>
@@ -243,6 +277,11 @@ things declared after it.</p>
 <tr>
 <td><code>func (ui *Context) End()</code></td>
 <td>End lays the interface out, paints it into the draw list and tells the input state whether the interface has the mouse or the keyboard.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) EntryField(name string, text *string, options TextFieldOptions) (submitted bool)</code></td>
+<td>EntryField is TextFieldWith for a line that is sent with Enter: a tag to add, a message to post.</td>
 </tr>
 
 <tr>
@@ -668,6 +707,10 @@ things declared after it.</p>
 <pre><code class="language-go"><span class="kd">const</span> <span class="p">(</span>
 	<span class="nx">Horizontal</span> <span class="nx">Direction</span> <span class="p">=</span> <span class="kc">iota</span> <span class="c1">// left to right</span>
 	<span class="nx">Vertical</span>                    <span class="c1">// top to bottom</span>
+	<span class="c1">// Stacked lays the children one over the other, each placed by the box&#39;s AlignX and AlignY</span>
+	<span class="c1">// and as big as the biggest: a label over a picture, a badge on a button&#39;s corner. Later</span>
+	<span class="c1">// children are drawn over earlier ones. It is CSS&#39;s grid with every child in the same cell.</span>
+	<span class="nx">Stacked</span>
 <span class="p">)</span>
 </code></pre>
 
@@ -809,9 +852,13 @@ things declared after it.</p>
 	<span class="c1">// between lines. The box needs a width that does not follow its content (Grow in a column,</span>
 	<span class="c1">// Fixed, Percent), or it is one line as wide as all its children.</span>
 	<span class="c1">// (Next to Gap, it takes the padding the compiler leaves there: boxes stay as small.)</span>
-	<span class="nx">Wrap</span>   <span class="kt">bool</span>
-	<span class="nx">AlignX</span> <span class="nx">Align</span> <span class="c1">// where the children sit horizontally when there is room to spare</span>
-	<span class="nx">AlignY</span> <span class="nx">Align</span> <span class="c1">// where the children sit vertically when there is room to spare</span>
+	<span class="nx">Wrap</span> <span class="kt">bool</span>
+	<span class="c1">// LineGap, on a box that wraps, is the space between its lines instead of Gap, as CSS&#39;s</span>
+	<span class="c1">// row-gap: words keep a space between them while their lines touch. 0 keeps Gap; NoLineGap</span>
+	<span class="c1">// puts none.</span>
+	<span class="nx">LineGap</span> <span class="kt">float32</span>
+	<span class="nx">AlignX</span>  <span class="nx">Align</span> <span class="c1">// where the children sit horizontally when there is room to spare</span>
+	<span class="nx">AlignY</span>  <span class="nx">Align</span> <span class="c1">// where the children sit vertically when there is room to spare</span>
 	<span class="c1">// Columns, when above 0, makes a grid: children fill rows of this many equal cells, left to</span>
 	<span class="c1">// right and then down, with Gap between cells both ways. Direction is not used then.</span>
 	<span class="nx">Columns</span> <span class="kt">int</span>
@@ -820,7 +867,7 @@ things declared after it.</p>
 
 <h3 id="leave">Leave</h3>
 
-<p>Leave is how a layer goes when the program stops showing it: over Duration it fades out, dimming and all, as it moves by X and Y (a sheet sliding back down, a drawer back off the side). Its zero value goes at once.</p>
+<p>Leave is how a layer goes when the program stops showing it: over Duration it fades out, dimming and all, as it moves by X and Y (a modal&rsquo;s dimming fades where it is) (a sheet sliding back down, a drawer back off the side). Its zero value goes at once.</p>
 <pre><code class="language-go"><span class="kd">type</span> <span class="nx">Leave</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span class="nx">Duration</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span>
 	<span class="nx">X</span><span class="p">,</span> <span class="nx">Y</span>     <span class="kt">float32</span>
@@ -845,6 +892,12 @@ things declared after it.</p>
 	<span class="c1">// block: a design system&#39;s main button. It takes no room in the layout, like a shadow.</span>
 	<span class="nx">Edge</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
 	<span class="nx">EdgeWidth</span> <span class="kt">float32</span>
+	<span class="c1">// Fade makes the box and all it holds that much see-through, from 0 (as it is) to 1 (gone): a</span>
+	<span class="c1">// screen fading in with Context.Appear.</span>
+	<span class="nx">Fade</span> <span class="kt">float32</span>
+	<span class="c1">// ShiftX and ShiftY draw the box and all it holds that many pixels away, without moving it in</span>
+	<span class="c1">// the layout or for the pointer: a dialog rising into place, a note sliding in.</span>
+	<span class="nx">ShiftX</span><span class="p">,</span> <span class="nx">ShiftY</span> <span class="kt">float32</span>
 <span class="p">}</span>
 </code></pre>
 
@@ -955,7 +1008,7 @@ things declared after it.</p>
 
 <p>SheetOptions size a sheet.</p>
 <pre><code class="language-go"><span class="kd">type</span> <span class="nx">SheetOptions</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span class="nx">Width</span> <span class="nx">Sizing</span> <span class="c1">// the card&#39;s width; zero = 420 pixels</span>
+	<span class="nx">Width</span> <span class="nx">Sizing</span> <span class="c1">// the card&#39;s width; zero = 420 pixels. A fixed width shrinks to fit a narrow window</span>
 <span class="p">}</span>
 </code></pre>
 
@@ -1091,6 +1144,13 @@ things declared after it.</p>
 	<span class="nx">Plain</span> <span class="kt">bool</span>
 	<span class="c1">// Secret shows a dot for each character (a password), and lets nothing be copied or cut.</span>
 	<span class="nx">Secret</span> <span class="kt">bool</span>
+	<span class="c1">// Size is the text&#39;s size in pixels; 0 is the theme&#39;s. Height is the field&#39;s; the zero value</span>
+	<span class="c1">// is the theme&#39;s ControlHeight. A big figure that can be typed over (a price) takes both.</span>
+	<span class="nx">Size</span>   <span class="kt">float32</span>
+	<span class="nx">Height</span> <span class="nx">Sizing</span>
+	<span class="c1">// FitText makes the field as wide as its text, or its placeholder while empty, and grows it</span>
+	<span class="c1">// as it is typed in: an amount with its unit written after it. Width is not used then.</span>
+	<span class="nx">FitText</span> <span class="kt">bool</span>
 <span class="p">}</span>
 </code></pre>
 
@@ -1104,6 +1164,10 @@ things declared after it.</p>
 	<span class="c1">// Shadow, when visible, draws the text a second time a pixel right and down, in this colour,</span>
 	<span class="c1">// under it: the hard shadow pixel-art games give their text.</span>
 	<span class="nx">Shadow</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
+	<span class="c1">// LineHeight, when above 0, makes this line as tall as its size × this, with the letters in</span>
+	<span class="c1">// the middle, as CSS&#39;s line-height does; 0 follows the theme&#39;s LineHeight, and</span>
+	<span class="c1">// LettersLineHeight keeps the line as tall as its letters.</span>
+	<span class="nx">LineHeight</span> <span class="kt">float32</span>
 <span class="p">}</span>
 </code></pre>
 
@@ -1119,16 +1183,25 @@ things declared after it.</p>
 	<span class="nx">InkQuiet</span>    <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// hints and captions</span>
 	<span class="nx">Line</span>        <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// borders and separators</span>
 	<span class="nx">ControlLine</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// borders of fields, selects and secondary buttons: stronger than Line, so a control reads as one</span>
+	<span class="c1">// FieldLine is the border of text and number fields and selects, when a design wants them</span>
+	<span class="c1">// softer than buttons; left empty, they take ControlLine.</span>
+	<span class="nx">FieldLine</span>   <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
 	<span class="nx">Primary</span>     <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// the main action</span>
 	<span class="nx">OnPrimary</span>   <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// text on the main action</span>
 	<span class="nx">PrimaryTint</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// a light wash of the primary colour (a selected row)</span>
 	<span class="nx">Positive</span>    <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
 	<span class="nx">Warning</span>     <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
 	<span class="nx">Danger</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
-	<span class="nx">FocusRing</span>   <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
-	<span class="nx">Selection</span>   <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// behind selected text</span>
-	<span class="nx">Shadow</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
-	<span class="nx">Scrim</span>       <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// over everything behind a sheet, dimming it</span>
+	<span class="c1">// Placeholder is the ink of a field&#39;s example words while it is empty; left empty, it is</span>
+	<span class="c1">// InkQuiet faded towards Surface, so an example never reads as a value typed in.</span>
+	<span class="nx">Placeholder</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
+	<span class="c1">// DangerTint is the soft fill of a destructive button, a wash of Danger like paper stained</span>
+	<span class="c1">// red; left empty, it is Danger mixed lightly into Surface.</span>
+	<span class="nx">DangerTint</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
+	<span class="nx">FocusRing</span>  <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
+	<span class="nx">Selection</span>  <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// behind selected text</span>
+	<span class="nx">Shadow</span>     <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span>
+	<span class="nx">Scrim</span>      <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Color</span> <span class="c1">// over everything behind a sheet, dimming it</span>
 
 	<span class="nx">TextSize</span>      <span class="kt">float32</span>
 	<span class="nx">SmallTextSize</span> <span class="kt">float32</span>

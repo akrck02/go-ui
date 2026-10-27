@@ -281,7 +281,9 @@ go run github.com/akrck02/go-ui/cmd/uitest -dark ./editor/... -run TestSaving
 test it ran is listed on the left by package, failed ones first; the chips above it (<em>All</em>,
 <em>Failed</em>, <em>With a window</em>, each with how many) narrow the list. A test with no window shows what it wrote. A window test shows its error codes
 and messages, and a replay of its frames. <em>Play</em> shows them one after another, a tenth of a second
-each, and stops at the last; <em>Pause</em> holds the frame shown. Step through them with <em>Previous
+each, so every step can be seen, and stops at the last; tick <em>At the host&rsquo;s speed</em> to show one
+recorded frame per frame your screen draws instead, and see an animation move as fast as it would
+in the real window. <em>Pause</em> holds the frame shown. Step through them with <em>Previous
 frame</em>, <em>Next frame</em> or the slider. The pointer is a ring, filled while pressed; fingers are
 orange dots; the element an action found has an outline in the theme&rsquo;s focus colour. Click an
 error&rsquo;s code to jump to the frame it came after.</p>

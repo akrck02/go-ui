@@ -170,6 +170,11 @@ token and every control follows:</p>
 </tr>
 
 <tr>
+<td><code>FieldLine</code></td>
+<td>The borders of fields and selects, when they should be softer than buttons; empty, they take <code>ControlLine</code></td>
+</tr>
+
+<tr>
 <td><code>Primary</code>, <code>OnPrimary</code>, <code>PrimaryTint</code></td>
 <td>The main action, the text on it, a light wash of it</td>
 </tr>
@@ -191,7 +196,12 @@ token and every control follows:</p>
 <p>Controls of your own can move. <code>context.Animate(name, target, duration)</code> eases a value towards a
 target and asks for frames only while it moves; <code>context.Appear(name, duration)</code> eases from 0 to 1
 the first time something is shown; <code>context.Fold(name, open, duration, layout, content)</code> opens a
-box to its content&rsquo;s height and closes it to nothing.</p>
+box to its content&rsquo;s height and closes it to nothing. To move a whole box with all it holds, give
+its look a <code>Fade</code> (0 as it is, 1 gone) or a <code>ShiftX</code> and <code>ShiftY</code>: it is drawn see-through or
+moved, but stays where it is in the layout, so nothing around it jumps. A dialog that rises in:</p>
+<pre><code class="language-go"><span class="nx">shown</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Appear</span><span class="p">(</span><span class="s">&#34;welcome&#34;</span><span class="p">,</span> <span class="mi">250</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span><span class="p">)</span>
+<span class="nx">look</span><span class="p">.</span><span class="nx">Fade</span><span class="p">,</span> <span class="nx">look</span><span class="p">.</span><span class="nx">ShiftY</span> <span class="p">=</span> <span class="mi">1</span><span class="o">-</span><span class="nx">shown</span><span class="p">,</span> <span class="mi">24</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="nx">shown</span><span class="p">)</span>
+</code></pre>
 
 <h4 id="checkpoint">Checkpoint</h4>
 

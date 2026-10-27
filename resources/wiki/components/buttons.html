@@ -63,6 +63,26 @@ that should not shout.</p>
 
 <p><img src="./images/components/buttons-toolbar.png" alt="A toolbar with undo, redo, File, Edit and View" /></p>
 
+<p>Every button answers the pointer with its border as well as its fill: a shade deeper towards
+ink when hovered, deeper still while pressed, so it reacts in its own colour family.</p>
+
+<h2 id="buttons-that-destroy">Buttons that destroy</h2>
+
+<p>Deleting, emptying, throwing away: these should never look like an ordinary action. <code>DangerButton</code>
+and <code>DangerIconButton</code> write in the theme&rsquo;s <code>Danger</code> red on a soft red fill (<code>DangerTint</code>, or a
+light wash of <code>Danger</code> when the theme leaves it empty). <code>DangerFlatIconButton</code> is the quiet one
+for a delete beside each row: red, with the fill only under the pointer. In a menu,
+<code>DangerMenuItem</code> writes its choice in red.</p>
+<pre><code class="language-go"><span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">DangerIconButton</span><span class="p">(</span><span class="s">&#34;trash-2&#34;</span><span class="p">,</span> <span class="s">&#34;Delete sale&#34;</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">confirming</span> <span class="p">=</span> <span class="kc">true</span>
+<span class="p">}</span>
+<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">row</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">rows</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">DangerFlatIconButton</span><span class="p">(</span><span class="s">&#34;trash-2&#34;</span><span class="p">,</span> <span class="s">&#34;##Remove &#34;</span><span class="o">+</span><span class="nx">row</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nf">remove</span><span class="p">(</span><span class="nx">row</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
 <h2 id="selectable"><code>Selectable</code></h2>
 
 <p>An item that shows whether it is chosen, and returns <code>true</code> when clicked. In a <strong>row</strong> it fits its
