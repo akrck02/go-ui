@@ -32,15 +32,15 @@ type scrollMemory struct {
 
 // scrollBarWidth is the thumb's width, and scrollBarReach how wide an area around it takes the
 // pointer, so a thin bar is still easy to grab.
-// endTolerance is how close to the end, in pixels, still counts as at the end: a wheel's last
-// step can leave a fraction of a pixel.
-const endTolerance = 1
-
 const (
 	scrollBarWidth = 4
 	scrollBarReach = 12
 	minimumThumb   = 24
 )
+
+// endTolerance is how close to the end, in pixels, still counts as at the end: a wheel's last
+// step can leave a fraction of a pixel.
+const endTolerance = 1
 
 // A glide slows by glideFriction of its speed every second and stops under glideStop pixels a
 // second. A pull past the top moves half as far as the finger (pullResistance), as a list resists.
