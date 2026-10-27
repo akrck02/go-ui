@@ -74,6 +74,19 @@ context.ScrollArea("log", ui.Layout{Direction: ui.Vertical, Width: ui.Grow(), He
 `ScrollOffset(name)` says how far it is scrolled (a bar that shrinks over it); `ScrollPull(name)`
 measures a pull past its top (a list that refreshes).
 
+**From the end.** A chat or a log reads from the bottom: `ScrollAreaFromEnd` opens at the end of
+its content and keeps the end in view as new lines arrive. Scroll up to read older lines and it
+stays put, so nothing moves under the reader's eyes; scroll back to the end and it follows again.
+With `AlignY: ui.End`, a few lines sit at the bottom of the box, as in a new chat.
+
+```go
+context.ScrollAreaFromEnd("log", ui.Layout{Width: ui.Grow(), Height: ui.Grow(), Gap: 4, AlignY: ui.End}, func() {
+	for _, line := range lighthouseLog {
+		context.Label(line)
+	}
+})
+```
+
 ## `Fold`
 
 A box that opens to its content's height and closes to nothing, with motion: the answer under a

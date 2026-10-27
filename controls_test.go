@@ -377,3 +377,38 @@ func TestANumberFieldLeavesTheProgramsValueAlone(t *testing.T) {
 		t.Fatalf("snapping 1.2 to tenths from -5000 gives %v", got)
 	}
 }
+
+func TestAScrollAreaFromTheEndFollowsNewLinesUntilScrolledAway(t *testing.T) {
+	h := newHarness(t)
+	lines := 10
+	build := func(ui *Context) {
+		ui.ScrollAreaFromEnd("chat", Layout{Width: Fixed(200), Height: Fixed(100)}, func() {
+			for index := range lines {
+				ui.frameWithID(idOf("line"+string(rune('0'+index))), Layout{Width: Grow(), Height: Fixed(30)}, Look{}, nil)
+			}
+		})
+	}
+	h.frame(build)
+	h.frame(build)
+	if last := h.rect(idOf("line9")); last.Bottom() != 100 {
+		t.Fatalf("it opens at the end: %+v", last)
+	}
+	lines = 11
+	h.frame(build)
+	h.frame(build)
+	if last := h.rect(idOf("line:")); last.Bottom() != 100 {
+		t.Fatalf("a new line at the end comes into view: %+v", last)
+	}
+	h.moveTo(50, 50)
+	h.frame(build)
+	h.state.Feed().AddScroll(1) // one notch up: away from the end
+	h.frame(build)
+	h.frame(build)
+	before := h.rect(idOf("line0"))
+	lines = 12
+	h.frame(build)
+	h.frame(build)
+	if after := h.rect(idOf("line0")); after.Y != before.Y {
+		t.Fatalf("scrolled away, a new line moves nothing: %+v, then %+v", before, after)
+	}
+}

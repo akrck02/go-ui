@@ -18,6 +18,11 @@ type scrollMemory struct {
 	thumbID ID
 	thumbOn bool // the pointer is on the thumb or dragging it: drawn stronger
 
+	// followsEnd keeps the end in view as the content grows, while the person has not scrolled
+	// away from it (ScrollAreaFromEnd); atEnd says whether the end was showing.
+	followsEnd bool
+	atEnd      bool
+
 	glide       float32   // pixels a second the content moves on after a finger let it go
 	lastTime    time.Time // the last step's time, for the glide
 	pull        float32   // how far a finger pulls the content down past its top
@@ -27,6 +32,10 @@ type scrollMemory struct {
 
 // scrollBarWidth is the thumb's width, and scrollBarReach how wide an area around it takes the
 // pointer, so a thin bar is still easy to grab.
+// endTolerance is how close to the end, in pixels, still counts as at the end: a wheel's last
+// step can leave a fraction of a pixel.
+const endTolerance = 1
+
 const (
 	scrollBarWidth = 4
 	scrollBarReach = 12
@@ -48,6 +57,19 @@ const (
 // children are stacked top to bottom.
 func (ui *Context) ScrollArea(name string, layout Layout, content func()) {
 	ui.scrollArea(ui.idFor(name), layout, content)
+}
+
+// ScrollAreaFromEnd is a ScrollArea that opens at the end of its content and stays there as the
+// content grows, the way a chat or a log does: new lines come in at the bottom and push the old
+// ones up. Scrolled away from the end, it stays where the person left it until they come back to
+// the end. With AlignY: End in its layout, content shorter than the box sits at its bottom.
+func (ui *Context) ScrollAreaFromEnd(name string, layout Layout, content func()) {
+	id := ui.idFor(name)
+	memory := ui.scrollMemoryOf(id)
+	if !memory.followsEnd {
+		memory.followsEnd, memory.atEnd = true, true // it opens at the end
+	}
+	ui.scrollArea(id, layout, content)
 }
 
 func (ui *Context) scrollArea(id ID, layout Layout, content func()) *scrollMemory {
@@ -164,10 +186,16 @@ func (ui *Context) followThumb(memory *scrollMemory) {
 	}
 }
 
-// keepInRange clamps a scroll area's offset to its content, once the content is measured.
+// keepInRange clamps a scroll area's offset to its content, once the content is measured. An
+// area that follows its end, and was at the end, is moved to the new end.
 func (memory *scrollMemory) keepInRange(content, view float32) {
+	end := max(content-view, 0)
+	if memory.followsEnd && memory.atEnd && memory.content != content {
+		memory.offset = end
+	}
 	memory.content, memory.view = content, view
-	memory.offset = clamp(memory.offset, 0, max(content-view, 0))
+	memory.offset = clamp(memory.offset, 0, end)
+	memory.atEnd = memory.offset >= end-endTolerance
 }
 
 // thumbArea is where the thumb is drawn in an area, and whether there is one.
