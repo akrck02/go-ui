@@ -220,10 +220,23 @@ func sendTypedField(context *ui.Context) {
 		ComposingStart: field.ComposingStart, ComposingEnd: field.ComposingEnd}, field.Secret)
 }
 
-// ChooseFiles opens the system's file chooser; Go Renderer cannot open Android's yet, so it tells
-// false and never calls chosen.
-// TODO(akrck02): open Android's chooser once Go Renderer can (llm-center's proposal 13, R4).
-func ChooseFiles(largest int64, chosen func([]ChosenFile)) bool { return false }
+// ChooseFiles opens Android's document chooser, through Go Renderer. chosen is called once, on
+// another goroutine, with what the person chose; a file over largest bytes comes unread.
+func ChooseFiles(largest int64, chosen func([]ChosenFile)) bool {
+	return android.ChooseFiles(largest, func(files []android.ChosenFile) {
+		chosen(chosenFrom(files))
+	})
+}
 
-// CanChooseFiles tells whether ChooseFiles can open a chooser here: Go Renderer cannot open Android's yet.
-func CanChooseFiles() bool { return false }
+// chosenFrom turns Go Renderer's chosen files into Go UI's.
+func chosenFrom(files []android.ChosenFile) []ChosenFile {
+	chosen := make([]ChosenFile, len(files))
+	for index, file := range files {
+		chosen[index] = ChosenFile{Name: file.Name, Size: file.Size, Content: file.Content, Read: file.Read}
+	}
+	return chosen
+}
+
+// CanChooseFiles tells whether ChooseFiles can open a chooser here: the app's package carries Go
+// Renderer's chooser.
+func CanChooseFiles() bool { return android.CanChooseFiles() }
