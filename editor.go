@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"unicode"
 )
 
@@ -13,6 +14,7 @@ type editor struct {
 	undo, redo    []editorSnapshot
 	lastEdit      editKind // what the last change was, so typing a word is undone in one go
 	limit         int      // the most characters the text may have; 0 = no limit
+	multiLine     bool     // line breaks are kept (a text area), not turned into spaces
 	// composeStart and composeEnd are the word an on-screen keyboard is still making, underlined;
 	// equal when none is
 	composeStart, composeEnd int
@@ -195,12 +197,19 @@ func (editor *editor) wordAfter(position int) int {
 	return position
 }
 
-// typable is text as a one-line field takes it: line breaks and tabs become spaces, and other
-// control characters are left out.
-func typable(text string) []rune {
+// typable is text as a field takes it: in one line, line breaks and tabs become spaces; in many
+// lines, a line break stays one '\n' (Windows' "\r\n" too) and tabs become spaces. Other control
+// characters are left out.
+func typable(text string, multiLine bool) []rune {
 	kept := make([]rune, 0, len(text))
-	for _, character := range text {
-		if character == '\n' || character == '\r' || character == '\t' {
+	for index, character := range text {
+		switch {
+		case multiLine && character == '\r' && strings.HasPrefix(text[index+1:], "\n"):
+			continue // the '\n' after it is the line break
+		case multiLine && (character == '\n' || character == '\r'):
+			kept = append(kept, '\n')
+			continue
+		case character == '\n' || character == '\r' || character == '\t':
 			character = ' '
 		}
 		if unicode.IsControl(character) {
@@ -213,21 +222,21 @@ func typable(text string) []rune {
 
 // fitted is text as the field takes it whole: typable, and cut at the limit.
 func (editor *editor) fitted(text string) string {
-	kept := typable(text)
+	kept := typable(text, editor.multiLine)
 	if editor.limit > 0 && len(kept) > editor.limit {
 		kept = kept[:editor.limit]
 	}
 	return string(kept)
 }
 
-// insert types text at the caret, over the selection if there is one. Line breaks and other
-// control characters are left out (the field has one line), and the limit cuts what does not fit.
+// insert types text at the caret, over the selection if there is one, as typable takes it, and the
+// limit cuts what does not fit.
 // It returns whether the text changed.
 func (editor *editor) insert(text string, kind editKind) bool {
 	if text == "" {
 		return false
 	}
-	added := typable(text)
+	added := typable(text, editor.multiLine)
 	start, end := editor.selection()
 	if editor.limit > 0 {
 		room := editor.limit - (len(editor.text) - (end - start))

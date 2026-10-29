@@ -217,7 +217,19 @@ func sendTypedField(context *ui.Context) {
 	}
 	android.EditText(uint64(field.Field), android.TextInput{Text: field.Text,
 		SelectionStart: field.SelectionStart, SelectionEnd: field.SelectionEnd,
-		ComposingStart: field.ComposingStart, ComposingEnd: field.ComposingEnd}, field.Secret)
+		ComposingStart: field.ComposingStart, ComposingEnd: field.ComposingEnd}, textKind(field))
+}
+
+// textKind is what the field typed in takes, for the keyboard's keys: a password's, a new-line
+// key for a text area, or done for one line.
+func textKind(field ui.KeyboardText) android.TextKind {
+	switch {
+	case field.Secret:
+		return android.Password
+	case field.MultiLine:
+		return android.LinesOfText
+	}
+	return android.LineOfText
 }
 
 // ChooseFiles opens Android's document chooser, through Go Renderer. chosen is called once, on

@@ -12,8 +12,11 @@ import (
 // TextFieldOptions shape a text field.
 type TextFieldOptions struct {
 	Placeholder string // shown, quiet, while the field is empty
-	MaxLength   int    // the most characters it takes; 0 = no limit
-	Width       Sizing // the zero value grows across the row or column
+	// Label is what a screen reader calls the field; the placeholder when empty. A placeholder
+	// that is an example ("Add a dark mode") needs one.
+	Label     string
+	MaxLength int    // the most characters it takes; 0 = no limit
+	Width     Sizing // the zero value grows across the row or column
 	// Weight is the face the text is written in: draw2d.Mono for a code or a key.
 	Weight draw2d.Weight
 	// Plain draws no box of the field's own, neither fill nor border nor focus ring: for a field
@@ -28,6 +31,8 @@ type TextFieldOptions struct {
 	// FitText makes the field as wide as its text, or its placeholder while empty, and grows it
 	// as it is typed in: an amount with its unit written after it. Width is not used then.
 	FitText bool
+
+	multiLine bool // a text area's field (textarea.go)
 }
 
 // FieldFocused tells whether the text field of a name, in the same scope, has the keyboard: a
@@ -78,6 +83,20 @@ type fieldMemory struct {
 	weight        draw2d.Weight // the face of its text, from its options
 	size          float32       // the size of its text, from its options; 0 is the theme's
 	handles       fieldHandles  // a touch screen's handles and bar (handles.go)
+
+	// a text area's (textarea.go): its lines as shown, how far they are scrolled up, and the caret
+	// the scroll last followed, so the wheel can move away from it
+	multiLine                     bool
+	lines                         []textLine
+	lineTexts                     []string
+	wrapped                       wrapKey
+	wrapValid                     bool
+	lineScroll                    float32
+	followedCaret, followedLength int
+	followedRoom                  float32 // and the area's height then: a shrinking area follows it again
+	selectionBands, composeBands  []draw2d.Rectangle
+	bandsFor                      bandsKey // what the bands were worked out for
+	bandsValid                    bool
 }
 
 // fieldPaint is what painting a field needs, worked out while the field is built; offsets are
@@ -91,6 +110,12 @@ type fieldPaint struct {
 	composeStart, composeEnd     float32 // the word an on-screen keyboard is composing, underlined
 	weight                       draw2d.Weight
 	size                         float32 // the text's size; 0 is the theme's
+
+	// a text area's, from the top left of its text (textarea.go)
+	multiLine                      bool
+	lines                          []string
+	lineHeight, lineScroll, caretY float32
+	selections, composing          []draw2d.Rectangle
 }
 
 // composingLine is the thickness of the line under a word being composed.
@@ -131,7 +156,7 @@ func (ui *Context) EntryField(name string, text *string, options TextFieldOption
 func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fieldEvent {
 	memory := remember(ui, id, func() *fieldMemory { return &fieldMemory{} })
 	memory.editor.limit, memory.weight, memory.secret = options.MaxLength, options.Weight, options.Secret
-	memory.size = options.Size
+	memory.size, memory.multiLine, memory.editor.multiLine = options.Size, options.multiLine, options.multiLine
 	if typed, asked := ui.readerText(id); asked {
 		*text = memory.editor.fitted(typed) // while it is being typed in too: the editor follows below
 	}
@@ -145,7 +170,12 @@ func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fiel
 	switch {
 	case focused && !memory.hadFocus:
 		memory.editor.load(*text)
-		memory.original, memory.scroll = *text, 0
+		memory.original, memory.scroll, memory.followedCaret = *text, 0, -1
+		if memory.multiLine && result.pressed && ui.press.finger {
+			// a finger places the caret when it lifts: the lines stay where they are until then
+			memory.followedCaret, memory.followedLength = memory.editor.caret, len(memory.editor.text)
+			memory.followedRoom = ui.previous[id].Height - 2*fieldPadding
+		}
 		if ui.focusByKeyboard {
 			memory.editor.selectAll()
 			ui.focusByKeyboard = false
@@ -188,6 +218,9 @@ func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fiel
 	if !focused {
 		memory.handles = fieldHandles{}
 	}
+	if memory.multiLine {
+		ui.followAreaScrolling(memory, result)
+	}
 	memory.hadFocus = focused
 	ui.addField(id, memory, *text, options, result, focused)
 	return event
@@ -208,11 +241,15 @@ func (ui *Context) followFieldMouse(id ID, memory *fieldMemory, result interacti
 		memory.blinkStart = ui.now
 		return fieldEditing
 	}
+	if memory.multiLine && ui.press.finger {
+		ui.followAreaFinger(id, memory, result)
+		return fieldEditing
+	}
 	if !result.pressed && !(result.held && memory.dragging) {
 		memory.dragging = false
 		return fieldEditing
 	}
-	position := ui.fieldPositionAt(id, memory, float32(state.CursorX))
+	position := ui.positionUnder(id, memory, float32(state.CursorX), float32(state.CursorY))
 	switch {
 	case result.pressed:
 		memory.dragging = false
@@ -237,15 +274,22 @@ func (ui *Context) followFieldMouse(id ID, memory *fieldMemory, result interacti
 	return fieldEditing
 }
 
-// fieldPositionAt is the caret position nearest to an x on the screen, from where the field was in
-// the last frame.
-func (ui *Context) fieldPositionAt(id ID, memory *fieldMemory, x float32) int {
+// positionUnder is the caret position nearest to a point on the screen, from where the field was
+// in the last frame: in a field of one line only its x counts.
+func (ui *Context) positionUnder(id ID, memory *fieldMemory, x, y float32) int {
+	if memory.multiLine {
+		return ui.areaPositionUnder(id, memory, x, y)
+	}
 	area, shown := ui.previous[id]
 	if !shown {
 		return memory.editor.caret
 	}
-	offset := x - (area.X + fieldPadding) + memory.scroll
-	runes := memory.editor.text
+	return ui.nearestPosition(memory, memory.editor.text, x-(area.X+fieldPadding)+memory.scroll)
+}
+
+// nearestPosition is the position in some characters of a field whose caret is nearest to an
+// offset from their start.
+func (ui *Context) nearestPosition(memory *fieldMemory, runes []rune, offset float32) int {
 	low, high := 0, len(runes)
 	for low < high { // the first position whose caret is right of the pointer
 		middle := (low + high) / 2
@@ -312,11 +356,22 @@ func (ui *Context) followFieldKeys(id ID, memory *fieldMemory) fieldEvent {
 	shift, shortcut, word := state.Down(input.KeyShift), state.Down(shortcutKey), state.Down(wordKey)
 	caretBefore, textBefore := editor.caret, len(editor.text)
 	lineKey := shortcut && shortcutKey == input.KeySuper // Cmd+arrow goes to the line's ends on a Mac
+	// the letters typed come first: a fast typist's last ones arrive with the Tab or Enter after them
+	typed := state.TypedText()
+	if memory.multiLine {
+		typed = state.TypedTextWithLineBreaks() // each Enter where it came among the characters
+	}
+	if !shortcut || state.Down(input.KeyAlt) && shortcutKey == input.KeyControl { // AltGr is Ctrl+Alt
+		editor.insert(typed, typingEdit)
+	}
 	switch {
+	case state.Pressed(input.KeyEscape) && memory.multiLine:
+		ui.focus = 0
+		return fieldLeft // a page of writing is never thrown away by one key
 	case state.Pressed(input.KeyEscape):
 		ui.focus = 0
 		return fieldCancelled
-	case state.Pressed(input.KeyEnter):
+	case state.Pressed(input.KeyEnter) && !memory.multiLine:
 		ui.focus = 0
 		return fieldSubmitted
 	case state.Pressed(input.KeyTab):
@@ -324,10 +379,9 @@ func (ui *Context) followFieldKeys(id ID, memory *fieldMemory) fieldEvent {
 		ui.focus = 0
 		return fieldLeft
 	}
-	if !shortcut || state.Down(input.KeyAlt) && shortcutKey == input.KeyControl { // AltGr is Ctrl+Alt
-		editor.insert(state.TypedText(), typingEdit)
-	}
 	switch {
+	case memory.multiLine && ui.moveByLines(memory, shift, shortcut, lineKey):
+		// Up, Down, Home and End went by the lines shown
 	case state.Typed(input.KeyLeft) && lineKey, state.Typed(input.KeyHome), state.Typed(input.KeyUp):
 		editor.moveTo(0, shift)
 	case state.Typed(input.KeyRight) && lineKey, state.Typed(input.KeyEnd), state.Typed(input.KeyDown):
@@ -341,9 +395,9 @@ func (ui *Context) followFieldKeys(id ID, memory *fieldMemory) fieldEvent {
 	case state.Typed(input.KeyRight):
 		editor.moveBy(1, shift)
 	case state.Typed(input.KeyBackspace):
-		editor.deleteTo(ui.deletionEnd(editor, -1, word, lineKey))
+		editor.deleteTo(ui.deletionEnd(memory, -1, word, lineKey))
 	case state.Typed(input.KeyDelete):
-		editor.deleteTo(ui.deletionEnd(editor, 1, word, lineKey))
+		editor.deleteTo(ui.deletionEnd(memory, 1, word, lineKey))
 	case shortcut && state.Typed(input.KeyA):
 		editor.selectAll()
 	case shortcut && state.Typed(input.KeyC) && editor.hasSelection() && !memory.secret:
@@ -366,12 +420,19 @@ func (ui *Context) followFieldKeys(id ID, memory *fieldMemory) fieldEvent {
 
 // deletionEnd is where Backspace (direction -1) or Delete (+1) deletes to: a character, a word
 // with the word key, the line's end with Cmd on a Mac.
-func (ui *Context) deletionEnd(editor *editor, direction int, word, line bool) int {
+func (ui *Context) deletionEnd(memory *fieldMemory, direction int, word, line bool) int {
+	editor := &memory.editor
+	lineStart, lineEnd := 0, len(editor.text)
+	if memory.multiLine {
+		ui.rewrapArea(memory)
+		index := memory.lineOf(editor.caret)
+		lineStart, lineEnd = memory.lines[index].start, memory.caretEnd(index)
+	}
 	switch {
 	case line && direction < 0:
-		return 0
+		return lineStart
 	case line:
-		return len(editor.text)
+		return lineEnd
 	case word && direction < 0:
 		return editor.wordBefore(editor.caret)
 	case word:
@@ -386,8 +447,13 @@ func (ui *Context) deletionEnd(editor *editor, direction int, word, line bool) i
 func (ui *Context) addField(id ID, memory *fieldMemory, text string, options TextFieldOptions, result interaction, focused bool) {
 	theme := ui.Theme
 	paint := &memory.paint
-	*paint = fieldPaint{text: memory.shown([]rune(text)), placeholder: options.Placeholder, focused: focused}
-	if focused {
+	*paint = fieldPaint{placeholder: options.Placeholder, focused: focused}
+	if !memory.multiLine { // a text area paints its lines; the whole text again would cost every frame
+		paint.text = memory.shown([]rune(text))
+	}
+	if memory.multiLine {
+		ui.measureArea(id, memory, text, focused)
+	} else if focused {
 		measures := ui.measureField(memory, text)
 		paint.caretX, paint.selectionStart, paint.selectionEnd = measures.caretX, measures.selectionStart, measures.selectionEnd
 		paint.composeStart, paint.composeEnd = measures.composeStart, measures.composeEnd
@@ -418,7 +484,10 @@ func (ui *Context) addField(id ID, memory *fieldMemory, text string, options Tex
 		ui.cursor = input.CursorText
 	}
 	height := options.Height
-	if height == (Sizing{}) {
+	switch {
+	case height == (Sizing{}) && memory.multiLine:
+		height = Fixed(textAreaLines*ui.areaLineHeight(memory) + 2*fieldPadding)
+	case height == (Sizing{}):
 		height = Fixed(theme.ControlHeight)
 	}
 	narrowest := float32(2*fieldPadding + 20)
@@ -428,7 +497,10 @@ func (ui *Context) addField(id ID, memory *fieldMemory, text string, options Tex
 	layout := Layout{Width: width.Between(max(width.Min, narrowest), width.Max), Height: height}
 	index := ui.frameWithID(id, layout, look, nil)
 	ui.elements[index].field = paint
-	read := Description{Role: FieldRole, Label: options.Placeholder, Secret: options.Secret}
+	read := Description{Role: FieldRole, Label: options.Label, Secret: options.Secret}
+	if read.Label == "" {
+		read.Label = options.Placeholder
+	}
 	if !options.Secret {
 		read.Value = text
 	}
@@ -526,6 +598,10 @@ func (ui *Context) paintField(element *element) {
 	rect := element.rect
 	if paint.focused && !paint.plain {
 		ui.paintFieldFocus(rect, element.look.Radius)
+	}
+	if paint.multiLine {
+		ui.paintArea(element)
+		return
 	}
 	clip := draw2d.Rectangle{X: rect.X + fieldPadding - 1, Y: rect.Y, Width: rect.Width - 2*fieldPadding + 2, Height: rect.Height}
 	ui.drawing.PushClip(clip)

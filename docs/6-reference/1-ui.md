@@ -242,6 +242,7 @@ type Context struct {
 | `func (ui *Context) Tabs(name string, selected *int, labels ...string) bool` | Tabs adds a row of segments, one per label, with the selected one raised; clicking a segment selects it. |
 | `func (ui *Context) TakeKeyboard()` | TakeKeyboard gives the interface the keyboard, as a game does when it opens its own menu: Tab then moves between the controls until Escape or ReleaseKeyboard gives the keys back. |
 | `func (ui *Context) Text(text string, style TextStyle)` | Text adds a line of text in a style. |
+| `func (ui *Context) TextArea(name string, text *string, options TextAreaOptions) bool` | TextArea adds a field of many lines to type text in, with the keys of TextField, Enter starting a new line, and Up and Down moving between lines. |
 | `func (ui *Context) TextField(name string, text *string) bool` | TextField adds a one-line field to type text in. |
 | `func (ui *Context) TextFieldWith(name string, text *string, options TextFieldOptions) bool` | TextFieldWith is TextField with a placeholder, a length limit or a width. |
 | `func (ui *Context) TextScale() float32` | TextScale is the text size SetTextScale gave, 1 by default: a control of a program's own whose height holds text grows by it. |
@@ -422,6 +423,7 @@ type KeyboardText struct {
 	SelectionStart, SelectionEnd int
 	ComposingStart, ComposingEnd int  // the word being composed, underlined; equal when none
 	Secret                       bool // a password: the keyboard suggests nothing
+	MultiLine                    bool // a text area: the keyboard offers a new-line key, not done
 }
 ```
 
@@ -698,6 +700,22 @@ type Table struct {
 | `func (table *Table) Row(id string, selected bool, cells ...string) bool` | Row adds a row with a text per column, named by id (unique in the table: the item's key), and returns true on the step it is clicked. |
 | `func (table *Table) RowWith(id string, selected bool, look RowLook, cells ...string) bool` | RowWith adds a row as Row does, its first cell starting as look says. |
 
+### TextAreaOptions
+
+TextAreaOptions shape a text area.
+
+```go
+type TextAreaOptions struct {
+	Placeholder string // shown, quiet, while the area is empty
+	Label       string // what a screen reader calls the area; the placeholder when empty
+	MaxLength   int    // the most characters it takes, line breaks included; 0 = no limit
+	Width       Sizing // the zero value grows across the row or column
+	// Height is the area's; the zero value is tall enough for four lines. Grow() fills
+	// what the column leaves, for a page that is all writing.
+	Height Sizing
+}
+```
+
 ### TextFieldOptions
 
 TextFieldOptions shape a text field.
@@ -705,6 +723,9 @@ TextFieldOptions shape a text field.
 ```go
 type TextFieldOptions struct {
 	Placeholder string // shown, quiet, while the field is empty
+	// Label is what a screen reader calls the field; the placeholder when empty. A placeholder
+	// that is an example ("Add a dark mode") needs one.
+	Label     string
 	MaxLength   int    // the most characters it takes; 0 = no limit
 	Width       Sizing // the zero value grows across the row or column
 	// Weight is the face the text is written in: draw2d.Mono for a code or a key.

@@ -11,6 +11,7 @@ type KeyboardText struct {
 	SelectionStart, SelectionEnd int
 	ComposingStart, ComposingEnd int  // the word being composed, underlined; equal when none
 	Secret                       bool // a password: the keyboard suggests nothing
+	MultiLine                    bool // a text area: the keyboard offers a new-line key, not done
 }
 
 // keyboardState is what goes between the fields and an on-screen keyboard.
@@ -29,7 +30,7 @@ func (ui *Context) TypedField() (KeyboardText, bool) {
 }
 
 // EditTypedField puts what an on-screen keyboard made of the field's text in it, in the next frame:
-// the field takes the whole text as typing (one line, cut at its MaxLength), the selection and the
+// the field takes the whole text as typing (one line, or many in a text area, cut at its MaxLength), the selection and the
 // word being composed. An edit of a field no longer typed in is dropped.
 func (ui *Context) EditTypedField(edit KeyboardText) {
 	ui.keyboard.asked, ui.keyboard.askedSet = edit, true
@@ -58,6 +59,6 @@ func (ui *Context) noteTyped(id ID, memory *fieldMemory) {
 	editor := &memory.editor
 	ui.keyboard.typed = KeyboardText{Field: id, Text: editor.String(), SelectionStart: editor.anchor,
 		SelectionEnd: editor.caret, ComposingStart: editor.composeStart, ComposingEnd: editor.composeEnd,
-		Secret: memory.secret}
+		Secret: memory.secret, MultiLine: memory.multiLine}
 	ui.keyboard.typing = true
 }
