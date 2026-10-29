@@ -142,6 +142,7 @@ The window does all of this on Android; see [the guide](../4-guides/9-screen-rea
 | `window.SystemPrefersDark()`, `SystemPalettes()` | The system's theme and, on Android 12+, the wallpaper's colours |
 | `window.Notify`, `AskForNotifications`, `NotificationsAllowed` | Notifications on a phone |
 | `window.OpenLink(link)`, `Share(title, text)`, `FeelLongPress()` | The system's browser, its share sheet, a buzz |
+| `window.ChooseFiles(largest, chosen)` | The system's file chooser, for one file or several: in the browser for now; false where there is none |
 | `window.OpenVideo(film)` | A film the phone or the browser decodes |
 | `window.Graphics()`, `LastCrash()` | What draws; the last crash's report, on a phone |
 

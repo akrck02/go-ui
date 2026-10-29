@@ -219,3 +219,11 @@ func sendTypedField(context *ui.Context) {
 		SelectionStart: field.SelectionStart, SelectionEnd: field.SelectionEnd,
 		ComposingStart: field.ComposingStart, ComposingEnd: field.ComposingEnd}, field.Secret)
 }
+
+// ChooseFiles opens the system's file chooser; Go Renderer cannot open Android's yet, so it tells
+// false and never calls chosen.
+// TODO(akrck02): open Android's chooser once Go Renderer can (llm-center's proposal 13, R4).
+func ChooseFiles(largest int64, chosen func([]ChosenFile)) bool { return false }
+
+// CanChooseFiles tells whether ChooseFiles can open a chooser here: Go Renderer cannot open Android's yet.
+func CanChooseFiles() bool { return false }

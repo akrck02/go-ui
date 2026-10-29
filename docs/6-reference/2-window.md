@@ -34,6 +34,9 @@ all the time.
 | `func LastCrash() string` | LastCrash returns the report of the last run's crash; on the desktop the terminal shows it, and this is always "". |
 | `func NotificationsAllowed() bool` | NotificationsAllowed tells whether the program may show notifications: not yet on the desktop. |
 | `func Notify(id int, title, text string) bool` | Notify shows a notification; on the desktop it does not yet, and returns false. |
+| `func ChooseFiles(largest int64, chosen func([]ChosenFile)) bool` | ChooseFiles opens the system's file chooser for one file or several, and calls chosen later, on another goroutine, with each file's name, size and bytes (none if the person closed it). Files over `largest` bytes, and those the system could not read, come unread. In the browser, call it right after a tap. Where there is no chooser yet (the desktop, Android, the console) it tells false. |
+| `func CanChooseFiles() bool` | CanChooseFiles tells whether ChooseFiles can open a chooser here, to show a button for it only where it works. |
+| `type ChosenFile struct{ Name string; Size int64; Content []byte; Read bool }` | ChosenFile is a file the person chose: its name, without a folder, its size, and what it holds when Read. |
 | `func OpenLink(link string) bool` | OpenLink opens a link in the application that shows it (the browser for a web page), through the computer's own command for that. |
 | `func Preference(name string) (string, bool)` | Preference is the value kept under a name, and whether there is one. |
 | `func Quit()` | Quit ends the program's window once the frame being made ends, as closing it would: Run returns. |
