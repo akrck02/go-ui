@@ -252,3 +252,8 @@ func chosenFrom(files []android.ChosenFile) []ChosenFile {
 // CanChooseFiles tells whether ChooseFiles can open a chooser here: the app's package carries Go
 // Renderer's chooser.
 func CanChooseFiles() bool { return android.CanChooseFiles() }
+
+// ReadClipboardPicture reads the clipboard's picture on a desktop; Android's is not read yet, so
+// it tells false and never calls read.
+// TODO(akrck02): read it through Android's ClipboardManager.
+func ReadClipboardPicture(read func(png []byte)) bool { return false }

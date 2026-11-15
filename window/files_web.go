@@ -73,3 +73,8 @@ func bytesOf(file js.Value) []byte {
 	file.Call("arrayBuffer").Call("then", done, failed)
 	return <-read
 }
+
+// ReadClipboardPicture reads the clipboard's picture on a desktop; a page may not read it until
+// the person pastes, so it tells false and never calls read: the page's paste event brings the
+// pasted files instead.
+func ReadClipboardPicture(read func(png []byte)) bool { return false }

@@ -269,3 +269,7 @@ func ChooseFiles(largest int64, chosen func([]ChosenFile)) bool { return false }
 
 // CanChooseFiles tells whether ChooseFiles can open a chooser here: the console has none.
 func CanChooseFiles() bool { return false }
+
+// ReadClipboardPicture reads the clipboard's picture on a desktop; the console has no clipboard,
+// so it tells false and never calls read.
+func ReadClipboardPicture(read func(png []byte)) bool { return false }
