@@ -32,7 +32,9 @@ type TextFieldOptions struct {
 	// as it is typed in: an amount with its unit written after it. Width is not used then.
 	FitText bool
 
-	multiLine bool // a text area's field (textarea.go)
+	multiLine  bool // a text area's field (textarea.go)
+	enterSends bool // an entry area's (textarea.go): Enter sends, Shift+Enter breaks the line
+	maxLines   int  // a text area's that grows with its lines, up to these (textarea.go)
 }
 
 // FieldFocused tells whether the text field of a name, in the same scope, has the keyboard: a
@@ -43,9 +45,11 @@ func (ui *Context) FieldFocused(name string) bool {
 }
 
 // FocusField gives the keyboard to the text field of a name, in the same scope, from the next
-// time it is built: a search that opens ready to type in. Call it before the field.
+// time it is built: a search that opens ready to type in. Call it before the field, or in the
+// frame before the one that first builds it (a button that opens a page to write in): the focus
+// waits one frame end for its field, and goes if the field is not built in the next.
 func (ui *Context) FocusField(name string) {
-	ui.focus, ui.focusByKeyboard = hashString(ui.scopeSeed(), name), false
+	ui.focus, ui.focusByKeyboard, ui.focusSeen = hashString(ui.scopeSeed(), name), false, true
 }
 
 // shown is what a field shows of some of its text: the characters, or a dot for each in a secret
@@ -86,7 +90,7 @@ type fieldMemory struct {
 
 	// a text area's (textarea.go): its lines as shown, how far they are scrolled up, and the caret
 	// the scroll last followed, so the wheel can move away from it
-	multiLine                     bool
+	multiLine, enterSends         bool
 	lines                         []textLine
 	lineTexts                     []string
 	wrapped                       wrapKey
@@ -157,6 +161,7 @@ func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fiel
 	memory := remember(ui, id, func() *fieldMemory { return &fieldMemory{} })
 	memory.editor.limit, memory.weight, memory.secret = options.MaxLength, options.Weight, options.Secret
 	memory.size, memory.multiLine, memory.editor.multiLine = options.Size, options.multiLine, options.multiLine
+	memory.enterSends = options.enterSends
 	if typed, asked := ui.readerText(id); asked {
 		*text = memory.editor.fitted(typed) // while it is being typed in too: the editor follows below
 	}
@@ -231,7 +236,9 @@ func (ui *Context) editField(id ID, text *string, options TextFieldOptions) fiel
 func (ui *Context) followFieldMouse(id ID, memory *fieldMemory, result interaction) fieldEvent {
 	state := ui.state
 	editor := &memory.editor
-	if state.ButtonPressed(input.MouseLeft) && !result.pressed && !ui.onOwnHandles(id) {
+	// a press elsewhere ends an edit begun before it: not one the same press began, through a
+	// button that gave this field the keyboard (FocusField)
+	if state.ButtonPressed(input.MouseLeft) && !result.pressed && !ui.onOwnHandles(id) && ui.focusAtBegin == id {
 		ui.focus = 0
 		return fieldLeft
 	}
@@ -358,7 +365,8 @@ func (ui *Context) followFieldKeys(id ID, memory *fieldMemory) fieldEvent {
 	lineKey := shortcut && shortcutKey == input.KeySuper // Cmd+arrow goes to the line's ends on a Mac
 	// the letters typed come first: a fast typist's last ones arrive with the Tab or Enter after them
 	typed := state.TypedText()
-	if memory.multiLine {
+	sends := memory.enterSends && state.Pressed(input.KeyEnter) && !shift
+	if memory.multiLine && !sends {
 		typed = state.TypedTextWithLineBreaks() // each Enter where it came among the characters
 	}
 	if !shortcut || state.Down(input.KeyAlt) && shortcutKey == input.KeyControl { // AltGr is Ctrl+Alt
@@ -371,7 +379,7 @@ func (ui *Context) followFieldKeys(id ID, memory *fieldMemory) fieldEvent {
 	case state.Pressed(input.KeyEscape):
 		ui.focus = 0
 		return fieldCancelled
-	case state.Pressed(input.KeyEnter) && !memory.multiLine:
+	case state.Pressed(input.KeyEnter) && !memory.multiLine, sends:
 		ui.focus = 0
 		return fieldSubmitted
 	case state.Pressed(input.KeyTab):
@@ -485,6 +493,9 @@ func (ui *Context) addField(id ID, memory *fieldMemory, text string, options Tex
 	}
 	height := options.Height
 	switch {
+	case options.maxLines > 0 && memory.multiLine:
+		shown := min(max(len(memory.lines), 1), options.maxLines)
+		height = Fixed(float32(shown)*ui.areaLineHeight(memory) + 2*fieldPadding)
 	case height == (Sizing{}) && memory.multiLine:
 		height = Fixed(textAreaLines*ui.areaLineHeight(memory) + 2*fieldPadding)
 	case height == (Sizing{}):

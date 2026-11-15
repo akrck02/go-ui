@@ -24,6 +24,12 @@ type TextAreaOptions struct {
 	// Height is the area's; the zero value is tall enough for four lines (textAreaLines). Grow() fills
 	// what the column leaves, for a page that is all writing.
 	Height Sizing
+	// MaxLines makes the area as tall as its lines, one at the least and this many at the most,
+	// after which it scrolls: a chat's box, one line until more are written. Height is not used then.
+	MaxLines int
+	// Plain draws no box of the area's own, as TextFieldOptions.Plain: for an area inside a box the
+	// program draws, a chat's box with its send button.
+	Plain bool
 }
 
 // textAreaLines is how many lines a text area shows when its options give no height.
@@ -37,9 +43,22 @@ const textAreaLineHeight = 1.45
 // a new line, and Up and Down moving between lines. It returns true on the steps the text changes.
 func (ui *Context) TextArea(name string, text *string, options TextAreaOptions) bool {
 	before := *text
-	ui.editField(ui.idFor(name), text, TextFieldOptions{Placeholder: options.Placeholder, Label: options.Label,
-		MaxLength: options.MaxLength, Width: options.Width, Height: options.Height, multiLine: true})
+	ui.editField(ui.idFor(name), text, areaFieldOptions(options, false))
 	return *text != before
+}
+
+// EntryArea is TextArea for writing that is sent with Enter, as a chat's box: Enter sends it and
+// Shift+Enter starts a new line. It returns true on the step Enter is pressed in it; the program
+// takes the text, clears it, and gives the area the keyboard back (FocusField) if more may follow.
+func (ui *Context) EntryArea(name string, text *string, options TextAreaOptions) (submitted bool) {
+	return ui.editField(ui.idFor(name), text, areaFieldOptions(options, true)) == fieldSubmitted
+}
+
+// areaFieldOptions are a text area's options as its field takes them.
+func areaFieldOptions(options TextAreaOptions, enterSends bool) TextFieldOptions {
+	return TextFieldOptions{Placeholder: options.Placeholder, Label: options.Label, MaxLength: options.MaxLength,
+		Width: options.Width, Height: options.Height, Plain: options.Plain, multiLine: true, enterSends: enterSends,
+		maxLines: options.MaxLines}
 }
 
 // textLine is one line of a text area as it is shown: the characters from start up to end. The
@@ -155,9 +174,22 @@ func (memory *fieldMemory) caretEnd(index int) int {
 
 // areaLineHeight is how tall each line of a text area is.
 func (ui *Context) areaLineHeight(memory *fieldMemory) float32 {
-	size := ui.scaledText(ui.fieldTextSize(memory.size))
+	return ui.lineHeightOfArea(memory.size)
+}
+
+// lineHeightOfArea is how tall each line of a text area with this text size is (0 for the
+// theme's).
+func (ui *Context) lineHeightOfArea(textSize float32) float32 {
+	size := ui.scaledText(ui.fieldTextSize(textSize))
 	letters := ui.measure("Hg", TextStyle{Size: size}).Height()
 	return max(ui.Theme.lineBox(size, letters), size*textAreaLineHeight)
+}
+
+// TextAreaHeight is how tall a text area is while it shows this many lines of text of this size
+// (0 for the theme's), its padding included. It lets what sits beside an area line up with its
+// lines: a send button centred on the first line of a box that grows, for example.
+func (ui *Context) TextAreaHeight(lines int, textSize float32) float32 {
+	return float32(lines)*ui.lineHeightOfArea(textSize) + 2*fieldPadding
 }
 
 // areaPoint is where a position of a text area's text is, from the top left of its text: the
