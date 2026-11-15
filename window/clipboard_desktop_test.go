@@ -7,9 +7,6 @@ import (
 	"testing"
 )
 
-// pngStart is how every PNG file begins, enough for a picture in these tests.
-var pngStart = []byte{0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n'}
-
 // Each computer reads its clipboard's picture with the tool it has: a Mac with AppleScript, a
 // Wayland desktop with wl-paste, an X11 one with xclip. Windows has no reader yet, and says so.
 func TestEachDesktopReadsItsClipboardsPictureWithItsOwnTool(test *testing.T) {
@@ -45,8 +42,8 @@ func TestEachDesktopReadsItsClipboardsPictureWithItsOwnTool(test *testing.T) {
 // is those bytes, and anything else is no picture.
 func TestAMacsClipboardPictureIsReadFromAppleScriptsHexadecimal(test *testing.T) {
 	picture, found := pictureFromAppleScript([]byte("«data PNGf89504E470D0A1A0A»\n"))
-	if !found || !bytes.Equal(picture, pngStart) {
-		test.Fatalf("read %x (found: %v), not %x", picture, found, pngStart)
+	if !found || !bytes.Equal(picture, pngSignature) {
+		test.Fatalf("read %x (found: %v), not %x", picture, found, pngSignature)
 	}
 	for _, output := range []string{"", "«data TIFF4D4D002A»\n", "«data PNGfnot hexadecimal»\n"} {
 		if picture, found := pictureFromAppleScript([]byte(output)); found {
@@ -59,7 +56,7 @@ func TestAMacsClipboardPictureIsReadFromAppleScriptsHexadecimal(test *testing.T)
 // gives none, so a paste of words never attaches a file.
 func TestOnlyAPNGTheToolPrintsIsAPicture(test *testing.T) {
 	printsPNG := pictureReader{command: []string{"printf", `\211PNG\r\n\032\n`}}
-	if picture, found := printsPNG.read(); !found || !bytes.Equal(picture, pngStart) {
+	if picture, found := printsPNG.read(); !found || !bytes.Equal(picture, pngSignature) {
 		test.Errorf("a tool printing a PNG gave %x (found: %v)", picture, found)
 	}
 	for _, reader := range []pictureReader{
