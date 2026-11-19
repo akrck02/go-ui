@@ -76,6 +76,21 @@ all the time.</p>
 </tr>
 
 <tr>
+<td><code>func ChooseFiles(largest int64, chosen func([]ChosenFile)) bool</code></td>
+<td>ChooseFiles opens the system&rsquo;s file chooser for one file or several, and calls chosen later, on another goroutine, with each file&rsquo;s name, size and bytes (none if the person closed it). Files over <code>largest</code> bytes, and those the system could not read, come unread. In the browser, call it right after a tap; on Android it opens the system&rsquo;s document chooser, through Go Renderer. Where there is no chooser yet (the desktop, the console) it tells false.</td>
+</tr>
+
+<tr>
+<td><code>func CanChooseFiles() bool</code></td>
+<td>CanChooseFiles tells whether ChooseFiles can open a chooser here, to show a button for it only where it works.</td>
+</tr>
+
+<tr>
+<td><code>type ChosenFile struct{ Name string; Size int64; Content []byte; Read bool }</code></td>
+<td>ChosenFile is a file the person chose: its name, without a folder, its size, and what it holds when Read.</td>
+</tr>
+
+<tr>
 <td><code>func OpenLink(link string) bool</code></td>
 <td>OpenLink opens a link in the application that shows it (the browser for a web page), through the computer&rsquo;s own command for that.</td>
 </tr>
@@ -88,6 +103,11 @@ all the time.</p>
 <tr>
 <td><code>func Quit()</code></td>
 <td>Quit ends the program&rsquo;s window once the frame being made ends, as closing it would: Run returns.</td>
+</tr>
+
+<tr>
+<td><code>func ReadClipboardPicture(read func(png []byte)) bool</code></td>
+<td>ReadClipboardPicture reads the picture on the system&rsquo;s clipboard, a screenshot most often, and calls read with it as PNG, on a goroutine of its own; read is not called when the clipboard holds no picture. A Mac reads it through AppleScript, Linux through wl-paste (Wayland) or xclip (X11); elsewhere it tells false. In a browser the page&rsquo;s paste event brings pictures instead.</td>
 </tr>
 
 <tr>

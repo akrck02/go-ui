@@ -65,6 +65,21 @@ shortcut, a screen just shown), call <code>context.FocusField(&quot;search&quot;
 
 <p><img src="./images/components/fields-validate.png" alt="An empty Name field and A lighthouse needs a name in red" /></p>
 
+<h2 id="many-lines-textarea">Many lines: <code>TextArea</code></h2>
+
+<p>A note, a description, a request of several pages: <code>TextArea</code> is a text field of many lines. It
+keeps the text&rsquo;s line breaks, wraps long lines between words at its width, and scrolls up and
+down (by the wheel, a finger, or the caret, which it keeps in view).</p>
+<pre><code class="language-go"><span class="nx">context</span><span class="p">.</span><span class="nf">TextArea</span><span class="p">(</span><span class="s">&#34;notes&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">notes</span><span class="p">,</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">TextAreaOptions</span><span class="p">{</span><span class="nx">Placeholder</span><span class="p">:</span> <span class="s">&#34;What the keeper saw tonight…&#34;</span><span class="p">,</span> <span class="nx">Height</span><span class="p">:</span> <span class="nx">ui</span><span class="p">.</span><span class="nf">Grow</span><span class="p">()})</span>
+</code></pre>
+
+<p>It edits as <code>TextField</code> does, with what many lines need: <strong>Enter starts a new line</strong> (it does not
+end the edit), Up and Down go to the line above and below, Home and End to the ends of the line,
+and with Cmd or Ctrl to the ends of the text. Pasted line breaks stay, <code>\r\n</code> as one. <strong>Escape
+leaves the field and keeps the text</strong>: a page of writing is never thrown away by one key. Its
+height is four lines unless <code>Height</code> says otherwise; <code>Grow()</code> fills what the column leaves. On a
+phone the keyboard offers a new-line key in place of done.</p>
+
 <h2 id="typing-everywhere">Typing, everywhere</h2>
 
 <table>
@@ -107,7 +122,7 @@ shortcut, a screen just shown), call <code>context.FocusField(&quot;search&quot;
 </tr>
 </tbody>
 </table>
-<p>Accents and «ñ» type as anywhere (characters come after the keyboard layout). Pasted line breaks
+<p>Accents and «ñ» type as anywhere (characters come after the keyboard layout). In a field of one line, pasted line breaks
 become spaces. On a phone the on-screen keyboard comes up, suggests words and underlines the one
 it composes; a finger held on a word selects it, with handles and a bar to cut, copy and paste.</p>
 

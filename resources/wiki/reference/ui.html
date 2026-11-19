@@ -620,6 +620,11 @@ things declared after it.</p>
 </tr>
 
 <tr>
+<td><code>func (ui *Context) TextArea(name string, text *string, options TextAreaOptions) bool</code></td>
+<td>TextArea adds a field of many lines to type text in, with the keys of TextField, Enter starting a new line, and Up and Down moving between lines.</td>
+</tr>
+
+<tr>
 <td><code>func (ui *Context) TextField(name string, text *string) bool</code></td>
 <td>TextField adds a one-line field to type text in.</td>
 </tr>
@@ -820,6 +825,7 @@ things declared after it.</p>
 	<span class="nx">SelectionStart</span><span class="p">,</span> <span class="nx">SelectionEnd</span> <span class="kt">int</span>
 	<span class="nx">ComposingStart</span><span class="p">,</span> <span class="nx">ComposingEnd</span> <span class="kt">int</span>  <span class="c1">// the word being composed, underlined; equal when none</span>
 	<span class="nx">Secret</span>                       <span class="kt">bool</span> <span class="c1">// a password: the keyboard suggests nothing</span>
+	<span class="nx">MultiLine</span>                    <span class="kt">bool</span> <span class="c1">// a text area: the keyboard offers a new-line key, not done</span>
 <span class="p">}</span>
 </code></pre>
 
@@ -1130,11 +1136,28 @@ things declared after it.</p>
 </tbody>
 </table>
 
+<h3 id="textareaoptions">TextAreaOptions</h3>
+
+<p>TextAreaOptions shape a text area.</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">TextAreaOptions</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Placeholder</span> <span class="kt">string</span> <span class="c1">// shown, quiet, while the area is empty</span>
+	<span class="nx">Label</span>       <span class="kt">string</span> <span class="c1">// what a screen reader calls the area; the placeholder when empty</span>
+	<span class="nx">MaxLength</span>   <span class="kt">int</span>    <span class="c1">// the most characters it takes, line breaks included; 0 = no limit</span>
+	<span class="nx">Width</span>       <span class="nx">Sizing</span> <span class="c1">// the zero value grows across the row or column</span>
+	<span class="c1">// Height is the area&#39;s; the zero value is tall enough for four lines. Grow() fills</span>
+	<span class="c1">// what the column leaves, for a page that is all writing.</span>
+	<span class="nx">Height</span> <span class="nx">Sizing</span>
+<span class="p">}</span>
+</code></pre>
+
 <h3 id="textfieldoptions">TextFieldOptions</h3>
 
 <p>TextFieldOptions shape a text field.</p>
 <pre><code class="language-go"><span class="kd">type</span> <span class="nx">TextFieldOptions</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span class="nx">Placeholder</span> <span class="kt">string</span> <span class="c1">// shown, quiet, while the field is empty</span>
+	<span class="c1">// Label is what a screen reader calls the field; the placeholder when empty. A placeholder</span>
+	<span class="c1">// that is an example (&#34;Add a dark mode&#34;) needs one.</span>
+	<span class="nx">Label</span>     <span class="kt">string</span>
 	<span class="nx">MaxLength</span>   <span class="kt">int</span>    <span class="c1">// the most characters it takes; 0 = no limit</span>
 	<span class="nx">Width</span>       <span class="nx">Sizing</span> <span class="c1">// the zero value grows across the row or column</span>
 	<span class="c1">// Weight is the face the text is written in: draw2d.Mono for a code or a key.</span>
