@@ -5,6 +5,7 @@ package window
 import (
 	"hash/maphash"
 	"strconv"
+	"sync"
 	"syscall/js"
 
 	"github.com/akrck02/go-renderer/browser"
@@ -37,13 +38,45 @@ func SystemPrefersDark() bool {
 // Notify shows a notification through the browser (the Notification API), once the person has
 // allowed the page's; the id replaces the one shown with it before. It returns false when it could
 // not.
-func Notify(id int, title, text string) bool {
+func Notify(id int, title, text string) bool { return NotifyAbout(id, title, text, "") }
+
+// opened is the target of the notification clicked last, until OpenedNotification takes it.
+var opened struct {
+	sync.Mutex
+	target  string
+	clicked bool
+}
+
+// NotifyAbout is Notify with a target: clicking the notification brings the page's tab to the
+// front, and OpenedNotification returns the target.
+func NotifyAbout(id int, title, text, target string) bool {
 	if !NotificationsAllowed() {
 		return false
 	}
 	options := map[string]any{"body": text, "tag": "notification-" + strconv.Itoa(id)}
-	js.Global().Get("Notification").New(title, options)
+	notification := js.Global().Get("Notification").New(title, options)
+	var clicked js.Func
+	clicked = js.FuncOf(func(js.Value, []js.Value) any {
+		js.Global().Call("focus")
+		opened.Lock()
+		opened.target, opened.clicked = target, true
+		opened.Unlock()
+		notification.Call("close")
+		clicked.Release()
+		Wake()
+		return nil
+	})
+	notification.Set("onclick", clicked)
 	return true
+}
+
+// OpenedNotification is the target of the notification clicked last, and true, once.
+func OpenedNotification() (string, bool) {
+	opened.Lock()
+	defer opened.Unlock()
+	target, clicked := opened.target, opened.clicked
+	opened.target, opened.clicked = "", false
+	return target, clicked
 }
 
 // NotificationsAllowed tells whether the page may show notifications.

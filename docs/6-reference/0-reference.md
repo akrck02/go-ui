@@ -140,7 +140,7 @@ The window does all of this on Android; see [the guide](../4-guides/9-screen-rea
 | `window.Wake()` | A frame, from another goroutine |
 | `window.KeepPreference`, `Preference`, `ForgetPreference` | Settings kept between runs |
 | `window.SystemPrefersDark()`, `SystemPalettes()` | The system's theme and, on Android 12+, the wallpaper's colours |
-| `window.Notify`, `AskForNotifications`, `NotificationsAllowed` | Notifications on a phone |
+| `window.Notify`, `NotifyAbout`, `OpenedNotification`, `AskForNotifications`, `NotificationsAllowed` | Notifications on a phone or in a browser, and the one that was touched |
 | `window.OpenLink(link)`, `Share(title, text)`, `FeelLongPress()` | The system's browser, its share sheet, a buzz |
 | `window.OpenVideo(film)` | A film the phone or the browser decodes |
 | `window.Graphics()`, `LastCrash()` | What draws; the last crash's report, on a phone |
