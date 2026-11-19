@@ -100,6 +100,10 @@ on the phone&rsquo;s own fields: it suggests words from it, underlines the word 
 suggestion replaces that word (<code>Context.TypedField</code>, <code>Context.EditTypedField</code>). <code>window.Notify</code> shows a notification in
 the phone&rsquo;s shade (in a browser, through the page&rsquo;s notifications), once <code>window.NotificationsAllowed</code>;
 <code>window.AskForNotifications</code> asks the person. On the desktop they are not shown yet.
+<code>window.NotifyAbout(id, title, text, target)</code> gives a notification a target in the program&rsquo;s own
+words (a screen, a thing&rsquo;s id): touching it (clicking it, in a browser) opens the program, and
+<code>window.OpenedNotification()</code>, asked in every frame, returns the target once, so the program can
+show that thing.
 <code>window.OpenLink(link)</code> opens a link in the application that shows it, <code>window.Share(title, text)</code>
 offers a text through the system&rsquo;s sheet, <code>Context.Copy</code> and <code>Context.ClipboardText</code> reach the
 phone&rsquo;s clipboard, and <code>window.Preference</code> / <code>window.KeepPreference</code> keep small values between runs

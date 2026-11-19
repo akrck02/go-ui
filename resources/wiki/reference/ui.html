@@ -266,7 +266,7 @@ things declared after it.</p>
 
 <tr>
 <td><code>func (ui *Context) EditTypedField(edit KeyboardText)</code></td>
-<td>EditTypedField puts what an on-screen keyboard made of the field&rsquo;s text in it, in the next frame: the field takes the whole text as typing (one line, cut at its MaxLength), the selection and the word being composed.</td>
+<td>EditTypedField puts what an on-screen keyboard made of the field&rsquo;s text in it, in the next frame: the field takes the whole text as typing (one line, or many in a text area, cut at its MaxLength), the selection and the word being composed.</td>
 </tr>
 
 <tr>
@@ -277,6 +277,11 @@ things declared after it.</p>
 <tr>
 <td><code>func (ui *Context) End()</code></td>
 <td>End lays the interface out, paints it into the draw list and tells the input state whether the interface has the mouse or the keyboard.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) EntryArea(name string, text *string, options TextAreaOptions) (submitted bool)</code></td>
+<td>EntryArea is TextArea for writing that is sent with Enter, as a chat&rsquo;s box: Enter sends it and Shift+Enter starts a new line.</td>
 </tr>
 
 <tr>
@@ -520,6 +525,11 @@ things declared after it.</p>
 </tr>
 
 <tr>
+<td><code>func (ui *Context) ScrollAreaFromEnd(name string, layout Layout, content func())</code></td>
+<td>ScrollAreaFromEnd is a ScrollArea that opens at the end of its content and stays there as the content grows, the way a chat or a log does: new lines come in at the bottom and push the old ones up.</td>
+</tr>
+
+<tr>
 <td><code>func (ui *Context) ScrollOffset(name string) float32</code></td>
 <td>ScrollOffset tells how far a scroll area&rsquo;s content is scrolled from its top, as of the last frame: a bar over a list shrinks or takes a colour as the list goes up under it.</td>
 </tr>
@@ -575,6 +585,11 @@ things declared after it.</p>
 </tr>
 
 <tr>
+<td><code>func (ui *Context) Shortcut(key input.Key, shift bool) bool</code></td>
+<td>Shortcut tells whether a key was pressed in this step with the system&rsquo;s shortcut key held: Cmd on a Mac, Ctrl elsewhere, and either in a browser, which does not tell which system it runs on.</td>
+</tr>
+
+<tr>
 <td><code>func (ui *Context) Size() (width, height float32)</code></td>
 <td>Size returns the window&rsquo;s size in this frame, in layout pixels: a program chooses a layout by it (a list alone on a phone, a list and its details side by side on a tablet).</td>
 </tr>
@@ -622,6 +637,11 @@ things declared after it.</p>
 <tr>
 <td><code>func (ui *Context) TextArea(name string, text *string, options TextAreaOptions) bool</code></td>
 <td>TextArea adds a field of many lines to type text in, with the keys of TextField, Enter starting a new line, and Up and Down moving between lines.</td>
+</tr>
+
+<tr>
+<td><code>func (ui *Context) TextAreaHeight(lines int, textSize float32) float32</code></td>
+<td>TextAreaHeight is how tall a text area is while it shows this many lines of text of this size (0 for the theme&rsquo;s), its padding included.</td>
 </tr>
 
 <tr>
@@ -1144,9 +1164,15 @@ things declared after it.</p>
 	<span class="nx">Label</span>       <span class="kt">string</span> <span class="c1">// what a screen reader calls the area; the placeholder when empty</span>
 	<span class="nx">MaxLength</span>   <span class="kt">int</span>    <span class="c1">// the most characters it takes, line breaks included; 0 = no limit</span>
 	<span class="nx">Width</span>       <span class="nx">Sizing</span> <span class="c1">// the zero value grows across the row or column</span>
-	<span class="c1">// Height is the area&#39;s; the zero value is tall enough for four lines. Grow() fills</span>
+	<span class="c1">// Height is the area&#39;s; the zero value is tall enough for four lines (textAreaLines). Grow() fills</span>
 	<span class="c1">// what the column leaves, for a page that is all writing.</span>
 	<span class="nx">Height</span> <span class="nx">Sizing</span>
+	<span class="c1">// MaxLines makes the area as tall as its lines, one at the least and this many at the most,</span>
+	<span class="c1">// after which it scrolls: a chat&#39;s box, one line until more are written. Height is not used then.</span>
+	<span class="nx">MaxLines</span> <span class="kt">int</span>
+	<span class="c1">// Plain draws no box of the area&#39;s own, as TextFieldOptions.Plain: for an area inside a box the</span>
+	<span class="c1">// program draws, a chat&#39;s box with its send button.</span>
+	<span class="nx">Plain</span> <span class="kt">bool</span>
 <span class="p">}</span>
 </code></pre>
 
@@ -1158,8 +1184,8 @@ things declared after it.</p>
 	<span class="c1">// Label is what a screen reader calls the field; the placeholder when empty. A placeholder</span>
 	<span class="c1">// that is an example (&#34;Add a dark mode&#34;) needs one.</span>
 	<span class="nx">Label</span>     <span class="kt">string</span>
-	<span class="nx">MaxLength</span>   <span class="kt">int</span>    <span class="c1">// the most characters it takes; 0 = no limit</span>
-	<span class="nx">Width</span>       <span class="nx">Sizing</span> <span class="c1">// the zero value grows across the row or column</span>
+	<span class="nx">MaxLength</span> <span class="kt">int</span>    <span class="c1">// the most characters it takes; 0 = no limit</span>
+	<span class="nx">Width</span>     <span class="nx">Sizing</span> <span class="c1">// the zero value grows across the row or column</span>
 	<span class="c1">// Weight is the face the text is written in: draw2d.Mono for a code or a key.</span>
 	<span class="nx">Weight</span> <span class="nx">draw2d</span><span class="p">.</span><span class="nx">Weight</span>
 	<span class="c1">// Plain draws no box of the field&#39;s own, neither fill nor border nor focus ring: for a field</span>
@@ -1174,6 +1200,8 @@ things declared after it.</p>
 	<span class="c1">// FitText makes the field as wide as its text, or its placeholder while empty, and grows it</span>
 	<span class="c1">// as it is typed in: an amount with its unit written after it. Width is not used then.</span>
 	<span class="nx">FitText</span> <span class="kt">bool</span>
+
+	<span class="c1">// Has unexported fields.</span>
 <span class="p">}</span>
 </code></pre>
 

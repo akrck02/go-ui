@@ -36,6 +36,16 @@ all the time.</p>
 </tr>
 
 <tr>
+<td><code>func CanChooseFiles() bool</code></td>
+<td>CanChooseFiles tells whether ChooseFiles can open a chooser here: the desktop has none yet.</td>
+</tr>
+
+<tr>
+<td><code>func ChooseFiles(largest int64, chosen func([]ChosenFile)) bool</code></td>
+<td>ChooseFiles opens the system&rsquo;s file chooser; the desktop has none yet, so it tells false and never calls chosen.</td>
+</tr>
+
+<tr>
 <td><code>func Feel(Feeling)</code></td>
 <td>Feel gives a buzz on a phone; a desktop has nothing to buzz.</td>
 </tr>
@@ -76,23 +86,18 @@ all the time.</p>
 </tr>
 
 <tr>
-<td><code>func ChooseFiles(largest int64, chosen func([]ChosenFile)) bool</code></td>
-<td>ChooseFiles opens the system&rsquo;s file chooser for one file or several, and calls chosen later, on another goroutine, with each file&rsquo;s name, size and bytes (none if the person closed it). Files over <code>largest</code> bytes, and those the system could not read, come unread. In the browser, call it right after a tap; on Android it opens the system&rsquo;s document chooser, through Go Renderer. Where there is no chooser yet (the desktop, the console) it tells false.</td>
-</tr>
-
-<tr>
-<td><code>func CanChooseFiles() bool</code></td>
-<td>CanChooseFiles tells whether ChooseFiles can open a chooser here, to show a button for it only where it works.</td>
-</tr>
-
-<tr>
-<td><code>type ChosenFile struct{ Name string; Size int64; Content []byte; Read bool }</code></td>
-<td>ChosenFile is a file the person chose: its name, without a folder, its size, and what it holds when Read.</td>
+<td><code>func NotifyAbout(id int, title, text, target string) bool</code></td>
+<td>NotifyAbout is Notify with a target; on the desktop it does not show either, and returns false.</td>
 </tr>
 
 <tr>
 <td><code>func OpenLink(link string) bool</code></td>
 <td>OpenLink opens a link in the application that shows it (the browser for a web page), through the computer&rsquo;s own command for that.</td>
+</tr>
+
+<tr>
+<td><code>func OpenedNotification() (string, bool)</code></td>
+<td>OpenedNotification is the target of a touched notification; a desktop shows none.</td>
 </tr>
 
 <tr>
@@ -107,7 +112,7 @@ all the time.</p>
 
 <tr>
 <td><code>func ReadClipboardPicture(read func(png []byte)) bool</code></td>
-<td>ReadClipboardPicture reads the picture on the system&rsquo;s clipboard, a screenshot most often, and calls read with it as PNG, on a goroutine of its own; read is not called when the clipboard holds no picture. A Mac reads it through AppleScript, Linux through wl-paste (Wayland) or xclip (X11); elsewhere it tells false. In a browser the page&rsquo;s paste event brings pictures instead.</td>
+<td>ReadClipboardPicture reads the picture on the system&rsquo;s clipboard, a screenshot most often, and calls read with it as PNG, on a goroutine of its own; read is not called when the clipboard holds no picture.</td>
 </tr>
 
 <tr>
@@ -138,6 +143,10 @@ all the time.</p>
 </table>
 
 <h3 id="constants-and-variables">Constants and variables</h3>
+<pre><code class="language-go"><span class="kd">const</span> <span class="nx">UnknownSize</span> <span class="p">=</span> <span class="o">-</span><span class="mi">1</span>
+</code></pre>
+
+<p>UnknownSize is the Size of a file not read because it was too big, when its size is not known.</p>
 <pre><code class="language-go"><span class="kd">var</span> <span class="nx">ErrVideoUnsupported</span> <span class="p">=</span> <span class="nx">errors</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="s">&#34;window: films do not play here yet&#34;</span><span class="p">)</span>
 </code></pre>
 
@@ -191,6 +200,17 @@ all the time.</p>
 	<span class="c1">// floating in a corner of the view); otherwise its area shows its own sky. A console&#39;s second</span>
 	<span class="c1">// screen is its own, and keeps its background.</span>
 	<span class="nx">Over</span> <span class="kt">bool</span>
+<span class="p">}</span>
+</code></pre>
+
+<h3 id="chosenfile">ChosenFile</h3>
+
+<p>ChosenFile is a file the person chose with ChooseFiles: its name, without a folder, its size in bytes, and what it holds. Read tells whether the contents were read: a file larger than the program asked for is not, nor one the system could not read; then Content is nil. Size is UnknownSize for a file too big to read whose size the system did not tell (on Android, a document of another app may not say).</p>
+<pre><code class="language-go"><span class="kd">type</span> <span class="nx">ChosenFile</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">Name</span>    <span class="kt">string</span>
+	<span class="nx">Size</span>    <span class="kt">int64</span>
+	<span class="nx">Content</span> <span class="p">[]</span><span class="kt">byte</span>
+	<span class="nx">Read</span>    <span class="kt">bool</span>
 <span class="p">}</span>
 </code></pre>
 
