@@ -26,6 +26,8 @@ all the time.
 | Function | |
 |---|---|
 | `func AskForNotifications()` | AskForNotifications asks the person to allow notifications; on the desktop there is nothing to ask. |
+| `func CanChooseFiles() bool` | CanChooseFiles tells whether ChooseFiles can open a chooser here: the desktop has none yet. |
+| `func ChooseFiles(largest int64, chosen func([]ChosenFile)) bool` | ChooseFiles opens the system's file chooser; the desktop has none yet, so it tells false and never calls chosen. |
 | `func Feel(Feeling)` | Feel gives a buzz on a phone; a desktop has nothing to buzz. |
 | `func FeelLongPress()` | FeelLongPress gives the buzz of a long press on a phone; a desktop has nothing to buzz. |
 | `func ForgetPreference(name string) error` | ForgetPreference lets go of the value kept under a name. |
@@ -39,6 +41,7 @@ all the time.
 | `func OpenedNotification() (string, bool)` | OpenedNotification is the target of a touched notification; a desktop shows none. |
 | `func Preference(name string) (string, bool)` | Preference is the value kept under a name, and whether there is one. |
 | `func Quit()` | Quit ends the program's window once the frame being made ends, as closing it would: Run returns. |
+| `func ReadClipboardPicture(read func(png []byte)) bool` | ReadClipboardPicture reads the picture on the system's clipboard, a screenshot most often, and calls read with it as PNG, on a goroutine of its own; read is not called when the clipboard holds no picture. |
 | `func Run(options Options, build func(context *ui.Context)) error` | Run opens the window and calls build in every update step, between the interface's Begin and End, until the window is closed. |
 | `func RunWith(context *ui.Context, options Options, build func(context *ui.Context)) error` | RunWith is Run with an interface context of your own (a custom theme or measurer). |
 | `func Share(title, text string) bool` | Share offers a text to other applications; a desktop has no sheet for that, so it returns false (put the text on the clipboard instead). |
@@ -46,6 +49,12 @@ all the time.
 | `func Wake()` | Wake makes the window draw a frame now: call it when the program's data changes on another goroutine (a file loaded, a message arrived), since the window otherwise sleeps until input. |
 
 ### Constants and variables
+
+```go
+const UnknownSize = -1
+```
+
+UnknownSize is the Size of a file not read because it was too big, when its size is not known.
 
 ```go
 var ErrVideoUnsupported = errors.New("window: films do not play here yet")
@@ -93,6 +102,19 @@ type BelowView struct {
 	// floating in a corner of the view); otherwise its area shows its own sky. A console's second
 	// screen is its own, and keeps its background.
 	Over bool
+}
+```
+
+### ChosenFile
+
+ChosenFile is a file the person chose with ChooseFiles: its name, without a folder, its size in bytes, and what it holds. Read tells whether the contents were read: a file larger than the program asked for is not, nor one the system could not read; then Content is nil. Size is UnknownSize for a file too big to read whose size the system did not tell (on Android, a document of another app may not say).
+
+```go
+type ChosenFile struct {
+	Name    string
+	Size    int64
+	Content []byte
+	Read    bool
 }
 ```
 

@@ -302,6 +302,27 @@ func TestALongTextScrollsToKeepTheCaretInSight(t *testing.T) {
 	}
 }
 
+// A fast typist's last letters and the Tab after them can arrive in one step: the letters still
+// go in the field they were typed in.
+func TestTheLettersTypedWithTabStayInTheirField(t *testing.T) {
+	h := newHarness(t)
+	first, second := "", ""
+	build := func(ui *Context) {
+		ui.Column(func() {
+			ui.TextField("First", &first)
+			ui.TextField("Second", &second)
+		})
+	}
+	h.frame(build)
+	h.clickInside(idOf("First"), build)
+	h.state.Feed().AddCharacter('o')
+	h.key(input.KeyTab, build)
+	h.frame(build)
+	if first != "o" || h.ui.focus != idOf("Second") {
+		t.Fatalf("the first field has %q, and the focus went on: %v", first, h.ui.focus == idOf("Second"))
+	}
+}
+
 func TestParseNumber(t *testing.T) {
 	for text, want := range map[string]float32{"2.5": 2.5, " 2,5 ": 2.5, "-3": -3, "12 km": 12, "1e2": 100} {
 		if got, ok := parseNumber(text); !ok || got != want {

@@ -216,3 +216,11 @@ func framebufferArea(area draw2d.Rectangle, framebufferHeight int, scale float32
 	width, height := int(area.Width*scale), int(area.Height*scale)
 	return opengl.Area{X: left, Y: framebufferHeight - top - height, Width: width, Height: height}
 }
+
+// ChooseFiles opens the system's file chooser; the desktop has none yet, so it tells false and
+// never calls chosen.
+// TODO(akrck02): offer go-ui's FilePicker sheet here, or the system's own dialog.
+func ChooseFiles(largest int64, chosen func([]ChosenFile)) bool { return false }
+
+// CanChooseFiles tells whether ChooseFiles can open a chooser here: the desktop has none yet.
+func CanChooseFiles() bool { return false }

@@ -171,9 +171,10 @@ type Context struct {
 | `func (ui *Context) Drawing() *draw2d.List` | Drawing is the draw list the interface paints into; give it to the scene's overlay once (world.Overlay.Drawing = ui.Drawing()) and go-renderer draws it after every frame. |
 | `func (ui *Context) DropTarget(name string, layout Layout, accepts func(payload any) bool, content func()) (payload any, dropped bool)` | DropTarget adds a box that takes dragged payloads. |
 | `func (ui *Context) DroppedOnScreen() (Drag, bool)` | DroppedOnScreen tells, on the step the button is let go, whether a payload was dropped on the open screen, with the pointer's place: the program drops it on its scene there. |
-| `func (ui *Context) EditTypedField(edit KeyboardText)` | EditTypedField puts what an on-screen keyboard made of the field's text in it, in the next frame: the field takes the whole text as typing (one line, cut at its MaxLength), the selection and the word being composed. |
+| `func (ui *Context) EditTypedField(edit KeyboardText)` | EditTypedField puts what an on-screen keyboard made of the field's text in it, in the next frame: the field takes the whole text as typing (one line, or many in a text area, cut at its MaxLength), the selection and the word being composed. |
 | `func (ui *Context) EditingWords() EditingWords` | EditingWords are the labels the bar over a selection shows: the ones set, or English. |
 | `func (ui *Context) End()` | End lays the interface out, paints it into the draw list and tells the input state whether the interface has the mouse or the keyboard. |
+| `func (ui *Context) EntryArea(name string, text *string, options TextAreaOptions) (submitted bool)` | EntryArea is TextArea for writing that is sent with Enter, as a chat's box: Enter sends it and Shift+Enter starts a new line. |
 | `func (ui *Context) EntryField(name string, text *string, options TextFieldOptions) (submitted bool)` | EntryField is TextFieldWith for a line that is sent with Enter: a tag to add, a message to post. |
 | `func (ui *Context) FieldFocused(name string) bool` | FieldFocused tells whether the text field of a name, in the same scope, has the keyboard: a program that draws the field's box itself (a Material field, with its text before and after) colours it by that. |
 | `func (ui *Context) FilePicker(options FilePickerOptions) (path string, closed bool)` | FilePicker shows a sheet to choose a file or a folder. |
@@ -234,6 +235,7 @@ type Context struct {
 | `func (ui *Context) SetScreenReaderFocus(id ID)` | SetScreenReaderFocus says which node the screen reader is on (0 for none), so the interface rings it, as a phone rings what TalkBack reads. |
 | `func (ui *Context) SetTextScale(scale float32)` | SetTextScale sets how much larger than its size each text is drawn: the person's text size, as a phone's settings give it (1.3 for a larger text). |
 | `func (ui *Context) Sheet(title string, options SheetOptions, content func()) (dismissed bool)` | Sheet shows a card in the middle of the window, over everything, with what is behind it dimmed: a question to confirm, a short form. |
+| `func (ui *Context) Shortcut(key input.Key, shift bool) bool` | Shortcut tells whether a key was pressed in this step with the system's shortcut key held: Cmd on a Mac, Ctrl elsewhere, and either in a browser, which does not tell which system it runs on. |
 | `func (ui *Context) Size() (width, height float32)` | Size returns the window's size in this frame, in layout pixels: a program chooses a layout by it (a list alone on a phone, a list and its details side by side on a tablet). |
 | `func (ui *Context) Slider(name string, value *float32, minimum, maximum float32) bool` | Slider adds a track with a knob to drag between minimum and maximum, across the width it is given. |
 | `func (ui *Context) SliderStep(name string, value *float32, minimum, maximum, step float32) bool` | SliderStep is Slider with the value kept to whole steps (0 = any value). |
@@ -243,6 +245,8 @@ type Context struct {
 | `func (ui *Context) Tabs(name string, selected *int, labels ...string) bool` | Tabs adds a row of segments, one per label, with the selected one raised; clicking a segment selects it. |
 | `func (ui *Context) TakeKeyboard()` | TakeKeyboard gives the interface the keyboard, as a game does when it opens its own menu: Tab then moves between the controls until Escape or ReleaseKeyboard gives the keys back. |
 | `func (ui *Context) Text(text string, style TextStyle)` | Text adds a line of text in a style. |
+| `func (ui *Context) TextArea(name string, text *string, options TextAreaOptions) bool` | TextArea adds a field of many lines to type text in, with the keys of TextField, Enter starting a new line, and Up and Down moving between lines. |
+| `func (ui *Context) TextAreaHeight(lines int, textSize float32) float32` | TextAreaHeight is how tall a text area is while it shows this many lines of text of this size (0 for the theme's), its padding included. |
 | `func (ui *Context) TextField(name string, text *string) bool` | TextField adds a one-line field to type text in. |
 | `func (ui *Context) TextFieldWith(name string, text *string, options TextFieldOptions) bool` | TextFieldWith is TextField with a placeholder, a length limit or a width. |
 | `func (ui *Context) TextScale() float32` | TextScale is the text size SetTextScale gave, 1 by default: a control of a program's own whose height holds text grows by it. |
@@ -423,6 +427,7 @@ type KeyboardText struct {
 	SelectionStart, SelectionEnd int
 	ComposingStart, ComposingEnd int  // the word being composed, underlined; equal when none
 	Secret                       bool // a password: the keyboard suggests nothing
+	MultiLine                    bool // a text area: the keyboard offers a new-line key, not done
 }
 ```
 
@@ -699,6 +704,28 @@ type Table struct {
 | `func (table *Table) Row(id string, selected bool, cells ...string) bool` | Row adds a row with a text per column, named by id (unique in the table: the item's key), and returns true on the step it is clicked. |
 | `func (table *Table) RowWith(id string, selected bool, look RowLook, cells ...string) bool` | RowWith adds a row as Row does, its first cell starting as look says. |
 
+### TextAreaOptions
+
+TextAreaOptions shape a text area.
+
+```go
+type TextAreaOptions struct {
+	Placeholder string // shown, quiet, while the area is empty
+	Label       string // what a screen reader calls the area; the placeholder when empty
+	MaxLength   int    // the most characters it takes, line breaks included; 0 = no limit
+	Width       Sizing // the zero value grows across the row or column
+	// Height is the area's; the zero value is tall enough for four lines (textAreaLines). Grow() fills
+	// what the column leaves, for a page that is all writing.
+	Height Sizing
+	// MaxLines makes the area as tall as its lines, one at the least and this many at the most,
+	// after which it scrolls: a chat's box, one line until more are written. Height is not used then.
+	MaxLines int
+	// Plain draws no box of the area's own, as TextFieldOptions.Plain: for an area inside a box the
+	// program draws, a chat's box with its send button.
+	Plain bool
+}
+```
+
 ### TextFieldOptions
 
 TextFieldOptions shape a text field.
@@ -706,8 +733,11 @@ TextFieldOptions shape a text field.
 ```go
 type TextFieldOptions struct {
 	Placeholder string // shown, quiet, while the field is empty
-	MaxLength   int    // the most characters it takes; 0 = no limit
-	Width       Sizing // the zero value grows across the row or column
+	// Label is what a screen reader calls the field; the placeholder when empty. A placeholder
+	// that is an example ("Add a dark mode") needs one.
+	Label     string
+	MaxLength int    // the most characters it takes; 0 = no limit
+	Width     Sizing // the zero value grows across the row or column
 	// Weight is the face the text is written in: draw2d.Mono for a code or a key.
 	Weight draw2d.Weight
 	// Plain draws no box of the field's own, neither fill nor border nor focus ring: for a field
@@ -722,6 +752,8 @@ type TextFieldOptions struct {
 	// FitText makes the field as wide as its text, or its placeholder while empty, and grows it
 	// as it is typed in: an amount with its unit written after it. Width is not used then.
 	FitText bool
+
+	// Has unexported fields.
 }
 ```
 

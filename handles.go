@@ -34,6 +34,7 @@ type fieldHandles struct {
 	bar      bool    // the bar of actions over the selection
 	dragging int     // the handle a finger holds
 	grab     float32 // how far right of the handle's point the finger took it
+	grabY    float32 // and how far below it
 }
 
 // EditingWords are the labels of the bar over a selection on a touch screen.
@@ -85,7 +86,7 @@ func (ui *Context) followTouches(id ID, memory *fieldMemory, result interaction,
 	case result.pressed && !press.finger:
 		*handles = fieldHandles{}
 	case result.held && press.finger && press.longNow:
-		editor.selectWord(ui.fieldPositionAt(id, memory, press.startX))
+		editor.selectWord(ui.positionUnder(id, memory, press.startX, press.startY))
 		memory.dragging = false
 		handles.shown, handles.bar = selectionHandles, true
 	case result.clicked && press.finger:
@@ -107,18 +108,26 @@ func (ui *Context) addHandles(id ID, memory *fieldMemory) {
 	if !shown || handles.shown == noHandles {
 		return
 	}
-	line := ui.fieldLine(area)
 	editor := &memory.editor
 	start, end := editor.selection()
 	if handles.shown == caretHandle {
-		ui.addHandle(id, memory, caretHandleID(id), draggingCaret, ui.textX(area, memory, editor.caret), line)
+		x, line := ui.textPoint(area, memory, editor.caret)
+		ui.addHandle(id, memory, caretHandleID(id), draggingCaret, x, line)
 		return
 	}
-	ui.addHandle(id, memory, startHandleID(id), draggingStart, ui.textX(area, memory, start), line)
-	ui.addHandle(id, memory, endHandleID(id), draggingEnd, ui.textX(area, memory, end), line)
+	startX, startLine := ui.textPoint(area, memory, start)
+	endX, endLine := ui.textPoint(area, memory, end)
+	ui.addHandle(id, memory, startHandleID(id), draggingStart, startX, startLine)
+	ui.addHandle(id, memory, endHandleID(id), draggingEnd, endX, endLine)
 	if handles.bar && handles.dragging == draggingNone {
-		middle := (ui.textX(area, memory, start) + ui.textX(area, memory, end)) / 2
-		ui.addSelectionBar(id, memory, area, middle, line)
+		middle, over := (startX+endX)/2, area.Y
+		if startLine != endLine {
+			middle = area.X + area.Width/2 // over lines of their own, the bar sits in the middle
+		}
+		if memory.multiLine { // over the selection's first line, not over the whole area
+			over = max(startLine-ui.areaLineHeight(memory), area.Y)
+		}
+		ui.addSelectionBar(id, memory, over, middle, endLine)
 	}
 }
 
@@ -128,9 +137,17 @@ func (ui *Context) fieldLine(area draw2d.Rectangle) float32 {
 	return area.Y + (area.Height+metrics.Height())/2
 }
 
-// textX is where a position of a field's text is on the screen.
-func (ui *Context) textX(area draw2d.Rectangle, memory *fieldMemory, position int) float32 {
-	return area.X + fieldPadding - memory.scroll + ui.textWidth(memory.shown(memory.editor.text[:position]), memory.weight, memory.size)
+// textPoint is where a position of a field's text is on the screen: its x, and the bottom of its
+// line of text, where a handle hangs from.
+func (ui *Context) textPoint(area draw2d.Rectangle, memory *fieldMemory, position int) (x, line float32) {
+	if !memory.multiLine {
+		return area.X + fieldPadding - memory.scroll + ui.textWidth(memory.shown(memory.editor.text[:position]), memory.weight, memory.size), ui.fieldLine(area)
+	}
+	ui.rewrapArea(memory)
+	x, top := ui.areaPoint(memory, position)
+	lineHeight := ui.areaLineHeight(memory)
+	letters := ui.measure("Hg", TextStyle{Size: ui.scaledText(ui.fieldTextSize(memory.size))}).Height()
+	return area.X + fieldPadding + x, area.Y + fieldPadding - memory.lineScroll + top + (lineHeight+letters)/2
 }
 
 // addHandle adds one handle with its point at x on the line, in a popup a finger can take it in,
@@ -138,7 +155,7 @@ func (ui *Context) textX(area draw2d.Rectangle, memory *fieldMemory, position in
 // selection, or the caret, to the position under the handle's point.
 func (ui *Context) addHandle(field ID, memory *fieldMemory, id ID, kind int, x, line float32) {
 	area := ui.previous[field]
-	if x < area.X || x > area.Right() {
+	if x < area.X || x > area.Right() || line < area.Y || line > area.Bottom() {
 		return
 	}
 	box := handleBox(kind, x, line)
@@ -152,17 +169,17 @@ func (ui *Context) addHandle(field ID, memory *fieldMemory, id ID, kind int, x, 
 			})
 		})
 		ui.Describe(Description{Hidden: true}) // the field is read, not its handles
-		ui.dragHandle(field, memory, kind, touched, x)
+		ui.dragHandle(field, memory, kind, touched, x, line)
 	})
 }
 
 // dragHandle follows a finger on a handle: it takes the handle where it came down, moves its end
 // to the position under the point as it goes, and shows the bar again once it lets go.
-func (ui *Context) dragHandle(field ID, memory *fieldMemory, kind int, touched interaction, x float32) {
+func (ui *Context) dragHandle(field ID, memory *fieldMemory, kind int, touched interaction, x, line float32) {
 	handles, editor := &memory.handles, &memory.editor
-	pointer := float32(ui.state.CursorX)
+	pointer, pointerY := float32(ui.state.CursorX), float32(ui.state.CursorY)
 	if touched.pressed {
-		handles.dragging, handles.grab = kind, pointer-x
+		handles.dragging, handles.grab, handles.grabY = kind, pointer-x, pointerY-line
 	}
 	if handles.dragging != kind {
 		return
@@ -171,7 +188,7 @@ func (ui *Context) dragHandle(field ID, memory *fieldMemory, kind int, touched i
 		handles.dragging, handles.bar = draggingNone, kind != draggingCaret
 		return
 	}
-	position := ui.fieldPositionAt(field, memory, pointer-handles.grab)
+	position := ui.positionUnder(field, memory, pointer-handles.grab, pointerY-handles.grabY-1) // just above the point: on its line
 	start, end := editor.selection()
 	switch kind {
 	case draggingCaret:
@@ -218,11 +235,12 @@ func paintHandle(drawing *draw2d.List, kind int, x, line float32, colour draw2d.
 	}
 }
 
-// addSelectionBar adds the bar of what can be done to the selection, centred over it above the
-// field, or under the handles when there is no room above.
-func (ui *Context) addSelectionBar(field ID, memory *fieldMemory, area draw2d.Rectangle, middle, line float32) {
+// addSelectionBar adds the bar of what can be done to the selection, centred over it above a y
+// (the field's top, or the selection's first line in a text area), or under the handles hanging
+// from line when there is no room above.
+func (ui *Context) addSelectionBar(field ID, memory *fieldMemory, over, middle, line float32) {
 	barHeight := ui.Theme.ControlHeight + 2*popupPadding
-	top := area.Y - barHeight - 8
+	top := over - barHeight - 8
 	if top < ui.insets.Top+4 {
 		top = line + 3*handleRadius + 4
 	}
