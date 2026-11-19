@@ -50,6 +50,12 @@ func NotificationsAllowed() bool             { return false }
 func AskForNotifications()                   {}
 func SystemPalettes() (Palettes, bool)       { return Palettes{}, false }
 
+// NotifyAbout is Notify with a target; the console shows no notifications.
+func NotifyAbout(id int, title, text, target string) bool { return false }
+
+// OpenedNotification is the target of a touched notification; the console shows none.
+func OpenedNotification() (string, bool) { return "", false }
+
 // separationAtFullSlider is how far apart the eyes stand with the 3D slider at its top, as a share
 // of the distance to what the camera looks at.
 const separationAtFullSlider = 0.03

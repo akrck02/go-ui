@@ -33,6 +33,18 @@ func Notify(id int, title, text string) bool {
 	return android.Notify(android.MessagesChannel(), id, title, text)
 }
 
+// NotifyAbout is Notify with a target: what the notification is about, in the program's own words
+// (a screen, a thing's id). Touching it opens the program, and OpenedNotification returns the
+// target. The package's activity must be go-renderer's (go-ui-apk names it) for a touch to reach a
+// program already open.
+func NotifyAbout(id int, title, text, target string) bool {
+	return android.NotifyAbout(android.MessagesChannel(), id, title, text, target)
+}
+
+// OpenedNotification is the target of the notification touched to open the program, and true, once.
+// Ask it in every frame.
+func OpenedNotification() (string, bool) { return android.OpenedNotification() }
+
 // NotificationsAllowed tells whether the program may show notifications.
 func NotificationsAllowed() bool { return android.NotificationsAllowed() }
 

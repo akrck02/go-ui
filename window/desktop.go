@@ -82,6 +82,12 @@ func Share(title, text string) bool { return false }
 // Notify shows a notification; on the desktop it does not yet, and returns false.
 func Notify(id int, title, text string) bool { return false }
 
+// NotifyAbout is Notify with a target; on the desktop it does not show either, and returns false.
+func NotifyAbout(id int, title, text, target string) bool { return false }
+
+// OpenedNotification is the target of a touched notification; a desktop shows none.
+func OpenedNotification() (string, bool) { return "", false }
+
 // FeelLongPress gives the buzz of a long press on a phone; a desktop has nothing to buzz.
 func FeelLongPress() {}
 
