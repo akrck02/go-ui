@@ -73,6 +73,23 @@ if strings.TrimSpace(name) == "" {
 
 ![An empty Name field and A lighthouse needs a name in red](../images/components/fields-validate.png)
 
+## Many lines: `TextArea`
+
+A note, a description, a request of several pages: `TextArea` is a text field of many lines. It
+keeps the text's line breaks, wraps long lines between words at its width, and scrolls up and
+down (by the wheel, a finger, or the caret, which it keeps in view).
+
+```go
+context.TextArea("notes", &notes, ui.TextAreaOptions{Placeholder: "What the keeper saw tonight…", Height: ui.Grow()})
+```
+
+It edits as `TextField` does, with what many lines need: **Enter starts a new line** (it does not
+end the edit), Up and Down go to the line above and below, Home and End to the ends of the line,
+and with Cmd or Ctrl to the ends of the text. Pasted line breaks stay, `\r\n` as one. **Escape
+leaves the field and keeps the text**: a page of writing is never thrown away by one key. Its
+height is four lines unless `Height` says otherwise; `Grow()` fills what the column leaves. On a
+phone the keyboard offers a new-line key in place of done.
+
 ## Typing, everywhere
 
 | To | Do |
@@ -84,7 +101,7 @@ if strings.TrimSpace(name) == "" {
 | Finish | Enter or a click elsewhere; **Escape puts back** the text it had when it took the keyboard |
 | Next field | Tab, Shift+Tab: round the fields of the panel or sheet |
 
-Accents and «ñ» type as anywhere (characters come after the keyboard layout). Pasted line breaks
+Accents and «ñ» type as anywhere (characters come after the keyboard layout). In a field of one line, pasted line breaks
 become spaces. On a phone the on-screen keyboard comes up, suggests words and underlines the one
 it composes; a finger held on a word selects it, with handles and a bar to cut, copy and paste.
 

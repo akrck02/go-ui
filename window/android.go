@@ -217,5 +217,43 @@ func sendTypedField(context *ui.Context) {
 	}
 	android.EditText(uint64(field.Field), android.TextInput{Text: field.Text,
 		SelectionStart: field.SelectionStart, SelectionEnd: field.SelectionEnd,
-		ComposingStart: field.ComposingStart, ComposingEnd: field.ComposingEnd}, field.Secret)
+		ComposingStart: field.ComposingStart, ComposingEnd: field.ComposingEnd}, textKind(field))
 }
+
+// textKind is what the field typed in takes, for the keyboard's keys: a password's, a new-line
+// key for a text area, or done for one line.
+func textKind(field ui.KeyboardText) android.TextKind {
+	switch {
+	case field.Secret:
+		return android.Password
+	case field.MultiLine:
+		return android.LinesOfText
+	}
+	return android.LineOfText
+}
+
+// ChooseFiles opens Android's document chooser, through Go Renderer. chosen is called once, on
+// another goroutine, with what the person chose; a file over largest bytes comes unread.
+func ChooseFiles(largest int64, chosen func([]ChosenFile)) bool {
+	return android.ChooseFiles(largest, func(files []android.ChosenFile) {
+		chosen(chosenFrom(files))
+	})
+}
+
+// chosenFrom turns Go Renderer's chosen files into Go UI's.
+func chosenFrom(files []android.ChosenFile) []ChosenFile {
+	chosen := make([]ChosenFile, len(files))
+	for index, file := range files {
+		chosen[index] = ChosenFile{Name: file.Name, Size: file.Size, Content: file.Content, Read: file.Read}
+	}
+	return chosen
+}
+
+// CanChooseFiles tells whether ChooseFiles can open a chooser here: the app's package carries Go
+// Renderer's chooser.
+func CanChooseFiles() bool { return android.CanChooseFiles() }
+
+// ReadClipboardPicture reads the clipboard's picture on a desktop; Android's is not read yet, so
+// it tells false and never calls read.
+// TODO(akrck02): read it through Android's ClipboardManager.
+func ReadClipboardPicture(read func(png []byte)) bool { return false }

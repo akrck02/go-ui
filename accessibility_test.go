@@ -126,6 +126,22 @@ func TestFieldsAreReadWithTheirTextUnlessSecret(t *testing.T) {
 	}
 }
 
+// A placeholder that is an example is no name: a field and an area are read by their label.
+func TestAFieldIsReadByItsLabelOverItsPlaceholder(t *testing.T) {
+	h := readerHarness(t)
+	title, notes := "", ""
+	h.frame(func(ui *Context) {
+		ui.TextFieldWith("title", &title, TextFieldOptions{Label: "Title", Placeholder: "A lighthouse page"})
+		ui.TextArea("notes", &notes, TextAreaOptions{Label: "Notes", Placeholder: "The lamp turns all night…"})
+	})
+	if node := h.node("Title"); node.Role != FieldRole {
+		t.Fatalf("the field: %+v", node)
+	}
+	if node := h.node("Notes"); node.Role != FieldRole {
+		t.Fatalf("the area: %+v", node)
+	}
+}
+
 func TestAPressFromTheScreenReaderClicksTheControl(t *testing.T) {
 	h := readerHarness(t)
 	clicks, longPresses := 0, 0

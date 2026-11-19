@@ -262,3 +262,14 @@ func packedBackground(colour [4]float32) uint32 {
 	channel := func(value float32) uint32 { return uint32(min(max(value, 0), 1)*255 + 0.5) }
 	return channel(colour[0])<<24 | channel(colour[1])<<16 | channel(colour[2])<<8 | channel(colour[3])
 }
+
+// ChooseFiles opens the system's file chooser; the console has none, so it tells false and never
+// calls chosen.
+func ChooseFiles(largest int64, chosen func([]ChosenFile)) bool { return false }
+
+// CanChooseFiles tells whether ChooseFiles can open a chooser here: the console has none.
+func CanChooseFiles() bool { return false }
+
+// ReadClipboardPicture reads the clipboard's picture on a desktop; the console has no clipboard,
+// so it tells false and never calls read.
+func ReadClipboardPicture(read func(png []byte)) bool { return false }
