@@ -17,6 +17,12 @@ import (
 // goroutine (a fetch finished). Safe from any goroutine.
 func Wake() { browser.Wake() }
 
+// SetZoom does nothing here: a page has the browser's own zoom. Zoom is always 1.
+func SetZoom(factor float64) {}
+
+// Zoom is 1: see SetZoom.
+func Zoom() float64 { return 1 }
+
 // Graphics describes a phone's OpenGL ES and GPU; in a browser it is "".
 func Graphics() string { return "" }
 

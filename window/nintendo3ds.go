@@ -31,6 +31,12 @@ func ButtonsPressed() nintendo3ds.Buttons { return buttonsPressed }
 // Wake: the console draws every frame, so there is nothing to wake.
 func Wake() {}
 
+// SetZoom does nothing here: the console's screens have one size. Zoom is always 1.
+func SetZoom(factor float64) {}
+
+// Zoom is 1: see SetZoom.
+func Zoom() float64 { return 1 }
+
 // Graphics names the console's GPU.
 func Graphics() string { return "PICA200, through citro3d" }
 

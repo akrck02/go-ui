@@ -25,6 +25,15 @@ import (
 // Safe from any goroutine.
 func Wake() { opengl.Wake() } // both backends wait for events in GLFW
 
+// SetZoom makes the whole interface that many times larger than the screen's scale (1 for its own
+// size), as a browser's zoom does: text, icons, paddings and fixed boxes all grow, and the layout
+// has less room. Call it while building the interface, from a shortcut or a setting; the next
+// frame comes at once at the new size. Keep it with KeepPreference to keep it across runs.
+func SetZoom(factor float64) { opengl.SetZoom(factor) }
+
+// Zoom is the zoom SetZoom gave, 1 by default.
+func Zoom() float64 { return opengl.Zoom() }
+
 // Graphics describes a phone's OpenGL ES and GPU; on the desktop it is "".
 func Graphics() string { return "" }
 

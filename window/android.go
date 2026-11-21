@@ -16,6 +16,12 @@ import (
 // goroutine. Safe from any goroutine.
 func Wake() { android.Wake() }
 
+// SetZoom does nothing here: a phone has the person's text size instead (SetTextScale). Zoom is always 1.
+func SetZoom(factor float64) {}
+
+// Zoom is 1: see SetZoom.
+func Zoom() float64 { return 1 }
+
 // SystemPrefersDark tells whether the phone is set to its dark theme, so a program can follow it.
 func SystemPrefersDark() bool { return android.SystemPrefersDark() }
 
