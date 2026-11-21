@@ -185,6 +185,7 @@ type Context struct {
 | `func (ui *Context) FocusedID() ID` | FocusedID is the control that has the focus after the last frame: the field being typed in, or the control Tab reached; 0 when none has it. |
 | `func (ui *Context) Fold(name string, open bool, duration time.Duration, layout Layout, content func())` | Fold lays content out in a box that opens to the content's height and closes to nothing with motion, clipping what does not show yet: the answer under a question, more under a list row. |
 | `func (ui *Context) Frame(layout Layout, look Look, content func())` | Frame adds a box with a layout and a look (fill, border, corners, shadow). |
+| `func (ui *Context) Fullscreen() bool` | Fullscreen tells whether the window is asked to be on the whole screen. |
 | `func (ui *Context) Grid(columns int, content func())` | Grid lays out what content adds in rows of a number of equal columns, across the whole width. |
 | `func (ui *Context) HasKeyboard() bool` | HasKeyboard tells whether the interface reads Tab, Enter and Space in this frame. |
 | `func (ui *Context) Heading(text string)` | Heading adds a line of bold, larger text: the title of a group. |
@@ -193,6 +194,7 @@ type Context struct {
 | `func (ui *Context) IconSized(name string, size float32, color draw2d.Color)` | IconSized adds an icon of a size and colour. |
 | `func (ui *Context) Image(picture *draw2d.Image, layout Layout, radius float32)` | Image adds a picture filling a box laid out as any other (a photo in a card, a person's avatar): scaled to cover it and cropped evenly where their shapes differ, its corners rounded by radius. |
 | `func (ui *Context) Insets() Insets` | Insets returns what the system draws over the window's edges. |
+| `func (ui *Context) KeyPressed(key input.Key) bool` | KeyPressed tells whether a key was pressed in this step, whatever else is held: for keys that act on their own, as F11 does for the whole screen. |
 | `func (ui *Context) Label(text string)` | Label adds a line of body text. |
 | `func (ui *Context) List(name string, layout Layout, count int, rowHeight float32, row func(index int))` | List shows count rows of the same height in a scroll area and builds only the rows that can be seen, so a list of ten thousand rows costs what a list of twenty does. |
 | `func (ui *Context) ListBox(name string, layout Layout, items []string, selected *int) bool` | ListBox shows items as a scrolling list of selectable rows and returns true when the selection changes. |
@@ -230,6 +232,7 @@ type Context struct {
 | `func (ui *Context) Selectable(icon, label string, selected bool) bool` | Selectable adds an item with an optional icon that shows whether it is selected, and returns true on the step it is clicked. |
 | `func (ui *Context) Separator()` | Separator draws a thin line across the row or column it is in. |
 | `func (ui *Context) SetEditingWords(words EditingWords)` | SetEditingWords sets the labels of the bar over a selection, in the person's language. |
+| `func (ui *Context) SetFullscreen(on bool)` | SetFullscreen asks for the window on the whole screen, or in a window again: from a shortcut (F11, as browsers use) or a button. |
 | `func (ui *Context) SetInsets(insets Insets)` | SetInsets tells the interface what the system draws over the window; the window calls it. |
 | `func (ui *Context) SetScreenReader(on bool)` | SetScreenReader tells the interface whether a screen reader is on; the window does, on a phone. |
 | `func (ui *Context) SetScreenReaderFocus(id ID)` | SetScreenReaderFocus says which node the screen reader is on (0 for none), so the interface rings it, as a phone rings what TalkBack reads. |

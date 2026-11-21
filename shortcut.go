@@ -20,3 +20,10 @@ func (ui *Context) Shortcut(key input.Key, shift bool) bool {
 	}
 	return state.Down(shortcutKey)
 }
+
+// KeyPressed tells whether a key was pressed in this step, whatever else is held: for keys that
+// act on their own, as F11 does for the whole screen. Keys that type or move in a field reach the
+// field too, so a program's own commands with letters use Shortcut instead.
+func (ui *Context) KeyPressed(key input.Key) bool {
+	return ui.state != nil && ui.state.Pressed(key)
+}
