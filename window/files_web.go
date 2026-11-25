@@ -78,3 +78,7 @@ func bytesOf(file js.Value) []byte {
 // the person pastes, so it tells false and never calls read: the page's paste event brings the
 // pasted files instead.
 func ReadClipboardPicture(read func(png []byte)) bool { return false }
+
+// ChooseFolder opens the system's folder chooser; a page cannot open folders on the computer, so
+// it tells false and never calls chosen.
+func ChooseFolder(title, start string, chosen func(folder string)) bool { return false }

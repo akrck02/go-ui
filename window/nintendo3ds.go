@@ -285,3 +285,7 @@ func CanChooseFiles() bool { return false }
 // ReadClipboardPicture reads the clipboard's picture on a desktop; the console has no clipboard,
 // so it tells false and never calls read.
 func ReadClipboardPicture(read func(png []byte)) bool { return false }
+
+// ChooseFolder opens the system's folder chooser; the console has none, so it tells false and
+// never calls chosen.
+func ChooseFolder(title, start string, chosen func(folder string)) bool { return false }

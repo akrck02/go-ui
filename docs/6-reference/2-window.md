@@ -28,6 +28,7 @@ all the time.
 | `func AskForNotifications()` | AskForNotifications asks the person to allow notifications; on the desktop there is nothing to ask. |
 | `func CanChooseFiles() bool` | CanChooseFiles tells whether ChooseFiles can open a chooser here: the desktop has none yet. |
 | `func ChooseFiles(largest int64, chosen func([]ChosenFile)) bool` | ChooseFiles opens the system's file chooser; the desktop has none yet, so it tells false and never calls chosen. |
+| `func ChooseFolder(title, start string, chosen func(folder string)) bool` | ChooseFolder opens the system's own folder chooser, with a title and in a start folder ("" for the system's choice), and calls chosen once, on a goroutine of its own, with the folder chosen, or with "" when the person closes the chooser without one. |
 | `func Feel(Feeling)` | Feel gives a buzz on a phone; a desktop has nothing to buzz. |
 | `func FeelLongPress()` | FeelLongPress gives the buzz of a long press on a phone; a desktop has nothing to buzz. |
 | `func ForgetPreference(name string) error` | ForgetPreference lets go of the value kept under a name. |

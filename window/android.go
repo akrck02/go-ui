@@ -275,3 +275,7 @@ func CanChooseFiles() bool { return android.CanChooseFiles() }
 // it tells false and never calls read.
 // TODO(akrck02): read it through Android's ClipboardManager.
 func ReadClipboardPicture(read func(png []byte)) bool { return false }
+
+// ChooseFolder opens the system's folder chooser; Android's is not offered yet, so it tells false
+// and never calls chosen.
+func ChooseFolder(title, start string, chosen func(folder string)) bool { return false }
